@@ -64,6 +64,23 @@ test("headings get an id, a keyboard-reachable anchor named for the heading, and
   assert.deepEqual(toc, [{ depth: 2, id: "methods--code", text: "Methods & code" }]);
 });
 
+test("a task-list checkbox is named by its item's first line, wrapped in a label, so a screen reader says what is done", async () => {
+  const tight = (await core("- [x] Draft **written**\n- [ ] Figures checked\n  - [ ] nested\n")).html;
+  assert.match(tight, /<label><input type="checkbox" checked disabled> Draft <strong>written<\/strong><\/label>/);
+  // The nested list is outside the parent's label and has its own.
+  assert.match(tight, /<label><input type="checkbox" disabled> Figures checked<\/label>\n<ul/);
+  assert.match(tight, /<label><input type="checkbox" disabled> nested<\/label>/);
+
+  // A loose item: the label is the first paragraph's, and the paragraphs after it are not part of the name.
+  const loose = (await core("- [ ] Task with $x^2$\n\n  More text.\n\n- [ ] ![a chart](/media/c.png)\n")).html;
+  assert.match(loose, /<p><label><input type="checkbox" disabled> Task with <span class="katex">[\s\S]*?<\/span><\/label><\/p>\n<p>More text.<\/p>/);
+  assert.match(loose, /<label><input type="checkbox" disabled> (?:<a [^>]*>)?<img[^>]*alt="a chart"[^>]*>(?:<\/a>)?<\/label>/);
+
+  for (const html of [tight, loose]) {
+    assert.equal((html.match(/<input/g) ?? []).length, (html.match(/<label><input/g) ?? []).length, html);
+  }
+});
+
 test("math is validated, flagged, and rendered as MathML plus HTML", async () => {
   const withMath = await core(fixture("math"));
   assert.equal(withMath.hasMath, true);
