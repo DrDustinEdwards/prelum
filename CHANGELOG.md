@@ -16,6 +16,8 @@
     another site opts into them rather than inheriting them.
   - `assertSafe` and `scanHtml` check rendered output with a parser against an allowlist derived from the benign corpus; `render` runs
     `assertSafe` when `options.assertSafe` is set (off by default).
+    The corpus holds all four chart types (`test/fixtures/render/charts.md`): with only bar and line charts in it, `assertSafe`
+    refused area and dot charts for their `fill-opacity`, `fill` and `stroke` attributes.
   - `HOSTILE_INPUTS` and `runConformance`: 44 hostile inputs for a site to run against its own configured renderer.
   - `maxBytes` (default 512 KB) and `maxDepth` (default 100) refuse a source before it can cost a Worker its time or its stack.
   - `RENDER_VERSION` is "1". A change to the output for any corpus input is a new version and a note here.
