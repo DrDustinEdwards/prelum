@@ -44,7 +44,7 @@ export { ContentError, isAllowedUrl };
  * Bumped whenever the output changes for the same input. A site stores it beside its rendered HTML and re-renders on a mismatch; Carrel's
  * health check reads it from meta.capabilities.render. test/render-golden.test.mjs fails when the output moves and this does not.
  */
-export const RENDER_VERSION = "1";
+export const RENDER_VERSION = "2";
 
 /** A source over this is refused before it is parsed: a 200,000-character bracket run took 2.8 s, which a Worker cannot be sent. */
 export const DEFAULT_MAX_BYTES = 512 * 1024;
@@ -205,6 +205,41 @@ function rehypeTableScroll() {
         properties: { className: ["table-scroll"], tabIndex: 0 },
         children: [node],
       };
+    });
+  };
+}
+
+/**
+ * remark-gfm emits a task-list checkbox with no name, which axe fails as critical. A <label> wraps the checkbox and the item's first
+ * line, the inline content after it up to the first block (a nested list, a paragraph, a table). The name is then what the reader
+ * sees once rendered (math, links, an image's alt), read once, and a loose item's later paragraphs stay out of it.
+ */
+const BLOCK_TAGS = new Set(["blockquote", "details", "div", "figure", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "ol", "p", "pre", "table", "ul"]);
+
+function rehypeTaskListLabels() {
+  return (/** @type {import("hast").Root} */ tree) => {
+    visit(tree, "element", (item) => {
+      if (item.tagName !== "li" || !item.properties?.className?.includes?.("task-list-item")) return;
+      // The checkbox is first in the item, or first in its paragraph when the list is loose.
+      const first = item.children.find((child) => child.type === "element");
+      const line = first?.tagName === "p" ? first : item;
+      const at = line.children.findIndex((child) => child.type === "element");
+      const checkbox = line.children[at];
+      if (checkbox?.type !== "element" || checkbox.tagName !== "input" || checkbox.properties?.type !== "checkbox") return;
+      let end = at + 1;
+      while (end < line.children.length) {
+        const child = line.children[end];
+        if (child.type === "element" && BLOCK_TAGS.has(child.tagName)) break;
+        end += 1;
+      }
+      // Trailing whitespace before a nested list stays outside the label.
+      while (end > at + 1) {
+        const last = line.children[end - 1];
+        if (last.type !== "text" || last.value.trim() !== "") break;
+        end -= 1;
+      }
+      const label = { type: "element", tagName: "label", properties: {}, children: line.children.slice(at, end) };
+      line.children.splice(at, end - at, /** @type {import("hast").Element} */ (label));
     });
   };
 }
@@ -405,7 +440,7 @@ export async function render({ file, body, resolveImage, options = {} }) {
   }
 
   // Option 1 in the header: no allowDangerousHtml, so raw HTML in the source never becomes markup.
-  processor.use(remarkRehype).use(rehypeTableScroll);
+  processor.use(remarkRehype).use(rehypeTableScroll).use(rehypeTaskListLabels);
 
   for (const run of runs) {
     for (const [plugin, ...args] of run.rehype) processor.use(plugin, ...args);

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- `RENDER_VERSION` is "2". A task-list checkbox now sits in a `<label>` with its item's first line (the inline content after it, up
+  to a nested list or the next block), so it has an accessible name; it had none, which axe reports as a critical failure. The name
+  is the rendered text, read once. A site re-renders every page with a task list, and a site passing `assertSafe` its own allowlist
+  adds `label`.
+
 ### Added
 
 - The specimen site (`specimen/`, https://prelum.dustinedwards.info) and its index, `elements.json`. Not part of the package:

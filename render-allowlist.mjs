@@ -22,6 +22,7 @@ export const DEFAULT_ALLOWLIST = {
     "hr",
     "img",
     "input",
+    "label",
     "li",
     "line",
     "math",
