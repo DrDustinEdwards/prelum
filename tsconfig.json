@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["*.mjs", "*.d.mts", "test/*.mjs"]
+  "include": ["*.mjs", "*.d.mts", "test/*.mjs", "specimen/*.mjs"]
 }

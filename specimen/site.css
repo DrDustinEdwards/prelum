@@ -1,0 +1,393 @@
+/* The specimen's own layout and the classes Prelum's output carries, on Capsomer's tokens. Capsomer's tokens, base and prose
+   styles come first in site.css (specimen/build.mjs joins them); this file is unlayered, so it wins where the two meet. The
+   prose rules follow dustinedwards-info's app/styles/prose.css, the first site to style this output. */
+
+.sr-only {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: 16px;
+  inset-block-start: -100px;
+  padding: 8px 12px;
+  background: var(--surface);
+  color: var(--accent-text);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+}
+.skip-link:focus {
+  inset-block-start: 8px;
+}
+
+/* The page. */
+.page {
+  max-inline-size: 1180px;
+  margin-inline: auto;
+  padding: 24px 16px 64px;
+}
+.page-head h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem);
+}
+.page-lead {
+  max-inline-size: var(--measure);
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+.contents {
+  margin: 24px 0 8px;
+  padding: 16px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.contents h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+.contents ol {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0 16px;
+  margin: 0;
+  padding-inline-start: 1.5em;
+}
+.contents a {
+  display: inline-block;
+  min-block-size: 24px;
+  padding-block: 2px;
+}
+
+.element,
+.outputs {
+  margin-block: 48px;
+  padding-block-start: 24px;
+  border-block-start: 1px solid var(--line);
+  scroll-margin-block-start: 16px;
+}
+.element-name {
+  margin: 0;
+  font-size: 1.375rem;
+}
+.element-name a {
+  color: inherit;
+  text-decoration: none;
+}
+.element-name a:hover {
+  text-decoration: underline;
+}
+.element-meta {
+  margin: 4px 0 16px;
+  color: var(--muted);
+}
+.element-pack {
+  display: inline-block;
+  margin-inline-start: 4px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  color: var(--text);
+}
+.pair {
+  display: grid;
+  /* minmax(0, ...), or a long line of source widens its column past the page on a phone. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+@media (min-width: 900px) {
+  .pair {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: start;
+  }
+}
+.pair-label {
+  margin: 0 0 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.source,
+.code-view {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  background: var(--sunken);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: 0.8125rem / 1.6 var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.output {
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  min-inline-size: 0;
+}
+.views {
+  margin-block-start: 12px;
+}
+.views details {
+  margin-block-start: 8px;
+}
+.views summary {
+  min-block-size: 24px;
+  cursor: pointer;
+  color: var(--accent-text);
+}
+.views details .code-view {
+  margin-block-start: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.site-foot {
+  margin-block-start: 64px;
+  padding-block-start: 16px;
+  border-block-start: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+/* The rendered output: the classes the pipeline emits. */
+.prose {
+  font-family: var(--prose);
+  font-size: var(--fs-prose);
+  line-height: 1.65;
+  overflow-wrap: break-word;
+}
+.prose > :first-child {
+  margin-block-start: 0;
+}
+.prose > :last-child {
+  margin-block-end: 0;
+}
+.prose :where(h2, h3, h4) {
+  margin: 1.6em 0 0.5em;
+  line-height: 1.25;
+}
+.prose :where(p, ul, ol) {
+  margin: 0 0 1em;
+}
+.prose :where(ul, ol) {
+  padding-inline-start: 1.5em;
+}
+.prose li {
+  margin-block-end: 0.3em;
+}
+.prose ul.contains-task-list {
+  list-style: none;
+  padding-inline-start: 0.25em;
+}
+.prose blockquote {
+  margin: 1.25em 0;
+  padding: 0.25em 0 0.25em 1em;
+  border-inline-start: 3px solid var(--line-strong);
+  color: var(--muted);
+}
+.prose hr {
+  margin: 2em 0;
+  border: 0;
+  border-block-start: 1px solid var(--line-strong);
+}
+.prose img {
+  max-inline-size: 100%;
+  block-size: auto;
+  border-radius: 6px;
+}
+.prose a.image-link {
+  display: inline-block;
+  text-decoration: none;
+}
+.prose figure {
+  margin: 1.5em 0;
+}
+.prose figcaption {
+  margin-block-start: 0.5em;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.prose figcaption p {
+  margin: 0;
+}
+.figure-credit {
+  display: block;
+  margin-block-start: 0.25em;
+  font-size: 0.8125rem;
+}
+.table-scroll {
+  overflow-x: auto;
+  margin: 1.25em 0;
+}
+.prose table {
+  inline-size: max-content;
+  min-inline-size: 100%;
+  border-collapse: collapse;
+  font-family: var(--ui);
+  font-size: 0.9375rem;
+}
+.prose :where(th, td) {
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--line);
+  text-align: start;
+}
+.prose th {
+  background: var(--raised);
+}
+.prose :where(th, td)[align="right"] {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+.prose :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--sunken);
+  overflow-wrap: anywhere;
+}
+.prose pre {
+  margin: 1.25em 0;
+  padding: 1em;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--sunken);
+  font: 0.875rem / 1.6 var(--mono);
+}
+/* Shiki writes both themes' colours as custom properties; light-dark() picks by the page's color-scheme, which Capsomer's tokens
+   set. The themes' own backgrounds are used because their token colours are tuned to them. */
+.prose pre.shiki {
+  background: light-dark(var(--shiki-light-bg), var(--shiki-dark-bg));
+}
+.prose .shiki,
+.prose .shiki span {
+  color: light-dark(var(--shiki-light), var(--shiki-dark));
+}
+.prose .shiki .line.highlighted {
+  display: inline-block;
+  min-inline-size: 100%;
+  background: var(--accent-soft);
+}
+.heading-anchor {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 24px;
+  min-block-size: 24px;
+  margin-inline-start: 0.25em;
+  color: var(--muted);
+  /* Underlined, so it is told from the heading text by more than a colour --muted cannot make 3:1 against it in the dark theme. */
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose .footnotes {
+  margin-block-start: 1.5em;
+  padding-block-start: 1em;
+  border-block-start: 1px solid var(--line);
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+.prose [data-footnote-ref],
+.prose .data-footnote-backref {
+  display: inline-block;
+  min-inline-size: 24px;
+  text-align: center;
+}
+.post-details {
+  margin: 1em 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.post-details > summary {
+  padding: 0.5em 0.75em;
+  min-block-size: 24px;
+  cursor: pointer;
+  font-family: var(--ui);
+  font-weight: 600;
+}
+.post-details > :not(summary) {
+  margin: 0;
+  padding: 0 0.75em 0.75em;
+}
+.post-note {
+  margin: 1em 0;
+  padding: 0.75em 1em;
+  border-inline-start: 3px solid var(--accent-line);
+  background: var(--raised);
+  font-size: 0.9375rem;
+}
+.post-note p {
+  margin: 0;
+}
+.post-note-kind {
+  display: block;
+  font-family: var(--ui);
+  font-size: 0.8125rem;
+  color: var(--accent-text);
+}
+.prose .pull-quote {
+  margin: 0.5em 0;
+  font-size: 1.3em;
+  line-height: 1.35;
+  color: var(--accent-text);
+  text-wrap: balance;
+}
+.prose .swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+}
+.prose .swatch-chip {
+  inline-size: 0.85em;
+  block-size: 0.85em;
+  flex: none;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.15em;
+  background: var(--swatch, transparent);
+}
+@media (forced-colors: active) {
+  .prose .swatch-chip {
+    border-color: CanvasText;
+  }
+}
+.prose .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.25em;
+}
+.diagram-title {
+  margin: 0 0 0.5em;
+  font-family: var(--ui);
+  font-weight: 600;
+}
+.diagram-image {
+  display: block;
+  max-inline-size: 100%;
+  block-size: auto;
+}
+/* An SVG in an <img> cannot read the page's custom properties, so each theme has its own drawing. */
+.diagram-dark {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  .diagram-light {
+    display: none;
+  }
+  .diagram-dark {
+    display: block;
+  }
+}
+.prose .enarratio svg {
+  max-inline-size: 100%;
+  block-size: auto;
+}
