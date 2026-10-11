@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Added
+
+- The specimen site (`specimen/`, https://prelum.dustinedwards.info) and its index, `elements.json`. Not part of the package:
+  `files` ships the root modules only.
+
 ## 0.2.0 (2026-10-11)
 
 ### Added

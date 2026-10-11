@@ -78,6 +78,27 @@ version is bumped. A site stores the version beside its rendered HTML and re-ren
 1.6 s and 400,000 in about 3.4 s (Node 22, one core). The default `maxBytes` of 512 KB therefore does not by itself keep that case
 out of a Worker; the number is the seat's to choose. `scanHtml` takes about 25 to 40 ms per 300 KB of output.
 
+## The specimen
+
+https://prelum.dustinedwards.info shows every element the pipeline renders, each short markdown source in `specimen/elements/`
+beside its output, in both themes, in Capsomer's styling, with no script on the page. It renders with the configuration
+dustinedwards.info uses (the core, `editorialPack` and `createHighlight`, with `assertSafe` on), shows each element's HTML and,
+where it differs, its RSS form, and ends with one short post as a page, an RSS item and an llms.txt line. The footer names
+Prelum's version from `package.json`.
+
+`/elements.json` lists every element (id, name, summary, markdown, the pack it needs and its directives). It is generated from
+`specimen/elements/` by the build and is what Carrel's Insert menu reads; nothing in it is written by hand. An element is one
+file, `<order>-<id>.md`, with a `name` and `summary` header.
+
+- `npm run specimen` builds the site into `specimen/dist`; `npm run deploy:specimen` builds and deploys it (a merge to `main`
+  deploys it too, through `.github/workflows/specimen.yml`, once the Cloudflare secrets are set).
+- `test/specimen.test.mjs` holds each element to its stored output in `specimen/expected/`, checks the elements cover every
+  directive, chart type and highlighted language Prelum has, and builds the site to check the index, the footer and that no page
+  has a generator tag or a script. `UPDATE_SPECIMEN=1 npm test` rewrites `specimen/expected/`; a changed file there is a change
+  in what every site publishes, and goes with a `RENDER_VERSION` bump.
+- Diagrams are drawn ahead of time by `npm run specimen:diagrams` (Mermaid's command line, in a browser) and committed in
+  `specimen/diagrams/`; the build stops when one is missing.
+
 ## What it does not hold
 
 These stay in each site:

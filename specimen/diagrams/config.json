@@ -1,0 +1,45 @@
+{
+  "mermaidCli": "@mermaid-js/mermaid-cli@11.16.0",
+  "light": {
+    "theme": "base",
+    "themeVariables": {
+      "darkMode": false,
+      "background": "#fdfdfe",
+      "primaryColor": "#ece5ff",
+      "primaryTextColor": "#1c1727",
+      "primaryBorderColor": "#9780c3",
+      "secondaryColor": "#f7f6fc",
+      "tertiaryColor": "#f7f6fc",
+      "lineColor": "#918e96",
+      "textColor": "#1c1727",
+      "fontFamily": "ui-sans-serif, system-ui, \"Segoe UI\", Roboto, sans-serif"
+    },
+    "htmlLabels": false,
+    "flowchart": {
+      "htmlLabels": false,
+      "padding": 12,
+      "useMaxWidth": false
+    }
+  },
+  "dark": {
+    "theme": "base",
+    "themeVariables": {
+      "darkMode": true,
+      "background": "#18161c",
+      "primaryColor": "#2c243c",
+      "primaryTextColor": "#efedf3",
+      "primaryBorderColor": "#745e9d",
+      "secondaryColor": "#211f25",
+      "tertiaryColor": "#211f25",
+      "lineColor": "#6b6970",
+      "textColor": "#efedf3",
+      "fontFamily": "ui-sans-serif, system-ui, \"Segoe UI\", Roboto, sans-serif"
+    },
+    "htmlLabels": false,
+    "flowchart": {
+      "htmlLabels": false,
+      "padding": 12,
+      "useMaxWidth": false
+    }
+  }
+}

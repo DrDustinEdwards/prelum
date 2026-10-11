@@ -65,9 +65,12 @@
     "README.md"
   ],
   "scripts": {
-    "lint": "oxlint *.mjs test --deny-warnings",
+    "lint": "oxlint *.mjs test specimen --deny-warnings",
     "typecheck": "tsc -p .",
-    "test": "node --test \"test/*.test.mjs\""
+    "test": "node --test \"test/*.test.mjs\"",
+    "specimen": "node specimen/build.mjs",
+    "specimen:diagrams": "node specimen/diagrams.mjs",
+    "deploy:specimen": "npm run specimen && npx --yes wrangler@4.143.0 deploy"
   },
   "peerDependencies": {
     "@shikijs/rehype": "4.3.1",
@@ -150,11 +153,15 @@
     }
   },
   "devDependencies": {
+    "@fontsource-variable/source-serif-4": "5.3.1",
+    "@fontsource/martian-mono": "5.3.0",
+    "@fontsource/schibsted-grotesk": "5.3.0",
     "@shikijs/rehype": "4.3.1",
     "@shikijs/transformers": "4.3.1",
     "@types/hast": "3.0.5",
     "@types/mdast": "4.0.4",
     "@types/node": "24.13.3",
+    "capsomer": "github:DrDustinEdwards/capsomer#v0.6.0",
     "enarratio": "0.1.0-alpha.8",
     "hast-util-from-html": "2.0.3",
     "hast-util-to-string": "3.0.1",
