@@ -1,6 +1,6 @@
 {
   "name": "@drdustinedwards/site-helpers",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, and the markdown pipeline they all render with, once.",
   "type": "module",
   "license": "MIT",

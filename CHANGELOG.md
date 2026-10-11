@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-10-11)
+
 ### Added
 
 - The markdown pipeline, moved from dustinedwards-info (`app/lib/content/pipeline.mjs`) as designed in carrel/design-markdown-pipeline.md.
@@ -14,6 +16,8 @@
     another site opts into them rather than inheriting them.
   - `assertSafe` and `scanHtml` check rendered output with a parser against an allowlist derived from the benign corpus; `render` runs
     `assertSafe` when `options.assertSafe` is set (off by default).
+    The corpus holds all four chart types (`test/fixtures/render/charts.md`): with only bar and line charts in it, `assertSafe`
+    refused area and dot charts for their `fill-opacity`, `fill` and `stroke` attributes.
   - `HOSTILE_INPUTS` and `runConformance`: 44 hostile inputs for a site to run against its own configured renderer.
   - `maxBytes` (default 512 KB) and `maxDepth` (default 100) refuse a source before it can cost a Worker its time or its stack.
   - `RENDER_VERSION` is "1". A change to the output for any corpus input is a new version and a note here.
@@ -34,3 +38,8 @@ rendered correctly before; a site switching over should still compare its whole 
 ### Not changed
 
 - Carrel and dustinedwards-info still render with their own copies. Switching them over is a separate step after a Prelum release.
+
+## 0.1.0
+
+- The XML escaping, RSS, Atom and JSON Feed, sitemap, llms.txt and FTS5 search helpers, each held byte for byte to the output of
+  the site it came from.

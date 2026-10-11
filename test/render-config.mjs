@@ -48,4 +48,4 @@ export function fixture(name) {
   return readFileSync(new URL(`./fixtures/render/${name}.md`, import.meta.url), "utf8");
 }
 
-export const FIXTURES = ["prose", "math", "untrusted-math", "code", "directives"];
+export const FIXTURES = ["prose", "math", "untrusted-math", "code", "directives", "charts"];

@@ -3,7 +3,7 @@
 The shared publishing code for the Dustin Edwards sites (ruling capsid/rulings/shared-homes-2026-10-06.md): the code that turns a site's
 content into the documents it publishes. This repository was `DrDustinEdwards/site-helpers` and was renamed, keeping its history and
 tags. The package is still named `@drdustinedwards/site-helpers` and is installed by tag:
-`"@drdustinedwards/site-helpers": "github:DrDustinEdwards/prelum#v0.1.0"`.
+`"@drdustinedwards/site-helpers": "github:DrDustinEdwards/prelum#v0.2.0"`.
 
 Pure ES modules, Web-standard only, so the same file runs in a Worker and in Node. The helpers have no dependencies; the markdown pipeline
 needs the unified family, KaTeX and parse5, which are optional peers: a site that only builds feeds installs none of them.
