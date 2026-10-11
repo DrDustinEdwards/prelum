@@ -1,0 +1,51 @@
+// How the render tests configure the pipeline: dustinedwards-info's configuration, with a stand-in for its media rules (the
+// real ones stay in that site). Shared by the render tests so each renders the way a site would.
+
+import { readFileSync } from "node:fs";
+
+import { createHighlight } from "../render-highlight.mjs";
+import { editorialPack } from "../render-packs.mjs";
+
+/** The media rules the fixtures stand in for: /media/<key> is an R2 object served at several widths. */
+export const media = {
+  /** @param {string} raw */
+  keyOf(raw) {
+    const path = raw.split(/[?#]/)[0] ?? "";
+    return path.startsWith("/media/") ? path.slice("/media/".length) || null : null;
+  },
+  /** @param {string} src */
+  imageProps(src) {
+    if (!src.startsWith("/media/")) return null;
+    const key = src.slice("/media/".length);
+    return {
+      srcSet: [640, 1024, 1408].map((w) => `/media/${key}?w=${w} ${w}w`).join(", "),
+      sizes: "(min-width: 46rem) 704px, calc(100vw - 2rem)",
+      href: `/media/${key}`,
+    };
+  },
+};
+
+/** @param {string} src */
+export async function resolveImage(src) {
+  // A stand-in for the site's image index. Only /media/ images get a placeholder, as on that site.
+  const dimensions = /-(\d+)x(\d+)\./.exec(src);
+  const width = dimensions ? Number(dimensions[1]) : 800;
+  const height = dimensions ? Number(dimensions[2]) : 600;
+  return src.startsWith("/media/")
+    ? { width, height, placeholder: "data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==" }
+    : { width, height };
+}
+
+export const packs = [editorialPack({ assetPrefix: "dustin-edwards-" })];
+
+export const highlight = createHighlight();
+
+/** The options a site configured like dustinedwards-info passes. */
+export const siteOptions = { packs, media, highlight };
+
+/** @param {string} name a file in test/fixtures/render, without .md */
+export function fixture(name) {
+  return readFileSync(new URL(`./fixtures/render/${name}.md`, import.meta.url), "utf8");
+}
+
+export const FIXTURES = ["prose", "math", "untrusted-math", "code", "directives"];

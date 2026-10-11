@@ -8,6 +8,7 @@
     "checkJs": true,
     "strict": true,
     "noEmit": true,
+    "skipLibCheck": true,
     "types": ["node"]
   },
   "include": ["*.mjs", "*.d.mts", "test/*.mjs"]

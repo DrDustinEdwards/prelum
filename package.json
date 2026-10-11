@@ -1,7 +1,7 @@
 {
   "name": "@drdustinedwards/site-helpers",
   "version": "0.1.0",
-  "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, once.",
+  "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, and the markdown pipeline they all render with, once.",
   "type": "module",
   "license": "MIT",
   "sideEffects": false,
@@ -29,6 +29,34 @@
     "./search": {
       "types": "./search.d.mts",
       "default": "./search.mjs"
+    },
+    "./render": {
+      "types": "./render.d.mts",
+      "default": "./render.mjs"
+    },
+    "./render/packs": {
+      "types": "./render-packs.d.mts",
+      "default": "./render-packs.mjs"
+    },
+    "./render/highlight": {
+      "types": "./render-highlight.d.mts",
+      "default": "./render-highlight.mjs"
+    },
+    "./render/safe": {
+      "types": "./render-safe.d.mts",
+      "default": "./render-safe.mjs"
+    },
+    "./render/conformance": {
+      "types": "./render-conformance.d.mts",
+      "default": "./render-conformance.mjs"
+    },
+    "./render/math": {
+      "types": "./render-math.d.mts",
+      "default": "./render-math.mjs"
+    },
+    "./render/url": {
+      "types": "./render-url.d.mts",
+      "default": "./render-url.mjs"
     }
   },
   "files": [
@@ -41,9 +69,110 @@
     "typecheck": "tsc -p .",
     "test": "node --test \"test/*.test.mjs\""
   },
+  "peerDependencies": {
+    "@shikijs/rehype": "4.3.1",
+    "@shikijs/transformers": "4.3.1",
+    "enarratio": "0.1.0-alpha.8",
+    "hast-util-from-html": "2.0.3",
+    "hast-util-to-string": "3.0.1",
+    "katex": "0.16.47",
+    "parse5": "7.3.0",
+    "rehype-autolink-headings": "7.1.0",
+    "rehype-katex": "7.0.1",
+    "rehype-slug": "6.0.0",
+    "rehype-stringify": "10.0.1",
+    "remark-directive": "4.0.0",
+    "remark-gfm": "4.0.1",
+    "remark-math": "6.0.0",
+    "remark-parse": "11.0.0",
+    "remark-rehype": "11.1.2",
+    "shiki": "4.3.1",
+    "unified": "11.0.5",
+    "unist-util-visit": "5.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@shikijs/rehype": {
+      "optional": true
+    },
+    "@shikijs/transformers": {
+      "optional": true
+    },
+    "enarratio": {
+      "optional": true
+    },
+    "hast-util-from-html": {
+      "optional": true
+    },
+    "hast-util-to-string": {
+      "optional": true
+    },
+    "katex": {
+      "optional": true
+    },
+    "parse5": {
+      "optional": true
+    },
+    "rehype-autolink-headings": {
+      "optional": true
+    },
+    "rehype-katex": {
+      "optional": true
+    },
+    "rehype-slug": {
+      "optional": true
+    },
+    "rehype-stringify": {
+      "optional": true
+    },
+    "remark-directive": {
+      "optional": true
+    },
+    "remark-gfm": {
+      "optional": true
+    },
+    "remark-math": {
+      "optional": true
+    },
+    "remark-parse": {
+      "optional": true
+    },
+    "remark-rehype": {
+      "optional": true
+    },
+    "shiki": {
+      "optional": true
+    },
+    "unified": {
+      "optional": true
+    },
+    "unist-util-visit": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@shikijs/rehype": "4.3.1",
+    "@shikijs/transformers": "4.3.1",
+    "@types/hast": "3.0.5",
+    "@types/mdast": "4.0.4",
     "@types/node": "24.13.3",
+    "enarratio": "0.1.0-alpha.8",
+    "hast-util-from-html": "2.0.3",
+    "hast-util-to-string": "3.0.1",
+    "katex": "0.16.47",
     "oxlint": "1.80.0",
-    "typescript": "5.9.3"
+    "parse5": "7.3.0",
+    "rehype-autolink-headings": "7.1.0",
+    "rehype-katex": "7.0.1",
+    "rehype-slug": "6.0.0",
+    "rehype-stringify": "10.0.1",
+    "remark-directive": "4.0.0",
+    "remark-gfm": "4.0.1",
+    "remark-math": "6.0.0",
+    "remark-parse": "11.0.0",
+    "remark-rehype": "11.1.2",
+    "shiki": "4.3.1",
+    "typescript": "5.9.3",
+    "unified": "11.0.5",
+    "unist-util-visit": "5.1.0"
   }
 }
