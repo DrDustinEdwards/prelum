@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-10-11)
+
 ### Added
 
 - The markdown pipeline, moved from dustinedwards-info (`app/lib/content/pipeline.mjs`) as designed in carrel/design-markdown-pipeline.md.
@@ -34,3 +36,8 @@ rendered correctly before; a site switching over should still compare its whole 
 ### Not changed
 
 - Carrel and dustinedwards-info still render with their own copies. Switching them over is a separate step after a Prelum release.
+
+## 0.1.0
+
+- The XML escaping, RSS, Atom and JSON Feed, sitemap, llms.txt and FTS5 search helpers, each held byte for byte to the output of
+  the site it came from.
