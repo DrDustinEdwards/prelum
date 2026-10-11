@@ -15,9 +15,9 @@ import { stylesheet } from "enarratio";
 import { llmsDocument } from "../llms.mjs";
 import { rssItem } from "../feeds.mjs";
 import { RENDER_VERSION, render } from "../render.mjs";
-import { DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
+import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
 import { absolutiseUrls, escapeXml, mathToTex } from "../xml.mjs";
-import { ASSET_PREFIX, ORIGIN, elementIndex, loadElements, options, renderElement, resolveImage } from "./specimen.mjs";
+import { ASSET_PREFIX, DIAGRAM_CONFIG_FILE, ORIGIN, diagramConfig, elementIndex, loadElements, options, renderElement, resolveImage, splitHeader } from "./specimen.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..");
@@ -71,6 +71,8 @@ function writeStyles(outDir) {
     inlineCss(join(capsomer, "tokens.css")),
     inlineCss(join(capsomer, "base.css")),
     inlineCss(join(capsomer, "prose.css")),
+    // Capsomer's tokens.css also maps the --enarratio-* properties onto its tokens (css/enarratio.css). The two agree, being
+    // generated from the same tokens; Enarratio 0.1.0-alpha.8 has no colour-free base stylesheet, so its full one is used.
     stylesheet(capsomerTheme),
     readFileSync(join(HERE, "site.css"), "utf8"),
   ].join("\n\n");
@@ -94,6 +96,13 @@ function writeStyles(outDir) {
  * @param {Array<{ key: string }>} diagrams
  */
 function copyDiagrams(outDir, diagrams) {
+  const stamp = join(HERE, DIAGRAM_ASSET_DIR, DIAGRAM_CONFIG_FILE);
+  if (diagrams.length > 0 && (!existsSync(stamp) || readFileSync(stamp, "utf8") !== `${JSON.stringify(diagramConfig(), null, 2)}\n`)) {
+    throw new Error(
+      `specimen diagrams were drawn with another palette or Mermaid version than ${DIAGRAM_ASSET_DIR}/${DIAGRAM_CONFIG_FILE} now ` +
+        "calls for. Run npm run specimen:diagrams and commit them.",
+    );
+  }
   const missing = [];
   for (const { key } of diagrams) {
     for (const theme of DIAGRAM_THEMES) {
@@ -196,13 +205,7 @@ ${feed === html ? "" : codeView("In the RSS item", feed)}
  */
 async function outputsSection(version) {
   const text = readFileSync(join(HERE, "sample-post.md"), "utf8");
-  const match = /^---\n([\s\S]*?)\n---\n/.exec(text);
-  if (!match) throw new Error("specimen/sample-post.md starts with a --- header");
-  /** @type {Record<string, string>} */
-  const meta = Object.fromEntries(
-    (match[1] ?? "").split("\n").map((line) => [line.slice(0, line.indexOf(": ")), line.slice(line.indexOf(": ") + 2)]),
-  );
-  const body = text.slice(match[0].length);
+  const { header: meta, source: body } = splitHeader("specimen/sample-post.md", text, ["title", "slug", "description", "date"]);
   const { html } = await render({ file: "specimen/sample-post.md", body, resolveImage, options });
   const post = {
     slug: meta.slug ?? "",
@@ -213,10 +216,13 @@ async function outputsSection(version) {
     tags: [],
   };
   const item = rssItem(post, ORIGIN);
+  // The address the feed gives the post, so the llms.txt line and the RSS item cannot disagree.
+  const link = /<link>([^<]+)<\/link>/.exec(item)?.[1];
+  if (!link) throw new Error("the sample post's RSS item has no <link>");
   const llms = llmsDocument({
     title: "Prelum specimen",
     summary: `Every element Prelum ${version} renders from markdown.`,
-    sections: [{ heading: "Writing", links: [{ title: post.title, url: `${ORIGIN}/writing/${post.slug}`, description: meta.description }] }],
+    sections: [{ heading: "Writing", links: [{ title: post.title, url: link, description: meta.description }] }],
   });
   return `<section class="outputs" id="outputs" aria-labelledby="outputs-name">
 <h2 class="element-name" id="outputs-name"><a href="#outputs">One source, three outputs</a></h2>
@@ -265,6 +271,10 @@ export async function buildSpecimen(outDir) {
   const rendered = [];
   for (const element of elements) rendered.push(await renderElement(element));
 
+  // Only an earlier build is deleted: a mistyped outDir must not take the working tree with it.
+  if (existsSync(outDir) && readdirSync(outDir).length > 0 && !existsSync(join(outDir, "elements.json"))) {
+    throw new Error(`${outDir} is not empty and holds no earlier specimen build; refusing to delete it`);
+  }
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   copyTree(join(HERE, "static"), outDir);

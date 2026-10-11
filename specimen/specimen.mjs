@@ -4,6 +4,8 @@
 // reads cannot drift apart.
 
 import { readdirSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
 
 import remarkDirective from "remark-directive";
 import remarkParse from "remark-parse";
@@ -66,8 +68,9 @@ export async function resolveImage(src) {
  *
  * @param {string} file
  * @param {string} text
+ * @param {readonly string[]} [required] the keys the header must carry
  */
-function splitHeader(file, text) {
+export function splitHeader(file, text, required = ["name", "summary"]) {
   const match = /^---\n([\s\S]*?)\n---\n/.exec(text);
   if (!match) throw new Error(`${file}: an element starts with a --- header naming it`);
   /** @type {Record<string, string>} */
@@ -77,7 +80,7 @@ function splitHeader(file, text) {
     if (at < 1) throw new Error(`${file}: header line ${JSON.stringify(line)} is not "key: value"`);
     header[line.slice(0, at)] = line.slice(at + 2).trim();
   }
-  for (const key of ["name", "summary"]) {
+  for (const key of required) {
     if (!header[key]) throw new Error(`${file}: the header has no ${key}`);
   }
   return { header, source: text.slice(match[0].length) };
@@ -160,4 +163,60 @@ export function elementIndex(elements, version) {
 /** @param {string} id */
 export function expectedPath(id) {
   return new URL(`${id}.html`, EXPECTED_DIR);
+}
+
+/** Beside the drawings in specimen/diagrams: the configuration they were drawn with. */
+export const DIAGRAM_CONFIG_FILE = "config.json";
+
+/**
+ * The colour tokens of one theme, read from Capsomer's generated colour.css: the light theme is the first :root block, the dark
+ * one the [data-theme="dark"] block.
+ *
+ * @param {"light" | "dark"} theme
+ */
+function capsomerColours(theme) {
+  const css = readFileSync(new URL("../tokens/colour.css", pathToFileURL(createRequire(import.meta.url).resolve("capsomer/tokens.css"))), "utf8");
+  const start = theme === "light" ? css.indexOf(":root {") : css.indexOf(':root[data-theme="dark"] {');
+  if (start < 0) throw new Error(`Capsomer's colour.css has no ${theme} block`);
+  const block = css.slice(start, css.indexOf("}", start));
+  /** @type {Record<string, string>} */
+  const tokens = {};
+  for (const [, name, value] of block.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{3,8});/g)) tokens[name ?? ""] = value ?? "";
+  for (const name of ["surface", "raised", "text", "accent-soft", "accent-line", "line-strong"]) {
+    if (!tokens[name]) throw new Error(`Capsomer's colour.css has no --${name} in the ${theme} theme`);
+  }
+  return tokens;
+}
+
+/** @param {"light" | "dark"} theme */
+function mermaidConfig(theme) {
+  const c = capsomerColours(theme);
+  return {
+    // "base" is the only built-in theme whose variables can all be overridden.
+    theme: "base",
+    themeVariables: {
+      darkMode: theme === "dark",
+      background: c.surface,
+      primaryColor: c["accent-soft"],
+      primaryTextColor: c.text,
+      primaryBorderColor: c["accent-line"],
+      secondaryColor: c.raised,
+      tertiaryColor: c.raised,
+      lineColor: c["line-strong"],
+      textColor: c.text,
+      fontFamily: 'ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif',
+    },
+    // Labels as text, never <foreignObject>, which an <img> does not draw.
+    htmlLabels: false,
+    flowchart: { htmlLabels: false, padding: 12, useMaxWidth: false },
+  };
+}
+
+/**
+ * What the diagrams are drawn with: Mermaid's command line and each theme's configuration, coloured from Capsomer's tokens.
+ * specimen/diagrams.mjs stores it beside the drawings, and the build refuses drawings made with anything else, so a Capsomer
+ * colour change cannot leave the diagrams in the old palette.
+ */
+export function diagramConfig() {
+  return { mermaidCli: "@mermaid-js/mermaid-cli@11.16.0", light: mermaidConfig("light"), dark: mermaidConfig("dark") };
 }

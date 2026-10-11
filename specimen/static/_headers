@@ -8,3 +8,8 @@
 
 /elements.json
   Access-Control-Allow-Origin: *
+
+# A Mermaid drawing styles itself with an inline <style>, which the page policy above refuses when the SVG is opened on its own.
+/diagrams/*
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'

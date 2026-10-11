@@ -2,7 +2,8 @@ name: Deploy specimen
 
 # Publishes the specimen to https://prelum.dustinedwards.info when main changes, as Enarratio's gallery deploys. It needs two
 # repository secrets, CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID; without them it says so and stops, rather than failing every
-# push to main.
+# push to main. The tests run first, so a red main is not deployed, and only the deploy step sees the token: npm ci runs
+# dependencies' install scripts.
 on:
   push:
     branches: [main]
@@ -19,12 +20,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - name: Check for Cloudflare credentials
         id: secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
             echo "::notice title=Specimen not deployed::Add the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets to deploy the specimen."
@@ -44,4 +45,9 @@ jobs:
       - if: steps.secrets.outputs.ready == 'true'
         run: npm ci
       - if: steps.secrets.outputs.ready == 'true'
+        run: npm test
+      - if: steps.secrets.outputs.ready == 'true'
         run: npm run deploy:specimen
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
