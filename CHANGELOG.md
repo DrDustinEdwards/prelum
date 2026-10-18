@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (2026-10-18)
 
 ### Changed
 
@@ -11,6 +11,8 @@
 
 ### Added
 
+- `sitemapDocument` lists a page's images: an entry's `images` (absolute URLs) become Google image sitemap `<image:image>` elements,
+  and the image namespace is declared only when some entry has one, so a sitemap without images is byte for byte unchanged.
 - A code map: after each push to `main`, devkit's shared workflow publishes each module's functions, complexity and test
   coverage to the `code-map` branch for the Capsid system explorer (`.github/workflows/code-map.yml`).
 - The specimen site (`specimen/`, https://prelum.dustinedwards.info) and its index, `elements.json`. Not part of the package:
