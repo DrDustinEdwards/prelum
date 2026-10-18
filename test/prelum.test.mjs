@@ -65,6 +65,24 @@ test("sitemap: a loc with an ampersand does not end the document", () => {
   assert.match(xml, /<loc>https:\/\/x\.test\/a\?b=1&amp;c=2<\/loc>/);
 });
 
+test("sitemap: images are listed under their page, and the image namespace is declared only when one is", () => {
+  const compact = sitemapDocument([
+    { loc: "https://x.test/a", lastmod: "2026-10-01", images: ["https://x.test/a.png", "https://x.test/b.jpg?w=1&h=2"] },
+    { loc: "https://x.test/b" },
+  ]);
+  assert.match(compact, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9" xmlns:image="http:\/\/www\.google\.com\/schemas\/sitemap-image\/1\.1">/);
+  assert.match(
+    compact,
+    /<url><loc>https:\/\/x\.test\/a<\/loc><lastmod>2026-10-01<\/lastmod><image:image><image:loc>https:\/\/x\.test\/a\.png<\/image:loc><\/image:image><image:image><image:loc>https:\/\/x\.test\/b\.jpg\?w=1&amp;h=2<\/image:loc><\/image:image><\/url>/,
+  );
+  assert.match(compact, /<url><loc>https:\/\/x\.test\/b<\/loc><\/url>/);
+
+  const expanded = sitemapDocument([{ loc: "https://x.test/a", images: ["https://x.test/a.png"] }], { layout: "expanded" });
+  assert.match(expanded, /\n    <image:image><image:loc>https:\/\/x\.test\/a\.png<\/image:loc><\/image:image>\n  <\/url>/);
+
+  assert.doesNotMatch(sitemapDocument([{ loc: "https://x.test/a", images: [] }]), /xmlns:image|image:image/);
+});
+
 /** The sections of a captured llms.txt, parsed back so the skeleton can be rebuilt from them. */
 function llmsParts(/** @type {string} */ text) {
   const [head, ...sectionTexts] = text.split(/\n## /);
