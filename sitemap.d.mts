@@ -4,6 +4,7 @@
  * @property {Date | number | string | null} [lastmod]
  * @property {string} [changefreq]
  * @property {number} [priority] 0 to 1
+ * @property {string[]} [images] absolute URLs of the images on the page, listed in Google's image sitemap extension
  */
 /**
  * @typedef {object} SitemapOptions
@@ -14,6 +15,9 @@
 /**
  * Sitemaps differ between the sites only in layout, lastmod precision and the trailing newline, so those are options and every
  * default is this site's own. `loc` is escaped: a URL with `&` in its query would otherwise end the document.
+ *
+ * An entry's `images` become `<image:image>` elements (https://developers.google.com/search/docs/crawling-indexing/sitemaps/image-sitemaps),
+ * and the image namespace is declared only when some entry has one, so a sitemap without images is unchanged.
  *
  * @param {SitemapEntry[]} entries
  * @param {SitemapOptions} [options]
@@ -31,6 +35,10 @@ export type SitemapEntry = {
      * 0 to 1
      */
     priority?: number;
+    /**
+     * absolute URLs of the images on the page, listed in Google's image sitemap extension
+     */
+    images?: string[];
 };
 export type SitemapOptions = {
     /**

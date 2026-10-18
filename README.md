@@ -3,7 +3,7 @@
 The shared publishing code for the Dustin Edwards sites (ruling capsid/rulings/shared-homes-2026-10-06.md): the code that turns a site's
 content into the documents it publishes. This repository was `DrDustinEdwards/site-helpers` and was renamed, keeping its history and
 tags. The package is still named `@drdustinedwards/site-helpers` and is installed by tag:
-`"@drdustinedwards/site-helpers": "github:DrDustinEdwards/prelum#v0.2.0"`.
+`"@drdustinedwards/site-helpers": "github:DrDustinEdwards/prelum#v0.2.1"`.
 
 Pure ES modules, Web-standard only, so the same file runs in a Worker and in Node. The helpers have no dependencies; the markdown pipeline
 needs the unified family, KaTeX and parse5, which are optional peers: a site that only builds feeds installs none of them.
@@ -16,7 +16,7 @@ The helpers every site wrote for itself, written once here in the form of the be
 | --- | --- |
 | `xml` | `escapeXml`, `escapeXmlText`, `cdata`, `rfc822`, `isoDay`, `absolutiseUrls`, `mathToTex` |
 | `feeds` | `rssDocument`, `rssItem`, `atomDocument`, `atomEntry`, `jsonFeedDocument`, `feedItem` (`itemPath` moves where a post lives) |
-| `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })` |
+| `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` list it in the image sitemap |
 | `llms` | `llmsDocument`, `llmsLink` |
 | `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` |
 | `render` | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl` |

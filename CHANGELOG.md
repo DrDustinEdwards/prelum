@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1 (2026-10-18)
+
+### Added
+
+- `sitemapDocument` lists a page's images: an entry's `images` (absolute URLs) become Google image sitemap `<image:image>` elements,
+  and the image namespace is declared only when some entry has one, so a sitemap without images is byte for byte unchanged.
+  Backported from 0.3.0 for sites still on 0.2's peer versions.
+
 ## Unreleased
 
 ## 0.2.0 (2026-10-11)
