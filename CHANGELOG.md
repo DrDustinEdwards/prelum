@@ -11,6 +11,8 @@
 
 ### Added
 
+- A code map: after each push to `main`, devkit's shared workflow publishes each module's functions, complexity and test
+  coverage to the `code-map` branch for the Capsid system explorer (`.github/workflows/code-map.yml`).
 - The specimen site (`specimen/`, https://prelum.dustinedwards.info) and its index, `elements.json`. Not part of the package:
   `files` ships the root modules only.
 
