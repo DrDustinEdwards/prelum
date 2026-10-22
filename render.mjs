@@ -35,7 +35,7 @@ import {
 } from "./render-directives.mjs";
 import { ContentError, errorMessage } from "./render-error.mjs";
 import { KATEX_OPTIONS } from "./render-math.mjs";
-import { assertSafe } from "./render-safe.mjs";
+import { LQIP_STYLE, assertSafe, srcsetUrls } from "./render-safe.mjs";
 import { isAllowedUrl } from "./render-url.mjs";
 
 export { ContentError, isAllowedUrl };
@@ -313,7 +313,10 @@ function rehypeImageSources(file, resolveImage, pending, imageProps) {
       if (!isAllowedUrl(src)) return;
 
       const props = imageProps(src);
-      const responsive = props?.srcSet ? { srcSet: props.srcSet, sizes: props.sizes } : {};
+      // srcset and the placeholder are written after rehypeUrlProtocols has run, so they are checked here: a candidate URL outside the
+      // policy drops the srcset, and a placeholder that is not the base64 form drops the placeholder.
+      const responsive =
+        props?.srcSet && srcsetUrls(props.srcSet).every(isAllowedUrl) ? { srcSet: props.srcSet, sizes: props.sizes } : {};
 
       // Links to the unsized original, which srcset never serves. Diagrams are excluded: an anchor around the display: none half would
       // be a focusable link with no name. An author's own link wins.
@@ -338,6 +341,7 @@ function rehypeImageSources(file, resolveImage, pending, imageProps) {
 
       pending.push(
         resolveImage(src).then(({ width, height, placeholder }) => {
+          const lqip = placeholder ? `background-image:url("${placeholder}")` : "";
           node.properties = {
             ...node.properties,
             ...responsive,
@@ -348,14 +352,14 @@ function rehypeImageSources(file, resolveImage, pending, imageProps) {
             // fetchpriority=high is a budget: several images marked high is the same as none.
             ...(first ? { fetchpriority: "high" } : {}),
             // The inline style carries only the per-image URL.
-            ...(placeholder
+            ...(LQIP_STYLE.test(lqip)
               ? {
                   className: [
                     ...(Array.isArray(node.properties?.className) ? node.properties.className : []),
                     "has-lqip",
                   ],
-                  // Cannot break out: base64 holds no quote, parenthesis or space. render-safe.mjs allows exactly this form.
-                  style: `background-image:url("${placeholder}")`,
+                  // Only the form render-safe.mjs allows: base64 holds no quote, parenthesis or space.
+                  style: lqip,
                 }
               : {}),
           };

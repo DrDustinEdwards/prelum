@@ -135,6 +135,21 @@ test("figure requires a source and alt text, and carries a caption and a credit"
   assert.doesNotMatch(bare.html, /figcaption/);
 });
 
+test("images: a srcset or placeholder outside the policy is dropped, since both are written after the URL check", async () => {
+  const hostile = {
+    keyOf: () => null,
+    imageProps: () => ({ srcSet: "/a.png 1x, javascript:alert(1) 2x", sizes: "100vw" }),
+  };
+  const { html } = await render({
+    file: "post.md",
+    body: "![a](/a.png)",
+    resolveImage: async () => ({ width: 10, height: 10, placeholder: 'x" onerror="alert(1)' }),
+    options: { media: hostile },
+  });
+  assert.doesNotMatch(html, /srcset|style=|onerror|javascript/);
+  assert.match(html, /<img src="\/a\.png" alt="a" width="10" height="10"/);
+});
+
 test("details requires a summary and refuses a heading inside, which would hide a section", async () => {
   await refuses(core(":::details\nx\n:::"), /:::details requires a summary attribute/);
   await refuses(core(':::details{summary="More"}\n## Hidden\n:::'), /:::details holds a heading on line 2/);

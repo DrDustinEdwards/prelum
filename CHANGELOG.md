@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- RSS, Atom, JSON Feed and `datetime` sitemap dates read SQLite's `2026-06-21 09:30:00` as UTC, as `rfc822` and `isoDay` already
+  did. A build on a machine outside UTC wrote them hours off. `toDate` is exported from `xml.mjs` for the same reading.
+- `render` checks a site's `srcset` and image placeholder before writing them, since both land after the URL policy has run: a
+  candidate URL outside the policy drops the srcset, and a placeholder that is not the base64 form drops the placeholder.
+  `render/safe` exports `LQIP_STYLE` and `srcsetUrls`.
+- `llmsLink` writes a `)` in a URL as `%29` and a line break in a title or description as a space, so a link stays one list item.
+- The specimen's http-to-https redirect carries the same security headers as its pages.
+- `.gitattributes` pins LF, so a Windows checkout passes the specimen and golden tests.
+
 ## 0.3.0 (2026-10-18)
 
 ### Changed

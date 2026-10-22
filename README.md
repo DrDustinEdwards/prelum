@@ -80,7 +80,7 @@ out of a Worker; the number is the seat's to choose. `scanHtml` takes about 25 t
 
 ## The specimen
 
-https://prelum.dustinedwards.info shows every element the pipeline renders, each short markdown source in `specimen/elements/`
+https://prelum.dustinedwards.info (not published yet: it goes up on the first deploy, below) shows every element the pipeline renders, each short markdown source in `specimen/elements/`
 beside its output, in both themes, in Capsomer's styling, with no script on the page. It renders with the configuration
 dustinedwards.info uses (the core, `editorialPack` and `createHighlight`, with `assertSafe` on), shows each element's HTML and,
 where it differs, its RSS form, and ends with one short post as a page, an RSS item and an llms.txt line. The footer names

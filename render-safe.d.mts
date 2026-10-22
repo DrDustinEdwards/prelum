@@ -41,3 +41,11 @@ export type Violation = {
     attribute?: string;
     detail?: string;
 };
+/**
+ * The one form of `style` that may carry a url(): the pipeline's own low-quality image placeholder.
+ */
+export const LQIP_STYLE: RegExp;
+/**
+ * The URLs in a srcset: each comma-separated candidate is a URL, then an optional descriptor.
+ */
+export function srcsetUrls(value: string): string[];

@@ -29,7 +29,20 @@ const URL_ATTRIBUTES = new Set([
  * The one form of `style` that may carry a url(): the pipeline's own low-quality image placeholder (render.mjs, rehypeImageSources).
  * Anything else with a url() is refused.
  */
-const LQIP_STYLE = /^background-image:url\("data:image\/(?:webp|png|jpeg|avif|gif);base64,[A-Za-z0-9+/=]*"\)$/;
+export const LQIP_STYLE = /^background-image:url\("data:image\/(?:webp|png|jpeg|avif|gif);base64,[A-Za-z0-9+/=]*"\)$/;
+
+/**
+ * The URLs in a srcset: each comma-separated candidate is a URL, then an optional descriptor.
+ *
+ * @param {string} value
+ * @returns {string[]}
+ */
+export function srcsetUrls(value) {
+  return value
+    .split(",")
+    .map((candidate) => candidate.trim().split(/\s+/)[0] ?? "")
+    .filter(Boolean);
+}
 
 /**
  * @typedef {{ tags: ReadonlySet<string>, attributes: ReadonlySet<string> }} Allowlist
@@ -104,12 +117,8 @@ export function scanHtml(html, allowlist = DEFAULT_ALLOWLIST) {
         violations.push({ kind: "url", tag, attribute: name, detail: value.slice(0, 80) });
       }
       if (name.toLowerCase() === "srcset") {
-        // Each candidate is a URL, then an optional descriptor; the first token of each comma-separated piece is the URL.
-        for (const candidate of value.split(",")) {
-          const url = candidate.trim().split(/\s+/)[0] ?? "";
-          if (url && !isAllowedUrl(url)) {
-            violations.push({ kind: "url", tag, attribute: name, detail: url.slice(0, 80) });
-          }
+        for (const url of srcsetUrls(value)) {
+          if (!isAllowedUrl(url)) violations.push({ kind: "url", tag, attribute: name, detail: url.slice(0, 80) });
         }
       }
       if (name === "style" && !styleIsSafe(value)) {

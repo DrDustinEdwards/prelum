@@ -1,4 +1,4 @@
-import { absolutiseUrls, cdata, escapeXml, mathToTex } from "./xml.mjs";
+import { absolutiseUrls, cdata, escapeXml, mathToTex, toDate } from "./xml.mjs";
 
 /*
  * RSS 2.0, Atom 1.0 and JSON Feed 1.1 from the same post rows. `<description>` keeps the summary because readers show it in the
@@ -23,7 +23,7 @@ const DEFAULT_ITEM_PATH = "/writing";
 export function rssItem(post, origin, itemPath = DEFAULT_ITEM_PATH) {
   const url = `${origin}${itemPath}/${post.slug}`;
   const published = post.publishAt
-    ? new Date(/** @type {any} */ (post.publishAt)).toUTCString()
+    ? toDate(post.publishAt, null).toUTCString()
     : null;
 
   return [
@@ -92,8 +92,8 @@ ${items}
  */
 export function atomEntry(post, origin, itemPath = DEFAULT_ITEM_PATH) {
   const url = `${origin}${itemPath}/${post.slug}`;
-  const published = post.publishAt ? new Date(/** @type {any} */ (post.publishAt)) : null;
-  const updated = post.updatedAt ? new Date(/** @type {any} */ (post.updatedAt)) : published;
+  const published = post.publishAt ? toDate(post.publishAt, null) : null;
+  const updated = post.updatedAt ? toDate(post.updatedAt, null) : published;
 
   return [
     "    <entry>",
@@ -135,7 +135,7 @@ export function atomDocument(feed) {
   const newest = feed.posts
     .map((post) => post.updatedAt ?? post.publishAt)
     .filter(Boolean)
-    .map((value) => new Date(/** @type {any} */ (value)).getTime())
+    .map((value) => toDate(value, null).getTime())
     .reduce((a, b) => Math.max(a, b), 0);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -178,10 +178,10 @@ export function feedItem(post, origin, itemPath = DEFAULT_ITEM_PATH) {
     content_text: post.body,
     summary: post.description ?? undefined,
     date_published: post.publishAt
-      ? new Date(/** @type {any} */ (post.publishAt)).toISOString()
+      ? toDate(post.publishAt, null).toISOString()
       : undefined,
     date_modified: post.updatedAt
-      ? new Date(/** @type {any} */ (post.updatedAt)).toISOString()
+      ? toDate(post.updatedAt, null).toISOString()
       : undefined,
     tags: post.tags.length > 0 ? post.tags : undefined,
     image: post.coverImage ? `${origin}${post.coverImage}` : undefined,

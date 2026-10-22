@@ -1,0 +1,2 @@
+# LF everywhere: the specimen headers and the golden hashes are byte-exact, and a CRLF checkout fails both.
+* text=auto eol=lf

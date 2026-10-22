@@ -31,6 +31,9 @@ export function llmsDocument(doc) {
 
 /** @param {LlmsLink} link */
 export function llmsLink(link) {
-  const title = link.title.replace(/[[\]]/g, (bracket) => "\\" + bracket);
-  return `- [${title}](${link.url})${link.description ? `: ${link.description}` : ""}`;
+  // One line per link: a newline in the title or description would end the list item, and a ")" in the URL would end the link.
+  const oneLine = (/** @type {string} */ text) => text.replace(/\s*[\r\n]+\s*/g, " ");
+  const title = oneLine(link.title).replace(/[[\]]/g, (bracket) => "\\" + bracket);
+  const url = link.url.replace(/\)/g, "%29");
+  return `- [${title}](${url})${link.description ? `: ${oneLine(link.description)}` : ""}`;
 }

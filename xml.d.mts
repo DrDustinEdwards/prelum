@@ -41,6 +41,8 @@ export function rfc822(value: Date | number | string | null | undefined): string
  * @returns {string | null}
  */
 export function isoDay(value: Date | number | string | null | undefined): string | null;
+/** A Date from a Date, an epoch in milliseconds, ISO 8601, or SQLite's `2026-06-21 09:30:00` read as UTC. */
+export function toDate(value: Date | number | string | null | undefined, fallback?: Date | null): Date;
 /**
  * Not an HTML parser: only `href`, `src` and `srcset` values beginning with a single `/` are rewritten. A `//` value is
  * protocol-relative and already absolute. A feed item is read on someone else's origin, where a root-relative path resolves
