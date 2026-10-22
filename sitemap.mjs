@@ -1,4 +1,4 @@
-import { escapeXml, isoDay } from "./xml.mjs";
+import { escapeXml, isoDay, toDate } from "./xml.mjs";
 
 const IMAGE_NAMESPACE = "http://www.google.com/schemas/sitemap-image/1.1";
 
@@ -67,6 +67,6 @@ ${rows.join("\n")}
 
 /** @param {Date | number | string} value */
 function datetime(value) {
-  const date = value instanceof Date ? value : new Date(value);
+  const date = toDate(value, null);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }

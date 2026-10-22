@@ -11,7 +11,17 @@ export default {
     const url = new URL(request.url);
     if (url.protocol === "http:") {
       url.protocol = "https:";
-      return Response.redirect(url.toString(), 301);
+      // Built by hand rather than with Response.redirect, so the 301 carries the same locked-down headers as specimen/static/_headers.
+      return new Response(null, {
+        status: 301,
+        headers: {
+          Location: url.toString(),
+          "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
+          "Strict-Transport-Security": "max-age=31536000",
+          "X-Content-Type-Options": "nosniff",
+          "Referrer-Policy": "strict-origin-when-cross-origin",
+        },
+      });
     }
     return env.ASSETS.fetch(request);
   },

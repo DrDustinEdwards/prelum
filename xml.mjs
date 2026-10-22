@@ -65,11 +65,14 @@ export function isoDay(value) {
 }
 
 /**
+ * A Date from the same forms `rfc822` reads, SQLite's `2026-06-21 09:30:00` as UTC. Every feed and sitemap date goes through it,
+ * so a build on a machine that is not on UTC writes the same instant as the Worker does.
+ *
  * @param {Date | number | string | null | undefined} value
- * @param {Date | null} [fallback] what an unreadable value becomes; the epoch by default
+ * @param {Date | null} [fallback] what an unreadable value becomes; the epoch by default, an invalid Date when null
  * @returns {Date}
  */
-function toDate(value, fallback = new Date(0)) {
+export function toDate(value, fallback = new Date(0)) {
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? (fallback ?? new Date(NaN)) : value;
   if (typeof value === "number") return new Date(value);
   if (typeof value === "string" && value !== "") {

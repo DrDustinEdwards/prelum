@@ -11,8 +11,9 @@
  */
 /**
  * The llms.txt skeleton (llmstxt.org): title, a blockquote summary, optional intro paragraphs, then H2 sections of link lists.
- * A link's title is Markdown link text, so `[` and `]` are escaped; everything else is kept as written, because the titles are
- * prose and the sites' own files carry quotes and ampersands in them. A section with no links is dropped rather than left a
+ * A link's title is Markdown link text, so `[` and `]` are escaped and a line break in a title or description becomes a space; a
+ * `)` in a URL is written `%29` so it cannot end the link. Everything else is kept as written, because the titles are prose and
+ * the sites' own files carry quotes and ampersands in them. A section with no links is dropped rather than left a
  * bare heading.
  *
  * @param {{ title: string, summary: string, intro?: string[], sections: LlmsSection[] }} doc

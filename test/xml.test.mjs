@@ -4,7 +4,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { absolutiseUrls, cdata, escapeXml, escapeXmlText, isoDay, mathToTex, rfc822 } from "../index.mjs";
+import {
+  absolutiseUrls,
+  atomEntry,
+  cdata,
+  escapeXml,
+  escapeXmlText,
+  isoDay,
+  mathToTex,
+  rfc822,
+  rssItem,
+  sitemapDocument,
+} from "../index.mjs";
 
 /** Runs `body` with the process in another time zone, so a date read as local time shows up as wrong. */
 function inZone(/** @type {string} */ zone, /** @type {() => void} */ body) {
@@ -61,6 +72,26 @@ test("xml: a stored date reads as UTC whatever zone the machine is in", () => {
   inZone("Asia/Tokyo", () => {
     assert.equal(rfc822("2026-06-21 09:30:00"), "Sun, 21 Jun 2026 09:30:00 GMT");
     assert.equal(isoDay("2026-06-21 00:30:00"), "2026-06-21");
+  });
+});
+
+test("xml: feeds and a datetime sitemap read a stored date as UTC whatever zone the machine is in", () => {
+  const post = {
+    slug: "a",
+    title: "A",
+    html: "",
+    description: null,
+    publishAt: "2026-06-21 09:30:00",
+    updatedAt: null,
+    tags: /** @type {string[]} */ ([]),
+  };
+  inZone("America/Chicago", () => {
+    assert.match(rssItem(post, "https://x.test"), /<pubDate>Sun, 21 Jun 2026 09:30:00 GMT<\/pubDate>/);
+    assert.match(atomEntry(post, "https://x.test"), /<published>2026-06-21T09:30:00.000Z<\/published>/);
+    const sitemap = sitemapDocument([{ loc: "https://x.test/a", lastmod: "2026-06-21 09:30:00" }], {
+      lastmodFormat: "datetime",
+    });
+    assert.match(sitemap, /<lastmod>2026-06-21T09:30:00.000Z<\/lastmod>/);
   });
 });
 
