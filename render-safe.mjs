@@ -26,7 +26,7 @@ const URL_ATTRIBUTES = new Set([
 ]);
 
 /**
- * The one form of `style` that may carry a url(): the pipeline's own low-quality image placeholder (render.mjs, rehypeImageSources).
+ * The one form of `style` that may carry a url(): the pipeline's own low-quality image placeholder (render-nomath.mjs, rehypeImageSources).
  * Anything else with a url() is refused.
  */
 export const LQIP_STYLE = /^background-image:url\("data:image\/(?:webp|png|jpeg|avif|gif);base64,[A-Za-z0-9+/=]*"\)$/;

@@ -1,5 +1,5 @@
 // The URL allowlist lives at the render layer so one guard binds every writer: a site's build, its save path and Carrel's preview all
-// call render. Pure predicates: rehypeUrlProtocols in render.mjs applies them to the rendered tree, and assertSafe applies them to the
+// call render. Pure predicates: rehypeUrlProtocols in render-nomath.mjs applies them to the rendered tree, and assertSafe applies them to the
 // output.
 
 const ALLOWED_PROTOCOLS = new Set(["https:", "http:", "mailto:"]);
