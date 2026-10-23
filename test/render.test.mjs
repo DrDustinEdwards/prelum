@@ -6,6 +6,7 @@ import test from "node:test";
 
 import { DEFAULT_MAX_BYTES, DEFAULT_MAX_DEPTH, RENDER_VERSION, ContentError, render } from "../render.mjs";
 import { htmlHasMath } from "../render-math.mjs";
+import { render as renderNoMath } from "../render-nomath.mjs";
 import { isAllowedUrl } from "../render-url.mjs";
 import { fixture, highlight, media, resolveImage, siteOptions } from "./render-config.mjs";
 
@@ -93,6 +94,12 @@ test("math is validated, flagged, and rendered as MathML plus HTML", async () =>
 test("math KaTeX cannot render stops the render and names the line and the expression", async () => {
   await refuses(core("one\n\ntwo $\\notacommand{x}$ three"), /KaTeX cannot render the inline expression on line 3 of the body: .*The expression is: \\notacommand\{x\}/s);
   await refuses(core("$$\n\\frac{1}\n$$"), /KaTeX cannot render the display expression on line 1 of the body/);
+});
+
+test("render/nomath leaves dollars as text", async () => {
+  const { html, hasMath } = await renderNoMath({ file: "post.md", body: "Awards of $3,000 to $6,500.", resolveImage });
+  assert.equal(html, "<p>Awards of $3,000 to $6,500.</p>");
+  assert.equal(hasMath, false);
 });
 
 test("a link outside the allowed protocols is shown as the markdown that wrote it", async () => {

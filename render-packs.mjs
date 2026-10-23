@@ -1,5 +1,5 @@
 // The directives dustinedwards-info writes with, registered as a pack so another site opts into them rather than inheriting them:
-// :swatch, :pullquote, :::sidenote, :::chart and :::diagram. The core (render.mjs) knows nothing of these names. A site that needs a
+// :swatch, :pullquote, :::sidenote, :::chart and :::diagram. The core (render-nomath.mjs) knows nothing of these names. A site that needs a
 // directive of its own writes a pack of the same shape: { name, directives, setup }.
 
 import { visit } from "unist-util-visit";

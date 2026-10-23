@@ -19,7 +19,7 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` list it in the image sitemap |
 | `llms` | `llmsDocument`, `llmsLink` |
 | `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` |
-| `render` | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl` |
+| `render`, `render/nomath` | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl` |
 | `render/packs` | `editorialPack`, the `RenderPack` shape a site's own directives take |
 | `render/highlight` | `createHighlight`, `LANGUAGES`, `SHIKI_THEMES` |
 | `render/safe` | `assertSafe`, `scanHtml`, `inventory` |
@@ -51,6 +51,10 @@ const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion } = 
   },
 });
 ```
+
+**A site with no math** imports `render` from `render/nomath` instead: the same pipeline and options, with `$` as plain text (so
+`$3,000 to $6,500` is prices, not an expression) and `hasMath` always false. KaTeX, remark-math and rehype-katex are imported only by
+`render`, so they never enter that site's bundle (about 1.6 MB raw) and need not be installed.
 
 The output is a fragment: no `<html>`, no layout. A site gives it its own layout and its own CSS for the classes the pipeline emits
 (`heading-anchor`, `table-scroll`, `image-link`, `post-details`, `figure-credit`, and a pack's own); a change to one of them is a new
