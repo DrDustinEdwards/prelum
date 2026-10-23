@@ -71,16 +71,18 @@ export function createHighlight({ wasm = () => import("shiki/wasm"), languages =
   let highlighterPromise = null;
 
   // A rejection is not cached: one failed wasm load would otherwise fail every render in the isolate. The caller still sees this
-  // render's failure; the next render tries again.
+  // render's failure; the next render tries again. The loader is awaited before shiki sees it, because shiki keeps its first wasm
+  // load for the isolate, a rejected one included.
   function getHighlighter() {
     if (!highlighterPromise) {
-      const building = createHighlighterCore({
-        themes: [githubLight, githubDark],
-        langs: Object.values(languages),
-        // Oniguruma, not the JS regex engine: the JS engine was measured non-deterministic, which makes a byte comparison fail at
-        // random on any post with code.
-        engine: createOnigurumaEngine(wasm()),
-      });
+      const building = (async () =>
+        createHighlighterCore({
+          themes: [githubLight, githubDark],
+          langs: Object.values(languages),
+          // Oniguruma, not the JS regex engine: the JS engine was measured non-deterministic, which makes a byte comparison fail
+          // at random on any post with code.
+          engine: createOnigurumaEngine(await wasm()),
+        }))();
       highlighterPromise = building;
       building.catch(() => {
         if (highlighterPromise === building) highlighterPromise = null;

@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.4.0 (2026-10-23)
+
+### Changed
+
+- The optional peer `enarratio` is `^0.3.1` (it was pinned to `0.1.0-alpha.8`, so a site on Enarratio 0.3 hit npm ERESOLVE). The
+  charts come from `enarratio/plot`, which needs `@observablehq/plot` and `linkedom` installed beside it (Enarratio's own optional
+  peers); a site that draws charts adds them.
+- `RENDER_VERSION` is "3". Every chart's wide frame now carries `tabindex="0"`, `role="group"` and
+  `aria-label="{title}, scrolls sideways"`, so a keyboard user can scroll it (Enarratio 0.3.0), and an area chart's bands are filled
+  at 0.3 opacity with a 2px line along each top edge (Enarratio 0.3.1). A site re-renders every page with a chart, and a site passing
+  `assertSafe` its own allowlist adds `div role` and `div aria-label`.
+
+### Fixed
+
+- `createHighlight` awaits the wasm loader before handing it to shiki. Shiki keeps its first wasm load for the isolate, a rejected
+  one included, so one failed load failed every later render; now the next render loads it again.
+
 ## 0.3.1 (2026-10-23)
 
 ### Fixed

@@ -2,7 +2,7 @@
 // package, as on /cv): its theme supplies the colours, its figure carries the accessible name and the
 // data table. the site's stylesheet is that theme.
 
-import { areaChart, barChart, lineChart, scatterPlot } from "enarratio";
+import { areaChart, barChart, lineChart, scatterPlot } from "enarratio/plot";
 import { fromHtml } from "hast-util-from-html";
 
 export const CHART_TYPES = ["bar", "line", "dot", "area"];
