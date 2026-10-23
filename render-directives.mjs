@@ -11,7 +11,7 @@ import { ContentError, errorMessage } from "./render-error.mjs";
  * @param {{ attributes?: Record<string, string | null | undefined> | null | undefined }} node
  * @returns {Record<string, string>}
  */
-export function attributesOf(node) {
+function attributesOf(node) {
   /** @type {Record<string, string>} */
   const out = {};
   for (const [key, value] of Object.entries(node.attributes ?? {})) {

@@ -1,13 +1,4 @@
 /**
- * Valueless attributes are dropped: they are indistinguishable from absent ones.
- *
- * @param {{ attributes?: Record<string, string | null | undefined> | null | undefined }} node
- * @returns {Record<string, string>}
- */
-export function attributesOf(node: {
-    attributes?: Record<string, string | null | undefined> | null | undefined;
-}): Record<string, string>;
-/**
  * @param {string} file
  */
 export function remarkFigure(file: string): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
