@@ -44,7 +44,7 @@ export { ContentError, isAllowedUrl };
  * Bumped whenever the output changes for the same input. A site stores it beside its rendered HTML and re-renders on a mismatch; Carrel's
  * health check reads it from meta.capabilities.render. test/render-golden.test.mjs fails when the output moves and this does not.
  */
-export const RENDER_VERSION = "2";
+export const RENDER_VERSION = "3";
 
 /** A source over this is refused before it is parsed: a 200,000-character bracket run took 2.8 s, which a Worker cannot be sent. */
 export const DEFAULT_MAX_BYTES = 512 * 1024;
