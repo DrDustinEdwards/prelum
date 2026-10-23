@@ -119,8 +119,8 @@ Access check and email.
 
 ## Tests
 
-`test/fixtures/` holds each site's own published output, captured from germomics, foxhound and dustinedwards-info by
-`scripts/capture-site-helper-fixtures.mjs` in dustinedwards-info. `PROVENANCE.json` lists the commits. `test/prelum.test.mjs`
+`test/fixtures/` holds each site's own published output, captured from germomics, foxhound and dustinedwards-info.
+`PROVENANCE.json` lists the commits. `test/prelum.test.mjs`
 holds the package to that output byte for byte. A change here changes what three sites publish, so it comes with a re-captured
 fixture and a reviewed diff.
 
