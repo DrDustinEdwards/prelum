@@ -1,12 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- README: the fixtures section no longer names dustinedwards-info's capture script, which that site deleted.
+
 ## 0.5.0 (2026-10-23)
 
 ### Added
 
 - `render/nomath`: the same `render` with no math syntax. `$3,000 to $6,500` stays text instead of becoming an inline expression,
   `hasMath` is always false, and KaTeX, remark-math and rehype-katex are never imported, so a site with no math stops bundling them
-  (about 1.6 MB raw, 360 KB gzip in txasm's Worker). The pipeline moved into `render-nomath.mjs`; `render` is that pipeline with KaTeX
+  (about 560 KiB raw, 124 KiB gzip in txasm's Worker). The pipeline moved into `render-nomath.mjs`; `render` is that pipeline with KaTeX
   passed in, and its output is unchanged (`RENDER_VERSION` stays "3").
 
 ## 0.4.0 (2026-10-23)
