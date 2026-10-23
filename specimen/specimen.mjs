@@ -17,7 +17,7 @@ import { CORE_DIRECTIVES } from "../render-directives.mjs";
 import { createHighlight } from "../render-highlight.mjs";
 import { editorialPack } from "../render-packs.mjs";
 
-export const ELEMENTS_DIR = new URL("./elements/", import.meta.url);
+const ELEMENTS_DIR = new URL("./elements/", import.meta.url);
 export const EXPECTED_DIR = new URL("./expected/", import.meta.url);
 
 /** The specimen's own address. The feed form of each element is absolutised against it. */
@@ -93,7 +93,7 @@ export function splitHeader(file, text, required = ["name", "summary"]) {
  * @param {string} file
  * @param {string} source
  */
-export function directivesOf(file, source) {
+function directivesOf(file, source) {
   const tree = unified().use(remarkParse).use(remarkDirective).parse(source);
   /** @type {Set<string>} */
   const names = new Set();

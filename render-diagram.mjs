@@ -13,7 +13,7 @@ const DIAGRAM_TEMPLATE_VERSION = 1;
  * @param {string} input
  * @returns {string} eight lowercase hex digits
  */
-export function fnv1a32(input) {
+function fnv1a32(input) {
   let hash = 0x811c9dc5;
   for (let i = 0; i < input.length; i += 1) {
     hash ^= input.charCodeAt(i);
@@ -32,14 +32,14 @@ export const DIAGRAM_THEMES = ["light", "dark"];
  *
  * @param {string} source
  */
-export function normalizeDiagramSource(source) {
+function normalizeDiagramSource(source) {
   return source.replace(/\r\n/g, "\n").replace(/\s+$/, "").replace(/^\n+/, "");
 }
 
 /**
  * @param {string} source the mermaid source, unnormalised
  */
-export function diagramKey(source) {
+function diagramKey(source) {
   const input = `${DIAGRAM_TEMPLATE_VERSION}\n${normalizeDiagramSource(source)}`;
   return fnv1a32(input);
 }

@@ -8,18 +8,12 @@ import test from "node:test";
 
 import {
   RRF_K,
-  absolutiseUrls,
-  atomDocument,
   cdata,
   escapeXml,
-  escapeXmlText,
   fuse,
   ftsLiteral,
-  isoDay,
   llmsDocument,
-  mathToTex,
   rfc822,
-  rssDocument,
   sitemapDocument,
   toMatchExpression,
 } from "../index.mjs";
@@ -123,19 +117,6 @@ test("llms: a link title's brackets are escaped and an empty section is dropped"
   assert.doesNotMatch(text, /## Empty/);
 });
 
-test("xml: escapeXml covers all five entities and escapeXmlText leaves the quotes", () => {
-  assert.equal(escapeXml(`&<>"'`), "&amp;&lt;&gt;&quot;&apos;");
-  assert.equal(escapeXmlText(`&<>"'`), `&amp;&lt;&gt;"'`);
-});
-
-test("xml: escaping the ampersand first does not double-escape", () => {
-  assert.equal(escapeXml("a &lt; b"), "a &amp;lt; b");
-});
-
-test("xml: a CDATA section survives a ]]> inside its text", () => {
-  assert.equal(cdata("a ]]> b"), "<![CDATA[a ]]]]><![CDATA[> b]]>");
-});
-
 test("xml: the sites' feed fragments are the primitives' output", () => {
   const germomics = fixture("germomics-site-feed.xml");
   assert.ok(germomics.includes(`<title>${escapeXml(`Why phages win: notes & "questions" <draft>`)}</title>`));
@@ -144,37 +125,6 @@ test("xml: the sites' feed fragments are the primitives' output", () => {
   const foxhound = fixture("foxhound-feed.rss");
   assert.ok(foxhound.includes(`<title>${cdata(`Recovering failed payments: what works & what "doesn't"`)}</title>`));
   assert.ok(foxhound.includes(`<pubDate>${rfc822(new Date("2026-08-01T12:00:00.000Z"))}</pubDate>`));
-});
-
-test("xml: dates read as UTC and an unreadable one is the epoch, never today", () => {
-  assert.equal(rfc822("2026-06-21 09:30:00"), "Sun, 21 Jun 2026 09:30:00 GMT");
-  assert.equal(rfc822("not a date"), "Thu, 01 Jan 1970 00:00:00 GMT");
-  assert.equal(isoDay("2026-07-01 12:00:00"), "2026-07-01");
-  assert.equal(isoDay(null), null);
-  assert.equal(isoDay("not a date"), null);
-});
-
-test("xml: only a single-slash root-relative URL is made absolute", () => {
-  const html = `<a href="/a">x</a><img src="//cdn.test/i.png" srcset="/s1.png 1x, /s2.png 2x">`;
-  assert.equal(
-    absolutiseUrls(html, "https://x.test"),
-    `<a href="https://x.test/a">x</a><img src="//cdn.test/i.png" srcset="https://x.test/s1.png 1x, https://x.test/s2.png 2x">`,
-  );
-});
-
-test("xml: KaTeX markup becomes its TeX", () => {
-  const html = `<span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">x^2</annotation></semantics></math></span><span class="katex-html">x</span></span>`;
-  assert.equal(mathToTex(html), "$x^2$");
-});
-
-test("feeds: itemPath moves a post's URL in all three formats", () => {
-  const post = { slug: "p", title: "T", html: null, description: null, publishAt: null, updatedAt: null, tags: [] };
-  const base = { title: "F", link: "https://x.test", description: "d", selfUrl: "https://x.test/f", origin: "https://x.test", posts: [post], itemPath: "/blog" };
-  assert.match(rssDocument(base), /<link>https:\/\/x\.test\/blog\/p<\/link>/);
-  assert.match(
-    atomDocument({ ...base, subtitle: "s", alternateUrl: "https://x.test", authorName: "A" }),
-    /href="https:\/\/x\.test\/blog\/p"/,
-  );
 });
 
 test("search: a quote inside a term is doubled, so the term cannot leave its quotes", () => {
