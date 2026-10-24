@@ -6,16 +6,25 @@
  */
 
 /**
- * @typedef {object} LlmsSection
+ * @typedef {object} LlmsLinkSection
  * @property {string} heading
  * @property {LlmsLink[]} links
  */
 
 /**
+ * @typedef {object} LlmsProseSection
+ * @property {string} heading
+ * @property {string[]} body paragraphs, kept as written and separated by a blank line
+ */
+
+/** @typedef {LlmsLinkSection | LlmsProseSection} LlmsSection */
+
+/**
  * The llms.txt skeleton (llmstxt.org): title, a blockquote summary, optional intro paragraphs, then H2 sections of link lists.
  * A link's title is Markdown link text, so `[` and `]` are escaped; everything else is kept as written, because the titles are
  * prose and the sites' own files carry quotes and ampersands in them. A section with no links is dropped rather than left a
- * bare heading.
+ * bare heading. A prose section (`body` in place of `links`) is its heading, a blank line, then its paragraphs as written, for a
+ * file that mixes prose with its lists; one with no paragraphs is dropped the same way.
  *
  * @param {{ title: string, summary: string, intro?: string[], sections: LlmsSection[] }} doc
  * @returns {string}
@@ -23,8 +32,11 @@
 export function llmsDocument(doc) {
   const blocks = [`# ${doc.title}`, `> ${doc.summary}`, ...(doc.intro ?? [])];
   for (const section of doc.sections) {
-    if (section.links.length === 0) continue;
-    blocks.push(`## ${section.heading}\n${section.links.map(llmsLink).join("\n")}`);
+    if ("body" in section) {
+      if (section.body.length > 0) blocks.push(`## ${section.heading}`, ...section.body);
+    } else if (section.links.length > 0) {
+      blocks.push(`## ${section.heading}\n${section.links.map(llmsLink).join("\n")}`);
+    }
   }
   return `${blocks.join("\n\n")}\n`;
 }

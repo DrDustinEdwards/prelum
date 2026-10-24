@@ -104,6 +104,17 @@ test("llms: germomics' file is reproduced byte for byte from its parts", () => {
   assert.equal(llmsDocument(llmsParts(text)), text);
 });
 
+test("llms: foxhound's file, prose sections and all, is reproduced byte for byte from its parts", () => {
+  const text = fixture("foxhound-llms.txt");
+  const [head, ...sectionTexts] = text.split(/\n## /);
+  const [title, summary, ...intro] = head.trimEnd().split("\n\n");
+  const sections = sectionTexts.map((section) => {
+    const [heading, ...body] = section.trimEnd().split("\n\n");
+    return { heading, body };
+  });
+  assert.equal(llmsDocument({ title: title.replace(/^# /, ""), summary: summary.replace(/^> /, ""), intro, sections }), text);
+});
+
 test("llms: a link title's brackets are escaped and an empty section is dropped", () => {
   const text = llmsDocument({
     title: "T",

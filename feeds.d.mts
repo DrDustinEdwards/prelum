@@ -6,7 +6,8 @@
  *   description: string | null,
  *   publishAt: unknown,
  *   tags: string[],
- * }} post one row of `listBlogPostsRendered`
+ *   author?: string,
+ * }} post one row of `listBlogPostsRendered`; `author` is RSS's own form, an email address with the name in brackets
  * @param {string} origin the site origin, no trailing slash
  * @param {string} [itemPath]
  */
@@ -17,6 +18,7 @@ export function rssItem(post: {
     description: string | null;
     publishAt: unknown;
     tags: string[];
+    author?: string;
 }, origin: string, itemPath?: string): string;
 /**
  * @param {{
@@ -27,7 +29,9 @@ export function rssItem(post: {
  *   posts: Array<Parameters<typeof rssItem>[0]>,
  *   origin: string,
  *   itemPath?: string,
- * }} feed
+ *   lastBuildDate?: unknown,
+ *   image?: { url: string, title: string, link: string },
+ * }} feed `lastBuildDate` is when the content last changed (the newest post), never the clock, so a render stays cacheable
  * @returns {string}
  */
 export function rssDocument(feed: {
@@ -38,6 +42,12 @@ export function rssDocument(feed: {
     posts: Array<Parameters<typeof rssItem>[0]>;
     origin: string;
     itemPath?: string;
+    lastBuildDate?: unknown;
+    image?: {
+        url: string;
+        title: string;
+        link: string;
+    };
 }): string;
 /**
  * The body is CDATA rather than escaped inline: double-escaping is how a feed

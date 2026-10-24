@@ -308,3 +308,19 @@ test("feeds: a JSON Feed item drops an empty optional field instead of sending i
     content_text: "Body text",
   });
 });
+
+test("rss: lastBuildDate, the channel image and an item's author are written when given", () => {
+  const image = { url: `${ORIGIN}/favicon.png`, title: "Site", link: `${ORIGIN}/blog` };
+  const xml = rssDocument({
+    ...rssFeed([post({ author: `support@x.test (${NASTY})` })]),
+    lastBuildDate: new Date("2026-08-01T12:00:00Z"),
+    image,
+  });
+  assertWellFormed(xml);
+  assert.equal(one(xml, "lastBuildDate"), "Sat, 01 Aug 2026 12:00:00 GMT");
+  assert.deepEqual(
+    { url: one(one(xml, "image"), "url"), title: one(one(xml, "image"), "title"), link: one(one(xml, "image"), "link") },
+    image,
+  );
+  assert.equal(one(xml, "author"), `support@x.test (${NASTY_ESCAPED})`);
+});
