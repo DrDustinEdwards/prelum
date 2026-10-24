@@ -23,7 +23,7 @@ export default {
    * @param {Request} request
    * @param {{
    *   ASSETS: { fetch(request: Request): Promise<Response> },
-   *   CSP_REPORT_LIMIT: { limit(options: { key: string }): Promise<{ success: boolean }> },
+   *   CSP_REPORT_RATE_LIMIT: { limit(options: { key: string }): Promise<{ success: boolean }> },
    * }} env
    */
   async fetch(request, env) {
@@ -36,7 +36,7 @@ export default {
     if (url.pathname === REPORT_PATH) {
       // The rate-limit binding in wrangler.jsonc, keyed by the client address, which is counted at the edge and never logged.
       const allow = async (/** @type {Request} */ r) =>
-        (await env.CSP_REPORT_LIMIT.limit({ key: r.headers.get("CF-Connecting-IP") ?? "unknown" })).success;
+        (await env.CSP_REPORT_RATE_LIMIT.limit({ key: r.headers.get("CF-Connecting-IP") ?? "unknown" })).success;
       return receiveCspReport(request, { headers: HEADERS, allow });
     }
     return env.ASSETS.fetch(request);
