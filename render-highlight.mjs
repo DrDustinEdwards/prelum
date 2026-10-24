@@ -104,6 +104,10 @@ export function createHighlight({ wasm = () => import("shiki/wasm"), languages =
           // Both palettes as CSS variables per token, so code follows the page theme with no script.
           defaultColor: false,
           fallbackLanguage: "text",
+          // No wall-clock limit per line. Shiki's default (500 ms) stops a line early when the machine is slow, most often on the
+          // first line, while Oniguruma compiles the grammar, and paints the rest of the line in the last scope's colour: the same
+          // post then rendered to different bytes on a busy machine than on CI. Output depends on the input alone.
+          tokenizeTimeLimit: 0,
           transformers: [
             // Marked lines are in the stored HTML, so they show with JavaScript off.
             transformerMetaHighlight(),
