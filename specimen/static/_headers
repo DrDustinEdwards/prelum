@@ -1,5 +1,6 @@
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; style-src-elem 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; style-src-elem 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; report-uri /csp-report; report-to csp-endpoint
+  Reporting-Endpoints: csp-endpoint="https://prelum.dustinedwards.info/csp-report"
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Cache-Control: public, max-age=300, must-revalidate
@@ -12,4 +13,4 @@
 # A Mermaid drawing styles itself with an inline <style>, which the page policy above refuses when the SVG is opened on its own.
 /diagrams/*
   ! Content-Security-Policy
-  Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; report-uri /csp-report; report-to csp-endpoint

@@ -1,27 +1,43 @@
-// The specimen's Worker: sends plain HTTP to HTTPS and serves everything else from the static assets in specimen/dist. It runs in
-// front of the assets (run_worker_first) so it sees http: requests, which the assets layer would otherwise answer directly, as
-// Enarratio's gallery does (enarratio worker/index.ts). Nothing else lives here.
+// The specimen's Worker: sends plain HTTP to HTTPS, receives Content-Security-Policy violation reports at /csp-report with
+// site-runtime's shared receiver (logged to Workers Logs, nothing stored), and serves everything else from the static assets in
+// specimen/dist. It runs in front of the assets (run_worker_first) so it sees http: requests, which the assets layer would
+// otherwise answer directly, as Enarratio's gallery does (enarratio worker/index.ts). site-runtime is a devDependency: the
+// published library never imports this file.
+
+import { receiveCspReport } from "@dustinedwards/site-runtime/csp-report";
+
+/** Where the policies in specimen/static/_headers send violation reports. */
+const REPORT_PATH = "/csp-report";
+
+/** The locked-down headers on the responses this Worker makes itself, the same set specimen/static/_headers gives the assets. */
+const HEADERS = Object.freeze({
+  "Content-Security-Policy": `default-src 'none'; frame-ancestors 'none'; report-uri ${REPORT_PATH}; report-to csp-endpoint`,
+  "Reporting-Endpoints": `csp-endpoint="https://prelum.dustinedwards.info${REPORT_PATH}"`,
+  "Strict-Transport-Security": "max-age=31536000",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+});
 
 export default {
   /**
    * @param {Request} request
-   * @param {{ ASSETS: { fetch(request: Request): Promise<Response> } }} env
+   * @param {{
+   *   ASSETS: { fetch(request: Request): Promise<Response> },
+   *   CSP_REPORT_LIMIT: { limit(options: { key: string }): Promise<{ success: boolean }> },
+   * }} env
    */
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.protocol === "http:") {
       url.protocol = "https:";
       // Built by hand rather than with Response.redirect, so the 301 carries the same locked-down headers as specimen/static/_headers.
-      return new Response(null, {
-        status: 301,
-        headers: {
-          Location: url.toString(),
-          "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
-          "Strict-Transport-Security": "max-age=31536000",
-          "X-Content-Type-Options": "nosniff",
-          "Referrer-Policy": "strict-origin-when-cross-origin",
-        },
-      });
+      return new Response(null, { status: 301, headers: { ...HEADERS, Location: url.toString() } });
+    }
+    if (url.pathname === REPORT_PATH) {
+      // The rate-limit binding in wrangler.jsonc, keyed by the client address, which is counted at the edge and never logged.
+      const allow = async (/** @type {Request} */ r) =>
+        (await env.CSP_REPORT_LIMIT.limit({ key: r.headers.get("CF-Connecting-IP") ?? "unknown" })).success;
+      return receiveCspReport(request, { headers: HEADERS, allow });
     }
     return env.ASSETS.fetch(request);
   },
