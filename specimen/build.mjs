@@ -17,6 +17,7 @@ import { rssItem } from "../feeds.mjs";
 import { RENDER_VERSION, render } from "../render.mjs";
 import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
 import { absolutiseUrls, escapeXml, mathToTex } from "../xml.mjs";
+import { PAGE_CSP, REPORTING_ENDPOINTS } from "./headers.mjs";
 import { ASSET_PREFIX, DIAGRAM_CONFIG_FILE, ORIGIN, diagramConfig, elementIndex, loadElements, options, renderElement, resolveImage, splitHeader } from "./specimen.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -278,6 +279,8 @@ export async function buildSpecimen(outDir) {
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   copyTree(join(HERE, "static"), outDir);
+  const headersFile = join(outDir, "_headers");
+  writeFileSync(headersFile, readFileSync(headersFile, "utf8").replace("{{PAGE_CSP}}", PAGE_CSP).replace("{{REPORTING_ENDPOINTS}}", REPORTING_ENDPOINTS));
   writeStyles(outDir);
   copyDiagrams(outDir, rendered.flatMap((r) => r.diagrams));
 

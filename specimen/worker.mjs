@@ -5,14 +5,12 @@
 // published library never imports this file.
 
 import { receiveCspReport } from "@dustinedwards/site-runtime/csp-report";
-
-/** Where the policies in specimen/static/_headers send violation reports. */
-const REPORT_PATH = "/csp-report";
+import { PAGE_CSP, REPORT_PATH, REPORTING_ENDPOINTS } from "./headers.mjs";
 
 /** The locked-down headers on the responses this Worker makes itself, the same set specimen/static/_headers gives the assets. */
 const HEADERS = Object.freeze({
-  "Content-Security-Policy": `default-src 'none'; frame-ancestors 'none'; report-uri ${REPORT_PATH}; report-to csp-endpoint`,
-  "Reporting-Endpoints": `csp-endpoint="https://prelum.dustinedwards.info${REPORT_PATH}"`,
+  "Content-Security-Policy": PAGE_CSP,
+  "Reporting-Endpoints": REPORTING_ENDPOINTS,
   "Strict-Transport-Security": "max-age=31536000",
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",

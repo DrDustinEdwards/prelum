@@ -1,6 +1,8 @@
+# specimen/build.mjs fills in the two {{…}} values from specimen/headers.mjs. The /diagrams/* policy stays written
+# here: it allows no script, font or image source, and the builder writes 'self' for each on every policy.
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; style-src-elem 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; report-uri /csp-report; report-to csp-endpoint
-  Reporting-Endpoints: csp-endpoint="https://prelum.dustinedwards.info/csp-report"
+  Content-Security-Policy: {{PAGE_CSP}}
+  Reporting-Endpoints: {{REPORTING_ENDPOINTS}}
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Cache-Control: public, max-age=300, must-revalidate
