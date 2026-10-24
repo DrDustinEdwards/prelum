@@ -16,7 +16,8 @@ const DEFAULT_ITEM_PATH = "/writing";
  *   description: string | null,
  *   publishAt: unknown,
  *   tags: string[],
- * }} post one row of `listBlogPostsRendered`
+ *   author?: string,
+ * }} post one row of `listBlogPostsRendered`; `author` is RSS's own form, an email address with the name in brackets
  * @param {string} origin the site origin, no trailing slash
  * @param {string} [itemPath]
  */
@@ -37,6 +38,7 @@ export function rssItem(post, origin, itemPath = DEFAULT_ITEM_PATH) {
       ? `      <content:encoded>${cdata(absolutiseUrls(mathToTex(post.html), origin))}</content:encoded>`
       : null,
     published ? `      <pubDate>${published}</pubDate>` : null,
+    post.author ? `      <author>${escapeXml(post.author)}</author>` : null,
     ...post.tags.map((tag) => `      <category>${escapeXml(tag)}</category>`),
     "    </item>",
   ]
@@ -53,19 +55,31 @@ export function rssItem(post, origin, itemPath = DEFAULT_ITEM_PATH) {
  *   posts: Array<Parameters<typeof rssItem>[0]>,
  *   origin: string,
  *   itemPath?: string,
- * }} feed
+ *   lastBuildDate?: unknown,
+ *   image?: { url: string, title: string, link: string },
+ * }} feed `lastBuildDate` is when the content last changed (the newest post), never the clock, so a render stays cacheable
  * @returns {string}
  */
 export function rssDocument(feed) {
   const items = feed.posts.map((post) => rssItem(post, feed.origin, feed.itemPath)).join("\n");
+  const lastBuildDate = feed.lastBuildDate
+    ? `\n    <lastBuildDate>${toDate(feed.lastBuildDate, null).toUTCString()}</lastBuildDate>`
+    : "";
+  const image = feed.image
+    ? `\n    <image>
+      <url>${escapeXml(feed.image.url)}</url>
+      <title>${escapeXml(feed.image.title)}</title>
+      <link>${escapeXml(feed.image.link)}</link>
+    </image>`
+    : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>${escapeXml(feed.title)}</title>
     <link>${escapeXml(feed.link)}</link>
     <description>${escapeXml(feed.description)}</description>
-    <language>en-us</language>
-    <atom:link href="${escapeXml(feed.selfUrl)}" rel="self" type="application/rss+xml" />
+    <language>en-us</language>${lastBuildDate}
+    <atom:link href="${escapeXml(feed.selfUrl)}" rel="self" type="application/rss+xml" />${image}
 ${items}
   </channel>
 </rss>
