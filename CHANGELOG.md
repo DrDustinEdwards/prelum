@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## 0.12.0 (2026-10-25)
+
+### Added
+
+- `slug`: `slugify(text, { max })`, the one slug rule (accents folded, other runs one hyphen, none at the ends, cut to a
+  whole word under `max`). Replaces the copies in dustinedwards-info, Carrel, Foxhound and Foxing.
+- `xml`: `jsonLdText(value)`, the JSON-LD script text with `< > &` and U+2028/9 escaped, dustinedwards-info's serializer.
+  `headHtml` now writes its JSON-LD with it, so `>` and `&` are escaped too; the data parses back unchanged.
+- `indexnow`: `keyFileResponse(key, headers)`, the `/<key>.txt` file IndexNow fetches, written by hand in Foxing and Foxhound.
+- `indexnow`: `recentSitemapUrls(xml, { days })` and the `prelum-indexnow` bin, so a static site tells IndexNow after a deploy:
+  `prelum-indexnow --origin https://example.com --key <key> --sitemap dist/sitemap.xml` sends the pages whose lastmod is
+  within two days (every page when the sitemap has none) and never fails the deploy. Carrel sites use site-api's
+  `onPageChange` instead.
+
+### Changed
+
+- `xml`: `absolutiseUrls` is `absolutizeUrls`, in American spelling like the rest of the family. The old name stays as an
+  alias, so no site breaks. So is `drawDiagrams`' `colours` option, now `colors`. <!-- codespell:ignore -->
+- American spelling through the code, comments, docs and the specimen, and the specimen sends site-runtime's standard
+  security headers (`buildSecurityHeaders`) instead of its own short list. The specimen reads Capsomer's `tokens/color.css`,
+  or the older name from a Capsomer before 0.21.0. The corpus fixture's text changed, so its golden hash did; the renderer
+  did not, so `RENDER_VERSION` stays 4.
+
 ## 0.11.0 (2026-10-25)
 
 ### Added
@@ -36,12 +59,12 @@
 ## 0.9.0 (2026-10-25)
 
 - Diagrams are drawn by shared code: `render/diagram-draw` (`drawDiagrams`, `pruneDiagrams`, `auditDiagramSvg`, `mermaidConfig`,
-  `DIAGRAM_ROLES`, `DIAGRAM_ROLE_NAMES`) is the drawing step and colour audit dustinedwards-info wrote in its
-  `scripts/build-diagrams.mjs` and `scripts/lib/diagram-audit.mjs`, so each site gives only its colours, by role. `render/diagram`
+  `DIAGRAM_ROLES`, `DIAGRAM_ROLE_NAMES`) is the drawing step and color audit dustinedwards-info wrote in its
+  `scripts/build-diagrams.mjs` and `scripts/lib/diagram-audit.mjs`, so each site gives only its colors, by role. `render/diagram`
   exports `DIAGRAM_ASSET_DIR`, `DIAGRAM_THEMES` and `diagramAssetPath`, which the site had copied. `@mermaid-js/mermaid-cli`,
   `puppeteer` and `linkedom` are optional peers. Rendered HTML is unchanged.
 - Specimen: its diagrams are drawn with that code instead of Mermaid's command line, from Capsomer's tokens by role, so a box is
-  the page's surface colour with a strong line, as on dustinedwards-info.
+  the page's surface color with a strong line, as on dustinedwards-info.
 - README: `/elements.json` is no longer said to feed Carrel's Insert menu, which keeps its own empty templates.
 
 ## 0.8.0 (2026-10-25)
@@ -82,7 +105,7 @@
 - Internal helpers are no longer exported from their modules (`fnv1a32`, `normalizeDiagramSource`, `diagramKey`, `attributesOf`); none is on a package subpath. Rendered HTML is unchanged.
 - Tests: the xml and itemPath tests in `prelum.test.mjs` that `xml.test.mjs` and `feeds.test.mjs` already make are gone, and so is the dated test baseline (`docs/research/`); the code-map workflow keeps the mutation results.
 - README: the fixtures section no longer names dustinedwards-info's capture script, which that site deleted.
-- Fixed: `createHighlight` passes shiki `tokenizeTimeLimit: 0`. Shiki's default stops tokenizing a line after 500 ms of wall-clock time and colours the rest of it as the last scope, so on a busy or cold machine (most often the first line, while Oniguruma compiles the grammar) a code block rendered to different bytes, and the golden test failed locally while CI passed. Now the output depends on the input alone. On a machine that never hit the limit nothing changes, so the golden hashes hold and `RENDER_VERSION` stays "3".
+- Fixed: `createHighlight` passes shiki `tokenizeTimeLimit: 0`. Shiki's default stops tokenizing a line after 500 ms of wall-clock time and colors the rest of it as the last scope, so on a busy or cold machine (most often the first line, while Oniguruma compiles the grammar) a code block rendered to different bytes, and the golden test failed locally while CI passed. Now the output depends on the input alone. On a machine that never hit the limit nothing changes, so the golden hashes hold and `RENDER_VERSION` stays "3".
 
 ## 0.5.0 (2026-10-23)
 
@@ -165,7 +188,7 @@
 
 ### Changed from the code it was moved from
 
-Three behaviours differ from dustinedwards-info's renderer, found in review, each with a test. None changes the output for content that
+Three behaviors differ from dustinedwards-info's renderer, found in review, each with a test. None changes the output for content that
 rendered correctly before; a site switching over should still compare its whole corpus.
 
 - A `:pullquote` that cannot be raised (inside a list, quote or table) is refused with its line; it used to render a block `<div>` in

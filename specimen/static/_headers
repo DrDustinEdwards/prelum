@@ -1,13 +1,8 @@
-# specimen/build.mjs fills in the two {{…}} values from specimen/headers.mjs. The /diagrams/* policy stays written
+# specimen/build.mjs writes the headers below from specimen/headers.mjs: site-runtime's standard set and the page policy. The /diagrams/* policy stays written
 # here: it allows no script, font or image source, and the builder writes 'self' for each on every policy.
 /*
-  Content-Security-Policy: {{PAGE_CSP}}
-  Reporting-Endpoints: {{REPORTING_ENDPOINTS}}
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
+{{SITE_HEADERS}}
   Cache-Control: public, max-age=300, must-revalidate
-  Strict-Transport-Security: max-age=31536000
-  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
 
 /elements.json
   Access-Control-Allow-Origin: *

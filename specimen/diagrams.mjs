@@ -1,4 +1,4 @@
-// Draws the specimen's diagrams, one SVG per theme, into specimen/diagrams, coloured from Capsomer's tokens, with the same
+// Draws the specimen's diagrams, one SVG per theme, into specimen/diagrams, colored from Capsomer's tokens, with the same
 // drawing code every site uses (render-diagram-draw.mjs). It is run by hand when a diagram source changes and the drawings
 // are committed, so the site build needs no browser. Missing drawings are drawn, every drawing is drawn again when the
 // configuration in config.json changes, and drawings no element uses are deleted.
@@ -25,7 +25,7 @@ const config = diagramConfig();
 const stamp = join(OUT, DIAGRAM_CONFIG_FILE);
 // Drawings made with another palette or Mermaid version are all drawn again: the file names hash only the source.
 const force = !existsSync(stamp) || readFileSync(stamp, "utf8") !== `${JSON.stringify(config, null, 2)}\n`;
-const { written, stale } = await drawDiagrams({ diagrams, dir: OUT, assetPrefix: ASSET_PREFIX, colours: config, force });
+const { written, stale } = await drawDiagrams({ diagrams, dir: OUT, assetPrefix: ASSET_PREFIX, colors: config, force });
 await pruneDiagrams(OUT, stale);
 writeFileSync(stamp, `${JSON.stringify(config, null, 2)}\n`);
 console.log(`specimen diagrams: ${diagrams.length} diagram(s), ${written.length} drawn, ${stale.length} stale removed`);

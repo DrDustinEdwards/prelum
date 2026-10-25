@@ -5,16 +5,8 @@
 // published library never imports this file.
 
 import { receiveCspReport } from "@dustinedwards/site-runtime/csp-report";
-import { PAGE_CSP, REPORT_PATH, REPORTING_ENDPOINTS } from "./headers.mjs";
+import { REPORT_PATH, SITE_HEADERS as HEADERS } from "./headers.mjs";
 
-/** The locked-down headers on the responses this Worker makes itself, the same set specimen/static/_headers gives the assets. */
-const HEADERS = Object.freeze({
-  "Content-Security-Policy": PAGE_CSP,
-  "Reporting-Endpoints": REPORTING_ENDPOINTS,
-  "Strict-Transport-Security": "max-age=31536000",
-  "X-Content-Type-Options": "nosniff",
-  "Referrer-Policy": "strict-origin-when-cross-origin",
-});
 
 export default {
   /**

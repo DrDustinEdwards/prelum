@@ -16,8 +16,8 @@ import { llmsDocument } from "../llms.mjs";
 import { rssItem } from "../feeds.mjs";
 import { RENDER_VERSION, render } from "../render.mjs";
 import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
-import { absolutiseUrls, escapeXml, mathToTex } from "../xml.mjs";
-import { PAGE_CSP, REPORTING_ENDPOINTS } from "./headers.mjs";
+import { absolutizeUrls, escapeXml, mathToTex } from "../xml.mjs";
+import { SITE_HEADERS } from "./headers.mjs";
 import { ASSET_PREFIX, DIAGRAM_CONFIG_FILE, ORIGIN, diagramConfig, elementIndex, loadElements, options, renderElement, resolveImage, splitHeader } from "./specimen.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -73,7 +73,7 @@ function writeStyles(outDir) {
     inlineCss(join(capsomer, "base.css")),
     inlineCss(join(capsomer, "prose.css")),
     // Capsomer's tokens.css also maps the --enarratio-* properties onto its tokens (css/enarratio.css). The two agree, being
-    // generated from the same tokens; Enarratio 0.1.0-alpha.8 has no colour-free base stylesheet, so its full one is used.
+    // generated from the same tokens; Enarratio 0.1.0-alpha.8 has no color-free base stylesheet, so its full one is used.
     stylesheet(capsomerTheme),
     readFileSync(join(HERE, "site.css"), "utf8"),
   ].join("\n\n");
@@ -164,7 +164,7 @@ const codeView = (label, text) =>
   `<details><summary>${escapeXml(label)}</summary><pre class="code-view" tabindex="0"><code>${escapeXml(text)}</code></pre></details>`;
 
 /** What a feed carries for this HTML: rssItem's own transformation, TeX for math and absolute URLs. */
-const feedForm = (/** @type {string} */ html) => absolutiseUrls(mathToTex(html), ORIGIN);
+const feedForm = (/** @type {string} */ html) => absolutizeUrls(mathToTex(html), ORIGIN);
 
 /**
  * @param {import("./specimen.mjs").Element} element
@@ -280,7 +280,7 @@ export async function buildSpecimen(outDir) {
   mkdirSync(outDir, { recursive: true });
   copyTree(join(HERE, "static"), outDir);
   const headersFile = join(outDir, "_headers");
-  writeFileSync(headersFile, readFileSync(headersFile, "utf8").replace("{{PAGE_CSP}}", PAGE_CSP).replace("{{REPORTING_ENDPOINTS}}", REPORTING_ENDPOINTS));
+  writeFileSync(headersFile, readFileSync(headersFile, "utf8").replace("{{SITE_HEADERS}}", Object.entries(SITE_HEADERS).map(([name, value]) => `  ${name}: ${value}`).join("\n")));
   writeStyles(outDir);
   copyDiagrams(outDir, rendered.flatMap((r) => r.diagrams));
 

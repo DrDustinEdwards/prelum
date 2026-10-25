@@ -1,6 +1,6 @@
 {
   "name": "@drdustinedwards/site-helpers",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt, head tag, JSON-LD, robots.txt, IndexNow, site audit and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, and the markdown pipeline they all render with, once.",
   "type": "module",
   "license": "MIT",
@@ -13,6 +13,10 @@
     "./xml": {
       "types": "./xml.d.mts",
       "default": "./xml.mjs"
+    },
+    "./slug": {
+      "types": "./slug.d.mts",
+      "default": "./slug.mjs"
     },
     "./feeds": {
       "types": "./feeds.d.mts",
@@ -94,10 +98,11 @@
   "files": [
     "*.mjs",
     "*.d.mts",
+    "bin",
     "README.md"
   ],
   "scripts": {
-    "lint": "oxlint *.mjs test specimen --deny-warnings",
+    "lint": "oxlint *.mjs bin test specimen --deny-warnings",
     "typecheck": "tsc -p .",
     "test": "node --test \"test/*.test.mjs\"",
     "specimen": "node specimen/build.mjs",
@@ -230,5 +235,8 @@
     "typescript": "5.9.3",
     "unified": "11.0.5",
     "unist-util-visit": "5.1.0"
+  },
+  "bin": {
+    "prelum-indexnow": "./bin/indexnow.mjs"
   }
 }

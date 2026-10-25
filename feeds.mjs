@@ -1,4 +1,4 @@
-import { absolutiseUrls, cdata, escapeXml, mathToTex, toDate } from "./xml.mjs";
+import { absolutizeUrls, cdata, escapeXml, mathToTex, toDate } from "./xml.mjs";
 
 /*
  * RSS 2.0, Atom 1.0 and JSON Feed 1.1 from the same post rows. `<description>` keeps the summary because readers show it in the
@@ -35,7 +35,7 @@ export function rssItem(post, origin, itemPath = DEFAULT_ITEM_PATH) {
     post.description ? `      <description>${escapeXml(post.description)}</description>` : null,
     // Omitted rather than empty: an empty `content:encoded` tells a reader the post IS empty.
     post.html
-      ? `      <content:encoded>${cdata(absolutiseUrls(mathToTex(post.html), origin))}</content:encoded>`
+      ? `      <content:encoded>${cdata(absolutizeUrls(mathToTex(post.html), origin))}</content:encoded>`
       : null,
     published ? `      <pubDate>${published}</pubDate>` : null,
     post.author ? `      <author>${escapeXml(post.author)}</author>` : null,
@@ -119,7 +119,7 @@ export function atomEntry(post, origin, itemPath = DEFAULT_ITEM_PATH) {
     published ? `      <published>${published.toISOString()}</published>` : null,
     post.description ? `      <summary>${escapeXml(post.description)}</summary>` : null,
     post.html
-      ? `      <content type="html">${cdata(absolutiseUrls(mathToTex(post.html), origin))}</content>`
+      ? `      <content type="html">${cdata(absolutizeUrls(mathToTex(post.html), origin))}</content>`
       : null,
     ...post.tags.map((tag) => `      <category term="${escapeXml(tag)}" />`),
     "    </entry>",

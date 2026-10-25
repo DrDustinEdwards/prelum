@@ -5,7 +5,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  absolutiseUrls,
+  absolutizeUrls,
+  jsonLdText,
   atomEntry,
   cdata,
   escapeXml,
@@ -109,15 +110,15 @@ test("xml: a missing or invalid date is the epoch in a feed and nothing in a sit
 test("xml: absolute and protocol-relative URLs in a srcset are left alone", () => {
   const html = `<img srcset="https://cdn.test/a.png 1x, //cdn.test/b.png 2x, /c.png 3x">`;
   assert.equal(
-    absolutiseUrls(html, "https://x.test"),
+    absolutizeUrls(html, "https://x.test"),
     `<img srcset="https://cdn.test/a.png 1x, //cdn.test/b.png 2x, https://x.test/c.png 3x">`,
   );
 });
 
 test("xml: absolute links and document-relative links are left alone", () => {
   const html = `<a href="https://y.test/a">a</a><a href="b/c">b</a><img src="http://y.test/i.png">`;
-  assert.equal(absolutiseUrls(html, "https://x.test"), html);
-  assert.equal(absolutiseUrls("", "https://x.test"), "");
+  assert.equal(absolutizeUrls(html, "https://x.test"), html);
+  assert.equal(absolutizeUrls("", "https://x.test"), "");
 });
 
 test("xml: text around KaTeX is kept, and each expression keeps its own TeX", () => {
@@ -154,4 +155,11 @@ test("xml: KaTeX with no annotation, an empty one or no closing tag is left as i
 test("xml: HTML with no math, or no HTML at all, comes back unchanged", () => {
   assert.equal(mathToTex(""), "");
   assert.equal(mathToTex("<p>no <span>math</span> here</p>"), "<p>no <span>math</span> here</p>");
+});
+
+test("jsonLdText cannot end its script element, and parses back to the same data", () => {
+  const value = { name: `</script><b>&${String.fromCharCode(0x2028)}` };
+  const text = jsonLdText(value);
+  assert.doesNotMatch(text, new RegExp(`[<>&${String.fromCharCode(0x2028)}]`));
+  assert.deepEqual(JSON.parse(text), value);
 });

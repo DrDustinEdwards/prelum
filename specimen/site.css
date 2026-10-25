@@ -264,8 +264,8 @@
   background: var(--sunken);
   font: 0.875rem / 1.6 var(--mono);
 }
-/* Shiki writes both themes' colours as custom properties; light-dark() picks by the page's color-scheme, which Capsomer's tokens
-   set. The themes' own backgrounds are used because their token colours are tuned to them. */
+/* Shiki writes both themes' colors as custom properties; light-dark() picks by the page's color-scheme, which Capsomer's tokens
+   set. The themes' own backgrounds are used because their token colors are tuned to them. */
 .prose pre.shiki {
   background: light-dark(var(--shiki-light-bg), var(--shiki-dark-bg));
 }
@@ -286,7 +286,7 @@
   min-block-size: 24px;
   margin-inline-start: 0.25em;
   color: var(--muted);
-  /* Underlined, so it is told from the heading text by more than a colour --muted cannot make 3:1 against it in the dark theme. */
+  /* Underlined, so it is told from the heading text by more than a color --muted cannot make 3:1 against it in the dark theme. */
   text-decoration: underline;
   text-underline-offset: 2px;
 }

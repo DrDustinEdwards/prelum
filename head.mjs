@@ -1,4 +1,4 @@
-import { escapeXml, toDate } from "./xml.mjs";
+import { escapeXml, jsonLdText, toDate } from "./xml.mjs";
 
 /**
  * Google truncates by pixel width (about 600px title, 920px description), so these approximate it; a 160-character counter
@@ -138,8 +138,8 @@ export function absoluteUrl(origin, path) {
 }
 
 /**
- * The tags as HTML, for a page built without React Router (a static build). Attribute values are escaped, and `<` inside
- * JSON-LD is written `\u003c`, so a title holding `</script>` cannot end the script element.
+ * The tags as HTML, for a page built without React Router (a static build). Attribute values are escaped, and JSON-LD is
+ * written by `jsonLdText`, so a title holding `</script>` cannot end the script element.
  *
  * @param {HeadTag[]} tags
  * @returns {string}
@@ -149,7 +149,7 @@ export function headHtml(tags) {
     .map((tag) => {
       if ("title" in tag) return `<title>${escapeXml(tag.title)}</title>`;
       if ("script:ld+json" in tag) {
-        return `<script type="application/ld+json">${JSON.stringify(tag["script:ld+json"]).replace(/</g, "\\u003c")}</script>`;
+        return `<script type="application/ld+json">${jsonLdText(tag["script:ld+json"])}</script>`;
       }
       if ("tagName" in tag) return `<link rel="${escapeXml(tag.rel)}" href="${escapeXml(tag.href)}">`;
       const [key, value] = "property" in tag ? ["property", tag.property] : ["name", tag.name];
