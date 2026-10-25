@@ -211,7 +211,7 @@ export async function pruneDiagrams(dir, names) {
   for (const name of names) await unlink(join(dir, name));
 }
 
-const COLOUR_PROPERTIES = new Set([
+const COLOR_PROPERTIES = new Set([
   "fill",
   "stroke",
   "color",
@@ -226,7 +226,7 @@ const COLOUR_PROPERTIES = new Set([
 ]);
 
 // `currentColor` is safe because it resolves to `color`, which is itself audited.
-const NON_COLOUR_VALUES = new Set(["none", "transparent", "currentcolor", "inherit", "initial", "unset", "revert"]);
+const NON_COLOR_VALUES = new Set(["none", "transparent", "currentcolor", "inherit", "initial", "unset", "revert"]);
 
 /** @param {string} hex */
 function normalizeHex(hex) {
@@ -274,7 +274,7 @@ function colorDeclarations(body) {
   const out = [];
   for (const m of body.matchAll(/([a-zA-Z-]+)\s*:\s*([^;{}]+)/g)) {
     const property = (m[1] ?? "").toLowerCase();
-    if (COLOUR_PROPERTIES.has(property)) out.push({ property, value: (m[2] ?? "").trim() });
+    if (COLOR_PROPERTIES.has(property)) out.push({ property, value: (m[2] ?? "").trim() });
   }
   return out;
 }
@@ -288,7 +288,7 @@ function colorDeclarations(body) {
 function colorProblem(value, palette) {
   const cleaned = value.replace(/!important/gi, "").trim();
   const lower = cleaned.toLowerCase();
-  if (cleaned === "" || NON_COLOUR_VALUES.has(lower) || lower.startsWith("url(")) return null;
+  if (cleaned === "" || NON_COLOR_VALUES.has(lower) || lower.startsWith("url(")) return null;
   if (/^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$/.test(cleaned)) {
     return palette.has(normalizeHex(cleaned)) ? null : `${cleaned} is not one of the palette's colors`;
   }
@@ -401,7 +401,7 @@ export function auditDiagramSvg(svg, paletteHexes) {
     for (const attribute of element.attributes) {
       const name = attribute.name.toLowerCase();
       if (name === "style") check(`<${element.localName} style>`, colorDeclarations(attribute.value));
-      else if (!COLOUR_PROPERTIES.has(name)) continue;
+      else if (!COLOR_PROPERTIES.has(name)) continue;
       else if (styledBy(element, name)) overridden += 1;
       else check(`<${element.localName}>`, [{ property: name, value: attribute.value }]);
     }
