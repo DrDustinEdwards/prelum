@@ -1,7 +1,7 @@
 {
   "name": "@drdustinedwards/site-helpers",
-  "version": "0.6.0",
-  "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, and the markdown pipeline they all render with, once.",
+  "version": "0.7.0",
+  "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt, head tag, JSON-LD, robots.txt, IndexNow and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, and the markdown pipeline they all render with, once.",
   "type": "module",
   "license": "MIT",
   "sideEffects": false,
@@ -25,6 +25,22 @@
     "./llms": {
       "types": "./llms.d.mts",
       "default": "./llms.mjs"
+    },
+    "./head": {
+      "types": "./head.d.mts",
+      "default": "./head.mjs"
+    },
+    "./schema": {
+      "types": "./schema.d.mts",
+      "default": "./schema.mjs"
+    },
+    "./robots": {
+      "types": "./robots.d.mts",
+      "default": "./robots.mjs"
+    },
+    "./indexnow": {
+      "types": "./indexnow.d.mts",
+      "default": "./indexnow.mjs"
     },
     "./search": {
       "types": "./search.d.mts",
