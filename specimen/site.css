@@ -376,14 +376,17 @@
   block-size: auto;
 }
 /* An SVG in an <img> cannot read the page's custom properties, so each theme has its own drawing. */
-.diagram-dark {
+.diagram-dark,
+.figure-dark {
   display: none;
 }
 @media (prefers-color-scheme: dark) {
-  .diagram-light {
+  .diagram-light,
+  .figure-light {
     display: none;
   }
-  .diagram-dark {
+  .diagram-dark,
+  .figure-dark {
     display: block;
   }
 }

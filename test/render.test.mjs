@@ -140,6 +140,10 @@ test("figure requires a source and alt text, and carries a caption and a credit"
   assert.match(credited.html, /<figcaption><span class="figure-credit">Someone<\/span><\/figcaption>/);
   const bare = await core(':::figure{src="/a.png" alt="A thing"}\n:::');
   assert.doesNotMatch(bare.html, /figcaption/);
+
+  // A dark twin: both images, each themed, neither wrapped in a link (the hidden half would be a focusable link with no name).
+  const themed = await core(':::figure{src="/a.svg" dark="/a-dark.svg" alt="A thing"}\n:::');
+  assert.match(themed.html, /^<figure><img src="\/a\.svg" alt="A thing" class="figure-light" width="800" height="600"[^>]*><img src="\/a-dark\.svg" alt="A thing" class="figure-dark" width="800" height="600"[^>]*><\/figure>$/);
 });
 
 test("images: a srcset or placeholder outside the policy is dropped, since both are written after the URL check", async () => {
@@ -195,7 +199,7 @@ test("every way a page can cite media is collected, figure directives included",
     '<img src="/media/k3.png">',
     '[ref][r]',
     '[r]: /media/k4.png',
-    ':::figure{src="/media/k5.png" alt="x"}',
+    ':::figure{src="/media/k5.png" dark="/media/k6.png" alt="x"}',
     ":::",
   ].join("\n\n");
   const { mediaRefs } = await core(body, { media });
@@ -206,6 +210,7 @@ test("every way a page can cite media is collected, figure directives included",
     "k3.png": "html",
     "k4.png": "link",
     "k5.png": "figure-directive",
+    "k6.png": "figure-directive",
   });
 });
 
