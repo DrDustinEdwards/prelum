@@ -20,7 +20,7 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `llms` | `llmsDocument`, `llmsLink` |
 | `head` | `headTags(input)` (title, description, canonical, Open Graph, Twitter, `article:*`), `headHtml(tags)`, `absoluteUrl`, `articleDates`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT` |
 | `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage` |
-| `robots` | `robotsDocument(input)`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
+| `robots` | `robotsDocument(input)`, `aiTxt(input)`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
 | `indexnow` | `submitIndexNow(input)` |
 | `audit` | `auditPages(pages, { origin })` |
 | `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` |
@@ -50,6 +50,9 @@ What they hold every site to:
   `Disallow: /`. The bot lists are the family's policy (Dustin, 2026-10-25): search engines and AI search bots are allowed;
   training bots are allowed so that they reach Cloudflare's Pay Per Crawl price, where AI Crawl Control charges or blocks them;
   Bytespider is denied.
+- Training rights are reserved in the same words everywhere: every public response carries `TDM_RESERVATION_HEADERS`
+  (TDMRep `tdm-reservation: 1`, the EU text-and-data-mining opt-out that a charge rests on), and `/ai.txt` from `aiTxt` says
+  answer engines may cite and link while training needs a license. A site's own policy wording is written as comments only.
 - IndexNow sends only the site's own URLs, only when the change came from the production origin, and never throws.
 
 `audit` runs the checks a site audit leads with over pages a crawl already fetched (Cloudflare Browser Run's `/crawl`, or a
