@@ -18,6 +18,11 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `feeds` | `rssDocument`, `rssItem`, `atomDocument`, `atomEntry`, `jsonFeedDocument`, `feedItem` (`itemPath` moves where a post lives) |
 | `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` list it in the image sitemap |
 | `llms` | `llmsDocument`, `llmsLink` |
+| `head` | `headTags(input)` (title, description, canonical, Open Graph, Twitter, `article:*`), `headHtml(tags)`, `absoluteUrl`, `articleDates`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT` |
+| `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage` |
+| `robots` | `robotsDocument(input)`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
+| `indexnow` | `submitIndexNow(input)` |
+| `audit` | `auditPages(pages, { origin })` |
 | `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` |
 | `render`, `render/nomath` | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl` |
 | `render/packs` | `editorialPack`, the `RenderPack` shape a site's own directives take |
@@ -25,6 +30,32 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `render/safe` | `assertSafe`, `scanHtml`, `inventory` |
 | `render/conformance` | `HOSTILE_INPUTS`, `runConformance` |
 | `render/math`, `render/url` | `htmlHasMath`, `KATEX_OPTIONS`; `isAllowedUrl` |
+
+## Search and AI crawlers
+
+`head`, `schema`, `robots` and `indexnow` are what each site wrote for its own `<head>`, JSON-LD, robots.txt and IndexNow
+pings, in one form. `headTags` returns the descriptor objects React Router's `meta` export takes, so a route returns it as it is;
+a static build writes the same objects with `headHtml`. Each site keeps its own facts (who it is, its sameAs links, its default
+card), and passes them in.
+
+What they hold every site to:
+
+- The canonical, `og:url` and every absolute URL come from the site's production origin, never the request's, so a workers.dev
+  copy cannot claim to be the page.
+- A card image is required, so `twitter:card` is always `summary_large_image`. An absent date writes no tag, and the Open Graph
+  dates and the Article schema's come from one `articleDates`.
+- `thing` drops empty fields, and `website` has no SearchAction without a real search URL: structured data claims nothing the
+  page cannot back.
+- robots.txt repeats the disallow list in every named group (a crawler uses only its own group), and a preview gets
+  `Disallow: /`. The bot lists are the family's policy (Dustin, 2026-10-25): search engines and AI search bots are allowed;
+  training bots are allowed so that they reach Cloudflare's Pay Per Crawl price, where AI Crawl Control charges or blocks them;
+  Bytespider is denied.
+- IndexNow sends only the site's own URLs, only when the change came from the production origin, and never throws.
+
+`audit` runs the checks a site audit leads with over pages a crawl already fetched (Cloudflare Browser Run's `/crawl`, or a
+site's own test): missing, long or duplicate titles and descriptions; a missing or off-site canonical; a sitemap URL that
+redirects, is broken or is noindex; redirect chains; links to broken pages; JSON-LD that does not parse; images with no `alt`;
+and pages with no card image.
 
 ## The markdown pipeline
 

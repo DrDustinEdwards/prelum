@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 0.7.0 (2026-10-25)
+
+### Added
+
+- `head`: `headTags` builds a page's title, description, canonical, Open Graph and Twitter tags (and `article:*` tags from
+  `ArticleFacts`) as React Router meta descriptors; `headHtml` writes them as HTML for static builds, escaping attributes and
+  `<` inside JSON-LD. Also `absoluteUrl`, `articleDates`, `truncateForSerp` and the SERP limits, from dustinedwards-info.
+- `schema`: `jsonLd`, `thing` (any schema.org type, empty fields dropped), `graph`, `website`, `article`, `breadcrumbs`,
+  `itemList` and `faqPage`, from the builders in dustinedwards-info, Foxing and Foxhound.
+- `robots`: `robotsDocument`, with the disallow list repeated in every named group (Foxhound's fix), `Disallow: /` for a preview,
+  and the family's bot lists (`SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS`).
+- `indexnow`: `submitIndexNow`, from Foxing and Foxhound: own-host URLs only, production origin only, never throws.
+- `audit`: `auditPages`, a site audit's checks over crawled pages (titles, descriptions, canonicals, sitemap entries,
+  redirect chains, broken links, JSON-LD, image `alt`, card images), with no HTML parser.
+
 ## 0.6.0 (2026-10-24)
 
 - `rssDocument` takes an optional `lastBuildDate` (any date `toDate` reads, written in RFC 822 after `<language>`) and an optional
