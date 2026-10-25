@@ -40,14 +40,16 @@ export function remarkFigure(file) {
       /** @type {any[]} */
       const captionChildren = [...(node.children ?? [])];
 
+      // A `dark` image is a second drawing for the dark theme: an SVG in an <img> cannot read the page's theme, so each theme has
+      // its own file, both in the HTML, and the site's stylesheet shows one (figure-light, figure-dark), as it does a diagram's.
       /** @type {any[]} */
-      const figureChildren = [
-        {
+      const figureChildren = (attrs.dark ? [["figure-light", attrs.src], ["figure-dark", attrs.dark]] : [[null, attrs.src]]).map(
+        ([theme, src]) => ({
           type: "paragraph",
-          data: { hName: "img", hProperties: { src: attrs.src, alt: attrs.alt } },
+          data: { hName: "img", hProperties: { src, alt: attrs.alt, ...(theme ? { className: [theme] } : {}) } },
           children: [],
-        },
-      ];
+        }),
+      );
 
       if (captionChildren.length > 0 || attrs.credit) {
         /** @type {any[]} */

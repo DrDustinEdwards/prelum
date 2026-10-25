@@ -2,6 +2,9 @@
 A caption with *emphasis*.
 :::
 
+:::figure{src="/media/dustin-edwards-chart-light-0123456789abcdef-640x360.svg" dark="/media/dustin-edwards-chart-dark-0123456789abcdef-640x360.svg" alt="A drawing with a twin for the dark theme"}
+:::
+
 :::details{summary="Long methods"}
 The details body, with a [link](https://example.com).
 :::

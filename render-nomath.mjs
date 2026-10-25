@@ -43,7 +43,7 @@ export { ContentError, isAllowedUrl };
  * Bumped whenever the output changes for the same input. A site stores it beside its rendered HTML and re-renders on a mismatch; Carrel's
  * health check reads it from meta.capabilities.render. test/render-golden.test.mjs fails when the output moves and this does not.
  */
-export const RENDER_VERSION = "3";
+export const RENDER_VERSION = "4";
 
 /** A source over this is refused before it is parsed: a 200,000-character bracket run took 2.8 s, which a Worker cannot be sent. */
 export const DEFAULT_MAX_BYTES = 512 * 1024;
@@ -137,7 +137,10 @@ function remarkCollectMedia(sink, keyOf) {
           add(node.url, "link", node);
           break;
         case "containerDirective":
-          if (node.name === "figure") add(node.attributes?.src, "figure-directive", node);
+          if (node.name === "figure") {
+            add(node.attributes?.src, "figure-directive", node);
+            add(node.attributes?.dark, "figure-directive", node);
+          }
           break;
         // Regex, not a parser, so every URL-carrying attribute is caught; over-detection only refuses a delete.
         case "html": {
@@ -282,9 +285,11 @@ function rehypeImageSources(file, resolveImage, pending, imageProps) {
       const responsive =
         props?.srcSet && srcsetUrls(props.srcSet).every(isAllowedUrl) ? { srcSet: props.srcSet, sizes: props.sizes } : {};
 
-      // Links to the unsized original, which srcset never serves. Diagrams are excluded: an anchor around the display: none half would
-      // be a focusable link with no name. An author's own link wins.
+      // Links to the unsized original, which srcset never serves. A figure's light and dark pair is excluded, as diagrams are: an
+      // anchor around the display: none half would be a focusable link with no name. An author's own link wins.
+      const themed = Array.isArray(classes) && (classes.includes("figure-light") || classes.includes("figure-dark"));
       const wrappable =
+        !themed &&
         src.length > 0 &&
         parent &&
         typeof index === "number" &&
@@ -299,9 +304,10 @@ function rehypeImageSources(file, resolveImage, pending, imageProps) {
         };
       }
 
-      // Counted after every exclusion, so the first image that gets attributes gets the eager pair.
-      seen += 1;
-      const first = seen === 1;
+      // Counted after every exclusion, so the first image that gets attributes gets the eager pair. A themed half is never first: an
+      // eager image loads while display: none, so the hidden half would take the priority, and a lazy one loads only once shown.
+      if (!themed) seen += 1;
+      const first = !themed && seen === 1;
 
       pending.push(
         resolveImage(src).then(({ width, height, placeholder }) => {

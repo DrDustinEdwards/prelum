@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.10.0 (2026-10-25)
+
+### Added
+
+- `render`: `:::figure` takes a `dark` attribute, the same drawing for the dark theme. An SVG in an `<img>` cannot read the
+  page's theme, so both images are in the HTML, `figure-light` and `figure-dark`, and the site's stylesheet shows one, as it
+  does a diagram's. Neither half is wrapped in an `image-link` (the hidden one would be a focusable link with no name), and
+  both load lazily, so the hidden one is never fetched. The dark file is collected into `mediaRefs` with the light one. For
+  Foxhound's hand-drawn diagrams, which switch on the page's `data-theme`.
+- `RENDER_VERSION` is 4. Output for a source without `dark` is unchanged; a source that wrote `dark` before had it ignored.
+- Specimen: a figure with a dark twin.
+
 ## 0.9.0 (2026-10-25)
 
 - Diagrams are drawn by shared code: `render/diagram-draw` (`drawDiagrams`, `pruneDiagrams`, `auditDiagramSvg`, `mermaidConfig`,

@@ -66,7 +66,7 @@ and pages with no card image.
 
 Markdown in, a safe HTML fragment out (carrel/design-markdown-pipeline.md). It is dustinedwards-info's renderer, moved here so every
 site that publishes Carrel's writing renders it the same way. The `render` import is deliberately light: it holds the parser, the
-directives every site gets (`:::figure`, `:::details`), math, the table of contents and the URL policy. What a site decides it injects:
+directives every site gets (`:::figure`, with a `dark` twin for a drawing that differs by theme, and `:::details`), math, the table of contents and the URL policy. What a site decides it injects:
 
 ```js
 import { render } from "@drdustinedwards/site-helpers/render";
@@ -93,7 +93,7 @@ const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion } = 
 `render`, so they never enter that site's bundle (about 1.6 MB raw) and need not be installed.
 
 The output is a fragment: no `<html>`, no layout. A site gives it its own layout and its own CSS for the classes the pipeline emits
-(`heading-anchor`, `table-scroll`, `image-link`, `post-details`, `figure-credit`, and a pack's own); a change to one of them is a new
+(`heading-anchor`, `table-scroll`, `image-link`, `post-details`, `figure-credit`, `figure-light` and `figure-dark`, and a pack's own); a change to one of them is a new
 `renderVersion`.
 
 **Safe by construction, then checked.** Raw HTML in the source is dropped before it becomes markup, the URL policy runs last, and
