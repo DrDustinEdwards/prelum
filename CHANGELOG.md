@@ -8,6 +8,9 @@
 
 - `feeds`: an RSS item takes an optional `guid`, a permanent id stored at first publish, written `isPermaLink="false"`, so a
   changed slug does not announce the post again. Germomics' writing feed moves onto `rssDocument` with it.
+- `render`: `resolveImage` may resolve `null` for an image the site stores no size for, which is then written unsized instead
+  of failing the render, as `marked` wrote it. Foxing's journal moves onto Prelum's render with it. Output for every other
+  input is unchanged, so `RENDER_VERSION` stays 4.
 
 ## 0.12.1 (2026-10-25)
 

@@ -2,7 +2,7 @@
  * @typedef {object} RenderInput
  * @property {string} file label used in error messages
  * @property {string} body markdown with any frontmatter already stripped
- * @property {(src: string) => Promise<{ width: number, height: number, placeholder?: string }>} resolveImage
+ * @property {(src: string) => Promise<{ width: number, height: number, placeholder?: string } | null>} resolveImage
  * @property {RenderOptions} [options]
  *
  * @typedef {object} MathPlugins What render.mjs passes in; without it there is no math syntax and `$` is text.
@@ -121,7 +121,7 @@ export type RenderInput = {
         width: number;
         height: number;
         placeholder?: string;
-    }>;
+    } | null>;
     options?: RenderOptions;
 };
 /**
