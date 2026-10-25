@@ -12,6 +12,11 @@
   of failing the render, as `marked` wrote it. Foxing's journal moves onto Prelum's render with it. Output for every other
   input is unchanged, so `RENDER_VERSION` stays 4.
 
+### Fixed
+
+- The optional `puppeteer` peer is `^25.4.0`, no longer exactly 25.4.0, so a site that runs a newer Puppeteer 25 for its
+  own tests (Enarratio) can install Prelum. Mermaid's CLI, the one user, takes any Puppeteer 23 to 25.
+
 ## 0.12.1 (2026-10-25)
 
 ### Fixed
