@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.9.0 (2026-10-25)
+
+- Diagrams are drawn by shared code: `render/diagram-draw` (`drawDiagrams`, `pruneDiagrams`, `auditDiagramSvg`, `mermaidConfig`,
+  `DIAGRAM_ROLES`, `DIAGRAM_ROLE_NAMES`) is the drawing step and colour audit dustinedwards-info wrote in its
+  `scripts/build-diagrams.mjs` and `scripts/lib/diagram-audit.mjs`, so each site gives only its colours, by role. `render/diagram`
+  exports `DIAGRAM_ASSET_DIR`, `DIAGRAM_THEMES` and `diagramAssetPath`, which the site had copied. `@mermaid-js/mermaid-cli`,
+  `puppeteer` and `linkedom` are optional peers. Rendered HTML is unchanged.
+- Specimen: its diagrams are drawn with that code instead of Mermaid's command line, from Capsomer's tokens by role, so a box is
+  the page's surface colour with a strong line, as on dustinedwards-info.
+
 ## 0.8.0 (2026-10-25)
 
 ### Added

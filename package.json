@@ -1,6 +1,6 @@
 {
   "name": "@drdustinedwards/site-helpers",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt, head tag, JSON-LD, robots.txt, IndexNow, site audit and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, and the markdown pipeline they all render with, once.",
   "type": "module",
   "license": "MIT",
@@ -81,6 +81,14 @@
     "./render/url": {
       "types": "./render-url.d.mts",
       "default": "./render-url.mjs"
+    },
+    "./render/diagram": {
+      "types": "./render-diagram.d.mts",
+      "default": "./render-diagram.mjs"
+    },
+    "./render/diagram-draw": {
+      "types": "./render-diagram-draw.d.mts",
+      "default": "./render-diagram-draw.mjs"
     }
   },
   "files": [
@@ -97,13 +105,16 @@
     "deploy:specimen": "npm run specimen && npx --yes wrangler@4.143.0 deploy"
   },
   "peerDependencies": {
+    "@mermaid-js/mermaid-cli": "11.16.0",
     "@shikijs/rehype": "4.5.0",
     "@shikijs/transformers": "4.5.0",
     "enarratio": "^0.3.1",
     "hast-util-from-html": "2.0.3",
     "hast-util-to-string": "3.0.1",
     "katex": "0.16.47",
+    "linkedom": "0.18.13",
     "parse5": "7.3.0",
+    "puppeteer": "25.4.0",
     "rehype-autolink-headings": "7.1.0",
     "rehype-katex": "7.0.1",
     "rehype-slug": "6.0.0",
@@ -118,6 +129,9 @@
     "unist-util-visit": "5.1.0"
   },
   "peerDependenciesMeta": {
+    "@mermaid-js/mermaid-cli": {
+      "optional": true
+    },
     "@shikijs/rehype": {
       "optional": true
     },
@@ -136,7 +150,13 @@
     "katex": {
       "optional": true
     },
+    "linkedom": {
+      "optional": true
+    },
     "parse5": {
+      "optional": true
+    },
+    "puppeteer": {
       "optional": true
     },
     "rehype-autolink-headings": {
@@ -181,6 +201,7 @@
     "@fontsource-variable/source-serif-4": "5.3.1",
     "@fontsource/martian-mono": "5.3.0",
     "@fontsource/schibsted-grotesk": "5.3.0",
+    "@mermaid-js/mermaid-cli": "11.16.0",
     "@observablehq/plot": "0.6.17",
     "@shikijs/rehype": "4.5.0",
     "@shikijs/transformers": "4.5.0",
@@ -195,6 +216,7 @@
     "linkedom": "0.18.13",
     "oxlint": "1.88.0",
     "parse5": "7.3.0",
+    "puppeteer": "25.4.0",
     "rehype-autolink-headings": "7.1.0",
     "rehype-katex": "7.0.1",
     "rehype-slug": "6.0.0",
