@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 0.11.0 (2026-10-25)
+
+### Added
+
+- `audit`: `crawlSite({ origin, fetch, maxPages, sitemapPath })`, the crawl for `auditPages`, with an injected `fetch` and no
+  other I/O, so Capsid can run it on a schedule against each live site. It follows a sitemap index one level, fetches each URL
+  with `redirect: "manual"` and follows up to five hops itself, then checks unlisted same-origin link targets by status (HEAD,
+  or GET where HEAD is refused), at most `maxPages` (200) fetches. A failed fetch is a page with status 0 and its error.
+- `auditPages` checks more: `canonical-elsewhere` (a sitemap page whose canonical names another URL), `X-Robots-Tag: noindex`
+  on a sitemap page (with the meta tag, `sitemap-noindex`), `og-title-missing`, `link-redirect` (a link to a redirect),
+  `fetch-failed` and `sitemap-empty`. A page takes `headers`, `redirectedFrom` and `error`; the site takes `sitemap`, the URLs
+  the sitemap lists. A redirect chain is reported once, at its first URL, with every hop; a 200 page with no `html` (a
+  status-only check) gets no head checks.
+
+### Changed
+
+- `auditPages` returns `{ findings, pages, summary }` instead of the findings array: `pages` is how many were audited and
+  `summary` the findings per check. A canonical is compared by origin, so a relative one counts as on its page's origin.
+
 ## 0.10.0 (2026-10-25)
 
 ### Added

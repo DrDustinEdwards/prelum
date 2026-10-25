@@ -22,7 +22,7 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage` |
 | `robots` | `robotsDocument(input)`, `aiTxt(input)`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
 | `indexnow` | `submitIndexNow(input)` |
-| `audit` | `auditPages(pages, { origin })` |
+| `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })` |
 | `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` |
 | `render`, `render/nomath` | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl` |
 | `render/packs` | `editorialPack`, the `RenderPack` shape a site's own directives take |
@@ -57,10 +57,26 @@ What they hold every site to:
   answer engines may cite and link while training needs a license. A site's own policy wording is written as comments only.
 - IndexNow sends only the site's own URLs, only when the change came from the production origin, and never throws.
 
-`audit` runs the checks a site audit leads with over pages a crawl already fetched (Cloudflare Browser Run's `/crawl`, or a
-site's own test): missing, long or duplicate titles and descriptions; a missing or off-site canonical; a sitemap URL that
-redirects, is broken or is noindex; redirect chains; links to broken pages; JSON-LD that does not parse; images with no `alt`;
-and pages with no card image.
+`audit` runs the checks a site audit leads with over pages a crawl already fetched (`crawlSite`, Cloudflare Browser Run's
+`/crawl`, or a site's own test): missing, long or duplicate titles and descriptions; a missing canonical, one off the production
+origin, or one that points away from a page the sitemap lists; a sitemap URL that redirects, is broken or is noindex (by meta tag
+or `X-Robots-Tag`); redirect chains; links to broken pages or to redirects; JSON-LD that does not parse; images with no `alt`;
+and pages with no `og:title` or card image. `auditPages` is pure and returns `{ findings, pages, summary }`, `summary` counting
+findings by check.
+
+`crawlSite` is the crawl, with its `fetch` passed in so a scheduled job (Capsid's, against each live site) runs it as it is and
+a test fakes it. It reads the sitemap (a sitemap index one level down), fetches each URL with `redirect: "manual"` and follows up
+to five hops itself so a chain is seen, then checks the status of every same-origin link target the sitemap left out (HEAD, or
+GET where HEAD is refused), at most `maxPages` (200) fetches in all. A failed fetch is a page with status 0, never a throw. It
+runs in a Worker or Node; a browser's fetch hides a manual redirect's status.
+
+```js
+import { auditPages, crawlSite } from "@drdustinedwards/site-helpers/audit";
+
+const origin = "https://example.com";
+const { pages, sitemap } = await crawlSite({ origin, fetch });
+const { findings, summary } = auditPages(pages, { origin, sitemap });
+```
 
 ## The markdown pipeline
 
