@@ -20,7 +20,10 @@ jobs:
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
+      # The diagrams are committed drawings; nothing here draws one, so Puppeteer's Chromium is not fetched.
       - run: npm ci
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
       - name: Lint
         run: npm run lint
       - name: Typecheck the modules, their declarations and the tests

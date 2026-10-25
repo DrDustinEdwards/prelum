@@ -169,12 +169,12 @@ export function expectedPath(id) {
 export const DIAGRAM_CONFIG_FILE = "config.json";
 
 /**
- * The colour tokens of one theme, read from Capsomer's generated colour.css: the light theme is the first :root block, the dark
- * one the [data-theme="dark"] block.
+ * The diagram colours of one theme, by role, read from Capsomer's generated colour.css: the light theme is the first :root
+ * block, the dark one the [data-theme="dark"] block.
  *
  * @param {"light" | "dark"} theme
  */
-function capsomerColours(theme) {
+export function diagramColours(theme) {
   const css = readFileSync(new URL("../tokens/colour.css", pathToFileURL(createRequire(import.meta.url).resolve("capsomer/tokens.css"))), "utf8");
   const start = theme === "light" ? css.indexOf(":root {") : css.indexOf(':root[data-theme="dark"] {');
   if (start < 0) throw new Error(`Capsomer's colour.css has no ${theme} block`);
@@ -182,41 +182,35 @@ function capsomerColours(theme) {
   /** @type {Record<string, string>} */
   const tokens = {};
   for (const [, name, value] of block.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{3,8});/g)) tokens[name ?? ""] = value ?? "";
-  for (const name of ["surface", "raised", "text", "accent-soft", "accent-line", "line-strong"]) {
-    if (!tokens[name]) throw new Error(`Capsomer's colour.css has no --${name} in the ${theme} theme`);
+  /** @type {Record<string, string>} */
+  const colours = {};
+  for (const [role, token] of Object.entries(DIAGRAM_TOKENS)) {
+    if (!tokens[token]) throw new Error(`Capsomer's colour.css has no --${token} in the ${theme} theme`);
+    colours[role] = tokens[token];
   }
-  return tokens;
+  return colours;
 }
 
-/** @param {"light" | "dark"} theme */
-function mermaidConfig(theme) {
-  const c = capsomerColours(theme);
-  return {
-    // "base" is the only built-in theme whose variables can all be overridden.
-    theme: "base",
-    themeVariables: {
-      darkMode: theme === "dark",
-      background: c.surface,
-      primaryColor: c["accent-soft"],
-      primaryTextColor: c.text,
-      primaryBorderColor: c["accent-line"],
-      secondaryColor: c.raised,
-      tertiaryColor: c.raised,
-      lineColor: c["line-strong"],
-      textColor: c.text,
-      fontFamily: 'ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif',
-    },
-    // Labels as text, never <foreignObject>, which an <img> does not draw.
-    htmlLabels: false,
-    flowchart: { htmlLabels: false, padding: 12, useMaxWidth: false },
-  };
-}
+/** Capsomer's token for each diagram colour role (DIAGRAM_ROLE_NAMES in render-diagram-draw.mjs). */
+const DIAGRAM_TOKENS = {
+  paper: "surface",
+  raised: "raised",
+  text: "text",
+  heading: "text",
+  border: "line",
+  borderStrong: "line-strong",
+  tint: "accent-soft",
+  onAccent: "primary-fg",
+  danger: "crit",
+  dangerTint: "crit-soft",
+};
 
 /**
- * What the diagrams are drawn with: Mermaid's command line and each theme's configuration, coloured from Capsomer's tokens.
- * specimen/diagrams.mjs stores it beside the drawings, and the build refuses drawings made with anything else, so a Capsomer
- * colour change cannot leave the diagrams in the old palette.
+ * What the diagrams are drawn with: the Mermaid version and each theme's colours from Capsomer's tokens. specimen/diagrams.mjs
+ * stores it beside the drawings, and the build refuses drawings made with anything else, so a Capsomer colour change cannot
+ * leave the diagrams in the old palette.
  */
 export function diagramConfig() {
-  return { mermaidCli: "@mermaid-js/mermaid-cli@11.16.0", light: mermaidConfig("light"), dark: mermaidConfig("dark") };
+  const mermaid = JSON.parse(readFileSync(new URL("../node_modules/@mermaid-js/mermaid-cli/package.json", import.meta.url), "utf8")).version;
+  return { mermaidCli: mermaid, light: diagramColours("light"), dark: diagramColours("dark") };
 }

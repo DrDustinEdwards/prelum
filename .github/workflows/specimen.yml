@@ -44,6 +44,8 @@ jobs:
           package-manager-cache: false
       - if: steps.secrets.outputs.ready == 'true'
         run: npm ci
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
       - if: steps.secrets.outputs.ready == 'true'
         run: npm test
       - if: steps.secrets.outputs.ready == 'true'

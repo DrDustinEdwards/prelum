@@ -30,6 +30,8 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `render/safe` | `assertSafe`, `scanHtml`, `inventory` |
 | `render/conformance` | `HOSTILE_INPUTS`, `runConformance` |
 | `render/math`, `render/url` | `htmlHasMath`, `KATEX_OPTIONS`; `isAllowedUrl` |
+| `render/diagram` | `DIAGRAM_ASSET_DIR`, `DIAGRAM_THEMES`, `diagramAssetPath`: where a `:::diagram`'s drawings live |
+| `render/diagram-draw` (Node, build time) | `drawDiagrams`, `pruneDiagrams`, `auditDiagramSvg`, `mermaidConfig`, `DIAGRAM_ROLES`, `DIAGRAM_ROLE_NAMES` |
 
 ## Search and AI crawlers
 
@@ -125,7 +127,8 @@ where it differs, its RSS form, and ends with one short post as a page, an RSS i
 Prelum's version from `package.json`.
 
 `/elements.json` lists every element (id, name, summary, markdown, the pack it needs and its directives). It is generated from
-`specimen/elements/` by the build and is what Carrel's Insert menu reads; nothing in it is written by hand. An element is one
+`specimen/elements/` by the build; nothing in it is written by hand. (Carrel's Insert menu does not read it: its blocks are
+empty templates with the cursor in `alt`, in `carrel/app/lib/site-markdown.ts`.) An element is one
 file, `<order>-<id>.md`, with a `name` and `summary` header.
 
 - `npm run specimen` builds the site into `specimen/dist`; `npm run deploy:specimen` builds and deploys it (a merge to `main`
@@ -134,8 +137,18 @@ file, `<order>-<id>.md`, with a `name` and `summary` header.
   directive, chart type and highlighted language Prelum has, and builds the site to check the index, the footer and that no page
   has a generator tag or a script. `UPDATE_SPECIMEN=1 npm test` rewrites `specimen/expected/`; a changed file there is a change
   in what every site publishes, and goes with a `RENDER_VERSION` bump.
-- Diagrams are drawn ahead of time by `npm run specimen:diagrams` (Mermaid's command line, in a browser) and committed in
-  `specimen/diagrams/`; the build stops when one is missing.
+- Diagrams are drawn ahead of time by `npm run specimen:diagrams` and committed in `specimen/diagrams/`; the build stops when
+  one is missing.
+
+## Diagrams
+
+A `:::diagram` holds Mermaid source and a required alt; the page shows a light and a dark drawing as two images. Mermaid lays
+text out with a browser's font metrics, so the drawings are made ahead of time, in Node, by `render/diagram-draw`:
+`drawDiagrams` runs Mermaid's own renderer (`@mermaid-js/mermaid-cli`, in Chromium through `puppeteer`) for each drawing that
+is missing, with labels as SVG text (an `<img>` does not draw `<foreignObject>`) and an intrinsic size, and refuses any drawing
+that paints a colour outside the site's palette (`auditDiagramSvg`). A site gives one hex colour per role in
+`DIAGRAM_ROLE_NAMES` for each theme, and prunes the files `drawDiagrams` reports as stale by its own rules. Those three
+packages are optional peers, needed only where drawings are made.
 
 ## What it does not hold
 
