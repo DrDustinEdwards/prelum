@@ -17,7 +17,10 @@ const DEFAULT_ITEM_PATH = "/writing";
  *   publishAt: unknown,
  *   tags: string[],
  *   author?: string,
- * }} post one row of `listBlogPostsRendered`; `author` is RSS's own form, an email address with the name in brackets
+ *   guid?: string,
+ * }} post one row of `listBlogPostsRendered`; `author` is RSS's own form, an email address with the name in brackets;
+ *   `guid` is a permanent id stored at first publish, so a changed slug does not announce the post again (the link
+ *   otherwise)
  * @param {string} origin the site origin, no trailing slash
  * @param {string} [itemPath]
  */
@@ -31,7 +34,9 @@ export function rssItem(post, origin, itemPath = DEFAULT_ITEM_PATH) {
     "    <item>",
     `      <title>${escapeXml(post.title)}</title>`,
     `      <link>${escapeXml(url)}</link>`,
-    `      <guid isPermaLink="true">${escapeXml(url)}</guid>`,
+    post.guid
+      ? `      <guid isPermaLink="false">${escapeXml(post.guid)}</guid>`
+      : `      <guid isPermaLink="true">${escapeXml(url)}</guid>`,
     post.description ? `      <description>${escapeXml(post.description)}</description>` : null,
     // Omitted rather than empty: an empty `content:encoded` tells a reader the post IS empty.
     post.html
