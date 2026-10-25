@@ -11,6 +11,7 @@
   `puppeteer` and `linkedom` are optional peers. Rendered HTML is unchanged.
 - Specimen: its diagrams are drawn with that code instead of Mermaid's command line, from Capsomer's tokens by role, so a box is
   the page's surface colour with a strong line, as on dustinedwards-info.
+- README: `/elements.json` is no longer said to feed Carrel's Insert menu, which keeps its own empty templates.
 
 ## 0.8.0 (2026-10-25)
 

@@ -127,7 +127,8 @@ where it differs, its RSS form, and ends with one short post as a page, an RSS i
 Prelum's version from `package.json`.
 
 `/elements.json` lists every element (id, name, summary, markdown, the pack it needs and its directives). It is generated from
-`specimen/elements/` by the build and is what Carrel's Insert menu reads; nothing in it is written by hand. An element is one
+`specimen/elements/` by the build; nothing in it is written by hand. (Carrel's Insert menu does not read it: its blocks are
+empty templates with the cursor in `alt`, in `carrel/app/lib/site-markdown.ts`.) An element is one
 file, `<order>-<id>.md`, with a `name` and `summary` header.
 
 - `npm run specimen` builds the site into `specimen/dist`; `npm run deploy:specimen` builds and deploys it (a merge to `main`
