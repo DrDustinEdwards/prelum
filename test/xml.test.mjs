@@ -158,8 +158,8 @@ test("xml: HTML with no math, or no HTML at all, comes back unchanged", () => {
 });
 
 test("jsonLdText cannot end its script element, and parses back to the same data", () => {
-  const value = { name: "</script><b>& " };
+  const value = { name: `</script><b>&${String.fromCharCode(0x2028)}` };
   const text = jsonLdText(value);
-  assert.doesNotMatch(text, /[<>& ]/);
+  assert.doesNotMatch(text, new RegExp(`[<>&${String.fromCharCode(0x2028)}]`));
   assert.deepEqual(JSON.parse(text), value);
 });
