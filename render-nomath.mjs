@@ -262,7 +262,7 @@ function textOf(node) {
  * returns null for keeps the attributes the resolver gives it and nothing more.
  *
  * @param {string} file
- * @param {(src: string) => Promise<{ width: number, height: number, placeholder?: string }>} resolveImage
+ * @param {(src: string) => Promise<{ width: number, height: number, placeholder?: string } | null>} resolveImage
  * @param {Array<Promise<void>>} pending
  * @param {(src: string) => { srcSet?: string, sizes?: string, href?: string } | null} imageProps
  */
@@ -310,7 +310,9 @@ function rehypeImageSources(file, resolveImage, pending, imageProps) {
       const first = !themed && seen === 1;
 
       pending.push(
-        resolveImage(src).then(({ width, height, placeholder }) => {
+        // null: a site that stores no sizes; the image is written unsized rather than refused.
+        resolveImage(src).then((size) => {
+          const { width, height, placeholder } = size ?? {};
           const lqip = placeholder ? `background-image:url("${placeholder}")` : "";
           node.properties = {
             ...node.properties,
@@ -364,7 +366,7 @@ function rehypeCollectToc(sink) {
  * @typedef {object} RenderInput
  * @property {string} file label used in error messages
  * @property {string} body markdown with any frontmatter already stripped
- * @property {(src: string) => Promise<{ width: number, height: number, placeholder?: string }>} resolveImage
+ * @property {(src: string) => Promise<{ width: number, height: number, placeholder?: string } | null>} resolveImage
  * @property {RenderOptions} [options]
  *
  * @typedef {object} MathPlugins What render.mjs passes in; without it there is no math syntax and `$` is text.

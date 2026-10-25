@@ -42,6 +42,12 @@ test("render returns the contract: a fragment, the outline, and what the page ci
   assert.equal(result.hasMath, false);
 });
 
+test("an image the site has no size for is written unsized, not refused", async () => {
+  const { html } = await renderNoMath({ file: "post.md", body: "![A fox](https://example.com/fox.png)", resolveImage: async () => null });
+  assert.match(html, /<img src="https:\/\/example\.com\/fox\.png" alt="A fox" loading="eager"/);
+  assert.doesNotMatch(html, /width=/);
+});
+
 test("render is deterministic: the same input is the same bytes, run after run", async () => {
   for (const name of ["prose", "math", "code", "directives"]) {
     const first = await site(fixture(name));
