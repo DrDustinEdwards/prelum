@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.13.0 (2026-10-25)
+
+### Added
+
+- `feeds`: an RSS item takes an optional `guid`, a permanent id stored at first publish, written `isPermaLink="false"`, so a
+  changed slug does not announce the post again. Germomics' writing feed moves onto `rssDocument` with it.
+
 ## 0.12.1 (2026-10-25)
 
 ### Fixed

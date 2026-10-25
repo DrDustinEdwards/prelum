@@ -93,6 +93,13 @@ test("feeds: an RSS item has the elements a reader lists it by", () => {
   assert.deepEqual(all(item, "category"), ["a", "b"]);
 });
 
+test("feeds: a stored guid is kept over the link, so a renamed post is not announced again", () => {
+  const item = one(rssDocument(rssFeed([post({ slug: "renamed", guid: "site-post-7" })])), "item");
+  assert.equal(one(item, "guid"), "site-post-7");
+  assert.match(item, /<guid isPermaLink="false">/);
+  assert.equal(one(item, "link"), `${ORIGIN}/writing/renamed`);
+});
+
 test("feeds: an RSS channel names itself and its own URL", () => {
   const xml = rssDocument(rssFeed([]));
   assertWellFormed(xml);
