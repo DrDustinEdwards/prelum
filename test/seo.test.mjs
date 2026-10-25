@@ -1,13 +1,14 @@
 // The parts of the SEO helpers a mistake in would ship silently: a named robots group that drops the disallow list opens every
 // private path to that crawler; an empty date tag claims a page has no date; `</script>` in a title would end the JSON-LD; and an
 // audit that compares URLs by their exact spelling misses a broken link written with a trailing slash or a fragment, and
-// one that lets a workers.dev canonical or a redirect chain through calls a site clean that search engines do not.
+// one that lets a workers.dev canonical or a redirect chain through calls a site clean that search engines do not. A cut
+// title that runs past the limit with its "...", or an entity the audit reads as extra characters, warns on every page.
 
 import assert from "node:assert/strict";
 import test from "node:test";
 
 import { auditPages, crawlSite } from "../audit.mjs";
-import { headHtml, headTags } from "../head.mjs";
+import { headHtml, headTags, SERP_TITLE_LIMIT, truncateForSerp } from "../head.mjs";
 import { aiTxt, DENIED_BOTS, robotsDocument } from "../robots.mjs";
 import { article, jsonLd } from "../schema.mjs";
 
@@ -134,4 +135,14 @@ test("the crawl follows a sitemap index and each redirect hop, checks unlisted l
     `sitemap-redirect ${ORIGIN}/old`,
   ]);
   assert.equal((await crawlSite({ origin: ORIGIN, fetch: fake, maxPages: 2 })).pages.length, 2);
+});
+
+test("a cut title fits the limit with its ellipsis, and the audit counts an entity as the one character it stands for", () => {
+  const long = "Dustin Edwards, Professor of Virology, Microbiology, and Science Writing at Tarleton";
+  const cut = truncateForSerp(long, SERP_TITLE_LIMIT);
+  assert.ok(cut.length <= SERP_TITLE_LIMIT, cut);
+  assert.equal(cut, "Dustin Edwards, Professor of Virology, Microbiology, and...");
+  const title = `Dustin&#x27;s ${"x".repeat(SERP_TITLE_LIMIT - 9)}`;
+  const { findings } = auditPages([{ url: `${ORIGIN}/`, status: 200, html: `${page("/", title, "one")}<body></body></html>` }], { origin: ORIGIN });
+  assert.equal(findings.filter((finding) => finding.check === "title-long").length, 0);
 });

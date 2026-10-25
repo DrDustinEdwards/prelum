@@ -159,14 +159,16 @@ export function headHtml(tags) {
 }
 
 /**
- * Cut at a word boundary near `limit` and mark the cut, for a title or description shown where Google's result would clip it.
+ * Cut at a word boundary and mark the cut with "...", `limit` characters at most in all, for a title or description shown
+ * where Google's result would clip it.
  *
  * @param {string} text
  * @param {number} limit
  */
 export function truncateForSerp(text, limit) {
   if (text.length <= limit) return text;
-  const cut = text.slice(0, limit);
+  // The "..." counts toward the limit, and punctuation left before it goes, so the cut never reads ",...".
+  const cut = text.slice(0, limit - 3);
   const lastSpace = cut.lastIndexOf(" ");
-  return `${(lastSpace > limit * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd()}...`;
+  return `${(lastSpace > limit * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[\s,;:.\-–—]+$/, "")}...`;
 }
