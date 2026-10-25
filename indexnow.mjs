@@ -54,3 +54,23 @@ export function keyFileResponse(key, headers) {
   for (const [name, value] of new Headers(headers)) merged.set(name, value);
   return new Response(key, { headers: merged });
 }
+
+/**
+ * The URLs of a sitemap whose `<lastmod>` falls within `days` of `now`, for a static site that tells IndexNow after a
+ * deploy which pages changed. A sitemap with no lastmod at all gives every URL: a small static site sends its whole list.
+ *
+ * @param {string} xml
+ * @param {{ days?: number, now?: Date }} [options]
+ * @returns {string[]}
+ */
+export function recentSitemapUrls(xml, { days = 2, now = new Date() } = {}) {
+  const entries = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)].map(([, body]) => ({
+    loc: /<loc>\s*([^<]+?)\s*<\/loc>/.exec(body)?.[1]?.replace(/&amp;/g, "&"),
+    lastmod: /<lastmod>\s*([^<]+?)\s*<\/lastmod>/.exec(body)?.[1],
+  }));
+  const dated = entries.some((entry) => entry.lastmod);
+  const since = now.getTime() - days * 86_400_000;
+  return entries
+    .filter((entry) => entry.loc && (!dated || (entry.lastmod && Date.parse(entry.lastmod) >= since)))
+    .map((entry) => /** @type {string} */ (entry.loc));
+}

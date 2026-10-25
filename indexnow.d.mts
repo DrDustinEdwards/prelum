@@ -43,3 +43,5 @@ export type IndexNowInput = {
 };
 /** The `/<key>.txt` file whose whole body is the key; `headers` adds to or replaces the Content-Type. */
 export function keyFileResponse(key: string, headers?: HeadersInit): Response;
+/** The sitemap's URLs with a lastmod within `days` (2) of `now`; every URL when the sitemap has no lastmod. */
+export function recentSitemapUrls(xml: string, options?: { days?: number; now?: Date }): string[];

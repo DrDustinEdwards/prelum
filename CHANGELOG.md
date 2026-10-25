@@ -11,6 +11,10 @@
 - `xml`: `jsonLdText(value)`, the JSON-LD script text with `< > &` and U+2028/9 escaped, dustinedwards-info's serializer.
   `headHtml` now writes its JSON-LD with it, so `>` and `&` are escaped too; the data parses back unchanged.
 - `indexnow`: `keyFileResponse(key, headers)`, the `/<key>.txt` file IndexNow fetches, written by hand in Foxing and Foxhound.
+- `indexnow`: `recentSitemapUrls(xml, { days })` and the `prelum-indexnow` bin, so a static site tells IndexNow after a deploy:
+  `prelum-indexnow --origin https://example.com --key <key> --sitemap dist/sitemap.xml` sends the pages whose lastmod is
+  within two days (every page when the sitemap has none) and never fails the deploy. Carrel sites use site-api's
+  `onPageChange` instead.
 
 ### Changed
 
