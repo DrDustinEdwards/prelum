@@ -1,9 +1,11 @@
 // The parts of the SEO helpers a mistake in would ship silently: a named robots group that drops the disallow list opens every
-// private path to that crawler; an empty date tag claims a page has no date; and `</script>` in a title would end the JSON-LD.
+// private path to that crawler; an empty date tag claims a page has no date; `</script>` in a title would end the JSON-LD; and an
+// audit that compares URLs by their exact spelling misses a broken link written with a trailing slash or a fragment.
 
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { auditPages } from "../audit.mjs";
 import { headHtml, headTags } from "../head.mjs";
 import { DENIED_BOTS, robotsDocument } from "../robots.mjs";
 import { article, jsonLd } from "../schema.mjs";
@@ -48,4 +50,26 @@ test("headHtml escapes attributes and keeps </script> inside JSON-LD from ending
   assert.deepEqual(JSON.parse(html.slice(html.indexOf(">", html.indexOf("ld+json")) + 1, html.lastIndexOf("</script>"))), {
     headline: "</script><script>alert(1)</script>",
   });
+});
+
+test("the audit finds a broken link through a trailing slash, a redirect chain and a duplicate title", () => {
+  const head = (/** @type {string} */ title, /** @type {string} */ description) =>
+    `<html><head><title>${title}</title><meta name="description" content="${description}"><link rel="canonical" href="${ORIGIN}/"><meta property="og:image" content="${ORIGIN}/c.png"></head>`;
+  const findings = auditPages(
+    [
+      { url: `${ORIGIN}/`, status: 200, html: `${head("Same", "one")}<body><a href="/gone/#top">x</a><a href="https://other.example/">y</a></body></html>` },
+      { url: `${ORIGIN}/b`, status: 200, html: `${head("Same", "two")}<body></body></html>`, inSitemap: true },
+      { url: `${ORIGIN}/gone`, status: 404 },
+      { url: `${ORIGIN}/old`, status: 301, location: "/older" },
+      { url: `${ORIGIN}/older`, status: 301, location: "/b" },
+    ],
+    { origin: ORIGIN },
+  );
+  const checks = findings.map((finding) => `${finding.check} ${finding.url}`).sort();
+  assert.deepEqual(checks, [
+    `link-broken ${ORIGIN}/`,
+    `redirect-chain ${ORIGIN}/old`,
+    `title-duplicate ${ORIGIN}/`,
+    `title-duplicate ${ORIGIN}/b`,
+  ]);
 });

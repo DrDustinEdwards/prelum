@@ -22,6 +22,7 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage` |
 | `robots` | `robotsDocument(input)`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
 | `indexnow` | `submitIndexNow(input)` |
+| `audit` | `auditPages(pages, { origin })` |
 | `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` |
 | `render`, `render/nomath` | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl` |
 | `render/packs` | `editorialPack`, the `RenderPack` shape a site's own directives take |
@@ -50,6 +51,11 @@ What they hold every site to:
   training bots are allowed so that they reach Cloudflare's Pay Per Crawl price, where AI Crawl Control charges or blocks them;
   Bytespider is denied.
 - IndexNow sends only the site's own URLs, only when the change came from the production origin, and never throws.
+
+`audit` runs the checks a site audit leads with over pages a crawl already fetched (Cloudflare Browser Run's `/crawl`, or a
+site's own test): missing, long or duplicate titles and descriptions; a missing or off-site canonical; a sitemap URL that
+redirects, is broken or is noindex; redirect chains; links to broken pages; JSON-LD that does not parse; images with no `alt`;
+and pages with no card image.
 
 ## The markdown pipeline
 
