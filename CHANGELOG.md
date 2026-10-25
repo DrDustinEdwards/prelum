@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.8.0 (2026-10-25)
+
+### Added
+
+- `robots`: `TDM_RESERVATION_HEADERS` (TDMRep `tdm-reservation: 1`, with no `tdm-policy`, since TDMRep reads a policy only as
+  ODRL JSON or HTML) and `aiTxt`, Germomics' ai.txt in one form: answer engines may cite, training rights are reserved and
+  licensed on request. A site's own policy lines are written as `#` comments, so edited text cannot add a directive.
+
 ## 0.7.0 (2026-10-25)
 
 ### Added

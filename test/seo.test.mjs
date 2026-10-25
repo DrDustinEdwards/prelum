@@ -7,7 +7,7 @@ import test from "node:test";
 
 import { auditPages } from "../audit.mjs";
 import { headHtml, headTags } from "../head.mjs";
-import { DENIED_BOTS, robotsDocument } from "../robots.mjs";
+import { aiTxt, DENIED_BOTS, robotsDocument } from "../robots.mjs";
 import { article, jsonLd } from "../schema.mjs";
 
 const ORIGIN = "https://example.com";
@@ -24,6 +24,12 @@ test("every named robots group carries the whole disallow list, and a denied bot
     assert.ok(groups.some((group) => group === `User-agent: ${bot}\nDisallow: /`), bot);
   }
   assert.equal(robotsDocument({ origin: ORIGIN, preview: true }), "User-agent: *\nDisallow: /\n");
+});
+
+test("ai.txt writes a site's own policy wording as comments, so edited text cannot add a directive", () => {
+  const txt = aiTxt({ origin: ORIGIN, name: "Sample", contact: "hello@example.com", policy: ["Allow: everything", "# kept"] });
+  const directives = txt.split("\n").filter((line) => line && !line.startsWith("#"));
+  assert.deepEqual(directives, ["User-agent: *", "Allow: /", "Training: disallow", `Sitemap: ${ORIGIN}/sitemap.xml`, `Content-index: ${ORIGIN}/llms.txt`]);
 });
 
 test("a missing or unreadable date writes no tag, and the Article schema agrees with the Open Graph tags", () => {

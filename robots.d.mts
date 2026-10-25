@@ -56,3 +56,42 @@ export type RobotsInput = {
      */
     preview?: boolean | undefined;
 };
+/**
+ * The TDM Reservation Protocol header (W3C TDMRep): text and data mining rights are reserved, the EU DSM Article 4 opt-out,
+ * which is what lets a training crawler be charged rather than mine for free. Every public response carries it. There is no
+ * `tdm-policy`: TDMRep reads one only as ODRL JSON or an HTML page, and a plain-text ai.txt is neither.
+ */
+export const TDM_RESERVATION_HEADERS: {
+    "tdm-reservation": string;
+};
+/**
+ * ai.txt, the family's AI usage policy in the robots.txt form: answer engines may cite and link, training rights are
+ * reserved (as `TDM_RESERVATION_HEADERS` says) and licensed on request.
+ *
+ * @param {AiTxtInput} input
+ * @returns {string}
+ */
+export function aiTxt({ origin, name, contact, disallow, policy }: AiTxtInput): string;
+export type AiTxtInput = {
+    /**
+     * the production origin
+     */
+    origin: string;
+    /**
+     * the site's name
+     */
+    name: string;
+    /**
+     * where a licensing request goes, an email address
+     */
+    contact: string;
+    /**
+     * the same list robots.txt carries
+     */
+    disallow?: string[] | undefined;
+    /**
+     * the site's own wording of the policy, in place of the family's; a line not already a `#`
+     * comment is written as one, so edited text cannot turn into a directive
+     */
+    policy?: string[] | undefined;
+};
