@@ -335,10 +335,11 @@ function tags(html, name) {
 
 /** @param {string} text */
 function decodeEntities(text) {
-  return text
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;|&#39;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&");
+  // One pass, so "&amp;lt;" stays "&lt;"; numeric references cover the &#x27; and &#8217; that sites write.
+  const named = { quot: '"', apos: "'", lt: "<", gt: ">", amp: "&", nbsp: "\u00a0" };
+  return text.replace(/&(?:#x([0-9a-f]+)|#(\d+)|(quot|apos|lt|gt|amp|nbsp));/gi, (whole, hex, dec, name) => {
+    if (name) return named[/** @type {keyof typeof named} */ (name.toLowerCase())];
+    const code = Number.parseInt(hex ?? dec, hex ? 16 : 10);
+    return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
+  });
 }

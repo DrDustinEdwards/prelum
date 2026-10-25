@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.12.1 (2026-10-25)
+
+### Fixed
+
+- `head`: `truncateForSerp(text, limit)` now keeps its "..." inside `limit` (it could return `limit + 3` characters) and
+  drops punctuation left before it, so a cut title no longer trips the audit's `title-long`.
+- `audit`: titles, descriptions and attributes decode every numeric character reference (`&#x27;`, `&#8217;`) and
+  `&nbsp;` in one pass, so an encoded apostrophe counts as one character and `&amp;lt;` stays `&lt;`.
+
 ## 0.12.0 (2026-10-25)
 
 ### Added
