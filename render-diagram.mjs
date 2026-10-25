@@ -3,7 +3,7 @@
 
 import { h, text } from "./render-hast.mjs";
 
-// Bump when the token map, the site's colour tokens or the mermaid version changes: the key hashes
+// Bump when the token map, the site's color tokens or the mermaid version changes: the key hashes
 // only the source, so a restyle without a bump leaves every rendered asset at the old colors forever.
 const DIAGRAM_TEMPLATE_VERSION = 1;
 

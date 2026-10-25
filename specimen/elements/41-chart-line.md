@@ -1,6 +1,6 @@
 ---
 name: Line chart
-summary: A line chart with two labelled series.
+summary: A line chart with two labeled series.
 ---
 :::chart{type="line" x="year" y="a,b" labels="Alpha,Beta" alt="Two lines rising from 2020 to 2023, Beta above Alpha" title="Two series"}
 ```csv

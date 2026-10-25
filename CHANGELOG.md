@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 0.12.0 (2026-10-25)
+
+### Added
+
+- `slug`: `slugify(text, { max })`, the one slug rule (accents folded, other runs one hyphen, none at the ends, cut to a
+  whole word under `max`). Replaces the copies in dustinedwards-info, Carrel, Foxhound and Foxing.
+- `xml`: `jsonLdText(value)`, the JSON-LD script text with `< > &` and U+2028/9 escaped, dustinedwards-info's serializer.
+  `headHtml` now writes its JSON-LD with it, so `>` and `&` are escaped too; the data parses back unchanged.
+- `indexnow`: `keyFileResponse(key, headers)`, the `/<key>.txt` file IndexNow fetches, written by hand in Foxing and Foxhound.
+
+### Changed
+
+- `xml`: `absolutiseUrls` is `absolutizeUrls`, in American spelling like the rest of the family. The old name stays as an
+  alias, so no site breaks. So is `drawDiagrams`' `colours` option, now `colors`.
+- American spelling through the code, comments, docs and the specimen. The specimen reads Capsomer's `tokens/color.css`, or
+  `tokens/colour.css` from a Capsomer before 0.21.0. The corpus fixture's text changed, so its golden hash did; the renderer
+  did not, so `RENDER_VERSION` stays 4.
+
 ## 0.11.0 (2026-10-25)
 
 ### Added

@@ -34,13 +34,13 @@ export const GRAMMARS = {
 
 export const LANGUAGES = Object.keys(GRAMMARS);
 
-// High-contrast themes because the plain github ones failed contrast on the paper colour; comments are repointed at a secondary text
-// colour.
+// High-contrast themes because the plain github ones failed contrast on the paper color; comments are repointed at a secondary text
+// color.
 const COMMENT_LIGHT = "#5C5248";
 const COMMENT_DARK = "#B3A99C";
 
-/** @param {any} theme @param {string} colour */
-function withCommentColour(theme, colour) {
+/** @param {any} theme @param {string} color */
+function withCommentColor(theme, color) {
   /** @type {any[]} */
   const rules = theme.settings ?? theme.tokenColors ?? [];
   return {
@@ -48,13 +48,13 @@ function withCommentColour(theme, colour) {
     settings: rules.map((/** @type {any} */ rule) => {
       const scope = Array.isArray(rule?.scope) ? rule.scope : [rule?.scope];
       if (!scope.includes("comment")) return rule;
-      return { ...rule, settings: { ...rule.settings, foreground: colour } };
+      return { ...rule, settings: { ...rule.settings, foreground: color } };
     }),
   };
 }
 
-const githubLight = withCommentColour(githubLightHighContrast, COMMENT_LIGHT);
-const githubDark = withCommentColour(githubDarkHighContrast, COMMENT_DARK);
+const githubLight = withCommentColor(githubLightHighContrast, COMMENT_LIGHT);
+const githubDark = withCommentColor(githubDarkHighContrast, COMMENT_DARK);
 
 // Exported so a site's contrast check verifies the themes actually used, not ones it imported by name.
 export const SHIKI_THEMES = { light: githubLight, dark: githubDark };
@@ -105,7 +105,7 @@ export function createHighlight({ wasm = () => import("shiki/wasm"), languages =
           defaultColor: false,
           fallbackLanguage: "text",
           // No wall-clock limit per line. Shiki's default (500 ms) stops a line early when the machine is slow, most often on the
-          // first line, while Oniguruma compiles the grammar, and paints the rest of the line in the last scope's colour: the same
+          // first line, while Oniguruma compiles the grammar, and paints the rest of the line in the last scope's color: the same
           // post then rendered to different bytes on a busy machine than on CI. Output depends on the input alone.
           tokenizeTimeLimit: 0,
           transformers: [

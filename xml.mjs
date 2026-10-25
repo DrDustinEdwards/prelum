@@ -90,7 +90,7 @@ export function toDate(value, fallback = new Date(0)) {
  * @param {string} html
  * @param {string} origin no trailing slash
  */
-export function absolutiseUrls(html, origin) {
+export function absolutizeUrls(html, origin) {
   return String(html)
     .replace(/\b(href|src)="\/(?!\/)/g, `$1="${origin}/`)
     .replace(
@@ -101,6 +101,30 @@ export function absolutiseUrls(html, origin) {
           .map((candidate) => candidate.replace(/^(\s*)\/(?!\/)/, `$1${origin}/`))
           .join(",")}"`,
     );
+}
+
+/** The old spelling of `absolutizeUrls`, kept so a site that imports it keeps working. @deprecated */
+export const absolutiseUrls = absolutizeUrls;
+
+// Built from strings: a literal U+2028 is invisible and does not survive a copy.
+const LINE_SEPARATOR = new RegExp("\\u2028", "g");
+const PARAGRAPH_SEPARATOR = new RegExp("\\u2029", "g");
+
+/**
+ * A value as the text of a `<script type="application/ld+json">`. The element's content is raw text ended only by a
+ * literal `</script`, so `<`, `>` and `&` are written as `\u003c`, `\u003e` and `\u0026`, and U+2028 and U+2029 as their
+ * escapes (line terminators if the text is ever read as JavaScript). Every escape parses back to the same data.
+ *
+ * @param {unknown} value
+ * @returns {string}
+ */
+export function jsonLdText(value) {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(LINE_SEPARATOR, "\\u2028")
+    .replace(PARAGRAPH_SEPARATOR, "\\u2029");
 }
 
 /**

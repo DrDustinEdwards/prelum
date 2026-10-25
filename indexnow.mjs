@@ -39,3 +39,18 @@ export async function submitIndexNow({ origin, key, urls, keyLocation, from, fet
     return false;
   }
 }
+
+/**
+ * The key file IndexNow fetches to prove the site owns its URLs: `/<key>.txt`, whose whole body is the key, with no
+ * newline (IndexNow compares the body with the key and silently rejects a submission when they differ). The key is public
+ * by the protocol's design, so a site commits it as a constant. `headers` adds to or replaces the Content-Type.
+ *
+ * @param {string} key
+ * @param {HeadersInit} [headers]
+ * @returns {Response}
+ */
+export function keyFileResponse(key, headers) {
+  const merged = new Headers({ "Content-Type": "text/plain; charset=utf-8" });
+  for (const [name, value] of new Headers(headers)) merged.set(name, value);
+  return new Response(key, { headers: merged });
+}

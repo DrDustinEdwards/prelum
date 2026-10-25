@@ -13,7 +13,7 @@ The details body, with a [link](https://example.com).
 A note in the rail.
 :::
 
-A paragraph with a :pullquote[sentence worth raising] in it, and the colour :swatch[#6b4fbb] and :swatch[the brand]{color=#fff}.
+A paragraph with a :pullquote[sentence worth raising] in it, and the color :swatch[#6b4fbb] and :swatch[the brand]{color=#fff}.
 
 :::chart{type="bar" x="label" y="value" alt="Two bars, a at one and b at two" title="Counts"}
 ```csv

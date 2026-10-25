@@ -1,6 +1,6 @@
 // Draws the assets render-diagram.mjs names: one SVG per theme, ahead of time, in Node. Layout needs real font metrics, so
 // this drives Mermaid's own renderer in a headless browser; the site build then only reads the committed files. Each site
-// gives its colours by role; the role map, Mermaid's configuration, the drawing and the colour audit are shared here.
+// gives its colors by role; the role map, Mermaid's configuration, the drawing and the color audit are shared here.
 
 import { existsSync } from "node:fs";
 import { mkdir, readdir, unlink, writeFile } from "node:fs/promises";
@@ -13,7 +13,7 @@ import puppeteer from "puppeteer";
 import { DIAGRAM_THEMES, diagramAssetPath } from "./render-diagram.mjs";
 
 /**
- * Every Mermaid theme variable a diagram paints with, by the role its colour plays. Everything khroma would otherwise
+ * Every Mermaid theme variable a diagram paints with, by the role its color plays. Everything khroma would otherwise
  * derive is supplied; what is not still gets derived, which is why every drawing is audited rather than trusting this
  * list to be complete.
  */
@@ -62,7 +62,7 @@ export const DIAGRAM_ROLES = {
   altBackground: "paper",
 };
 
-/** The roles a site must colour, each once per theme. */
+/** The roles a site must color, each once per theme. */
 export const DIAGRAM_ROLE_NAMES = [...new Set(Object.values(DIAGRAM_ROLES))];
 
 /**
@@ -79,14 +79,14 @@ const VIEWPORT = { width: 1200, height: 800, deviceScaleFactor: 1 };
 
 /**
  * @param {"light" | "dark"} theme
- * @param {Record<string, string>} colours one hex colour per name in DIAGRAM_ROLE_NAMES
+ * @param {Record<string, string>} colors one hex color per name in DIAGRAM_ROLE_NAMES
  */
-export function mermaidConfig(theme, colours) {
-  const missing = DIAGRAM_ROLE_NAMES.filter((role) => !/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(colours[role] ?? ""));
-  if (missing.length > 0) throw new Error(`the ${theme} diagram colours lack a hex colour for ${missing.join(", ")}`);
+export function mermaidConfig(theme, colors) {
+  const missing = DIAGRAM_ROLE_NAMES.filter((role) => !/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(colors[role] ?? ""));
+  if (missing.length > 0) throw new Error(`the ${theme} diagram colors lack a hex color for ${missing.join(", ")}`);
   /** @type {Record<string, string | boolean>} */
   const themeVariables = { darkMode: theme === "dark", fontFamily: FONT_FAMILY };
-  for (const [variable, role] of Object.entries(DIAGRAM_ROLES)) themeVariables[variable] = /** @type {string} */ (colours[role]);
+  for (const [variable, role] of Object.entries(DIAGRAM_ROLES)) themeVariables[variable] = /** @type {string} */ (colors[role]);
   return {
     // "base" is the only built-in theme whose variables are fully overridable; every other one hardcodes part of its palette.
     theme: "base",
@@ -146,15 +146,18 @@ function sizeRoot(svg, label) {
  *   diagrams: Array<{ key: string, source: string, label?: string }>,
  *   dir: string,
  *   assetPrefix: string,
- *   colours: Record<"light" | "dark", Record<string, string>>,
+ *   colors?: Record<"light" | "dark", Record<string, string>>,
+ *   colours?: Record<"light" | "dark", Record<string, string>>, // codespell:ignore colours
  *   force?: boolean,
  *   log?: (line: string) => void,
  * }} options
  * @returns {Promise<{ written: string[], current: number, stale: string[] }>}
  */
-export async function drawDiagrams({ diagrams, dir, assetPrefix, colours, force = false, log = console.log }) {
+export async function drawDiagrams({ diagrams, dir, assetPrefix, colors: given, colours, force = false, log = console.log }) { // codespell:ignore colours
+  // `colours`, the British spelling, is the option's old name, still taken so no site breaks. codespell:ignore colours
+  const colors = /** @type {Record<"light" | "dark", Record<string, string>>} */ (given ?? colours); // codespell:ignore colours
   const themes = /** @type {Array<"light" | "dark">} */ (DIAGRAM_THEMES);
-  const configs = { light: mermaidConfig("light", colours.light), dark: mermaidConfig("dark", colours.dark) };
+  const configs = { light: mermaidConfig("light", colors.light), dark: mermaidConfig("dark", colors.dark) };
   const fileName = (/** @type {string} */ key, /** @type {string} */ theme) => basename(diagramAssetPath(key, theme, assetPrefix));
 
   await mkdir(dir, { recursive: true });
@@ -179,15 +182,15 @@ export async function drawDiagrams({ diagrams, dir, assetPrefix, colours, force 
         viewport: VIEWPORT,
       });
       const svg = sizeRoot(Buffer.from(data).toString("utf8"), label);
-      // Audited before it is written, so a colour Mermaid derived rather than took from the palette stops the build
+      // Audited before it is written, so a color Mermaid derived rather than took from the palette stops the build
       // instead of shipping.
-      const audit = auditDiagramSvg(svg, Object.values(colours[theme]));
+      const audit = auditDiagramSvg(svg, Object.values(colors[theme]));
       if (audit.problems.length > 0) {
-        throw new Error(`${label} uses colours that are not the site's:\n${audit.problems.map((p) => `    ${p}`).join("\n")}`);
+        throw new Error(`${label} uses colors that are not the site's:\n${audit.problems.map((p) => `    ${p}`).join("\n")}`);
       }
       await writeFile(join(dir, name), svg, "utf8");
       written.push(name);
-      log(`  wrote ${name} (${Math.round(svg.length / 1024)} kB, ${audit.checked} colours checked)`);
+      log(`  wrote ${name} (${Math.round(svg.length / 1024)} kB, ${audit.checked} colors checked)`);
     }
   } finally {
     await browser?.close();
@@ -266,7 +269,7 @@ function cssRules(text) {
 const GROUPING_AT_RULES = /^@(media|supports|layer|container|document|scope)\b/i;
 
 /** @param {string} body */
-function colourDeclarations(body) {
+function colorDeclarations(body) {
   /** @type {Array<{ property: string, value: string }>} */
   const out = [];
   for (const m of body.matchAll(/([a-zA-Z-]+)\s*:\s*([^;{}]+)/g)) {
@@ -277,23 +280,23 @@ function colourDeclarations(body) {
 }
 
 /**
- * Allowlist, not a hex hunt, so rgb(), hsl() and named colours are caught too.
+ * Allowlist, not a hex hunt, so rgb(), hsl() and named colors are caught too.
  *
  * @param {string} value
  * @param {Set<string>} palette
  */
-function colourProblem(value, palette) {
+function colorProblem(value, palette) {
   const cleaned = value.replace(/!important/gi, "").trim();
   const lower = cleaned.toLowerCase();
   if (cleaned === "" || NON_COLOUR_VALUES.has(lower) || lower.startsWith("url(")) return null;
   if (/^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$/.test(cleaned)) {
-    return palette.has(normalizeHex(cleaned)) ? null : `${cleaned} is not one of the palette's colours`;
+    return palette.has(normalizeHex(cleaned)) ? null : `${cleaned} is not one of the palette's colors`;
   }
-  return `${cleaned} is not a palette colour`;
+  return `${cleaned} is not a palette color`;
 }
 
 /**
- * Every colour a drawing can paint must be one of the palette's: in its `<style>` (rules inside conditional group rules
+ * Every color a drawing can paint must be one of the palette's: in its `<style>` (rules inside conditional group rules
  * included, `@keyframes` audited whole, a rule no element matches skipped and counted), in `style` attributes, and in
  * presentation attributes no stylesheet rule overrides, on every element except unreferenced `<defs>` children.
  *
@@ -322,7 +325,7 @@ export function auditDiagramSvg(svg, paletteHexes) {
   const check = (where, declarations) => {
     for (const { property, value } of declarations) {
       checked += 1;
-      const problem = colourProblem(value, palette);
+      const problem = colorProblem(value, palette);
       if (problem) problems.push(`${where} ${property}: ${problem}`);
     }
   };
@@ -334,7 +337,7 @@ export function auditDiagramSvg(svg, paletteHexes) {
         auditRules(rule.body);
         continue;
       }
-      const declarations = colourDeclarations(rule.body);
+      const declarations = colorDeclarations(rule.body);
       if (declarations.length === 0) continue;
       if (rule.selector.startsWith("@")) {
         check(rule.selector, declarations);
@@ -397,7 +400,7 @@ export function auditDiagramSvg(svg, paletteHexes) {
     if (dead.has(element)) continue;
     for (const attribute of element.attributes) {
       const name = attribute.name.toLowerCase();
-      if (name === "style") check(`<${element.localName} style>`, colourDeclarations(attribute.value));
+      if (name === "style") check(`<${element.localName} style>`, colorDeclarations(attribute.value));
       else if (!COLOUR_PROPERTIES.has(name)) continue;
       else if (styledBy(element, name)) overridden += 1;
       else check(`<${element.localName}>`, [{ property: name, value: attribute.value }]);

@@ -3,7 +3,7 @@
 // (test/specimen.test.mjs) both read the elements through this file, so the page, the stored expected output and the index Carrel
 // reads cannot drift apart.
 
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 
@@ -169,29 +169,32 @@ export function expectedPath(id) {
 export const DIAGRAM_CONFIG_FILE = "config.json";
 
 /**
- * The diagram colours of one theme, by role, read from Capsomer's generated colour.css: the light theme is the first :root
+ * The diagram colors of one theme, by role, read from Capsomer's generated color.css: the light theme is the first :root
  * block, the dark one the [data-theme="dark"] block.
  *
  * @param {"light" | "dark"} theme
  */
-export function diagramColours(theme) {
-  const css = readFileSync(new URL("../tokens/colour.css", pathToFileURL(createRequire(import.meta.url).resolve("capsomer/tokens.css"))), "utf8");
+export function diagramColors(theme) {
+  const tokensCss = pathToFileURL(createRequire(import.meta.url).resolve("capsomer/tokens.css"));
+  // Capsomer 0.21.0 renamed tokens/colour.css to color.css; the old name serves the Capsomer pinned before it. codespell:ignore colour
+  const file = [new URL("../tokens/color.css", tokensCss), new URL("../tokens/colour.css", tokensCss)].find((url) => existsSync(url)); // codespell:ignore colour
+  const css = readFileSync(/** @type {URL} */ (file), "utf8");
   const start = theme === "light" ? css.indexOf(":root {") : css.indexOf(':root[data-theme="dark"] {');
-  if (start < 0) throw new Error(`Capsomer's colour.css has no ${theme} block`);
+  if (start < 0) throw new Error(`Capsomer's color.css has no ${theme} block`);
   const block = css.slice(start, css.indexOf("}", start));
   /** @type {Record<string, string>} */
   const tokens = {};
   for (const [, name, value] of block.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{3,8});/g)) tokens[name ?? ""] = value ?? "";
   /** @type {Record<string, string>} */
-  const colours = {};
+  const colors = {};
   for (const [role, token] of Object.entries(DIAGRAM_TOKENS)) {
-    if (!tokens[token]) throw new Error(`Capsomer's colour.css has no --${token} in the ${theme} theme`);
-    colours[role] = tokens[token];
+    if (!tokens[token]) throw new Error(`Capsomer's color.css has no --${token} in the ${theme} theme`);
+    colors[role] = tokens[token];
   }
-  return colours;
+  return colors;
 }
 
-/** Capsomer's token for each diagram colour role (DIAGRAM_ROLE_NAMES in render-diagram-draw.mjs). */
+/** Capsomer's token for each diagram color role (DIAGRAM_ROLE_NAMES in render-diagram-draw.mjs). */
 const DIAGRAM_TOKENS = {
   paper: "surface",
   raised: "raised",
@@ -206,11 +209,11 @@ const DIAGRAM_TOKENS = {
 };
 
 /**
- * What the diagrams are drawn with: the Mermaid version and each theme's colours from Capsomer's tokens. specimen/diagrams.mjs
- * stores it beside the drawings, and the build refuses drawings made with anything else, so a Capsomer colour change cannot
+ * What the diagrams are drawn with: the Mermaid version and each theme's colors from Capsomer's tokens. specimen/diagrams.mjs
+ * stores it beside the drawings, and the build refuses drawings made with anything else, so a Capsomer color change cannot
  * leave the diagrams in the old palette.
  */
 export function diagramConfig() {
   const mermaid = JSON.parse(readFileSync(new URL("../node_modules/@mermaid-js/mermaid-cli/package.json", import.meta.url), "utf8")).version;
-  return { mermaidCli: mermaid, light: diagramColours("light"), dark: diagramColours("dark") };
+  return { mermaidCli: mermaid, light: diagramColors("light"), dark: diagramColors("dark") };
 }

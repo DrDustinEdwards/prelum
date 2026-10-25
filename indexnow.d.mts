@@ -41,3 +41,5 @@ export type IndexNowInput = {
     from?: string | undefined;
     fetch?: typeof fetch | undefined;
 };
+/** The `/<key>.txt` file whose whole body is the key; `headers` adds to or replaces the Content-Type. */
+export function keyFileResponse(key: string, headers?: HeadersInit): Response;

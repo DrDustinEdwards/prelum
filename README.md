@@ -14,14 +14,15 @@ The helpers every site wrote for itself, written once here in the form of the be
 
 | Module | Exports |
 | --- | --- |
-| `xml` | `escapeXml`, `escapeXmlText`, `cdata`, `rfc822`, `isoDay`, `absolutiseUrls`, `mathToTex` |
+| `xml` | `escapeXml`, `escapeXmlText`, `cdata`, `rfc822`, `isoDay`, `absolutizeUrls` (`absolutiseUrls` still works), `jsonLdText`, `mathToTex` |
+| `slug` | `slugify(text, { max })` |
 | `feeds` | `rssDocument`, `rssItem`, `atomDocument`, `atomEntry`, `jsonFeedDocument`, `feedItem` (`itemPath` moves where a post lives) |
 | `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` list it in the image sitemap |
 | `llms` | `llmsDocument`, `llmsLink` |
 | `head` | `headTags(input)` (title, description, canonical, Open Graph, Twitter, `article:*`), `headHtml(tags)`, `absoluteUrl`, `articleDates`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT` |
 | `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage` |
 | `robots` | `robotsDocument(input)`, `aiTxt(input)`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
-| `indexnow` | `submitIndexNow(input)` |
+| `indexnow` | `submitIndexNow(input)`, `keyFileResponse(key, headers)` (the `/<key>.txt` file) |
 | `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })` |
 | `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` |
 | `render`, `render/nomath` | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl` |
@@ -162,7 +163,7 @@ A `:::diagram` holds Mermaid source and a required alt; the page shows a light a
 text out with a browser's font metrics, so the drawings are made ahead of time, in Node, by `render/diagram-draw`:
 `drawDiagrams` runs Mermaid's own renderer (`@mermaid-js/mermaid-cli`, in Chromium through `puppeteer`) for each drawing that
 is missing, with labels as SVG text (an `<img>` does not draw `<foreignObject>`) and an intrinsic size, and refuses any drawing
-that paints a colour outside the site's palette (`auditDiagramSvg`). A site gives one hex colour per role in
+that paints a color outside the site's palette (`auditDiagramSvg`). A site gives one hex color per role in
 `DIAGRAM_ROLE_NAMES` for each theme, and prunes the files `drawDiagrams` reports as stale by its own rules. Those three
 packages are optional peers, needed only where drawings are made.
 
@@ -170,7 +171,7 @@ packages are optional peers, needed only where drawings are made.
 
 These stay in each site:
 
-- **Search behaviour.** Prelum escapes FTS5 queries and fuses ranked lists. Each site still decides which indexes it has, how it
+- **Search behavior.** Prelum escapes FTS5 queries and fuses ranked lists. Each site still decides which indexes it has, how it
   tokenizes, how it weights fields and what a result page shows.
 - **Layouts.** No page, component or stylesheet lives here. The design system is Capsomer.
 - **Frontmatter, media rules, long-date and the site's search visibility.** The pipeline renders a body; the site reads its own

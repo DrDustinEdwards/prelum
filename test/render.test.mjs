@@ -1,4 +1,4 @@
-// The markdown pipeline's behaviour: what it returns, what it refuses and says why, and that the parts a site injects (media, packs,
+// The markdown pipeline's behavior: what it returns, what it refuses and says why, and that the parts a site injects (media, packs,
 // highlighting) are the only parts that know about the site.
 
 import assert from "node:assert/strict";
@@ -214,7 +214,7 @@ test("every way a page can cite media is collected, figure directives included",
   });
 });
 
-test("code is plain without a highlighter, and highlighted, labelled and line-marked with one", async () => {
+test("code is plain without a highlighter, and highlighted, labeled and line-marked with one", async () => {
   const plain = await core("```js\nlet a\n```");
   assert.equal(plain.html, '<pre><code class="language-js">let a\n</code></pre>');
 
@@ -295,7 +295,7 @@ test("the editorial pack: sidenotes, pull quotes, swatches, charts and diagrams,
   assert.match(html, /src="\/diagrams\/dustin-edwards-4efabcc1-dark\.svg"/);
   assert.deepEqual(diagrams, [{ key: "4efabcc1", source: "graph TD\n  A --> B" }]);
 
-  // A hex in the attribute with no label falls back to the hex as the label, the second channel for the colour.
+  // A hex in the attribute with no label falls back to the hex as the label, the second channel for the color.
   assert.match((await site(":swatch{color=#fff}")).html, /<code class="swatch-label">#FFF<\/code>/);
   // A pull quote that cannot be raised is refused, not left as a block <div> in the middle of a sentence.
   await refuses(site("- a :pullquote[hello there] b"), /:pullquote on line 1 of the body is not in a top-level paragraph/);

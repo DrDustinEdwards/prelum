@@ -6,7 +6,7 @@ import { auditDiagramSvg } from "../render-diagram-draw.mjs";
 const PALETTE = ["#111111", "#EEEEEE"];
 const problems = (/** @type {string} */ svg) => auditDiagramSvg(svg, PALETTE).problems;
 
-test("the colour audit reaches the root's own style, @media and @keyframes rules, and defs a <use> names", () => {
+test("the color audit reaches the root's own style, @media and @keyframes rules, and defs a <use> names", () => {
   assert.match(problems('<svg style="background-color: #FF0000"><rect fill="#111111"/></svg>').join(), /<svg style> background-color: #FF0000/);
   assert.equal(problems("<svg><style>@media (prefers-color-scheme: dark) { rect { fill: #FF0000; } }</style><rect/></svg>").length, 1);
   assert.equal(problems("<svg><style>@keyframes pulse { from { fill: #FF0000; } }</style><rect/></svg>").length, 1);

@@ -1,5 +1,5 @@
 // Validation and CSV parsing for the :::chart directive. The drawing is Enarratio's (the site's charts
-// package, as on /cv): its theme supplies the colours, its figure carries the accessible name and the
+// package, as on /cv): its theme supplies the colors, its figure carries the accessible name and the
 // data table. the site's stylesheet is that theme.
 
 import { areaChart, barChart, lineChart, scatterPlot } from "enarratio/plot";
