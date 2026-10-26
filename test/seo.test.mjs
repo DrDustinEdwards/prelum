@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { auditPages, crawlSite } from "../audit.mjs";
-import { headHtml, headTags, SERP_TITLE_LIMIT, truncateForSerp } from "../head.mjs";
+import { headHtml, headTags, SERP_TITLE_LIMIT, searchTitle, truncateForSerp } from "../head.mjs";
 import { aiTxt, DENIED_BOTS, robotsDocument } from "../robots.mjs";
 import { article, jsonLd } from "../schema.mjs";
 
@@ -100,15 +100,16 @@ test("a canonical must be on the production origin, and a sitemap page's canonic
   assert.deepEqual(findings.map((finding) => `${finding.check} ${finding.url}`).sort(), [`canonical-elsewhere ${ORIGIN}/b`, `canonical-off-site ${ORIGIN}/a`]);
 });
 
-test("the crawl follows a sitemap index and each redirect hop, checks unlisted links by status, and records a failed fetch", async () => {
+test("the crawl follows a sitemap index and each redirect hop, checks unlisted links by status, skips nofollow links, and records a failed fetch", async () => {
   /** @type {Record<string, () => Response>} */
   const site = {
     "/sitemap.xml": () => new Response(`<sitemapindex><sitemap><loc>${ORIGIN}/pages.xml</loc></sitemap></sitemapindex>`),
     "/pages.xml": () => new Response(`<urlset><url><loc>${ORIGIN}/</loc></url><url><loc>${ORIGIN}/old</loc></url><url><loc>${ORIGIN}/down</loc></url></urlset>`),
-    "/": () => new Response(`${page("/", "Home", "home")}<body><a href="/missing">m</a><a href="/moved">v</a></body></html>`, { headers: { "content-type": "text/html" } }),
+    "/": () => new Response(`${page("/", "Home", "home")}<body><a href="/missing">m</a><a href="/moved">v</a><a href="/admin" rel="nofollow">a</a></body></html>`, { headers: { "content-type": "text/html" } }),
     "/old": () => new Response(null, { status: 301, headers: { location: "/older" } }),
     "/older": () => new Response(null, { status: 301, headers: { location: "/" } }),
     "/moved": () => new Response(null, { status: 302, headers: { location: "/" } }),
+    "/admin": () => new Response(null, { status: 302, headers: { location: "https://sample.cloudflareaccess.com/" } }),
   };
   /** @type {string[]} */
   const methods = [];
@@ -123,6 +124,7 @@ test("the crawl follows a sitemap index and each redirect hop, checks unlisted l
   const { pages, sitemap } = await crawlSite({ origin: ORIGIN, fetch: fake });
   assert.deepEqual(sitemap, [`${ORIGIN}/`, `${ORIGIN}/old`, `${ORIGIN}/down`]);
   assert.ok(methods.includes("HEAD /moved") && methods.includes("GET /missing"));
+  assert.ok(!methods.some((each) => each.endsWith(" /admin")));
   assert.deepEqual(pages.find((each) => each.url === `${ORIGIN}/down`), { url: `${ORIGIN}/down`, status: 0, error: "connection reset" });
 
   const { findings } = auditPages(pages, { origin: ORIGIN, sitemap });
@@ -137,11 +139,13 @@ test("the crawl follows a sitemap index and each redirect hop, checks unlisted l
   assert.equal((await crawlSite({ origin: ORIGIN, fetch: fake, maxPages: 2 })).pages.length, 2);
 });
 
-test("a cut title fits the limit with its ellipsis, and the audit counts an entity as the one character it stands for", () => {
+test("a cut title fits the limit with its ellipsis and drops the site suffix, and the audit counts an entity as the one character it stands for", () => {
   const long = "Dustin Edwards, Professor of Virology, Microbiology, and Science Writing at Tarleton";
   const cut = truncateForSerp(long, SERP_TITLE_LIMIT);
   assert.ok(cut.length <= SERP_TITLE_LIMIT, cut);
   assert.equal(cut, "Dustin Edwards, Professor of Virology, Microbiology, and...");
+  assert.equal(searchTitle("Short", " | Sample"), "Short | Sample");
+  assert.equal(searchTitle(long, " | Sample"), cut);
   const title = `Dustin&#x27;s ${"x".repeat(SERP_TITLE_LIMIT - 9)}`;
   const { findings } = auditPages([{ url: `${ORIGIN}/`, status: 200, html: `${page("/", title, "one")}<body></body></html>` }], { origin: ORIGIN });
   assert.equal(findings.filter((finding) => finding.check === "title-long").length, 0);

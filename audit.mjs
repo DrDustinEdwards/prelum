@@ -273,12 +273,17 @@ function sameOrigin(url, origin) {
   return resolved !== null && new URL(resolved).origin === origin;
 }
 
-/** The same-origin `<a href>` targets in a page, absolute and without fragments, as written (not normalized). @param {string} html @param {string} base @param {string} origin */
+/**
+ * The same-origin `<a href>` targets in a page, absolute and without fragments, as written (not normalized). A
+ * rel="nofollow" link, such as a sign-in link, is one the site asks crawlers not to follow, so it is left out.
+ * @param {string} html @param {string} base @param {string} origin
+ */
 function internalLinks(html, base, origin) {
   /** @type {string[]} */
   const urls = [];
-  for (const { href } of tags(html, "a")) {
+  for (const { href, rel } of tags(html, "a")) {
     if (!href || href.startsWith("#") || /^(mailto|tel|javascript|data):/i.test(href)) continue;
+    if (rel && /(^|\s)nofollow(\s|$)/i.test(rel)) continue;
     const url = resolve(href, base);
     if (url && new URL(url).origin === origin && !urls.includes(url)) urls.push(url);
   }
