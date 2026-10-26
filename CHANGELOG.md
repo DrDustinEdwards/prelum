@@ -3,6 +3,7 @@
 ## Unreleased
 
 - The specimen moves to Capsomer v0.22.0, the newest release.
+- devkit v0.13.3, site-runtime v0.24.0 and Capsomer v0.23.0, the newest releases.
 
 ## 0.14.0 (2026-10-26)
 
