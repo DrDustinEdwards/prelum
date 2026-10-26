@@ -165,12 +165,16 @@ export function expectedPath(id) {
   return new URL(`${id}.html`, EXPECTED_DIR);
 }
 
+/** The specimen's Capsomer family, on the page's root: the build sets it and the diagrams are drawn in it. */
+export const FAMILY = "cerulean";
+
 /** Beside the drawings in specimen/diagrams: the configuration they were drawn with. */
 export const DIAGRAM_CONFIG_FILE = "config.json";
 
 /**
- * The diagram colors of one theme, by role, read from Capsomer's generated color.css: the light theme is the first :root
- * block, the dark one the [data-theme="dark"] block.
+ * The diagram colors of one theme, by role, read from Capsomer's generated color.css (the light theme is the first :root
+ * block, the dark one the [data-theme="dark"] block) with the specimen's own family, cerulean, laid over it from
+ * family-cerulean.css, as the page does.
  *
  * @param {"light" | "dark"} theme
  */
@@ -181,10 +185,14 @@ export function diagramColors(theme) {
   const css = readFileSync(/** @type {URL} */ (file), "utf8");
   const start = theme === "light" ? css.indexOf(":root {") : css.indexOf(':root[data-theme="dark"] {');
   if (start < 0) throw new Error(`Capsomer's color.css has no ${theme} block`);
-  const block = css.slice(start, css.indexOf("}", start));
+  const family = readFileSync(new URL(`../tokens/family-${FAMILY}.css`, tokensCss), "utf8");
+  const familyStart = theme === "light" ? family.indexOf(`[data-family="${FAMILY}"] {`) : family.indexOf(`:root:not([data-theme="light"])[data-family="${FAMILY}"] {`);
+  if (familyStart < 0) throw new Error(`Capsomer's family-${FAMILY}.css has no ${theme} block`);
   /** @type {Record<string, string>} */
   const tokens = {};
-  for (const [, name, value] of block.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{3,8});/g)) tokens[name ?? ""] = value ?? "";
+  for (const block of [css.slice(start, css.indexOf("}", start)), family.slice(familyStart, family.indexOf("}", familyStart))]) {
+    for (const [, name, value] of block.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{3,8});/g)) tokens[name ?? ""] = value ?? "";
+  }
   /** @type {Record<string, string>} */
   const colors = {};
   for (const [role, token] of Object.entries(DIAGRAM_TOKENS)) {

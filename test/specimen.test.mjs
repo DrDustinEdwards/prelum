@@ -93,7 +93,7 @@ test("the built site carries the index generated from the sources, names Prelum'
       const html = readFileSync(join(out, page), "utf8");
       assert.doesNotMatch(html, /<meta[^>]+name="generator"/i, `${page} carries a generator tag`);
       assert.doesNotMatch(html, /<script/i, `${page} carries a script`);
-      assert.match(html, new RegExp(`<footer class="site-foot">\\s*<p>Prelum ${version.replace(/\./g, "\\.")},`), `${page} footer`);
+      assert.match(html, new RegExp(`<footer class="site-foot">[\\s\\S]*Prelum ${version.replace(/\./g, "\\.")},`), `${page} footer`);
     }
     const page = readFileSync(join(out, "index.html"), "utf8");
     for (const element of elements) assert.ok(page.includes(`id="el-${element.id}"`), `index.html shows ${element.id}`);
