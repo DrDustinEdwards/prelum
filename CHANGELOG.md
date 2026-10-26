@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- The specimen serves `/.well-known/security.txt` (site-runtime, security@dustinedwards.info), an IndexNow key file and a
+  sitemap, and its deploy pings IndexNow with `prelum-indexnow`. A refused ping is only a warning.
+- The repository runs devkit's family check and its no-bloat report (`npm run bloat`, a warning) in CI; site-runtime, a
+  development dependency for the specimen, moves to v0.23.0.
+
 ## 0.13.0 (2026-10-25)
 
 ### Added
