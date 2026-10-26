@@ -2,8 +2,17 @@
 
 ## Unreleased
 
+## 0.14.0 (2026-10-26)
+
+### Added
+
+- `searchTitle(title, suffix)` in `head`: the title with the site suffix where both fit in a search result, else the
+  title alone, cut at a word. It moves here from dustinedwards.info so every site cuts long titles the same way.
+
 ### Changed
 
+- `crawlSite` and `auditPages` skip links marked rel="nofollow", such as a footer sign-in link, so a link to a page
+  behind a sign-in is no longer reported as a redirect.
 - The specimen serves `/.well-known/security.txt` (site-runtime, security@dustinedwards.info), an IndexNow key file and a
   sitemap, and its deploy pings IndexNow with `prelum-indexnow`. A refused ping is only a warning.
 - The repository runs devkit's family check and its no-bloat report (`npm run bloat`, a warning) in CI; site-runtime, a

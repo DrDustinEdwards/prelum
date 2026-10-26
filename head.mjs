@@ -172,3 +172,15 @@ export function truncateForSerp(text, limit) {
   const lastSpace = cut.lastIndexOf(" ");
   return `${(lastSpace > limit * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[\s,;:.\-–—]+$/, "")}...`;
 }
+
+/**
+ * The `<title>` a search result shows: the title with the site's suffix where both fit, else the suffix dropped and the
+ * title cut at a word. Only the `<title>` is shortened; pass the whole title as `socialTitle` and keep it in the heading.
+ *
+ * @param {string} title
+ * @param {string} suffix e.g. " | Foxing"
+ */
+export function searchTitle(title, suffix) {
+  const full = `${title}${suffix}`;
+  return full.length <= SERP_TITLE_LIMIT ? full : truncateForSerp(title, SERP_TITLE_LIMIT);
+}

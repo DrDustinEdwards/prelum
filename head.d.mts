@@ -79,6 +79,14 @@ export function headHtml(tags: HeadTag[]): string;
  */
 export function truncateForSerp(text: string, limit: number): string;
 /**
+ * The `<title>` a search result shows: the title with the site's suffix where both fit, else the suffix dropped and the
+ * title cut at a word. Only the `<title>` is shortened; pass the whole title as `socialTitle` and keep it in the heading.
+ *
+ * @param {string} title
+ * @param {string} suffix e.g. " | Foxing"
+ */
+export function searchTitle(title: string, suffix: string): string;
+/**
  * Google truncates by pixel width (about 600px title, 920px description), so these approximate it; a 160-character counter
  * would show text the result clips.
  */
