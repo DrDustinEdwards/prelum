@@ -9,11 +9,13 @@ import { createRequire } from "node:module";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { securityTxt } from "@dustinedwards/site-runtime/security-txt";
 import { capsomerTheme } from "capsomer/enarratio-theme";
 import { stylesheet } from "enarratio";
 
 import { llmsDocument } from "../llms.mjs";
 import { rssItem } from "../feeds.mjs";
+import { sitemapDocument } from "../sitemap.mjs";
 import { RENDER_VERSION, render } from "../render.mjs";
 import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
 import { absolutizeUrls, escapeXml, mathToTex } from "../xml.mjs";
@@ -24,6 +26,12 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..");
 const require = createRequire(import.meta.url);
 const REPO = "https://github.com/DrDustinEdwards/prelum";
+
+/** The IndexNow key, served as /<key>.txt; .github/workflows/specimen.yml reads it here to ping IndexNow. Public by design. */
+const INDEXNOW_KEY = "32790edc1bac129b5f5c0b174219150c";
+
+/** When security.txt lapses (RFC 9116 asks for under a year); renew it before then. */
+const SECURITY_TXT_EXPIRES = "2027-10-26T00:00:00Z";
 
 /** @param {string} specifier a package file, resolved from this repository's node_modules */
 const packageFile = (specifier) => require.resolve(specifier);
@@ -320,6 +328,16 @@ ${await outputsSection(version)}
   );
 
   writeFileSync(join(outDir, "elements.json"), `${JSON.stringify(elementIndex(elements, version), null, 2)}\n`);
+
+  // security.txt (site-runtime), the IndexNow key file, and a sitemap of the one page, which the deploy hands to
+  // prelum-indexnow.
+  mkdirSync(join(outDir, ".well-known"), { recursive: true });
+  writeFileSync(
+    join(outDir, ".well-known", "security.txt"),
+    securityTxt({ origin: ORIGIN, contact: "security@dustinedwards.info", expires: SECURITY_TXT_EXPIRES }),
+  );
+  writeFileSync(join(outDir, `${INDEXNOW_KEY}.txt`), INDEXNOW_KEY);
+  writeFileSync(join(outDir, "sitemap.xml"), sitemapDocument([{ loc: `${ORIGIN}/` }]));
 
   /** @type {string[]} */
   const files = [];

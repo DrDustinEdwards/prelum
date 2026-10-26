@@ -1,0 +1,16 @@
+{
+  "tools": {
+    "knip": "knip@6.39.0",
+    "jscpd": "jscpd@5.4.0"
+  },
+  "baseline": {
+    "measured_at": "f73d03b",
+    "knip": {
+      "Duplicate exports": 1
+    },
+    "jscpd": {
+      "clones": 0,
+      "percentage": 0
+    }
+  }
+}

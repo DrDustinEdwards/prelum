@@ -1,0 +1,20 @@
+{
+  "$schema": "https://unpkg.com/knip@6.39.0/schema.json",
+  "entry": [
+    "*.mjs",
+    "bin/*.mjs",
+    "specimen/*.mjs",
+    "test/*.test.mjs"
+  ],
+  "project": [
+    "*.mjs",
+    "bin/**/*.mjs",
+    "specimen/**/*.mjs",
+    "test/**/*.mjs"
+  ],
+  "ignoreDependencies": [
+    "@fontsource-variable/source-serif-4",
+    "@fontsource/martian-mono",
+    "@fontsource/schibsted-grotesk"
+  ]
+}

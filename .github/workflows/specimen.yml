@@ -53,3 +53,10 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # Prelum's own prelum-indexnow with the built sitemap and the key in specimen/build.mjs. A refused ping is a warning,
+      # never a failed deploy.
+      - if: steps.secrets.outputs.ready == 'true'
+        name: Tell IndexNow
+        run: |
+          key=$(sed -n 's/^const INDEXNOW_KEY = "\(.*\)";$/\1/p' specimen/build.mjs)
+          node bin/indexnow.mjs --origin https://prelum.dustinedwards.info --key "$key" --sitemap specimen/dist/sitemap.xml
