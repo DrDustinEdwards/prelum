@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The specimen moves to Capsomer v0.22.0, the newest release.
+
 ## 0.14.0 (2026-10-26)
 
 ### Added
