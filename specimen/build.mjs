@@ -20,7 +20,7 @@ import { RENDER_VERSION, render } from "../render.mjs";
 import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
 import { absolutizeUrls, escapeXml, mathToTex } from "../xml.mjs";
 import { SITE_HEADERS } from "./headers.mjs";
-import { ASSET_PREFIX, DIAGRAM_CONFIG_FILE, ORIGIN, diagramConfig, elementIndex, loadElements, options, renderElement, resolveImage, splitHeader } from "./specimen.mjs";
+import { ASSET_PREFIX, DIAGRAM_CONFIG_FILE, FAMILY, ORIGIN, diagramConfig, elementIndex, loadElements, options, renderElement, resolveImage, splitHeader } from "./specimen.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..");
@@ -75,11 +75,14 @@ function writeStyles(outDir) {
   });
   const capsomer = dirname(packageFile("capsomer/tokens.css"));
   const css = [
-    "/* Built by specimen/build.mjs: Capsomer's fonts, tokens, base and prose styles, Enarratio's chart styles in Capsomer's theme, and specimen/site.css. */",
+    "/* Built by specimen/build.mjs: Capsomer's fonts, tokens, the specimen's family, base, prose and manual styles, Enarratio's chart styles in Capsomer's theme, and specimen/site.css. */",
     ...faces,
     inlineCss(join(capsomer, "tokens.css")),
     inlineCss(join(capsomer, "base.css")),
     inlineCss(join(capsomer, "prose.css")),
+    // The NASA manual theme every dustinedwards.info public page shares, in the specimen's own family.
+    `@layer cap.tokens {\n${inlineCss(join(capsomer, "..", "tokens", `family-${FAMILY}.css`))}\n}`,
+    inlineCss(join(capsomer, "..", "components", "manual", "manual.css")),
     // Capsomer's tokens.css also maps the --enarratio-* properties onto its tokens (css/enarratio.css). The two agree, being
     // generated from the same tokens; Enarratio 0.1.0-alpha.8 has no color-free base stylesheet, so its full one is used.
     stylesheet(capsomerTheme),
@@ -144,7 +147,7 @@ function copyTree(from, to) {
  */
 function documentHtml({ title, description, body, version }) {
   return `<!doctype html>
-<html lang="en">
+<html lang="en" data-family="${FAMILY}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -157,9 +160,10 @@ function documentHtml({ title, description, body, version }) {
 <body>
 <a class="skip-link" href="#main">Skip to the elements</a>
 <div class="page">
+<div class="cap-running-head" data-variant="sign"><span class="cap-running-head-name"><span class="cap-running-head-no">1</span>Prelum specimen</span><span class="cap-running-head-folio">Release ${escapeXml(version)}</span></div>
 ${body}
 <footer class="site-foot">
-<p>Prelum ${escapeXml(version)}, render version ${escapeXml(RENDER_VERSION)}. <a href="${REPO}">The code on GitHub</a>. Styled with Capsomer; charts drawn by Enarratio.</p>
+<div class="cap-letterhead"><p class="cap-letterhead-logo">Prelum</p><p class="cap-letterhead-address"><b>Prelum ${escapeXml(version)}, render version ${escapeXml(RENDER_VERSION)}</b><br>The family's publishing library<br><a href="${REPO}">The code on GitHub</a>. Styled with Capsomer; charts drawn by Enarratio.</p><span class="cap-letterhead-folio">prelum.dustinedwards.info</span></div>
 </footer>
 </div>
 </body>
@@ -177,8 +181,9 @@ const feedForm = (/** @type {string} */ html) => absolutizeUrls(mathToTex(html),
 /**
  * @param {import("./specimen.mjs").Element} element
  * @param {string} html
+ * @param {number} no its number on the page
  */
-function elementSection(element, html) {
+function elementSection(element, html, no) {
   const directives = element.directives.map((d) => `:${d}`).join(", ");
   const pack =
     element.pack === "editorial"
@@ -186,7 +191,7 @@ function elementSection(element, html) {
       : `<span class="element-pack">core</span>`;
   const feed = feedForm(html);
   return `<section class="element" id="el-${element.id}" aria-labelledby="el-${element.id}-name">
-<h2 class="element-name" id="el-${element.id}-name"><a href="#el-${element.id}">${escapeXml(element.name)}</a></h2>
+<h2 class="element-name cap-part-title" id="el-${element.id}-name"><span class="cap-part-no">${no}</span><a href="#el-${element.id}">${escapeXml(element.name)}</a></h2>
 <p class="element-meta">${escapeXml(element.summary)} ${pack}${directives ? ` <span class="sr-only">directives:</span> <code>${escapeXml(directives)}</code>` : ""}</p>
 <div class="pair">
 <div>
@@ -211,8 +216,9 @@ ${feed === html ? "" : codeView("In the RSS item", feed)}
  * A short post through every output Prelum makes from it: the page's HTML, the RSS item and the llms.txt entry.
  *
  * @param {string} version
+ * @param {number} no its number on the page
  */
-async function outputsSection(version) {
+async function outputsSection(version, no) {
   const text = readFileSync(join(HERE, "sample-post.md"), "utf8");
   const { header: meta, source: body } = splitHeader("specimen/sample-post.md", text, ["title", "slug", "description", "date"]);
   const { html } = await render({ file: "specimen/sample-post.md", body, resolveImage, options });
@@ -234,7 +240,7 @@ async function outputsSection(version) {
     sections: [{ heading: "Writing", links: [{ title: post.title, url: link, description: meta.description }] }],
   });
   return `<section class="outputs" id="outputs" aria-labelledby="outputs-name">
-<h2 class="element-name" id="outputs-name"><a href="#outputs">One source, three outputs</a></h2>
+<h2 class="element-name cap-part-title" id="outputs-name"><span class="cap-part-no">${no}</span><a href="#outputs">One source, three outputs</a></h2>
 <p class="element-meta">A short post as a site publishes it: the page, the RSS item (<code>rssItem</code>: math as TeX, URLs made absolute) and the line llms.txt gives it (<code>llmsDocument</code>).</p>
 <div class="pair">
 <div>
@@ -292,21 +298,31 @@ export async function buildSpecimen(outDir) {
   writeStyles(outDir);
   copyDiagrams(outDir, rendered.flatMap((r) => r.diagrams));
 
-  const contents = elements.map((e) => `<li><a href="#el-${e.id}">${escapeXml(e.name)}</a></li>`).join("\n");
+  /** @param {number} no @param {string} href @param {string} name @param {string} fact */
+  const indexRow = (no, href, name, fact) =>
+    `<li><a class="cap-leader-index-link" href="${href}"><span class="cap-leader-index-no">${no}</span><span class="cap-leader-index-name">${escapeXml(name)}</span><span class="cap-leader-index-dots" aria-hidden="true"></span><span class="cap-leader-index-fact">${fact}</span></a></li>`;
+  const contents = elements.map((e, i) => indexRow(i + 1, `#el-${e.id}`, e.name, e.pack)).join("\n");
+  const editorialCount = elements.filter((e) => e.pack === "editorial").length;
   const body = `<main id="main" tabindex="-1">
 <header class="page-head">
 <h1>Prelum specimen</h1>
 <p class="page-lead">Every element Prelum renders from markdown, each source beside its output, in the configuration dustinedwards.info uses: the core, the editorial pack and code highlighting. The page follows your system's light or dark setting. The list is also at <a href="/elements.json">elements.json</a>, generated from the same sources.</p>
+<dl class="cap-form-boxes" data-variant="readings">
+<div class="cap-form-boxes-box"><dt>Release</dt><dd>${escapeXml(version)}</dd></div>
+<div class="cap-form-boxes-box"><dt>Render version</dt><dd>${escapeXml(RENDER_VERSION)}</dd></div>
+<div class="cap-form-boxes-box"><dt>Elements</dt><dd>${elements.length}</dd></div>
+<div class="cap-form-boxes-box"><dt>Editorial pack</dt><dd>${editorialCount}</dd></div>
+</dl>
 </header>
 <nav class="contents" aria-labelledby="contents-name">
 <h2 id="contents-name">Elements</h2>
-<ol>
+<ol class="cap-leader-index">
 ${contents}
-<li><a href="#outputs">One source, three outputs</a></li>
+${indexRow(elements.length + 1, "#outputs", "One source, three outputs", "page, feed, llms.txt")}
 </ol>
 </nav>
-${elements.map((e, i) => elementSection(e, rendered[i]?.html ?? "")).join("\n")}
-${await outputsSection(version)}
+${elements.map((e, i) => elementSection(e, rendered[i]?.html ?? "", i + 1)).join("\n")}
+${await outputsSection(version, elements.length + 1)}
 </main>`;
   const index = documentHtml({
     title: "Prelum specimen",

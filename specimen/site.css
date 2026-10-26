@@ -31,9 +31,18 @@
   margin-inline: auto;
   padding: 24px 16px 64px;
 }
+/* The NASA manual theme (capsomer/manual.css) in cerulean: a sign for the running head, the facts in form boxes, the
+   contents as a leader index, each element a numbered part, and a letterhead at the foot. */
+.page > .cap-running-head {
+  margin-block-end: 32px;
+}
 .page-head h1 {
   margin: 0 0 8px;
-  font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem);
+  font-size: clamp(2rem, 1.5rem + 2vw, 3rem);
+  letter-spacing: -0.02em;
+}
+.page-head .cap-form-boxes {
+  margin-block: 24px 0;
 }
 .page-lead {
   max-inline-size: var(--measure);
@@ -41,39 +50,37 @@
   color: var(--muted);
 }
 .contents {
-  margin: 24px 0 8px;
-  padding: 16px;
-  background: var(--raised);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  margin: 40px 0 8px;
+}
+@media (min-width: 64rem) {
+  .contents .cap-leader-index {
+    columns: 2;
+    column-gap: 48px;
+  }
+  .contents .cap-leader-index li {
+    break-inside: avoid;
+  }
+}
+.outputs > .pair-label {
+  margin-block-start: 24px;
 }
 .contents h2 {
   margin: 0 0 8px;
-  font-size: 1rem;
-}
-.contents ol {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 0 16px;
-  margin: 0;
-  padding-inline-start: 1.5em;
-}
-.contents a {
-  display: inline-block;
-  min-block-size: 24px;
-  padding-block: 2px;
+  font: 600 0.75rem / 1.5 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .element,
 .outputs {
-  margin-block: 48px;
-  padding-block-start: 24px;
-  border-block-start: 1px solid var(--line);
+  margin-block: 56px;
+  padding-block-start: 16px;
+  border-block-start: 4px solid var(--text);
   scroll-margin-block-start: 16px;
 }
 .element-name {
   margin: 0;
-  font-size: 1.375rem;
+  font-size: 1.5rem;
 }
 .element-name a {
   color: inherit;
@@ -90,9 +97,10 @@
   display: inline-block;
   margin-inline-start: 4px;
   padding: 0 8px;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  font-size: 0.8125rem;
+  border: 1px solid var(--text);
+  font: 0.6875rem / 1.7 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--text);
 }
 .pair {
@@ -109,9 +117,8 @@
 }
 .pair-label {
   margin: 0 0 6px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font: 600 0.6875rem / 1.5 var(--mono);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -121,8 +128,7 @@
   padding: 12px;
   overflow-x: auto;
   background: var(--sunken);
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  border: 1px solid var(--line-strong);
   font: 0.8125rem / 1.6 var(--mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -130,8 +136,8 @@
 .output {
   padding: 16px;
   background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  border-block-start: 4px solid var(--on);
   min-inline-size: 0;
 }
 .views {
@@ -153,9 +159,6 @@
 
 .site-foot {
   margin-block-start: 64px;
-  padding-block-start: 16px;
-  border-block-start: 1px solid var(--line);
-  color: var(--muted);
   font-size: 0.875rem;
 }
 
