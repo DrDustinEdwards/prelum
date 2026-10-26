@@ -3,6 +3,7 @@
 ## Unreleased
 
 - The specimen moves to Capsomer v0.22.0, the newest release.
+- CI moves to devkit v0.13.3, the newest release.
 
 ## 0.14.0 (2026-10-26)
 
