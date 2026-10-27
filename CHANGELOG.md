@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.15.0 (2026-10-27)
+
+### Added
+
+- Search for a site with no database, in `search`: the build writes an index with `staticSearchIndex(pages)` (url, title,
+  summary, headings, text) and the search page ranks it in the browser with `staticSearch(index, query)`. Every word must
+  match (the last as a prefix), accents fold as `slugify` folds them, the title counts most, and a result links to the
+  heading that matched. Capsomer's site is the first to use it; Enarratio's gallery and the specimen can follow.
+
+### Changed
+
 - The specimen's Worker is named `prelum`, after its site, as every family Worker is named after its product.
 - The specimen takes the NASA manual theme the dustinedwards.info public pages share (Capsomer's `manual.css`), in its own family, cerulean: a running head as a sign, the facts in form boxes, the contents as a leader index, each element a numbered part and a letterhead at the foot. The diagrams are drawn in cerulean too (`diagramColors` lays `family-cerulean.css` over Capsomer's base colors). Rendered HTML is unchanged, so `RENDER_VERSION` stays 4.
 - The specimen moves to Capsomer v0.22.0, the newest release.

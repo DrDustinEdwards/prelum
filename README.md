@@ -24,7 +24,7 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `robots` | `robotsDocument(input)`, `aiTxt(input)`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
 | `indexnow` | `submitIndexNow(input)`, `keyFileResponse(key, headers)` (the `/<key>.txt` file), `recentSitemapUrls(xml, { days })`; the `prelum-indexnow` bin |
 | `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })` |
-| `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` |
+| `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` (D1's FTS5); `staticSearchIndex(pages)` at build and `staticSearch(index, query)` in the browser, `searchWords`, for a site with no database |
 | `render`, `render/nomath` | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl` |
 | `render/packs` | `editorialPack`, the `RenderPack` shape a site's own directives take |
 | `render/highlight` | `createHighlight`, `LANGUAGES`, `SHIKI_THEMES` |
