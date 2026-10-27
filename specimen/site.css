@@ -11,31 +11,18 @@
   white-space: nowrap;
 }
 
-.skip-link {
-  position: absolute;
-  inset-inline-start: 16px;
-  inset-block-start: -100px;
-  padding: 8px 12px;
-  background: var(--surface);
-  color: var(--accent-text);
-  border: 1px solid var(--line-strong);
-  border-radius: 6px;
-}
-.skip-link:focus {
-  inset-block-start: 8px;
-}
-
 /* The page. */
 .page {
   max-inline-size: 1180px;
   margin-inline: auto;
   padding: 24px 16px 64px;
 }
-/* The NASA manual theme (capsomer/manual.css) in cerulean: a sign for the running head, the facts in form boxes, the
-   contents as a leader index, each element a numbered part, and a letterhead at the foot. */
-.page > .cap-running-head {
-  margin-block-end: 32px;
+/* The family letterhead at the top lines up with the page's column. */
+:root {
+  --header-max: calc(1180px - 32px);
 }
+/* The NASA manual theme (capsomer/manual.css) in cerulean: the facts in form boxes, the contents as a leader index,
+   each element a numbered part, and a letterhead at the foot. */
 .page-head h1 {
   margin: 0 0 8px;
   font-size: clamp(2rem, 1.5rem + 2vw, 3rem);

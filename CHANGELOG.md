@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Changed
+
+- The specimen wears the family letterhead (Capsomer v0.28.1, `letterheadHtml`): the cerulean stripe over the band, the mark
+  with "Dustin Edwards" over Prelum, and Home, Elements and Outputs in a second row, pinned at the top. It replaces the
+  running head sign and the specimen's own skip link. The page has no script, so it follows the system's theme.
+
 ## 0.15.0 (2026-10-27)
 
 ### Added

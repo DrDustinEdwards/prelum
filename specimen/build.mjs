@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 
 import { securityTxt } from "@dustinedwards/site-runtime/security-txt";
 import { familyFooterHtml } from "capsomer/behavior/family-footer";
+import { letterheadHtml } from "capsomer/behavior/site-header";
 import { capsomerTheme } from "capsomer/enarratio-theme";
 import { stylesheet } from "enarratio";
 
@@ -84,6 +85,8 @@ function writeStyles(outDir) {
     // The NASA manual theme every dustinedwards.info public page shares, in the specimen's own family.
     `@layer cap.tokens {\n${inlineCss(join(capsomer, "..", "tokens", `family-${FAMILY}.css`))}\n}`,
     inlineCss(join(capsomer, "..", "components", "manual", "manual.css")),
+    // The family letterhead at the top of every page, pinned while it scrolls.
+    inlineCss(join(capsomer, "..", "components", "site-header", "site-header.css")),
     // The family footer every dustinedwards.info site ends with, and the color marks of its Network strip.
     inlineCss(join(capsomer, "..", "tokens", "family-marks.css")),
     inlineCss(join(capsomer, "..", "components", "family-footer", "family-footer.css")),
@@ -163,6 +166,19 @@ const footerHtml = (version) =>
 </div>`,
   });
 
+/** The family letterhead (capsomer/site-header); the page has no script, so it follows the system's theme. */
+const HEADER = letterheadHtml({
+  name: "Prelum",
+  mark: '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M10 7h8a6 6 0 0 1 0 12h-4v6h-4z"/></svg>',
+  links: [
+    ["/", "Home"],
+    ["/#contents-name", "Elements"],
+    ["/#outputs", "Outputs"],
+  ],
+  current: "Home",
+  theme: false,
+});
+
 /**
  * @param {{ title: string, description: string, body: string, version: string }} page
  */
@@ -179,9 +195,8 @@ function documentHtml({ title, description, body, version }) {
 <link rel="stylesheet" href="/katex/katex.min.css">
 </head>
 <body>
-<a class="skip-link" href="#main">Skip to the elements</a>
+${HEADER}
 <div class="page">
-<div class="cap-running-head" data-variant="sign"><span class="cap-running-head-name"><span class="cap-running-head-no">1</span>Prelum specimen</span><span class="cap-running-head-folio">Release ${escapeXml(version)}</span></div>
 ${body}
 <footer class="site-foot">${footerHtml(version)}</footer>
 </div>
