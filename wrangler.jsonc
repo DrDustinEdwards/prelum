@@ -3,7 +3,7 @@
   // No account id here: wrangler takes it from the login or from CLOUDFLARE_ACCOUNT_ID. Deploy with `npm run deploy:specimen`.
   // The custom domain below is created by the first deploy; adding it is Dustin's step (conventions 1.7).
   "$schema": "https://unpkg.com/wrangler@4.143.0/config-schema.json",
-  "name": "prelum-specimen",
+  "name": "prelum",
   "compatibility_date": "2026-09-28",
   "main": "./specimen/worker.mjs",
   "assets": {
