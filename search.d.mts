@@ -38,3 +38,25 @@ export function fuse<T extends {
 }>;
 /** Reciprocal rank fusion constant. See fuse(). */
 export const RRF_K: 60;
+/** One page of a static search index, as `staticSearchIndex` writes it: url, title, summary, headings [id, text] and text. */
+export type StaticSearchPage = { u: string; t: string; s: string; h: Array<[string, string]>; x: string };
+/** A static search index: what the build writes and the search page loads. */
+export type StaticSearchIndex = { v: 1; pages: StaticSearchPage[] };
+/** One result of `staticSearch`; `url` points to the heading that matched most words, when one did. */
+export type StaticSearchResult = { url: string; title: string; summary: string; heading: string | null; snippet: string; score: number };
+/**
+ * Search for a site with no database: the build writes the index once, the search page ranks with `staticSearch` in the
+ * browser. Each page keeps at most `maxText` characters of its text (default 4000).
+ */
+export function staticSearchIndex(
+  pages: Array<{ url: string; title: string; summary?: string; headings?: Array<{ id: string; text: string }>; text?: string }>,
+  options?: { maxText?: number },
+): StaticSearchIndex;
+/** The query's words, folded as `slugify` folds them (café to cafe), split on anything not a letter or digit. */
+export function searchWords(query: string): string[];
+/**
+ * Ranks the pages: every word must start a word somewhere in a page (the last may be cut short); the title counts most,
+ * then a heading, the summary and the text, with a bonus when the title is exactly the query. At most `limit` results
+ * (default 50), snippets of about `snippet` characters (default 160).
+ */
+export function staticSearch(index: StaticSearchIndex, query: string, options?: { limit?: number; snippet?: number }): StaticSearchResult[];
