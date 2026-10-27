@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The specimen's Worker is named `prelum`, after its site, as every family Worker is named after its product.
 - The specimen takes the NASA manual theme the dustinedwards.info public pages share (Capsomer's `manual.css`), in its own family, cerulean: a running head as a sign, the facts in form boxes, the contents as a leader index, each element a numbered part and a letterhead at the foot. The diagrams are drawn in cerulean too (`diagramColors` lays `family-cerulean.css` over Capsomer's base colors). Rendered HTML is unchanged, so `RENDER_VERSION` stays 4.
 - The specimen moves to Capsomer v0.22.0, the newest release.
 - devkit v0.13.3, site-runtime v0.24.0 and Capsomer v0.23.0, the newest releases.
