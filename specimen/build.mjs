@@ -10,6 +10,7 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { securityTxt } from "@dustinedwards/site-runtime/security-txt";
+import { familyFooterHtml } from "capsomer/behavior/family-footer";
 import { capsomerTheme } from "capsomer/enarratio-theme";
 import { stylesheet } from "enarratio";
 
@@ -83,6 +84,9 @@ function writeStyles(outDir) {
     // The NASA manual theme every dustinedwards.info public page shares, in the specimen's own family.
     `@layer cap.tokens {\n${inlineCss(join(capsomer, "..", "tokens", `family-${FAMILY}.css`))}\n}`,
     inlineCss(join(capsomer, "..", "components", "manual", "manual.css")),
+    // The family footer every dustinedwards.info site ends with, and the color marks of its Network strip.
+    inlineCss(join(capsomer, "..", "tokens", "family-marks.css")),
+    inlineCss(join(capsomer, "..", "components", "family-footer", "family-footer.css")),
     // Capsomer's tokens.css also maps the --enarratio-* properties onto its tokens (css/enarratio.css). The two agree, being
     // generated from the same tokens; Enarratio 0.1.0-alpha.8 has no color-free base stylesheet, so its full one is used.
     stylesheet(capsomerTheme),
@@ -143,6 +147,23 @@ function copyTree(from, to) {
 }
 
 /**
+ * The family footer (capsomer/family-footer), with Prelum's own part under its thin cerulean stripe.
+ * @param {string} version
+ */
+const footerHtml = (version) =>
+  familyFooterHtml({
+    site: "prelum",
+    center: `<div class="cap-family-footer-center">
+<div><p class="cap-family-footer-center-name">Prelum</p><p class="cap-family-footer-about">The family's publishing library: markdown to pages, feeds, sitemaps, llms.txt and search.</p></div>
+<div class="cap-family-footer-columns">
+<ul class="cap-family-footer-links"><li><a href="/#contents-name">Every element</a></li><li><a href="/elements.json">elements.json</a></li></ul>
+<ul class="cap-family-footer-links"><li><a href="${REPO}">Source, MIT licensed</a></li><li><a href="${REPO}#readme">How to use it</a></li></ul>
+</div>
+<p class="cap-family-footer-stamp"><span>Release ${escapeXml(version)}</span><span>Render version ${escapeXml(RENDER_VERSION)}</span><span>Styled with Capsomer, charts drawn by Enarratio</span></p>
+</div>`,
+  });
+
+/**
  * @param {{ title: string, description: string, body: string, version: string }} page
  */
 function documentHtml({ title, description, body, version }) {
@@ -162,9 +183,7 @@ function documentHtml({ title, description, body, version }) {
 <div class="page">
 <div class="cap-running-head" data-variant="sign"><span class="cap-running-head-name"><span class="cap-running-head-no">1</span>Prelum specimen</span><span class="cap-running-head-folio">Release ${escapeXml(version)}</span></div>
 ${body}
-<footer class="site-foot">
-<div class="cap-letterhead"><p class="cap-letterhead-logo">Prelum</p><p class="cap-letterhead-address"><b>Prelum ${escapeXml(version)}, render version ${escapeXml(RENDER_VERSION)}</b><br>The family's publishing library<br><a href="${REPO}">The code on GitHub</a>. Styled with Capsomer; charts drawn by Enarratio.</p><span class="cap-letterhead-folio">prelum.dustinedwards.info</span></div>
-</footer>
+<footer class="site-foot">${footerHtml(version)}</footer>
 </div>
 </body>
 </html>

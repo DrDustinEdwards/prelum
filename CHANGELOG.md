@@ -5,6 +5,7 @@
 - The specimen takes the NASA manual theme the dustinedwards.info public pages share (Capsomer's `manual.css`), in its own family, cerulean: a running head as a sign, the facts in form boxes, the contents as a leader index, each element a numbered part and a letterhead at the foot. The diagrams are drawn in cerulean too (`diagramColors` lays `family-cerulean.css` over Capsomer's base colors). Rendered HTML is unchanged, so `RENDER_VERSION` stays 4.
 - The specimen moves to Capsomer v0.22.0, the newest release.
 - devkit v0.13.3, site-runtime v0.24.0 and Capsomer v0.23.0, the newest releases.
+- The specimen ends with the family footer every dustinedwards.info site shares (Capsomer v0.27.0): Prelum's own part under a thin cerulean stripe, the Network strip of sites, then Dustin Edwards. It replaces the letterhead at the foot.
 
 ## 0.14.0 (2026-10-26)
 
