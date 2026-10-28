@@ -13,8 +13,6 @@
     "test/**/*.mjs"
   ],
   "ignoreDependencies": [
-    "@fontsource-variable/source-serif-4",
-    "@fontsource/martian-mono",
-    "@fontsource/schibsted-grotesk"
+    "@fontsource-variable/source-serif-4"
   ]
 }

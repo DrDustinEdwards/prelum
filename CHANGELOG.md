@@ -12,6 +12,11 @@
 - The specimen's footer is Capsomer's family footer as it ships (Capsomer v0.30.0), the same on every family site. Its own
   `.site-foot` spacing and type size are gone, and the page keeps only its top padding.
 - devkit v0.14.0, the newest release (its family check now also flags a site's own value for a Capsomer token).
+- The specimen moves to Capsomer v0.31.0 and devkit v0.15.0. Its fonts are Capsomer's `fonts.css` and `fonts/` (Schibsted
+  Grotesk and Martian Mono, one variable file each), so the footer's bold name is the same face as on every family site; the
+  `@fontsource/schibsted-grotesk` and `@fontsource/martian-mono` dev dependencies are gone. The page's own 24px top padding
+  is gone, the footer sits in its own `.cap-page` under the page as Capsomer's site sets it, and the body is 17px, the size
+  of Capsomer's public pages. Rendered HTML is unchanged, so `RENDER_VERSION` stays 4.
 
 ## 0.15.0 (2026-10-27)
 
