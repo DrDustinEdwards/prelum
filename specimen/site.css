@@ -14,7 +14,7 @@
 
 /* The page: Capsomer's family column (.cap-page), so the letterhead, content and footer line up. */
 .page {
-  padding-block: 24px 64px;
+  padding-block-start: 24px;
 }
 /* The NASA manual theme (capsomer/manual.css) in cerulean: the facts in form boxes, the contents as a leader index,
    each element a numbered part, and a letterhead at the foot. */
@@ -137,11 +137,6 @@
   margin-block-start: 8px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-}
-
-.site-foot {
-  margin-block-start: 64px;
-  font-size: 0.875rem;
 }
 
 /* The rendered output: the classes the pipeline emits. */
