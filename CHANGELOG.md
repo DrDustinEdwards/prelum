@@ -7,6 +7,8 @@
 - The specimen wears the family letterhead (Capsomer v0.28.1, `letterheadHtml`): the cerulean stripe over the band, the mark
   with "Dustin Edwards" over Prelum, and Home, Elements and Outputs in a second row, pinned at the top. It replaces the
   running head sign and the specimen's own skip link. The page has no script, so it follows the system's theme.
+- The specimen's page is Capsomer's family column (Capsomer v0.29.0, `.cap-page`), so its letterhead, content and footer
+  line up with every other family site. Its own 1180px width and `--header-max` are gone.
 
 ## 0.15.0 (2026-10-27)
 

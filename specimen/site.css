@@ -2,6 +2,7 @@
    styles come first in site.css (specimen/build.mjs joins them); this file is unlayered, so it wins where the two meet. The
    prose rules follow dustinedwards-info's app/styles/prose.css, the first site to style this output. */
 
+/* GFM's footnotes heading (Prelum's output) is .sr-only. */
 .sr-only {
   position: absolute;
   inline-size: 1px;
@@ -11,15 +12,9 @@
   white-space: nowrap;
 }
 
-/* The page. */
+/* The page: Capsomer's family column (.cap-page), so the letterhead, content and footer line up. */
 .page {
-  max-inline-size: 1180px;
-  margin-inline: auto;
-  padding: 24px 16px 64px;
-}
-/* The family letterhead at the top lines up with the page's column. */
-:root {
-  --header-max: calc(1180px - 32px);
+  padding-block: 24px 64px;
 }
 /* The NASA manual theme (capsomer/manual.css) in cerulean: the facts in form boxes, the contents as a leader index,
    each element a numbered part, and a letterhead at the foot. */
