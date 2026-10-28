@@ -196,7 +196,7 @@ function documentHtml({ title, description, body, version }) {
 </head>
 <body>
 ${HEADER}
-<div class="page">
+<div class="cap-page page">
 ${body}
 <footer class="site-foot">${footerHtml(version)}</footer>
 </div>
