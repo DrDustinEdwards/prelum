@@ -1,6 +1,7 @@
 // Builds the specimen site at https://prelum.dustinedwards.info into specimen/dist (or the directory named): one page showing every
 // element in specimen/elements as its markdown beside Prelum's output, what a short post becomes in an RSS item and in llms.txt, and
-// elements.json, the index Carrel's Insert menu reads. Static files only, and no script on any page.
+// elements.json, the index Carrel's Insert menu reads. Static files only; the one script is Capsomer's letterhead and theme button,
+// served from the site's own origin (no inline script).
 //
 //   node specimen/build.mjs [outDir]
 
@@ -14,6 +15,7 @@ import { familyFooterHtml } from "capsomer/behavior/family-footer";
 import { letterheadHtml } from "capsomer/behavior/site-header";
 import { capsomerTheme } from "capsomer/enarratio-theme";
 import { stylesheet } from "enarratio";
+import { rolldown } from "rolldown";
 
 import { llmsDocument } from "../llms.mjs";
 import { rssItem } from "../feeds.mjs";
@@ -84,6 +86,9 @@ function writeStyles(outDir) {
     // The NASA manual theme every dustinedwards.info public page shares, in the specimen's own family.
     `@layer cap.tokens {\n${inlineCss(join(capsomer, "..", "tokens", `family-${FAMILY}.css`))}\n}`,
     inlineCss(join(capsomer, "..", "components", "manual", "manual.css")),
+    // The theme button in the letterhead, and the tooltip (a popover) that names it.
+    inlineCss(join(capsomer, "..", "components", "popover", "popover.css")),
+    inlineCss(join(capsomer, "..", "components", "theme-switch", "theme-switch.css")),
     // The family letterhead at the top of every page, pinned while it scrolls.
     inlineCss(join(capsomer, "..", "components", "site-header", "site-header.css")),
     // The family footer every dustinedwards.info site ends with, and the color marks of its Network strip.
@@ -139,6 +144,21 @@ function copyDiagrams(outDir, diagrams) {
   }
 }
 
+/**
+ * Bundles a script of specimen/browser for the browser, Capsomer's behavior inlined.
+ *
+ * @param {string} file
+ * @param {"esm" | "iife"} format
+ */
+async function bundle(file, format) {
+  const built = await rolldown({ input: join(HERE, "browser", file), platform: "browser", logLevel: "silent" });
+  const { output } = await built.generate({ format, minify: true });
+  await built.close();
+  const [chunk] = output;
+  if (output.length !== 1 || chunk?.type !== "chunk") throw new Error(`${file}: expected one chunk`);
+  return chunk.code;
+}
+
 /** @param {string} from @param {string} to */
 function copyTree(from, to) {
   mkdirSync(to, { recursive: true });
@@ -165,7 +185,7 @@ const footerHtml = (version) =>
 </div>`,
   });
 
-/** The family letterhead (capsomer/site-header); the page has no script, so it follows the system's theme. */
+/** The family letterhead (capsomer/site-header), with its theme button, wired by /specimen.js. */
 const HEADER = letterheadHtml({
   name: "Prelum",
   mark: '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M10 7h8a6 6 0 0 1 0 12h-4v6h-4z"/></svg>',
@@ -175,7 +195,6 @@ const HEADER = letterheadHtml({
     ["/#outputs", "Outputs"],
   ],
   current: "Home",
-  theme: false,
 });
 
 /**
@@ -192,6 +211,7 @@ function documentHtml({ title, description, body, version }) {
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/site.css">
 <link rel="stylesheet" href="/katex/katex.min.css">
+<script src="/theme.js"></script>
 </head>
 <body>
 ${HEADER}
@@ -199,6 +219,7 @@ ${HEADER}
 ${body}
 </div>
 <footer><div class="cap-page">${footerHtml(version)}</div></footer>
+<script type="module" src="/specimen.js"></script>
 </body>
 </html>
 `;
@@ -329,6 +350,9 @@ export async function buildSpecimen(outDir) {
   const headersFile = join(outDir, "_headers");
   writeFileSync(headersFile, readFileSync(headersFile, "utf8").replace("{{SITE_HEADERS}}", Object.entries(SITE_HEADERS).map(([name, value]) => `  ${name}: ${value}`).join("\n")));
   writeStyles(outDir);
+  // The remembered theme before first paint (a plain script in the head), and the letterhead's behavior.
+  writeFileSync(join(outDir, "theme.js"), await bundle("theme.mjs", "iife"));
+  writeFileSync(join(outDir, "specimen.js"), await bundle("specimen.mjs", "esm"));
   copyDiagrams(outDir, rendered.flatMap((r) => r.diagrams));
 
   /** @param {number} no @param {string} href @param {string} name @param {string} fact */
@@ -339,7 +363,7 @@ export async function buildSpecimen(outDir) {
   const body = `<main id="main" tabindex="-1">
 <header class="page-head">
 <h1>Prelum specimen</h1>
-<p class="page-lead">Every element Prelum renders from markdown, each source beside its output, in the configuration dustinedwards.info uses: the core, the editorial pack and code highlighting. The page follows your system's light or dark setting. The list is also at <a href="/elements.json">elements.json</a>, generated from the same sources.</p>
+<p class="page-lead">Every element Prelum renders from markdown, each source beside its output, in the configuration dustinedwards.info uses: the core, the editorial pack and code highlighting. The page follows your system's light or dark setting until you choose one with the button in the letterhead. The list is also at <a href="/elements.json">elements.json</a>, generated from the same sources.</p>
 <dl class="cap-form-boxes" data-variant="readings">
 <div class="cap-form-boxes-box"><dt>Release</dt><dd>${escapeXml(version)}</dd></div>
 <div class="cap-form-boxes-box"><dt>Render version</dt><dd>${escapeXml(RENDER_VERSION)}</dd></div>

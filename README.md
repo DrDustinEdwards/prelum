@@ -138,7 +138,8 @@ out of a Worker; the number is the seat's to choose. `scanHtml` takes about 25 t
 ## The specimen
 
 https://prelum.dustinedwards.info (not published yet: it goes up on the first deploy, below) shows every element the pipeline renders, each short markdown source in `specimen/elements/`
-beside its output, in both themes, in Capsomer's styling, with no script on the page. It renders with the configuration
+beside its output, in both themes, in Capsomer's styling, with the family letterhead's theme button (Capsomer's theme switch, bundled into `/theme.js` and
+`/specimen.js`; no inline script). It renders with the configuration
 dustinedwards.info uses (the core, `editorialPack` and `createHighlight`, with `assertSafe` on), shows each element's HTML and,
 where it differs, its RSS form, and ends with one short post as a page, an RSS item and an llms.txt line. The footer names
 Prelum's version from `package.json`.
@@ -152,7 +153,7 @@ file, `<order>-<id>.md`, with a `name` and `summary` header.
   deploys it too, through `.github/workflows/specimen.yml`, once the Cloudflare secrets are set).
 - `test/specimen.test.mjs` holds each element to its stored output in `specimen/expected/`, checks the elements cover every
   directive, chart type and highlighted language Prelum has, and builds the site to check the index, the footer and that no page
-  has a generator tag or a script. `UPDATE_SPECIMEN=1 npm test` rewrites `specimen/expected/`; a changed file there is a change
+  has a generator tag or an inline script. `UPDATE_SPECIMEN=1 npm test` rewrites `specimen/expected/`; a changed file there is a change
   in what every site publishes, and goes with a `RENDER_VERSION` bump.
 - Diagrams are drawn ahead of time by `npm run specimen:diagrams` and committed in `specimen/diagrams/`; the build stops when
   one is missing.
