@@ -17,6 +17,12 @@
   `@fontsource/schibsted-grotesk` and `@fontsource/martian-mono` dev dependencies are gone. The page's own 24px top padding
   is gone, the footer sits in its own `.cap-page` under the page as Capsomer's site sets it, and the 17px body comes from
   Capsomer's `.cap-page`. Rendered HTML is unchanged, so `RENDER_VERSION` stays 4.
+- The specimen's letterhead has the family's theme button, as Enarratio's gallery does: Capsomer's `theme-switch` and
+  `popover` CSS, `/theme.js` (Capsomer's `applyStoredTheme`, a plain script in the head, so a remembered theme paints first)
+  and `/specimen.js` (Capsomer's site header and theme switch `enhance`), both bundled from `specimen/browser/` with rolldown,
+  a new dev dependency. The page policy's `script-src 'self'` already allows them; no page has an inline script.
+- The specimen's main column starts `--space-6` (24px) below the letterhead, as Enarratio's gallery does, so its first
+  heading no longer sits against the band. Rendered HTML is unchanged, so `RENDER_VERSION` stays 4.
 
 ## 0.15.0 (2026-10-27)
 

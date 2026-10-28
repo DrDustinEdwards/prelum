@@ -4,6 +4,7 @@
     "*.mjs",
     "bin/*.mjs",
     "specimen/*.mjs",
+    "specimen/browser/*.mjs",
     "test/*.test.mjs"
   ],
   "project": [
