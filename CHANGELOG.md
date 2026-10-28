@@ -4,6 +4,7 @@
 
 ### Changed
 
+- The specimen moves to Capsomer v0.34.1, so a short page keeps the scrollbar's room and its letterhead sits on the same pixels as a long page's.
 - The specimen moves to Capsomer v0.34.0. Home starts at the same place as on every family site, x 496 at 1536px, whatever the site's name.
 - The specimen wears the family letterhead (Capsomer v0.28.1, `letterheadHtml`): the cerulean stripe over the band, the mark
   with "Dustin Edwards" over Prelum, and Home, Elements and Outputs in a second row, pinned at the top. It replaces the
