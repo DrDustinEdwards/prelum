@@ -12,10 +12,6 @@
   white-space: nowrap;
 }
 
-/* The page: Capsomer's family column (.cap-page), so the letterhead, content and footer line up. */
-.page {
-  padding-block-start: 24px;
-}
 /* The NASA manual theme (capsomer/manual.css) in cerulean: the facts in form boxes, the contents as a leader index,
    each element a numbered part, and a letterhead at the foot. */
 .page-head h1 {

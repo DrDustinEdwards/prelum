@@ -58,26 +58,25 @@ function inlineCss(file, seen = new Set()) {
   );
 }
 
-/** The faces Capsomer's tokens name, latin only: the specimen is in English. */
-const FONTS = [
-  { family: "Schibsted Grotesk", file: "@fontsource/schibsted-grotesk/files/schibsted-grotesk-latin-400-normal.woff2", weight: "400", style: "normal" },
-  { family: "Schibsted Grotesk", file: "@fontsource/schibsted-grotesk/files/schibsted-grotesk-latin-600-normal.woff2", weight: "600", style: "normal" },
-  { family: "Martian Mono", file: "@fontsource/martian-mono/files/martian-mono-latin-400-normal.woff2", weight: "400", style: "normal" },
-  { family: "Source Serif 4", file: "@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2", weight: "200 900", style: "normal" },
-  { family: "Source Serif 4", file: "@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-italic.woff2", weight: "200 900", style: "italic" },
-];
+/** Source Serif 4, the prose face, latin only: the specimen is in English. Capsomer's fonts.css has the family's other faces. */
+const SERIF = ["normal", "italic"].map((style) => ({
+  file: `@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-${style}.woff2`,
+  style,
+}));
 
 /** @param {string} outDir */
 function writeStyles(outDir) {
-  mkdirSync(join(outDir, "fonts"), { recursive: true });
-  const faces = FONTS.map((font) => {
+  // Capsomer's fonts.css names its files as ../fonts/ from css/; site.css sits beside fonts/.
+  copyTree(join(dirname(packageFile("capsomer/fonts.css")), "..", "fonts"), join(outDir, "fonts"));
+  const faces = SERIF.map((font) => {
     const name = font.file.split("/").pop() ?? "";
     copyFileSync(packageFile(font.file), join(outDir, "fonts", name));
-    return `@font-face {\n  font-family: "${font.family}";\n  font-style: ${font.style};\n  font-weight: ${font.weight};\n  font-display: swap;\n  src: url("fonts/${name}") format("woff2");\n}`;
+    return `@font-face {\n  font-family: "Source Serif 4";\n  font-style: ${font.style};\n  font-weight: 200 900;\n  font-display: swap;\n  src: url("fonts/${name}") format("woff2");\n}`;
   });
   const capsomer = dirname(packageFile("capsomer/tokens.css"));
   const css = [
     "/* Built by specimen/build.mjs: Capsomer's fonts, tokens, the specimen's family, base, prose and manual styles, Enarratio's chart styles in Capsomer's theme, and specimen/site.css. */",
+    inlineCss(packageFile("capsomer/fonts.css")).replaceAll("../fonts/", "fonts/"),
     ...faces,
     inlineCss(join(capsomer, "tokens.css")),
     inlineCss(join(capsomer, "base.css")),
@@ -196,10 +195,10 @@ function documentHtml({ title, description, body, version }) {
 </head>
 <body>
 ${HEADER}
-<div class="cap-page page">
+<div class="cap-page">
 ${body}
-<footer class="site-foot">${footerHtml(version)}</footer>
 </div>
+<footer><div class="cap-page">${footerHtml(version)}</div></footer>
 </body>
 </html>
 `;
