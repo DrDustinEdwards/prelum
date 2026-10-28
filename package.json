@@ -111,16 +111,16 @@
     "bloat": "devkit-no-bloat --warn-only"
   },
   "peerDependencies": {
-    "@mermaid-js/mermaid-cli": "11.16.0",
+    "@mermaid-js/mermaid-cli": "11.17.0",
     "@shikijs/rehype": "4.5.0",
     "@shikijs/transformers": "4.5.0",
     "enarratio": "^0.3.1",
     "hast-util-from-html": "2.0.3",
     "hast-util-to-string": "3.0.1",
     "katex": "0.16.47",
-    "linkedom": "0.18.13",
+    "linkedom": "0.18.14",
     "parse5": "8.0.1",
-    "puppeteer": "25.4.0",
+    "puppeteer": "25.16.0",
     "rehype-autolink-headings": "7.1.0",
     "rehype-katex": "7.0.1",
     "rehype-slug": "6.0.0",
@@ -132,7 +132,7 @@
     "remark-rehype": "11.1.2",
     "shiki": "4.5.0",
     "unified": "11.0.5",
-    "unist-util-visit": "5.1.0"
+    "unist-util-visit": "5.2.0"
   },
   "peerDependenciesMeta": {
     "@mermaid-js/mermaid-cli": {
@@ -206,7 +206,7 @@
     "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.15.0",
     "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.24.0",
     "@fontsource-variable/source-serif-4": "5.3.1",
-    "@mermaid-js/mermaid-cli": "11.16.0",
+    "@mermaid-js/mermaid-cli": "11.17.0",
     "@observablehq/plot": "0.6.17",
     "@shikijs/rehype": "4.5.0",
     "@shikijs/transformers": "4.5.0",
@@ -218,10 +218,10 @@
     "hast-util-from-html": "2.0.3",
     "hast-util-to-string": "3.0.1",
     "katex": "0.16.47",
-    "linkedom": "0.18.13",
-    "oxlint": "1.88.0",
+    "linkedom": "0.18.14",
+    "oxlint": "1.89.0",
     "parse5": "8.0.1",
-    "puppeteer": "25.4.0",
+    "puppeteer": "25.16.0",
     "rehype-autolink-headings": "7.1.0",
     "rehype-katex": "7.0.1",
     "rehype-slug": "6.0.0",
@@ -231,11 +231,11 @@
     "remark-math": "6.0.0",
     "remark-parse": "11.0.0",
     "remark-rehype": "11.1.2",
-    "rolldown": "1.2.11",
+    "rolldown": "1.2.15",
     "shiki": "4.5.0",
     "typescript": "5.9.3",
     "unified": "11.0.5",
-    "unist-util-visit": "5.1.0"
+    "unist-util-visit": "5.2.0"
   },
   "bin": {
     "prelum-indexnow": "./bin/indexnow.mjs"
