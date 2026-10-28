@@ -11,6 +11,7 @@
   line up with every other family site. Its own 1180px width and `--header-max` are gone.
 - The specimen's footer is Capsomer's family footer as it ships (Capsomer v0.30.0), the same on every family site. Its own
   `.site-foot` spacing and type size are gone, and the page keeps only its top padding.
+- devkit v0.14.0, the newest release (its family check now also flags a site's own value for a Capsomer token).
 
 ## 0.15.0 (2026-10-27)
 
