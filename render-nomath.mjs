@@ -43,7 +43,7 @@ export { ContentError, isAllowedUrl };
  * Bumped whenever the output changes for the same input. A site stores it beside its rendered HTML and re-renders on a mismatch; Carrel's
  * health check reads it from meta.capabilities.render. test/render-golden.test.mjs fails when the output moves and this does not.
  */
-export const RENDER_VERSION = "4";
+export const RENDER_VERSION = "5";
 
 /** A source over this is refused before it is parsed: a 200,000-character bracket run took 2.8 s, which a Worker cannot be sent. */
 export const DEFAULT_MAX_BYTES = 512 * 1024;
@@ -58,8 +58,9 @@ const encoder = new TextEncoder();
  *
  * @typedef {object} MediaOptions What a site decides about its images; the core knows none of it.
  * @property {(raw: string) => string | null} [keyOf] The key a URL cites, or null when it is not media. Collected into mediaRefs.
- * @property {(src: string) => { srcSet?: string, sizes?: string, href?: string } | null} [imageProps] Responsive attributes for an
- *   image, and the href of the link that wraps it (the unsized original). Null leaves the image as written.
+ * @property {(src: string) => { srcSet?: string, sizes?: string, href?: string, sources?: Array<{ type: string, srcSet: string }> } | null} [imageProps]
+ *   Responsive attributes for an image, and the href of the link that wraps it (the unsized original). `sources` (each a MIME type and
+ *   a srcset, AVIF first) wrap the image in a <picture>; site-runtime's ./image writes them. Null leaves the image as written.
  *
  * @typedef {object} HighlightOptions Code highlighting, injected so the core does not bundle a grammar set.
  * @property {() => Promise<[unknown, ...unknown[]]>} plugin The rehype plugin and its arguments, as render-highlight.mjs builds them.
@@ -264,7 +265,7 @@ function textOf(node) {
  * @param {string} file
  * @param {(src: string) => Promise<{ width: number, height: number, placeholder?: string } | null>} resolveImage
  * @param {Array<Promise<void>>} pending
- * @param {(src: string) => { srcSet?: string, sizes?: string, href?: string } | null} imageProps
+ * @param {(src: string) => { srcSet?: string, sizes?: string, href?: string, sources?: Array<{ type: string, srcSet: string }> } | null} imageProps
  */
 function rehypeImageSources(file, resolveImage, pending, imageProps) {
   let seen = 0;
@@ -284,6 +285,11 @@ function rehypeImageSources(file, resolveImage, pending, imageProps) {
       // policy drops the srcset, and a placeholder that is not the base64 form drops the placeholder.
       const responsive =
         props?.srcSet && srcsetUrls(props.srcSet).every(isAllowedUrl) ? { srcSet: props.srcSet, sizes: props.sizes } : {};
+      // Each format the site offers becomes a <source>, AVIF before WebP, so the browser takes the first it reads (Astro's <Picture>).
+      // Only beside a valid srcset, and each source is held to the same URL policy, so one bad candidate drops that source alone.
+      const sources = responsive.srcSet
+        ? (props?.sources ?? []).filter((s) => /^image\/[a-z0-9.+-]+$/.test(s.type) && s.srcSet && srcsetUrls(s.srcSet).every(isAllowedUrl))
+        : [];
 
       // Links to the unsized original, which srcset never serves. A figure's light and dark pair is excluded, as diagrams are: an
       // anchor around the display: none half would be a focusable link with no name. An author's own link wins.
@@ -295,13 +301,33 @@ function rehypeImageSources(file, resolveImage, pending, imageProps) {
         typeof index === "number" &&
         parent.children[index] === node &&
         !(parent.type === "element" && parent.tagName === "a");
+      /** @type {import("hast").Element} */
+      const shown =
+        sources.length > 0
+          ? {
+              type: "element",
+              tagName: "picture",
+              properties: {},
+              children: [
+                ...sources.map((s) => ({
+                  type: /** @type {const} */ ("element"),
+                  tagName: "source",
+                  properties: { type: s.type, srcSet: s.srcSet, ...(responsive.sizes ? { sizes: responsive.sizes } : {}) },
+                  children: [],
+                })),
+                node,
+              ],
+            }
+          : node;
       if (wrappable) {
         parent.children[index] = {
           type: "element",
           tagName: "a",
           properties: { className: ["image-link"], href: props?.href ?? src },
-          children: [node],
+          children: [shown],
         };
+      } else if (shown !== node && parent && typeof index === "number" && parent.children[index] === node) {
+        parent.children[index] = shown;
       }
 
       // Counted after every exclusion, so the first image that gets attributes gets the eager pair. A themed half is never first: an

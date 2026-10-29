@@ -179,7 +179,8 @@ test("images: the site's media rules decide srcset, the wrapping link and the ci
   const body = "![one](/media/dustin-edwards-a-0123456789abcdef-640x480.png)\n\n![two](/static/b.png)\n\n![three](/media/dustin-edwards-c-fedcba9876543210-100x100.png)";
   const { html, mediaRefs } = await core(body, { media });
 
-  assert.match(html, /<a class="image-link" href="\/media\/dustin-edwards-a-0123456789abcdef-640x480\.png"><img src="[^"]+" alt="one" srcset="\/media\/[^"]+\?w=640 640w, [^"]+ 1024w, [^"]+ 1408w" sizes="\(min-width: 46rem\) 704px, calc\(100vw - 2rem\)" width="640" height="480" loading="eager" decoding="async" fetchpriority="high" class="has-lqip" style="background-image:url\(&#x22;data:image\/webp;base64,/);
+  // AVIF first, so a browser that reads it takes it; the <img> keeps the WebP srcset for the rest.
+  assert.match(html, /<a class="image-link" href="\/media\/dustin-edwards-a-0123456789abcdef-640x480\.png"><picture><source type="image\/avif" srcset="[^"]+\?w=640&#x26;f=avif 640w, [^"]+" sizes="[^"]+"><source type="image\/webp" srcset="[^"]+\?w=640 640w, [^"]+" sizes="[^"]+"><img src="[^"]+" alt="one" srcset="\/media\/[^"]+\?w=640 640w, [^"]+ 1024w, [^"]+ 1408w" sizes="\(min-width: 46rem\) 704px, calc\(100vw - 2rem\)" width="640" height="480" loading="eager" decoding="async" fetchpriority="high" class="has-lqip" style="background-image:url\(&#x22;data:image\/webp;base64,/);
   // Not a media image: no srcset, no placeholder, and the link goes to the image itself.
   assert.match(html, /<a class="image-link" href="\/static\/b\.png"><img src="\/static\/b\.png" alt="two" width="800" height="600" loading="lazy" decoding="async"><\/a>/);
   assert.equal((html.match(/fetchpriority/g) ?? []).length, 1);

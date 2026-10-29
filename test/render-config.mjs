@@ -17,10 +17,15 @@ export const media = {
   imageProps(src) {
     if (!src.startsWith("/media/")) return null;
     const key = src.slice("/media/".length);
+    const srcSet = (/** @type {string} */ f) => [640, 1024, 1408].map((w) => `/media/${key}?w=${w}${f} ${w}w`).join(", ");
     return {
-      srcSet: [640, 1024, 1408].map((w) => `/media/${key}?w=${w} ${w}w`).join(", "),
+      srcSet: srcSet(""),
       sizes: "(min-width: 46rem) 704px, calc(100vw - 2rem)",
       href: `/media/${key}`,
+      sources: [
+        { type: "image/avif", srcSet: srcSet("&f=avif") },
+        { type: "image/webp", srcSet: srcSet("") },
+      ],
     };
   },
 };

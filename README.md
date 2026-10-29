@@ -95,7 +95,8 @@ const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion } = 
   body, // markdown with any frontmatter already stripped
   resolveImage, // async (src) => ({ width, height, placeholder? })
   options: {
-    media: { keyOf, imageProps }, // the site's image rules; without them images are left as written
+    media: { keyOf, imageProps }, // the site's image rules; without them images are left as written. imageProps may return
+                                  // sources (AVIF, then WebP) to wrap an image in <picture>
     packs: [editorialPack({ assetPrefix: "dustin-edwards-" })], // chart, diagram, sidenote, pullquote, swatch
     highlight: createHighlight({ wasm }), // without it a code block is plain <pre><code>
     maxBytes: 512 * 1024, // refused before parsing
