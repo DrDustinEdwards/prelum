@@ -207,8 +207,8 @@
     }
   },
   "devDependencies": {
-    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.15.0",
-    "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.24.0",
+    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.16.1",
+    "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.26.0",
     "@fontsource-variable/source-serif-4": "5.3.1",
     "@mermaid-js/mermaid-cli": "11.17.0",
     "@observablehq/plot": "0.6.17",
@@ -217,7 +217,7 @@
     "@types/hast": "3.0.5",
     "@types/mdast": "4.0.4",
     "@types/node": "24.19.2",
-    "capsomer": "github:DrDustinEdwards/capsomer#v0.35.0",
+    "capsomer": "github:DrDustinEdwards/capsomer#v0.36.0",
     "enarratio": "0.3.1",
     "hast-util-from-html": "2.0.3",
     "hast-util-to-string": "3.0.1",
