@@ -18,10 +18,10 @@
     "text": "#e9f0f3",
     "heading": "#e9f0f3",
     "border": "#2d3438",
-    "borderStrong": "#636c70",
+    "borderStrong": "#747e82",
     "tint": "#192c35",
     "onAccent": "#080e11",
-    "danger": "#da746b",
+    "danger": "#fe9f95",
     "dangerTint": "#3e1e1c"
   }
 }

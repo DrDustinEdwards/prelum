@@ -4,6 +4,7 @@
 
 ### Changed
 
+- The specimen moves to Capsomer v0.35.0: in dark, muted text, links and borders are stronger, and with "Increase contrast" on it takes Capsomer's stronger set.
 - Peer dependencies: `@mermaid-js/mermaid-cli` 11.17.0, `puppeteer` 25.16.0, `linkedom` 0.18.14 and `unist-util-visit` 5.2.0. The specimen's diagrams draw the same; only their stamp names the new Mermaid.
 - The specimen moves to Capsomer v0.34.1, so a short page keeps the scrollbar's room and its letterhead sits on the same pixels as a long page's.
 - The specimen moves to Capsomer v0.34.0. Home starts at the same place as on every family site, x 496 at 1536px, whatever the site's name.
