@@ -9,6 +9,21 @@ import { absolutizeUrls, cdata, escapeXml, mathToTex, toDate } from "./xml.mjs";
 const DEFAULT_ITEM_PATH = "/writing";
 
 /**
+ * A feed date as a Date, null when there is none, and an error naming the value when it is not a date: a feed must never say
+ * "Invalid Date" or fail later with an unnamed RangeError (Astro's RSS schema refuses one the same way).
+ *
+ * @param {unknown} value
+ * @param {string} what e.g. `post "hello": publishAt`
+ * @returns {Date | null}
+ */
+function validDate(value, what) {
+  if (value === null || value === undefined || value === "") return null;
+  const date = toDate(/** @type {Date | number | string} */ (value), null);
+  if (Number.isNaN(date.getTime())) throw new Error(`${what} is not a date: ${JSON.stringify(value)}`);
+  return date;
+}
+
+/**
  * @param {{
  *   slug: string,
  *   title: string,
@@ -26,9 +41,7 @@ const DEFAULT_ITEM_PATH = "/writing";
  */
 export function rssItem(post, origin, itemPath = DEFAULT_ITEM_PATH) {
   const url = `${origin}${itemPath}/${post.slug}`;
-  const published = post.publishAt
-    ? toDate(post.publishAt, null).toUTCString()
-    : null;
+  const published = validDate(post.publishAt, `post "${post.slug}": publishAt`)?.toUTCString();
 
   return [
     "    <item>",
@@ -62,14 +75,15 @@ export function rssItem(post, origin, itemPath = DEFAULT_ITEM_PATH) {
  *   itemPath?: string,
  *   lastBuildDate?: unknown,
  *   image?: { url: string, title: string, link: string },
- * }} feed `lastBuildDate` is when the content last changed (the newest post), never the clock, so a render stays cacheable
+ *   language?: string,
+ * }} feed `lastBuildDate` is when the content last changed (the newest post), never the clock, so a render stays cacheable;
+ *   `language` is `en-us` by default
  * @returns {string}
  */
 export function rssDocument(feed) {
   const items = feed.posts.map((post) => rssItem(post, feed.origin, feed.itemPath)).join("\n");
-  const lastBuildDate = feed.lastBuildDate
-    ? `\n    <lastBuildDate>${toDate(feed.lastBuildDate, null).toUTCString()}</lastBuildDate>`
-    : "";
+  const built = validDate(feed.lastBuildDate, "lastBuildDate");
+  const lastBuildDate = built ? `\n    <lastBuildDate>${built.toUTCString()}</lastBuildDate>` : "";
   const image = feed.image
     ? `\n    <image>
       <url>${escapeXml(feed.image.url)}</url>
@@ -83,7 +97,7 @@ export function rssDocument(feed) {
     <title>${escapeXml(feed.title)}</title>
     <link>${escapeXml(feed.link)}</link>
     <description>${escapeXml(feed.description)}</description>
-    <language>en-us</language>${lastBuildDate}
+    <language>${escapeXml(feed.language ?? "en-us")}</language>${lastBuildDate}
     <atom:link href="${escapeXml(feed.selfUrl)}" rel="self" type="application/rss+xml" />${image}
 ${items}
   </channel>
@@ -104,21 +118,23 @@ ${items}
  *   publishAt: unknown,
  *   updatedAt: unknown,
  *   tags: string[],
- * }} post
+ *   guid?: string,
+ * }} post `guid` is the same permanent id RSS uses, an IRI such as `urn:example:...`, so a changed slug does not announce the
+ *   post again (the link otherwise)
  * @param {string} origin
  * @param {string} [itemPath]
  * @returns {string}
  */
 export function atomEntry(post, origin, itemPath = DEFAULT_ITEM_PATH) {
   const url = `${origin}${itemPath}/${post.slug}`;
-  const published = post.publishAt ? toDate(post.publishAt, null) : null;
-  const updated = post.updatedAt ? toDate(post.updatedAt, null) : published;
+  const published = validDate(post.publishAt, `post "${post.slug}": publishAt`);
+  const updated = validDate(post.updatedAt, `post "${post.slug}": updatedAt`) ?? published;
 
   return [
     "    <entry>",
     `      <title>${escapeXml(post.title)}</title>`,
     `      <link href="${escapeXml(url)}" rel="alternate" type="text/html" />`,
-    `      <id>${escapeXml(url)}</id>`,
+    `      <id>${escapeXml(post.guid ?? url)}</id>`,
     // An entry with no `updated` is invalid Atom, hence the epoch fallback.
     `      <updated>${(updated ?? new Date(0)).toISOString()}</updated>`,
     published ? `      <published>${published.toISOString()}</published>` : null,
@@ -152,9 +168,7 @@ export function atomDocument(feed) {
   // are byte-identical and the edge can cache them. An empty feed gets the epoch,
   // which validates where an empty `<updated>` does not.
   const newest = feed.posts
-    .map((post) => post.updatedAt ?? post.publishAt)
-    .filter(Boolean)
-    .map((value) => toDate(value, null).getTime())
+    .map((post) => validDate(post.updatedAt ?? post.publishAt, `post "${post.slug}": updatedAt or publishAt`)?.getTime() ?? 0)
     .reduce((a, b) => Math.max(a, b), 0);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -196,14 +210,11 @@ export function feedItem(post, origin, itemPath = DEFAULT_ITEM_PATH) {
     // JSON Feed 1.1 requires content_html or content_text on every item.
     content_text: post.body,
     summary: post.description ?? undefined,
-    date_published: post.publishAt
-      ? toDate(post.publishAt, null).toISOString()
-      : undefined,
-    date_modified: post.updatedAt
-      ? toDate(post.updatedAt, null).toISOString()
-      : undefined,
+    date_published: validDate(post.publishAt, `post "${post.slug}": publishAt`)?.toISOString(),
+    date_modified: validDate(post.updatedAt, `post "${post.slug}": updatedAt`)?.toISOString(),
     tags: post.tags.length > 0 ? post.tags : undefined,
-    image: post.coverImage ? `${origin}${post.coverImage}` : undefined,
+    // A path on the origin, or an absolute URL (a CDN) kept as it is.
+    image: post.coverImage ? new URL(post.coverImage, origin).href : undefined,
   };
 }
 
@@ -217,7 +228,8 @@ export function feedItem(post, origin, itemPath = DEFAULT_ITEM_PATH) {
  *   posts: Array<Parameters<typeof feedItem>[0]>,
  *   origin: string,
  *   itemPath?: string,
- * }} feed
+ *   language?: string,
+ * }} feed `language` is `en-US` by default
  */
 export function jsonFeedDocument(feed) {
   return {
@@ -226,7 +238,7 @@ export function jsonFeedDocument(feed) {
     home_page_url: feed.homePageUrl,
     feed_url: feed.feedUrl,
     description: feed.description,
-    language: "en-US",
+    language: feed.language ?? "en-US",
     authors: [{ name: feed.authorName, url: feed.origin }],
     items: feed.posts.map((post) => feedItem(post, feed.origin, feed.itemPath)),
   };

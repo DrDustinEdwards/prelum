@@ -12,6 +12,7 @@ import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
 
+import { frontmatter } from "../frontmatter.mjs";
 import { render } from "../render.mjs";
 import { CORE_DIRECTIVES } from "../render-directives.mjs";
 import { createHighlight } from "../render-highlight.mjs";
@@ -64,26 +65,19 @@ export async function resolveImage(src) {
  */
 
 /**
- * A header of `key: value` lines between two `---` lines; the specimen needs no more of YAML than that.
+ * A header of `key: value` lines between two `---` lines, read by Prelum's own `frontmatter`.
  *
  * @param {string} file
  * @param {string} text
  * @param {readonly string[]} [required] the keys the header must carry
  */
 export function splitHeader(file, text, required = ["name", "summary"]) {
-  const match = /^---\n([\s\S]*?)\n---\n/.exec(text);
-  if (!match) throw new Error(`${file}: an element starts with a --- header naming it`);
-  /** @type {Record<string, string>} */
-  const header = {};
-  for (const line of (match[1] ?? "").split("\n")) {
-    const at = line.indexOf(": ");
-    if (at < 1) throw new Error(`${file}: header line ${JSON.stringify(line)} is not "key: value"`);
-    header[line.slice(0, at)] = line.slice(at + 2).trim();
-  }
+  const { data, body } = frontmatter(text);
+  if (body === text) throw new Error(`${file}: an element starts with a --- header naming it`);
   for (const key of required) {
-    if (!header[key]) throw new Error(`${file}: the header has no ${key}`);
+    if (typeof data[key] !== "string" || !data[key]) throw new Error(`${file}: the header has no ${key}`);
   }
-  return { header, source: text.slice(match[0].length) };
+  return { header: /** @type {Record<string, string>} */ (data), source: body };
 }
 
 /**

@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { atomDocument, atomEntry, jsonFeedDocument, rssDocument, rssItem } from "../index.mjs";
+import { atomDocument, atomEntry, feedItem, jsonFeedDocument, rssDocument, rssItem } from "../index.mjs";
 
 const ORIGIN = "https://x.test";
 const NASTY = `Tom & "Jerry" <b>'s</b>`;
@@ -98,6 +98,15 @@ test("feeds: a stored guid is kept over the link, so a renamed post is not annou
   assert.equal(one(item, "guid"), "site-post-7");
   assert.match(item, /<guid isPermaLink="false">/);
   assert.equal(one(item, "link"), `${ORIGIN}/writing/renamed`);
+  const entry = one(atomDocument(atomFeed([post({ slug: "renamed", guid: "urn:site:7" })])), "entry");
+  assert.equal(one(entry, "id"), "urn:site:7");
+});
+
+test("feeds: an unreadable date is refused with the post and the value, never written as Invalid Date", () => {
+  const bad = /post "first": publishAt is not a date: "next Tuesday"/;
+  assert.throws(() => rssDocument(rssFeed([post({ publishAt: "next Tuesday" })])), bad);
+  assert.throws(() => atomDocument(atomFeed([post({ publishAt: "next Tuesday" })])), bad);
+  assert.throws(() => feedItem(jsonPost({ publishAt: "next Tuesday" }), ORIGIN), bad);
 });
 
 test("feeds: an RSS channel names itself and its own URL", () => {
@@ -296,6 +305,7 @@ test("feeds: a JSON Feed is version 1.1 with the fields a reader requires, and s
       image: `${ORIGIN}/img/c.png`,
     })),
   });
+  assert.equal(feedItem(jsonPost({ coverImage: "https://cdn.x.test/c.png" }), ORIGIN).image, "https://cdn.x.test/c.png");
 });
 
 test("feeds: a JSON Feed item drops an empty optional field instead of sending it empty", () => {

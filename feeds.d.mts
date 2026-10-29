@@ -35,7 +35,9 @@ export function rssItem(post: {
  *   itemPath?: string,
  *   lastBuildDate?: unknown,
  *   image?: { url: string, title: string, link: string },
- * }} feed `lastBuildDate` is when the content last changed (the newest post), never the clock, so a render stays cacheable
+ *   language?: string,
+ * }} feed `lastBuildDate` is when the content last changed (the newest post), never the clock, so a render stays cacheable;
+ *   `language` is `en-us` by default
  * @returns {string}
  */
 export function rssDocument(feed: {
@@ -52,6 +54,7 @@ export function rssDocument(feed: {
         title: string;
         link: string;
     };
+    language?: string;
 }): string;
 /**
  * The body is CDATA rather than escaped inline: double-escaping is how a feed
@@ -66,7 +69,9 @@ export function rssDocument(feed: {
  *   publishAt: unknown,
  *   updatedAt: unknown,
  *   tags: string[],
- * }} post
+ *   guid?: string,
+ * }} post `guid` is the same permanent id RSS uses, an IRI such as `urn:example:...`, so a changed slug does not announce the
+ *   post again (the link otherwise)
  * @param {string} origin
  * @param {string} [itemPath]
  * @returns {string}
@@ -79,6 +84,7 @@ export function atomEntry(post: {
     publishAt: unknown;
     updatedAt: unknown;
     tags: string[];
+    guid?: string;
 }, origin: string, itemPath?: string): string;
 /**
  * @param {{
@@ -150,7 +156,8 @@ export function feedItem(post: {
  *   posts: Array<Parameters<typeof feedItem>[0]>,
  *   origin: string,
  *   itemPath?: string,
- * }} feed
+ *   language?: string,
+ * }} feed `language` is `en-US` by default
  */
 export function jsonFeedDocument(feed: {
     title: string;
@@ -161,6 +168,7 @@ export function jsonFeedDocument(feed: {
     posts: Array<Parameters<typeof feedItem>[0]>;
     origin: string;
     itemPath?: string;
+    language?: string;
 }): {
     version: string;
     title: string;

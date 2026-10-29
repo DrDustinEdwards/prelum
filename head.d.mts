@@ -2,7 +2,7 @@
  * @typedef {{ title: string }
  *   | { name: string, content: string }
  *   | { property: string, content: string }
- *   | { tagName: "link", rel: string, href: string }
+ *   | { tagName: "link", rel: string, href: string, type?: string }
  *   | { "script:ld+json": Record<string, unknown> }} HeadTag
  * The descriptor shapes React Router's `meta` export takes, so a route returns `headTags(...)` as it is.
  */
@@ -35,6 +35,8 @@
  * @property {string} [locale] e.g. `en_US`
  * @property {boolean} [noindex]
  * @property {ArticleFacts} [article] `article:*` tags; pass the same facts to the schema's `article` so the two agree
+ * @property {string} [markdown] the page's Markdown copy (`markdownPath(path)` from `llms`), absolute or a path on `origin`, linked as
+ *   `<link rel="alternate" type="text/markdown">` so an agent can find it
  */
 /**
  * The full head of a public page: title, description, canonical, Open Graph and Twitter. `twitter:card` is always
@@ -107,6 +109,7 @@ export type HeadTag = {
     tagName: "link";
     rel: string;
     href: string;
+    type?: string;
 } | {
     "script:ld+json": Record<string, unknown>;
 };
@@ -163,4 +166,9 @@ export type HeadInput = {
      * `article:*` tags; pass the same facts to the schema's `article` so the two agree
      */
     article?: ArticleFacts | undefined;
+    /**
+     * the page's Markdown copy (`markdownPath(path)` from `llms`), absolute or a path on `origin`, linked as
+     * `<link rel="alternate" type="text/markdown">` so an agent can find it
+     */
+    markdown?: string | undefined;
 };

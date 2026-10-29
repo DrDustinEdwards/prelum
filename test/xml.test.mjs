@@ -10,7 +10,6 @@ import {
   atomEntry,
   cdata,
   escapeXml,
-  escapeXmlText,
   isoDay,
   mathToTex,
   rfc822,
@@ -40,10 +39,8 @@ test("xml: escaping leaves plain text, empty text and non-strings readable", () 
   assert.equal(escapeXml(""), "");
   assert.equal(escapeXml("plain text"), "plain text");
   assert.equal(escapeXml(42), "42");
-  assert.equal(escapeXmlText(null), "null");
   const long = `<&>"'`.repeat(10000);
   assert.equal(escapeXml(long), "&lt;&amp;&gt;&quot;&apos;".repeat(10000));
-  assert.equal(escapeXmlText(long), `&lt;&amp;&gt;"'`.repeat(10000));
 });
 
 test("xml: CDATA wraps empty text, and every ]]> in long text, so the text reads back whole", () => {

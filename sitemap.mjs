@@ -6,8 +6,8 @@ const IMAGE_NAMESPACE = "http://www.google.com/schemas/sitemap-image/1.1";
  * @typedef {object} SitemapEntry
  * @property {string} loc absolute URL
  * @property {Date | number | string | null} [lastmod]
- * @property {string} [changefreq]
- * @property {number} [priority] 0 to 1
+ * @property {string} [changefreq] expanded layout only (Google ignores it)
+ * @property {number} [priority] 0 to 1, expanded layout only (Google ignores it)
  * @property {string[]} [images] absolute URLs of the images on the page, listed in Google's image sitemap extension
  */
 
@@ -23,7 +23,9 @@ const IMAGE_NAMESPACE = "http://www.google.com/schemas/sitemap-image/1.1";
  * default is this site's own. `loc` is escaped: a URL with `&` in its query would otherwise end the document.
  *
  * An entry's `images` become `<image:image>` elements (https://developers.google.com/search/docs/crawling-indexing/sitemaps/image-sitemaps),
- * and the image namespace is declared only when some entry has one, so a sitemap without images is unchanged.
+ * and the image namespace is declared only when some entry has one, so a sitemap without images is unchanged. A URL listed twice
+ * is written once, the first time. `changefreq` and `priority` are refused in the compact layout, which has no place for them,
+ * rather than dropped without a word.
  *
  * @param {SitemapEntry[]} entries
  * @param {SitemapOptions} [options]
@@ -38,12 +40,17 @@ export function sitemapDocument(entries, options = {}) {
 
   const imagesOf = (/** @type {SitemapEntry} */ entry) =>
     (entry.images ?? []).map((image) => `<image:image><image:loc>${escapeXml(image)}</image:loc></image:image>`);
-  const hasImages = entries.some((entry) => (entry.images ?? []).length > 0);
+  const seen = new Set();
+  const unique = entries.filter((entry) => !seen.has(entry.loc) && seen.add(entry.loc));
+  const hasImages = unique.some((entry) => (entry.images ?? []).length > 0);
 
-  const rows = entries.map((entry) => {
+  const rows = unique.map((entry) => {
     const lastmod = lastmodOf(entry);
     const images = imagesOf(entry);
     if (layout === "compact") {
+      if (entry.changefreq !== undefined || entry.priority !== undefined) {
+        throw new Error(`sitemap: ${entry.loc} has changefreq or priority, which only the expanded layout writes`);
+      }
       return `  <url><loc>${escapeXml(entry.loc)}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ""}${images.join("")}</url>`;
     }
     return [

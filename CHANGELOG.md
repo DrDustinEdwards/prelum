@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.17.0 (2026-10-29)
+
+### Added
+
+- llms-full.txt, after Cloudflare's Nimbus (MIT; its notice is in `llms.mjs`): `llmsFullDocument({ title, summary, intro,
+  pages })` writes llms.txt's own header, then every page in full. The header is the same code as `llmsDocument`'s.
+- A Markdown copy of each page for agents, in `llms`: `markdownPage` writes it (title, description, `Source:` line, body), and
+  llms-full.txt is made of the same text. `markdownPath` says where it lives (`/post.md`, `/index.md`), `prefersMarkdown` reads
+  an Accept header (Nimbus's code: Markdown only when it outranks HTML and every wildcard) and `markdownResponse` serves it
+  with `Vary: Accept` and a canonical `Link` header back to the page.
+- `headTags` takes `markdown`, the copy's path, and links it with `<link rel="alternate" type="text/markdown">`. `headHtml`
+  writes a link's `type`.
+- `frontmatter(source)`: a Markdown file's `---` header as `{ data, body }` (`key: value`, `key: [a, b]` and `- item` lists),
+  the parser Capsomer wrote twice, so Capsomer can drop its copies. The specimen reads its element headers with it.
+- `rssDocument` and `jsonFeedDocument` take `language` (`en-us` and `en-US` by default, as before).
+
+### Changed
+
+- `RENDER_VERSION` is 6. A heading that ends in `#` ("Learning C#") kept its `#` in the HTML but lost it in `toc`; the
+  outline now keeps it. The HTML is unchanged.
+- A reference-style image (`![alt][ref]`) is recorded in `mediaRefs` as `markdown-image`, not `link`.
+- `render` asks `resolveImage` once per src in a render, so an image used twice is looked up once.
+- A feed date that is not a date is refused with an error naming the post and the value. RSS wrote `Invalid Date`, and Atom
+  and JSON Feed failed with an unnamed `RangeError`.
+- An Atom entry's `<id>` is the post's `guid` when it has one, as RSS's `<guid>` is, so a renamed post is not announced
+  again. A site with guids sees each Atom entry's id change once.
+- A JSON Feed item's `image` keeps an absolute cover URL as it is; it was written after the origin.
+- `sitemapDocument` writes a URL listed twice once, the first time, and refuses `changefreq` or `priority` in the compact
+  layout, which dropped them without a word. The expanded layout still writes them.
+- The specimen's page policy drops `style-src-elem 'self'`, which said no more than `style-src 'self'`.
+
+### Removed
+
+- `escapeXmlText` and `absolutiseUrls` (the old spelling of `absolutizeUrls`) from `xml`. No site uses either.
+
 ## 0.16.0 (2026-10-29)
 
 ### Added

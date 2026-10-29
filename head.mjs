@@ -11,7 +11,7 @@ export const SERP_DESCRIPTION_LIMIT = 155;
  * @typedef {{ title: string }
  *   | { name: string, content: string }
  *   | { property: string, content: string }
- *   | { tagName: "link", rel: string, href: string }
+ *   | { tagName: "link", rel: string, href: string, type?: string }
  *   | { "script:ld+json": Record<string, unknown> }} HeadTag
  * The descriptor shapes React Router's `meta` export takes, so a route returns `headTags(...)` as it is.
  */
@@ -47,6 +47,8 @@ export const SERP_DESCRIPTION_LIMIT = 155;
  * @property {string} [locale] e.g. `en_US`
  * @property {boolean} [noindex]
  * @property {ArticleFacts} [article] `article:*` tags; pass the same facts to the schema's `article` so the two agree
+ * @property {string} [markdown] the page's Markdown copy (`markdownPath(path)` from `llms`), absolute or a path on `origin`, linked as
+ *   `<link rel="alternate" type="text/markdown">` so an agent can find it
  */
 
 /**
@@ -71,6 +73,7 @@ export function headTags(input) {
     { name: "description", content: description },
     { tagName: "link", rel: "canonical", href: url },
   ];
+  if (input.markdown) tags.push({ tagName: "link", rel: "alternate", type: "text/markdown", href: absoluteUrl(origin, input.markdown) });
   if (noindex) tags.push({ name: "robots", content: "noindex, follow" });
   if (siteName) tags.push({ property: "og:site_name", content: siteName });
   tags.push(
@@ -151,7 +154,10 @@ export function headHtml(tags) {
       if ("script:ld+json" in tag) {
         return `<script type="application/ld+json">${jsonLdText(tag["script:ld+json"])}</script>`;
       }
-      if ("tagName" in tag) return `<link rel="${escapeXml(tag.rel)}" href="${escapeXml(tag.href)}">`;
+      if ("tagName" in tag) {
+        const type = tag.type ? ` type="${escapeXml(tag.type)}"` : "";
+        return `<link rel="${escapeXml(tag.rel)}"${type} href="${escapeXml(tag.href)}">`;
+      }
       const [key, value] = "property" in tag ? ["property", tag.property] : ["name", tag.name];
       return `<meta ${key}="${escapeXml(value)}" content="${escapeXml(tag.content)}">`;
     })

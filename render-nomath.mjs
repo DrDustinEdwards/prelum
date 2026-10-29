@@ -43,7 +43,7 @@ export { ContentError, isAllowedUrl };
  * Bumped whenever the output changes for the same input. A site stores it beside its rendered HTML and re-renders on a mismatch; Carrel's
  * health check reads it from meta.capabilities.render. test/render-golden.test.mjs fails when the output moves and this does not.
  */
-export const RENDER_VERSION = "5";
+export const RENDER_VERSION = "6";
 
 /** A source over this is refused before it is parsed: a 200,000-character bracket run took 2.8 s, which a Worker cannot be sent. */
 export const DEFAULT_MAX_BYTES = 512 * 1024;
@@ -114,6 +114,12 @@ function remarkLimitDepth(file, maxDepth) {
  */
 function remarkCollectMedia(sink, keyOf) {
   return (/** @type {import("mdast").Root} */ tree) => {
+    // A definition an image reference uses (`![alt][ref]`) is an image's URL, not a link's.
+    /** @type {Set<string>} */
+    const imageIds = new Set();
+    visit(tree, "imageReference", (node) => {
+      imageIds.add(node.identifier);
+    });
     /** @param {string | null | undefined} url @param {string} form @param {any} node */
     const add = (url, form, node) => {
       const key = keyOf(url ?? "");
@@ -135,7 +141,7 @@ function remarkCollectMedia(sink, keyOf) {
           break;
         // A reference definition: the link that uses it carries no URL of its own.
         case "definition":
-          add(node.url, "link", node);
+          add(node.url, imageIds.has(node.identifier) ? "markdown-image" : "link", node);
           break;
         case "containerDirective":
           if (node.name === "figure") {
@@ -236,7 +242,7 @@ function rehypeUrlProtocols(file, sink) {
       sink.push({ file, tag: node.tagName, url });
 
       const text = isLink
-        ? `[${textOf(node)}](${url})`
+        ? `[${hastToString(node)}](${url})`
         : `![${String(node.properties?.alt ?? "")}](${url})`;
 
       if (parent && typeof index === "number") {
@@ -244,17 +250,6 @@ function rehypeUrlProtocols(file, sink) {
       }
     });
   };
-}
-
-/**
- * @param {import("hast").Nodes} node
- */
-function textOf(node) {
-  let out = "";
-  visit(node, "text", (child) => {
-    out += child.value;
-  });
-  return out;
 }
 
 /**
@@ -382,7 +377,8 @@ function rehypeCollectToc(sink) {
       sink.push({
         depth: node.tagName === "h2" ? 2 : 3,
         id,
-        text: hastToString(node).replace(/#$/, "").trim(),
+        // Collected before the autolink appends its "#", so a trailing "#" here is the heading's own ("Learning C#").
+        text: hastToString(node).trim(),
       });
     });
   };
@@ -435,6 +431,13 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   const hasMath = { value: false };
 
   const keyOf = options.media?.keyOf ?? (() => null);
+  // One lookup per src in a render: a resolver that reads D1 or R2 pays once for an image used twice.
+  /** @type {Map<string, ReturnType<typeof resolveImage>>} */
+  const sizes = new Map();
+  const resolveOnce = (/** @type {string} */ src) => {
+    if (!sizes.has(src)) sizes.set(src, resolveImage(src));
+    return /** @type {ReturnType<typeof resolveImage>} */ (sizes.get(src));
+  };
   const imageProps = options.media?.imageProps ?? (() => null);
 
   /** @type {any} */
@@ -480,7 +483,7 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   // After rehypeSlug, rehypeCollectToc and the autolinks: they read heading text, and after KaTeX that text is the expression twice
   // over (MathML plus HTML), ruining ids and the toc. Option 3 in the header: KATEX_OPTIONS leaves `trust` off.
   if (math) processor.use(math.html, math.options);
-  processor.use(rehypeImageSources, file, resolveImage, pending, imageProps);
+  processor.use(rehypeImageSources, file, resolveOnce, pending, imageProps);
 
   if (options.highlight) {
     const [plugin, ...args] = await options.highlight.plugin();

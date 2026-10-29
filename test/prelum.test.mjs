@@ -12,7 +12,12 @@ import {
   escapeXml,
   fuse,
   ftsLiteral,
+  frontmatter,
   llmsDocument,
+  llmsFullDocument,
+  markdownPage,
+  markdownPath,
+  prefersMarkdown,
   rfc822,
   sitemapDocument,
   toMatchExpression,
@@ -52,6 +57,13 @@ test("sitemap: foxhound's expanded document with datetimes, changefreq and prior
     sitemapDocument(entriesOf(xml, /^\d{4}-\d{2}-\d{2}T/), { layout: "expanded", lastmodFormat: "datetime" }),
     xml,
   );
+});
+
+test("sitemap: a URL listed twice is written once, and compact layout refuses the fields it cannot write", () => {
+  const xml = sitemapDocument([{ loc: "https://x.test/a" }, { loc: "https://x.test/a", lastmod: "2026-01-01" }]);
+  assert.equal(xml.match(/<url>/g)?.length, 1);
+  assert.doesNotMatch(xml, /lastmod/);
+  assert.throws(() => sitemapDocument([{ loc: "https://x.test/a", priority: 1 }]), /only the expanded layout writes/);
 });
 
 test("sitemap: a loc with an ampersand does not end the document", () => {
@@ -126,6 +138,37 @@ test("llms: a link title's brackets are escaped and an empty section is dropped"
   });
   assert.match(text, /- \[\\\[draft\\\] note\]\(https:\/\/x\.test\/n\)/);
   assert.doesNotMatch(text, /## Empty/);
+});
+
+test("llms-full: the llms.txt header, then each page as its Markdown copy, so the two files and the .md cannot disagree", () => {
+  const page = { title: "Post", url: "https://x.test/post", description: "About it", markdown: "## Part\n\nText.\n" };
+  assert.equal(markdownPage(page), "# Post\n\n> About it\n\nSource: https://x.test/post\n\n## Part\n\nText.\n");
+  const doc = { title: "T", summary: "S", intro: ["Intro."] };
+  assert.equal(
+    llmsFullDocument({ ...doc, pages: [page, { title: "Empty", url: "https://x.test/e", markdown: "" }] }),
+    `${llmsDocument({ ...doc, sections: [] })}\n${markdownPage(page)}\n# Empty\n\nSource: https://x.test/e\n`,
+  );
+  assert.deepEqual(["/writing/post", "/a/", "/"].map(markdownPath), ["/writing/post.md", "/a.md", "/index.md"]);
+});
+
+test("markdown: only an Accept header that ranks Markdown above HTML and every wildcard gets it", () => {
+  const cases = {
+    "text/markdown": true,
+    "text/markdown, text/html;q=0.9": true,
+    "text/html,application/xhtml+xml,*/*;q=0.8": false,
+    "text/markdown, text/html": false,
+    "text/markdown;q=0.5, */*;q=0.5": false,
+    "text/markdown;q=2": false,
+    "": false,
+  };
+  for (const [accept, wanted] of Object.entries(cases)) assert.equal(prefersMarkdown(accept), wanted, accept);
+});
+
+test("frontmatter: values, quoted values, inline and block lists, and the body after it", () => {
+  const { data, body } = frontmatter('---\r\nname: "Button"\r\nparts: [a, \'b\']\r\nstates:\r\n  - hover\r\n  - focus\r\nadded:\r\n---\r\n# Body\r\n');
+  assert.deepEqual(data, { name: "Button", parts: ["a", "b"], states: ["hover", "focus"], added: [] });
+  assert.equal(body, "# Body\n");
+  assert.deepEqual(frontmatter("# No header"), { data: {}, body: "# No header" });
 });
 
 test("xml: the sites' feed fragments are the primitives' output", () => {

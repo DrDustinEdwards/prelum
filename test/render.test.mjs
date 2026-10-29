@@ -69,6 +69,8 @@ test("headings get an id, a keyboard-reachable anchor named for the heading, and
   const { html, toc } = await core("## Methods & `code`\n\ntext[^1]\n\n[^1]: note");
   assert.match(html, /<h2 id="methods--code">Methods &#x26; <code>code<\/code><a class="heading-anchor" aria-label="Link to section: Methods &#x26; code" href="#methods--code">#<\/a><\/h2>/);
   assert.deepEqual(toc, [{ depth: 2, id: "methods--code", text: "Methods & code" }]);
+  // The outline is read before the anchor's "#" is added, so a heading's own "#" stays.
+  assert.equal((await core("## Learning C#")).toc[0]?.text, "Learning C#");
 });
 
 test("a task-list checkbox is named by its item's first line, wrapped in a label, so a screen reader says what is done", async () => {
@@ -206,6 +208,8 @@ test("every way a page can cite media is collected, figure directives included",
     '<img src="/media/k3.png">',
     '[ref][r]',
     '[r]: /media/k4.png',
+    '![pic][i]',
+    '[i]: /media/k7.png',
     ':::figure{src="/media/k5.png" dark="/media/k6.png" alt="x"}',
     ":::",
   ].join("\n\n");
@@ -218,6 +222,7 @@ test("every way a page can cite media is collected, figure directives included",
     "k4.png": "link",
     "k5.png": "figure-directive",
     "k6.png": "figure-directive",
+    "k7.png": "markdown-image",
   });
 });
 
