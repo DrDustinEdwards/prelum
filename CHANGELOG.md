@@ -4,6 +4,7 @@
 
 ### Changed
 
+- The specimen moves to Capsomer v0.35.0: in dark, muted text, links and borders are stronger, and with "Increase contrast" on it takes Capsomer's stronger set.
 - The specimen moves to Capsomer v0.34.1, so a short page keeps the scrollbar's room and its letterhead sits on the same pixels as a long page's.
 - The specimen moves to Capsomer v0.34.0. Home starts at the same place as on every family site, x 496 at 1536px, whatever the site's name.
 - The specimen wears the family letterhead (Capsomer v0.28.1, `letterheadHtml`): the cerulean stripe over the band, the mark
