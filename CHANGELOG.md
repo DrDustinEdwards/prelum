@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- The specimen moves to Capsomer v0.37.0 (exact times in American English) and site-runtime v0.27.0, the newest releases.
+
 ## 0.17.0 (2026-10-29)
 
 ### Added
