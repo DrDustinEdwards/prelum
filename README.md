@@ -14,12 +14,13 @@ The helpers every site wrote for itself, written once here in the form of the be
 
 | Module | Exports |
 | --- | --- |
-| `xml` | `escapeXml`, `escapeXmlText`, `cdata`, `rfc822`, `isoDay`, `absolutizeUrls` (`absolutiseUrls` still works), `jsonLdText`, `mathToTex` |
+| `xml` | `escapeXml`, `cdata`, `rfc822`, `isoDay`, `absolutizeUrls`, `jsonLdText`, `mathToTex` |
 | `slug` | `slugify(text, { max })` |
 | `feeds` | `rssDocument`, `rssItem`, `atomDocument`, `atomEntry`, `jsonFeedDocument`, `feedItem` (`itemPath` moves where a post lives) |
 | `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` list it in the image sitemap |
-| `llms` | `llmsDocument`, `llmsLink` |
-| `head` | `headTags(input)` (title, description, canonical, Open Graph, Twitter, `article:*`), `headHtml(tags)`, `absoluteUrl`, `articleDates`, `searchTitle(title, suffix)`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT` |
+| `llms` | `llmsDocument`, `llmsLink`; `llmsFullDocument`, `markdownPage`, `markdownPath`, `prefersMarkdown`, `markdownResponse` (llms-full.txt and each page's Markdown copy) |
+| `frontmatter` | `frontmatter(source)`: the `---` header of a Markdown file as `{ data, body }` |
+| `head` | `headTags(input)` (title, description, canonical, the Markdown copy's link, Open Graph, Twitter, `article:*`), `headHtml(tags)`, `absoluteUrl`, `articleDates`, `searchTitle(title, suffix)`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT` |
 | `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage` |
 | `robots` | `robotsDocument(input)`, `aiTxt(input)`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
 | `indexnow` | `submitIndexNow(input)`, `keyFileResponse(key, headers)` (the `/<key>.txt` file), `recentSitemapUrls(xml, { days })`; the `prelum-indexnow` bin |
@@ -78,6 +79,30 @@ const origin = "https://example.com";
 const { pages, sitemap } = await crawlSite({ origin, fetch });
 const { findings, summary } = auditPages(pages, { origin, sitemap });
 ```
+
+## For agents: llms-full.txt and a Markdown copy of each page
+
+After Cloudflare's Nimbus (MIT; its notice is in `llms.mjs`). A page's Markdown copy is `markdownPage({ title, url,
+description, markdown })`: the title, the description as a blockquote, a `Source:` line and the body as the site stores it.
+llms-full.txt is `llmsFullDocument`: llms.txt's own title, summary and intro, then every page as that same text, so the
+two files and the `.md` copy cannot disagree.
+
+A site serves the copy at `markdownPath(path)` (`/writing/post.md`, `/index.md` for home), and from the page's own URL when
+`prefersMarkdown(request.headers.get("Accept"))` is true. Pass `markdown: markdownPath(path)` to `headTags` and the page links
+it with `<link rel="alternate" type="text/markdown">`.
+
+```js
+import { markdownPage, markdownPath, markdownResponse, prefersMarkdown } from "@drdustinedwards/site-helpers/llms";
+
+// In the page's loader and in its .md route:
+if (prefersMarkdown(request.headers.get("Accept")) || url.pathname.endsWith(".md")) {
+  return markdownResponse(markdownPage({ title, url: canonical, description, markdown: post.body }), { canonical });
+}
+```
+
+`markdownResponse` sets `Content-Type: text/markdown; charset=utf-8`, `Vary: Accept` and, with `canonical`, a
+`Link: rel="canonical"` header, so search engines index the HTML page and not the copy. The page's HTML response needs
+`Vary: Accept` too once its URL answers both ways.
 
 ## The markdown pipeline
 

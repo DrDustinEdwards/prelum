@@ -58,6 +58,8 @@ test("headHtml escapes attributes and keeps </script> inside JSON-LD from ending
   assert.deepEqual(JSON.parse(html.slice(html.indexOf(">", html.indexOf("ld+json")) + 1, html.lastIndexOf("</script>"))), {
     headline: "</script><script>alert(1)</script>",
   });
+  const tags = headTags({ origin: ORIGIN, path: "/post", title: "T", description: "D", image: "/c.png", markdown: "/post.md" });
+  assert.ok(headHtml(tags).includes(`<link rel="alternate" type="text/markdown" href="${ORIGIN}/post.md">`));
 });
 
 const page = (/** @type {string} */ path, /** @type {string} */ title, /** @type {string} */ description, canonical = `${ORIGIN}${path}`) =>

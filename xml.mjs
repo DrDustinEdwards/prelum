@@ -19,17 +19,6 @@ export function escapeXml(value) {
 }
 
 /**
- * Element text only: `&`, `<` and `>`. What a site that never puts a quote into a value (a URL, a category) wrote for
- * itself; `escapeXml` is safe wherever this is, and the two differ only on `"` and `'`.
- *
- * @param {unknown} value
- * @returns {string}
- */
-export function escapeXmlText(value) {
-  return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-/**
  * A CDATA section ends at the first `]]>`, so it is closed and reopened around one; the two sections concatenate
  * transparently. A hand-written `<![CDATA[${text}]]>` loses the rest of the text, and the document, at that point.
  *
@@ -102,9 +91,6 @@ export function absolutizeUrls(html, origin) {
           .join(",")}"`,
     );
 }
-
-/** The old spelling of `absolutizeUrls`, kept so a site that imports it keeps working. @deprecated */
-export const absolutiseUrls = absolutizeUrls;
 
 // Built from strings: a literal U+2028 is invisible and does not survive a copy.
 const LINE_SEPARATOR = new RegExp("\\u2028", "g");

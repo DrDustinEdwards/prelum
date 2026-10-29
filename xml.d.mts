@@ -10,14 +10,6 @@
  */
 export function escapeXml(value: unknown): string;
 /**
- * Element text only: `&`, `<` and `>`. What a site that never puts a quote into a value (a URL, a category) wrote for
- * itself; `escapeXml` is safe wherever this is, and the two differ only on `"` and `'`.
- *
- * @param {unknown} value
- * @returns {string}
- */
-export function escapeXmlText(value: unknown): string;
-/**
  * A CDATA section ends at the first `]]>`, so it is closed and reopened around one; the two sections concatenate
  * transparently. A hand-written `<![CDATA[${text}]]>` loses the rest of the text, and the document, at that point.
  *
@@ -52,8 +44,6 @@ export function toDate(value: Date | number | string | null | undefined, fallbac
  * @param {string} origin no trailing slash
  */
 export function absolutizeUrls(html: string, origin: string): string;
-/** The old spelling of `absolutizeUrls`. @deprecated */
-export const absolutiseUrls: typeof absolutizeUrls;
 /** A value as the text of a `<script type="application/ld+json">`: `< > &` and U+2028/9 escaped, the data unchanged. */
 export function jsonLdText(value: unknown): string;
 /**
