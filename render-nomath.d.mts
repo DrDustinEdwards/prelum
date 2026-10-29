@@ -22,7 +22,7 @@ export function renderWith({ file, body, resolveImage, options }: RenderInput, m
  * Bumped whenever the output changes for the same input. A site stores it beside its rendered HTML and re-renders on a mismatch; Carrel's
  * health check reads it from meta.capabilities.render. test/render-golden.test.mjs fails when the output moves and this does not.
  */
-export const RENDER_VERSION: "4";
+export const RENDER_VERSION: "5";
 /** A source over this is refused before it is parsed: a 200,000-character bracket run took 2.8 s, which a Worker cannot be sent. */
 export const DEFAULT_MAX_BYTES: number;
 /** The deepest nesting of markdown nodes allowed (lists in quotes in lists), so a hostile source cannot recurse the stack. */
@@ -37,13 +37,14 @@ export type MediaOptions = {
      */
     keyOf?: (raw: string) => string | null;
     /**
-     * Responsive attributes for an
-     * image, and the href of the link that wraps it (the unsized original). Null leaves the image as written.
+     * Responsive attributes for an image, and the href of the link that wraps it (the unsized original). `sources` (each a MIME type
+     * and a srcset, AVIF first) wrap the image in a <picture>; site-runtime's ./image writes them. Null leaves the image as written.
      */
     imageProps?: (src: string) => {
         srcSet?: string;
         sizes?: string;
         href?: string;
+        sources?: Array<{ type: string; srcSet: string }>;
     } | null;
 };
 /**

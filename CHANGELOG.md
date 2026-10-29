@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.16.0 (2026-10-29)
+
+### Added
+
+- Images can be offered in more than one format, as Astro's `<Picture>` does. `media.imageProps` may return `sources`, each a
+  MIME type and a srcset (AVIF first); the image is then wrapped in `<picture>` with one `<source>` per format, and the
+  `<img>` keeps its own srcset as the fallback. Every source is held to the same URL policy as the srcset, so one bad
+  candidate drops that source alone. site-runtime's `./image` writes `sources`. `RENDER_VERSION` is 5: a site that passes
+  `sources` gets new HTML, and the allowlist gains `picture` and `source`.
 
 ### Changed
 
