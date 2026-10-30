@@ -26,11 +26,17 @@ test("render returns the contract: a fragment, the outline, and what the page ci
   assert.deepEqual(Object.keys(result).sort(), [
     "blockedUrls",
     "diagrams",
+    "excerpt",
+    "faq",
     "hasMath",
     "html",
     "mediaRefs",
+    "postLinks",
+    "readingMinutes",
     "renderVersion",
     "toc",
+    "warnings",
+    "words",
   ]);
   assert.equal(result.renderVersion, RENDER_VERSION);
   assert.doesNotMatch(result.html, /<html|<body|<head/);
@@ -58,7 +64,7 @@ test("render is deterministic: the same input is the same bytes, run after run",
 
 test("render needs no site: the core renders without media, packs or highlighting", async () => {
   const { html, mediaRefs } = await core(fixture("prose"));
-  assert.match(html, /<h1 id="a-title">/);
+  assert.match(html, /<h2 id="second-heading">/);
   assert.match(html, /<div class="table-scroll" tabindex="0"><table>/);
   assert.match(html, /<img src="\/media\/dustin-edwards-sample-0123456789abcdef-640x480.png"/);
   assert.doesNotMatch(html, /srcset=/);
@@ -130,7 +136,7 @@ test("prose that looks like a directive stays prose; an unknown directive is ref
   const { html } = await core("Meet at 12:30, ratio 4.5:1, see localhost:8080.");
   assert.equal(html, "<p>Meet at 12:30, ratio 4.5:1, see localhost:8080.</p>");
 
-  await refuses(core("one\n\n:::figrue{src=\"/a.png\" alt=\"x\"}\n:::"), /unknown directive ":::figrue" on line 3\. Known directives: details, figure\./);
+  await refuses(core("one\n\n:::figrue{src=\"/a.png\" alt=\"x\"}\n:::"), /unknown directive ":::figrue" on line 3\. Known directives: details, figure, abbr, /);
   await refuses(core("see :alert here"), /unknown directive ":alert" on line 1/);
   await refuses(core(":::chart{type=\"bar\"}\n:::"), /unknown directive ":::chart"/);
 });
@@ -291,8 +297,9 @@ test("a pack may add to the result but cannot replace the fields that are the co
     setup: () => ({ remark: [], rehype: [], result: () => ({ html: "stolen", toc: "stolen", renderVersion: "0", extra: 1 }) }),
   };
   const result = await core("# Real", { packs: [greedy] });
-  assert.match(result.html, /^<h1 id="real">/);
-  assert.equal(result.toc.length, 0);
+  // An h1 in the body moves down a level: the page's title is the h1.
+  assert.match(result.html, /^<h2 id="real">/);
+  assert.deepEqual(result.toc, [{ depth: 2, id: "real", text: "Real" }]);
   assert.equal(result.renderVersion, RENDER_VERSION);
   assert.equal(/** @type {any} */ (result).extra, 1);
 });
@@ -336,4 +343,53 @@ test("diagram assets are named by the site's prefix, and the key moves with the 
   });
   assert.match(lf.html, /src="\/diagrams\/other-4efabcc1-light\.svg"/);
   assert.deepEqual(crlf.diagrams, lf.diagrams);
+});
+
+test("the blocks every site gets: callouts, media, embeds, galleries, links, FAQs and inline marks, each refused with a reason when misused", async () => {
+  const result = await site(fixture("blocks"));
+  const { html } = result;
+
+  assert.match(html, /<div class="callout callout-note" role="note">\n?<p class="callout-title">Note<\/p>/);
+  assert.match(html, /<p class="callout-title">Read this first<\/p>/);
+  assert.match(html, /<kbd>Ctrl<\/kbd>.*<abbr title="HyperText Markup Language">HTML<\/abbr>.*<mark>highlight<\/mark>, H<sub>2<\/sub>O/);
+  // A lone tilde is prose, and SmartyPants curls quotes and writes TeX's dashes.
+  assert.match(html, /H~2~O stays prose, “quotes” curl – and dashes—too…/);
+  assert.match(html, /<video [^>]*controls preload="metadata"[^>]*aria-label="A short demo"><track kind="captions"/);
+  assert.match(html, /<figure class="media media-video width-wide">/);
+  assert.match(html, /<a href="\/writing\/talk-transcript">Transcript: A talk<\/a>/);
+  // No request to the service until a click: a link with the no-cookie player beside it.
+  assert.match(html, /<a class="embed-link" href="https:\/\/www\.youtube\.com\/watch\?v=dQw4w9WgXcQ" data-embed-src="https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ\?autoplay=1"/);
+  assert.equal((html.match(/<li><a class="image-link"/g) ?? []).length, 2);
+  assert.match(html, /<figcaption>Two pictures side by side\.<\/figcaption>/);
+  assert.match(html, /<p class="button-row"><a href="\/join" class="button">Join the list<\/a><\/p>/);
+  assert.match(html, /<span class="bookmark-host">ghost\.org<\/span>/);
+  assert.match(html, /<figure class="code-frame"><figcaption class="code-title">example\.js<\/figcaption><pre/);
+  assert.deepEqual(result.faq, [
+    { question: "What is this?", answer: "A fixture." },
+    { question: "Does an answer run on?", answer: "It runs on over the next line." },
+  ]);
+  assert.ok(result.mediaRefs.some((ref) => ref.form === "media-directive" && ref.key.endsWith(".vtt")));
+  assert.ok(result.words > 60 && result.readingMinutes === 1, `${result.words} words`);
+
+  const linked = await core("See ::postlink[old|that post] and ::postlink[gone].\n\n:::faq\nQ: Where?\nA: In ::postlink[old].\n:::", {
+    postLink: async (slug) => (slug === "old" ? { url: "/writing/new", title: "New" } : null),
+  });
+  assert.match(linked.html, /<a href="\/writing\/new">that post<\/a> and <code>::postlink\[gone\]<\/code>/);
+  assert.deepEqual(linked.postLinks, ["old", "gone"]);
+  // Foxhound's live FAQ showed ::postlink[…] as text: the answer links on the page and reads as words in the JSON-LD.
+  assert.match(linked.html, /<dd>In <a href="\/writing\/new">New<\/a>\.<\/dd>/);
+  assert.deepEqual(linked.faq, [{ question: "Where?", answer: "In New." }]);
+
+  const outline = await core("Intro words here.\n\n## A\n\n#### Too deep\n\n![](/x.png)");
+  assert.deepEqual(outline.warnings.map((w) => w.line), [5, 7]);
+  assert.equal(outline.excerpt, "Intro words here.");
+
+  await refuses(core("![a clip](/media/clip.mp4)"), /links \/media\/clip\.mp4, a video or audio file\. Write :::video or :::audio/);
+  await refuses(core(':::video{src="/a.mp4" title="x"}\n:::'), /requires a captions attribute/);
+  await refuses(core('::audio{src="/a.mp3" title="x"}'), /requires a transcript attribute/);
+  await refuses(core('::embed[x]{url="https://example.com/v"}'), /cannot embed .* Embeds come from youtube, vimeo, spotify, soundcloud/);
+  await refuses(core('::embed{url="https://youtu.be/dQw4w9WgXcQ"}'), /requires a title/);
+  await refuses(core(":::gallery\n![one](/a.png)\n:::"), /holds 1 images; a gallery takes 2 to 9/);
+  await refuses(core(':::figure{src="/a.png" alt="x" width=huge}\n:::'), /use width=wide or width=full/);
+  await refuses(core(":abbr[HTML]"), /requires a title attribute/);
 });

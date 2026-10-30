@@ -160,3 +160,14 @@ export function staticSearch(index, query, { limit = 50, snippet = 160 } = {}) {
   }
   return results.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title)).slice(0, limit);
 }
+
+/**
+ * A LIKE pattern matching `text` anywhere in a column, with `%`, `_` and the backslash escaped, for `col LIKE ? ESCAPE '\'`. Unescaped, a
+ * search for "50%" or "a_b" matches rows it should not.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function likeContains(text) {
+  return `%${String(text).replace(/[\\%_]/g, "\\$&")}%`;
+}

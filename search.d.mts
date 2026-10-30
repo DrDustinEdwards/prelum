@@ -60,3 +60,5 @@ export function searchWords(query: string): string[];
  * (default 50), snippets of about `snippet` characters (default 160).
  */
 export function staticSearch(index: StaticSearchIndex, query: string, options?: { limit?: number; snippet?: number }): StaticSearchResult[];
+/** A LIKE pattern matching `text` anywhere, with `%`, `_` and the backslash escaped, for `col LIKE ? ESCAPE '\'`. */
+export function likeContains(text: string): string;

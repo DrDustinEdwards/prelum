@@ -20,6 +20,26 @@ function attributesOf(node) {
   return out;
 }
 
+const WIDTHS = ["wide", "full"];
+
+/**
+ * The width class a figure, gallery, video or embed asks for: Ghost's regular, wide and full. The site's stylesheet sets the widths.
+ *
+ * @param {string} file
+ * @param {any} node
+ * @param {string} name
+ * @returns {string[]}
+ */
+export function widthClass(file, node, name) {
+  const width = node.attributes?.width;
+  if (width === undefined || width === null) return [];
+  if (!WIDTHS.includes(width)) {
+    const line = node.position?.start?.line;
+    throw new ContentError(file, `${name}${line ? ` on line ${line} of the body` : ""} has width=${JSON.stringify(width)}; use width=wide or width=full`);
+  }
+  return [`width-${width}`];
+}
+
 /**
  * @param {string} file
  */
@@ -68,7 +88,8 @@ export function remarkFigure(file) {
         });
       }
 
-      node.data = { ...node.data, hName: "figure" };
+      const width = widthClass(file, node, ":::figure");
+      node.data = { ...node.data, hName: "figure", ...(width.length > 0 ? { hProperties: { className: width } } : {}) };
       node.children = figureChildren;
     });
   };

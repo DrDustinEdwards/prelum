@@ -1,5 +1,3 @@
-# A title
-
 An opening paragraph with *emphasis*, **strong text**, ~~strikethrough~~, `inline code`, a [web link](https://example.com/page "A title"), a [mail link](mailto:someone@example.com), a [relative link](/writing/other), a [fragment](#second-heading) and a bare https://example.org/autolink in it.[^note]
 
 ## Second heading
@@ -10,6 +8,12 @@ An opening paragraph with *emphasis*, **strong text**, ~~strikethrough~~, `inlin
 > > And one nested inside it.
 
 ### Third heading
+
+#### Fourth heading
+
+##### Fifth heading
+
+###### Sixth heading
 
 1. First
 2. Second

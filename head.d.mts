@@ -271,8 +271,3 @@ export function defineHead(site: SiteHead): (page: PageHead) => HeadTag[];
  * entity it does not know is kept as written. The result is text, so it is escaped where it is written, as every tag is.
  */
 export function metaText(html: string, limit?: number): string;
-/**
- * Minutes to read at 200 words a minute, rounded, never less than one. Words are runs of non-space, so Markdown syntax
- * counts, as the sites' published reading times were counted; pass HTML through `metaText(html, Infinity)` first.
- */
-export function readingMinutes(text: string): number;
