@@ -1,3 +1,5 @@
+import { plainTextResponse } from "./robots.mjs";
+
 /**
  * @typedef {object} LlmsLink
  * @property {string} title
@@ -126,12 +128,13 @@ export function markdownPath(path) {
 /**
  * Whether a request's Accept header prefers Markdown over HTML (RFC 9110). Markdown wins only when `text/markdown` is
  * acceptable and outranks every HTML and wildcard range; a tie or an unreadable header keeps HTML, so a browser never gets
- * Markdown by accident. Nimbus's `prefersMarkdown`.
+ * Markdown by accident. Nimbus's `prefersMarkdown`. Takes the header's value or the request itself.
  *
- * @param {string | null | undefined} accept
+ * @param {Request | string | null | undefined} accept
  * @returns {boolean}
  */
 export function prefersMarkdown(accept) {
+  if (accept && typeof accept !== "string") accept = accept.headers.get("Accept");
   if (!accept) return false;
   let markdown = 0;
   let html = 0;
@@ -152,18 +155,46 @@ export function prefersMarkdown(accept) {
 }
 
 /**
+ * @typedef {object} MarkdownResponseOptions
+ * @property {string} [canonical] the HTML page's absolute URL, sent as `Link: <url>; rel="canonical"`
+ * @property {string[]} [links] more `Link` values, written after the canonical one (a license, say)
+ * @property {boolean} [vary] `Vary: Accept`, true by default; false for a copy served only at its own `.md` URL, so a cache
+ *   keeps it as one entry
+ * @property {Record<string, string>} [headers] added, e.g. the site's cache policy
+ */
+
+/**
  * The response for a page's Markdown copy, from its `.md` route or from the page's own route when `prefersMarkdown` is true.
- * `Vary: Accept` tells a cache the page's URL has two forms; the page's HTML response needs it too. With `canonical`, a
+ * `Vary: Accept` tells a cache the page's URL has two forms; the page's HTML response needs it too. A copy that only its `.md`
+ * URL serves has one form, so a site that stores it in a cache keyed without Accept passes `vary: false`. With `canonical`, a
  * `Link: rel="canonical"` header points search engines at the HTML page, so the copy never competes with it.
  *
  * @param {string} markdown what `markdownPage` wrote
- * @param {{ canonical?: string, headers?: Record<string, string> }} [options] `headers` are added, e.g. the site's cache policy
+ * @param {MarkdownResponseOptions} [options]
  * @returns {Response}
  */
 export function markdownResponse(markdown, options = {}) {
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "text/markdown; charset=utf-8");
-  headers.set("Vary", "Accept");
-  if (options.canonical) headers.set("Link", `<${options.canonical}>; rel="canonical"`);
+  if (options.vary !== false) headers.set("Vary", "Accept");
+  const links = [...(options.canonical ? [`<${options.canonical}>; rel="canonical"`] : []), ...(options.links ?? [])];
+  if (links.length > 0) headers.set("Link", links.join(", "));
   return new Response(markdown, { headers });
+}
+
+/**
+ * @typedef {{ title: string, summary: string, intro?: string[], sections: LlmsSection[] } | { body: string }} LlmsContent
+ * the document's parts for `llmsDocument`, or a file the site already has (one written by hand, say) as `body`
+ */
+
+/**
+ * /llms.txt as a whole response: `llmsDocument`, or the site's own text, with `plainTextResponse`'s headers from `robots`
+ * (UTF-8, the shared cache lifetime, the TDMRep header, `no-store` on a preview) and `X-Robots-Tag: noindex`: the file is a
+ * guide for machines, and search results should show the pages it lists.
+ *
+ * @param {LlmsContent & import("./robots.mjs").PlainTextOptions} input
+ * @returns {Response}
+ */
+export function llmsResponse(input) {
+  return plainTextResponse("body" in input ? input.body : llmsDocument(input), { ...input, noindex: true });
 }

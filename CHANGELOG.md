@@ -1,9 +1,33 @@
 # Changelog
 
-## Unreleased
+## 0.18.0 (2026-10-30)
+
+### Added
+
+- `robotsResponse`, `aiTxtResponse` (`robots`) and `llmsResponse` (`llms`): the whole /robots.txt, /ai.txt and /llms.txt
+  routes the sites each wrote. Each takes `{ origin, request }` with the document's own input; a request on another origin
+  is a preview (`preview` overrides it), so robots.txt tells every crawler `Disallow: /`. robots.txt's notes default to
+  `robotsNotes(origin)` (the ai.txt and llms.txt pointers). All three carry one set of headers from `plainTextResponse`:
+  `text/plain; charset=utf-8`, `PLAIN_TEXT_CACHE_CONTROL` (`public, max-age=3600`, or `no-store` on a preview), the TDMRep
+  header, and `X-Robots-Tag: noindex` on ai.txt, llms.txt and any preview. `headers` adds or replaces one. `llmsResponse`
+  takes the `llmsDocument` parts or a finished `body`.
+- `defineHead({ origin, siteName, image, suffix, locale, feeds })` in `head`, returning `(page) => HeadTag[]`: the wrapper
+  around `headTags` every site wrote. The `<title>` is `searchTitle(title, suffix)` unless the page says `fullTitle`, the
+  share card keeps the whole title, and the description is cut at a word to `SERP_DESCRIPTION_LIMIT` with the share card
+  keeping it whole.
+- `headTags` takes `feeds: [{ type, href, title }]` and links each with `<link rel="alternate">` (`rss`, `atom` and `json`
+  name their media types). A link tag can carry a `title`, and `headHtml` writes it.
+- `metaText(html, limit)`: a meta tag's text from HTML (tags dropped, entities decoded, cut at a word, by default to
+  `SERP_DESCRIPTION_LIMIT`). `readingMinutes(text)`: words over 200, rounded, at least one.
+- `markdownResponse` takes `vary: false`, for a copy served only at its `.md` URL, and `links`, more `Link` values after the
+  canonical one. `prefersMarkdown` also takes the request itself.
 
 ### Changed
 
+- The canonical and `og:url` drop a trailing slash on `path` (`/about/` is `/about`; the home page stays `/`), so one page
+  has one canonical URL. `keepTrailingSlash: true` keeps it for a route served only with its slash. A `canonical` passed
+  in is kept as it is.
+- `headHtml` reads a link descriptor before a title, as React Router does.
 - The specimen moves to Capsomer v0.37.0 (exact times in American English) and site-runtime v0.27.0, the newest releases.
 
 ## 0.17.0 (2026-10-29)

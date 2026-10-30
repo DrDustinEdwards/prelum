@@ -18,11 +18,11 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `slug` | `slugify(text, { max })` |
 | `feeds` | `rssDocument`, `rssItem`, `atomDocument`, `atomEntry`, `jsonFeedDocument`, `feedItem` (`itemPath` moves where a post lives) |
 | `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` list it in the image sitemap |
-| `llms` | `llmsDocument`, `llmsLink`; `llmsFullDocument`, `markdownPage`, `markdownPath`, `prefersMarkdown`, `markdownResponse` (llms-full.txt and each page's Markdown copy) |
+| `llms` | `llmsDocument`, `llmsLink`; `llmsFullDocument`, `markdownPage`, `markdownPath`, `prefersMarkdown`, `markdownResponse` (llms-full.txt and each page's Markdown copy); `llmsResponse` (the whole /llms.txt response) |
 | `frontmatter` | `frontmatter(source)`: the `---` header of a Markdown file as `{ data, body }` |
-| `head` | `headTags(input)` (title, description, canonical, the Markdown copy's link, Open Graph, Twitter, `article:*`), `headHtml(tags)`, `absoluteUrl`, `articleDates`, `searchTitle(title, suffix)`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT` |
+| `head` | `defineHead(site)` (the per-site builder: `(page) => HeadTag[]`), `headTags(input)` (title, description, canonical, the Markdown copy's and the feeds' links, Open Graph, Twitter, `article:*`), `headHtml(tags)`, `metaText(html, limit)`, `readingMinutes(text)`, `absoluteUrl`, `articleDates`, `searchTitle(title, suffix)`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT` |
 | `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage` |
-| `robots` | `robotsDocument(input)`, `aiTxt(input)`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
+| `robots` | `robotsDocument(input)`, `aiTxt(input)`, `robotsResponse(input)`, `aiTxtResponse(input)` (the whole responses), `plainTextResponse`, `isPreviewRequest`, `robotsNotes`, `PLAIN_TEXT_CACHE_CONTROL`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
 | `indexnow` | `submitIndexNow(input)`, `keyFileResponse(key, headers)` (the `/<key>.txt` file), `recentSitemapUrls(xml, { days })`; the `prelum-indexnow` bin |
 | `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })` |
 | `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` (D1's FTS5); `staticSearchIndex(pages)` at build and `staticSearch(index, query)` in the browser, `searchWords`, for a site with no database |
@@ -51,7 +51,10 @@ What they hold every site to:
 - `thing` drops empty fields, and `website` has no SearchAction without a real search URL: structured data claims nothing the
   page cannot back.
 - robots.txt repeats the disallow list in every named group (a crawler uses only its own group), and a preview gets
-  `Disallow: /`. The bot lists are the family's policy (Dustin, 2026-10-25): search engines and AI search bots are allowed;
+  `Disallow: /`. `robotsResponse`, `aiTxtResponse` and `llmsResponse` (in `llms`) are the whole routes: given `{ origin,
+  request }`, a request on any other origin is a preview (or pass `preview`), and the three files share one set of headers
+  (UTF-8 text, an hour's cache or `no-store` on a preview, the TDMRep header, and `X-Robots-Tag: noindex` on ai.txt and
+  llms.txt). The bot lists are the family's policy (Dustin, 2026-10-25): search engines and AI search bots are allowed;
   training bots are allowed so that they reach Cloudflare's Pay Per Crawl price, where AI Crawl Control charges or blocks them;
   Bytespider is denied.
 - Training rights are reserved in the same words everywhere: every public response carries `TDM_RESERVATION_HEADERS`

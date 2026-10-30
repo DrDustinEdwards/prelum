@@ -2,7 +2,7 @@
  * @typedef {{ title: string }
  *   | { name: string, content: string }
  *   | { property: string, content: string }
- *   | { tagName: "link", rel: string, href: string, type?: string }
+ *   | { tagName: "link", rel: string, href: string, type?: string, title?: string }
  *   | { "script:ld+json": Record<string, unknown> }} HeadTag
  * The descriptor shapes React Router's `meta` export takes, so a route returns `headTags(...)` as it is.
  */
@@ -110,6 +110,7 @@ export type HeadTag = {
     rel: string;
     href: string;
     type?: string;
+    title?: string;
 } | {
     "script:ld+json": Record<string, unknown>;
 };
@@ -171,4 +172,80 @@ export type HeadInput = {
      * `<link rel="alternate" type="text/markdown">` so an agent can find it
      */
     markdown?: string | undefined;
+    /**
+     * the site's or the page's feeds, each linked as `<link rel="alternate">` so a reader finds it
+     */
+    feeds?: HeadFeed[] | undefined;
+    /**
+     * keep a trailing slash on `path` in the canonical and `og:url`; by default `/about/` is written `/about` (the home page
+     * stays `/`), so one page has one canonical URL. A route served only with its slash (a podcast feed's page at
+     * `/feed/podcast/`) keeps it.
+     */
+    keepTrailingSlash?: boolean | undefined;
 };
+export type HeadFeed = {
+    /**
+     * `rss`, `atom` and `json` name the usual media types; any other value is written as the type
+     */
+    type: "rss" | "atom" | "json" | (string & {});
+    /**
+     * absolute, or a path on `origin`
+     */
+    href: string;
+    /**
+     * e.g. "Germomics (RSS)"
+     */
+    title?: string | undefined;
+};
+export type SiteHead = {
+    /**
+     * the site's production origin
+     */
+    origin: string;
+    /**
+     * `og:site_name`
+     */
+    siteName: string;
+    /**
+     * the site's default card, for a page without its own
+     */
+    image: HeadImage | string;
+    /**
+     * what follows a page's title in `<title>`, e.g. " | Foxing"; `searchTitle` drops it where the two do not fit
+     */
+    suffix?: string | undefined;
+    /**
+     * `og:locale`, e.g. `en_US`
+     */
+    locale?: string | undefined;
+    /**
+     * the site's feeds, linked from every page
+     */
+    feeds?: HeadFeed[] | undefined;
+};
+/**
+ * One page's head: `title` is the page's own title, without the suffix, unless `fullTitle` says it is already the whole
+ * `<title>`. `feeds` are added to the site's.
+ */
+export type PageHead = Omit<HeadInput, "origin" | "siteName" | "image" | "locale"> & {
+    image?: HeadImage | string | null;
+    fullTitle?: boolean;
+};
+/**
+ * The per-site head builder every site wrote around `headTags`: the site's facts once, then a function a route's `meta`
+ * calls with the page's. The `<title>` is `searchTitle(title, suffix)` (the suffix dropped and the title cut where both do
+ * not fit) and the share card keeps the whole title as `socialTitle`; the description is cut at a word to
+ * `SERP_DESCRIPTION_LIMIT`, and the share card keeps it whole.
+ */
+export function defineHead(site: SiteHead): (page: PageHead) => HeadTag[];
+/**
+ * A meta tag's text from HTML (an excerpt, an abstract title): scripts, styles and tags dropped, entities decoded, white
+ * space collapsed, then cut at a word to `limit` (by default `SERP_DESCRIPTION_LIMIT`; `Infinity` keeps it whole). An
+ * entity it does not know is kept as written. The result is text, so it is escaped where it is written, as every tag is.
+ */
+export function metaText(html: string, limit?: number): string;
+/**
+ * Minutes to read at 200 words a minute, rounded, never less than one. Words are runs of non-space, so Markdown syntax
+ * counts, as the sites' published reading times were counted; pass HTML through `metaText(html, Infinity)` first.
+ */
+export function readingMinutes(text: string): number;

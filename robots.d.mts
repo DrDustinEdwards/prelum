@@ -95,3 +95,53 @@ export type AiTxtInput = {
      */
     policy?: string[] | undefined;
 };
+/**
+ * How long a shared cache keeps robots.txt, ai.txt and llms.txt: an hour, the lifetime most of the sites chose, so a policy
+ * change reaches crawlers the same day everywhere.
+ */
+export const PLAIN_TEXT_CACHE_CONTROL: "public, max-age=3600";
+export type PlainTextOptions = {
+    /**
+     * the site's production origin
+     */
+    origin: string;
+    /**
+     * the request being answered: its origin differing from `origin` marks a preview
+     */
+    request: Request;
+    /**
+     * in place of the origin comparison, for a site that knows otherwise (a Worker Preview's env var)
+     */
+    preview?: boolean | undefined;
+    /**
+     * added last, so a site can add a `Cache-Tag` or replace the cache lifetime
+     */
+    headers?: Record<string, string> | undefined;
+};
+/**
+ * Whether a request reached a copy of the site that is not the production origin (a workers.dev URL, a Worker Preview): the
+ * copy must not be crawled or indexed in place of the site.
+ */
+export function isPreviewRequest({ origin, request, preview }: Pick<PlainTextOptions, "origin" | "request" | "preview">): boolean;
+/**
+ * The one set of headers the family's plain-text policy files carry: UTF-8 text, `PLAIN_TEXT_CACHE_CONTROL` (or `no-store`
+ * on a preview, which no cache should keep), `TDM_RESERVATION_HEADERS`, and `X-Robots-Tag: noindex` where the file is for
+ * machines and should not appear in search results.
+ */
+export function plainTextResponse(body: string, options: PlainTextOptions & {
+    noindex?: boolean;
+}): Response;
+/**
+ * The default `#` notes robots.txt ends with: where the AI usage policy and the LLM guide live.
+ */
+export function robotsNotes(origin: string): string[];
+/**
+ * /robots.txt as a whole response, the route every site wrote: `robotsDocument` with `robotsNotes(origin)` as the notes unless
+ * the site passes its own, `Disallow: /` for every crawler when the request is a preview, and `plainTextResponse`'s headers.
+ */
+export function robotsResponse(input: Omit<RobotsInput, "preview"> & PlainTextOptions): Response;
+/**
+ * /ai.txt as a whole response: `aiTxt`, with `plainTextResponse`'s headers and `X-Robots-Tag: noindex`, since the file is
+ * policy for machines, not a page for search results.
+ */
+export function aiTxtResponse(input: AiTxtInput & PlainTextOptions): Response;

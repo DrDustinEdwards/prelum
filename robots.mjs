@@ -108,3 +108,82 @@ export function aiTxt({ origin, name, contact, disallow = [], policy }) {
     "",
   ].join("\n");
 }
+
+/**
+ * How long a shared cache keeps robots.txt, ai.txt and llms.txt: an hour, the lifetime most of the sites chose, so a policy
+ * change reaches crawlers the same day everywhere.
+ */
+export const PLAIN_TEXT_CACHE_CONTROL = "public, max-age=3600";
+
+/**
+ * @typedef {object} PlainTextOptions
+ * @property {string} origin the site's production origin
+ * @property {Request} request the request being answered: its origin differing from `origin` marks a preview
+ * @property {boolean} [preview] in place of the origin comparison, for a site that knows otherwise (a Worker Preview's env var)
+ * @property {Record<string, string>} [headers] added last, so a site can add a `Cache-Tag` or replace the cache lifetime
+ */
+
+/**
+ * Whether a request reached a copy of the site that is not the production origin (a workers.dev URL, a Worker Preview): the
+ * copy must not be crawled or indexed in place of the site.
+ *
+ * @param {Pick<PlainTextOptions, "origin" | "request" | "preview">} options
+ */
+export function isPreviewRequest({ origin, request, preview }) {
+  if (preview !== undefined) return preview;
+  return new URL(request.url).origin !== new URL(origin).origin;
+}
+
+/**
+ * The one set of headers the family's plain-text policy files carry: UTF-8 text, `PLAIN_TEXT_CACHE_CONTROL` (or `no-store`
+ * on a preview, which no cache should keep), `TDM_RESERVATION_HEADERS`, and `X-Robots-Tag: noindex` where the file is for
+ * machines and should not appear in search results.
+ *
+ * @param {string} body
+ * @param {PlainTextOptions & { noindex?: boolean }} options
+ * @returns {Response}
+ */
+export function plainTextResponse(body, options) {
+  const preview = isPreviewRequest(options);
+  const headers = new Headers({
+    "Content-Type": "text/plain; charset=utf-8",
+    "Cache-Control": preview ? "no-store" : PLAIN_TEXT_CACHE_CONTROL,
+    ...TDM_RESERVATION_HEADERS,
+  });
+  if (options.noindex || preview) headers.set("X-Robots-Tag", "noindex");
+  for (const [name, value] of Object.entries(options.headers ?? {})) headers.set(name, value);
+  return new Response(body, { headers });
+}
+
+/**
+ * The default `#` notes robots.txt ends with: where the AI usage policy and the LLM guide live.
+ *
+ * @param {string} origin
+ */
+export function robotsNotes(origin) {
+  const base = origin.replace(/\/$/, "");
+  return [`AI usage policy: ${base}/ai.txt`, `LLM guide: ${base}/llms.txt`];
+}
+
+/**
+ * /robots.txt as a whole response, the route every site wrote: `robotsDocument` with `robotsNotes(origin)` as the notes unless
+ * the site passes its own, `Disallow: /` for every crawler when the request is a preview, and `plainTextResponse`'s headers.
+ *
+ * @param {Omit<RobotsInput, "preview"> & PlainTextOptions} input
+ * @returns {Response}
+ */
+export function robotsResponse(input) {
+  const body = robotsDocument({ ...input, notes: input.notes ?? robotsNotes(input.origin), preview: isPreviewRequest(input) });
+  return plainTextResponse(body, input);
+}
+
+/**
+ * /ai.txt as a whole response: `aiTxt`, with `plainTextResponse`'s headers and `X-Robots-Tag: noindex`, since the file is
+ * policy for machines, not a page for search results.
+ *
+ * @param {AiTxtInput & PlainTextOptions} input
+ * @returns {Response}
+ */
+export function aiTxtResponse(input) {
+  return plainTextResponse(aiTxt(input), { ...input, noindex: true });
+}
