@@ -5,8 +5,17 @@
 ### Added
 
 - `prelum-audit` bin: crawls a live site from its sitemap with `crawlSite` and runs `auditPages`, printing each finding as a
-  GitHub annotation and exiting 1 on any error, so a scheduled job goes red the day a page loses its title, description or
-  canonical. `--from` fetches from a preview host while canonicals are checked against `--origin`.
+  GitHub annotation and exiting 1 on any error (2 when the site does not answer), so a scheduled job goes red the day a page loses its title,
+  description or canonical. `--from` fetches from a preview host while canonicals are checked against `--origin`.
+- `defineHead` adds a JSON-LD graph to every indexable page: a `WebPage` (or the page's `pageType`, such as
+  `CollectionPage`) joined to the site's `website` node by `@id`, and a `BreadcrumbList` from the home page through the
+  sections `site.sections` names (`{ "/blog": "Blog" }`) to the page. A page passes its own `breadcrumbs`, or `false` for none.
+- `robotsDocument` writes `Content-Signal: search=yes, ai-input=yes, ai-train=no` (`CONTENT_SIGNAL`) in every group;
+  `contentSignal` replaces it.
+
+### Changed
+
+- `headTags` sends `robots: max-image-preview:large` on every indexable page, so Google can show the whole share image.
 
 ## 0.18.0 (2026-10-30)
 

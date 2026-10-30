@@ -24,7 +24,15 @@ export const DENIED_BOTS = ["Bytespider"];
  * @property {string[]} [sitemaps] defaults to `${origin}/sitemap.xml`
  * @property {string[]} [notes] lines after the Sitemap lines, each written as a `#` comment (an llms.txt pointer, say)
  * @property {boolean} [preview] a preview or workers.dev copy: every crawler is told `Disallow: /`
+ * @property {string} [contentSignal] defaults to `CONTENT_SIGNAL`
  */
+
+/**
+ * Cloudflare's Content Signals (contentsignals.org): pages may be indexed for search and used as input to an AI answer, but
+ * not used to train, the same policy ai.txt and the TDMRep header state. Written in every group, since a crawler that matches
+ * a named group reads only that group.
+ */
+export const CONTENT_SIGNAL = "search=yes, ai-input=yes, ai-train=no";
 
 /**
  * robots.txt. Every named group repeats the full disallow list: a crawler that matches a named group uses only that group
@@ -43,9 +51,11 @@ export function robotsDocument(input) {
     denyBots = DENIED_BOTS,
     sitemaps = [`${origin}/sitemap.xml`],
     notes = [],
+    contentSignal = CONTENT_SIGNAL,
   } = input;
   const group = (/** @type {string} */ agent) => [
     `User-agent: ${agent}`,
+    `Content-Signal: ${contentSignal}`,
     "Allow: /",
     ...disallow.map((path) => `Disallow: ${path}`),
     "",
