@@ -2,7 +2,8 @@
 // private path to that crawler; an empty date tag claims a page has no date; `</script>` in a title would end the JSON-LD; and an
 // audit that compares URLs by their exact spelling misses a broken link written with a trailing slash or a fragment, and
 // one that lets a workers.dev canonical or a redirect chain through calls a site clean that search engines do not. A cut
-// title that runs past the limit with its "...", or an entity the audit reads as extra characters, warns on every page.
+// title that runs past the limit with its "...", or an entity the audit reads as extra characters, warns on every page. An
+// image's license node without a rights field, or an Article image under Google's size, is structured data Google ignores.
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -11,7 +12,7 @@ import { auditPages, crawlSite } from "../audit.mjs";
 import { defineHead, headHtml, headTags, metaText, SERP_TITLE_LIMIT, searchTitle, truncateForSerp } from "../head.mjs";
 import { llmsResponse } from "../llms.mjs";
 import { aiTxt, DENIED_BOTS, robotsDocument, robotsResponse } from "../robots.mjs";
-import { article, jsonLd } from "../schema.mjs";
+import { article, imageObject, jsonLd } from "../schema.mjs";
 
 const ORIGIN = "https://example.com";
 
@@ -63,14 +64,40 @@ test("headHtml escapes attributes and keeps </script> inside JSON-LD from ending
   assert.ok(headHtml(tags).includes(`<link rel="alternate" type="text/markdown" href="${ORIGIN}/post.md">`));
 });
 
+test("a share image writes its type from the extension and X's alt within 420 characters; schema images claim only what is known", () => {
+  const alt = `A ${"long ".repeat(100)}alt`;
+  const tags = headTags({ origin: ORIGIN, path: "/p", title: "T", description: "D", image: { url: "/c.JPG?v=2", width: 1200, height: 630, alt } });
+  const content = (/** @type {string} */ key) => tags.map((tag) => ("content" in tag && (("property" in tag && tag.property === key) || ("name" in tag && tag.name === key)) ? tag.content : null)).find(Boolean);
+  assert.equal(content("og:image:type"), "image/jpeg");
+  assert.equal(content("og:image:alt"), alt);
+  assert.ok((content("twitter:image:alt") ?? "").length <= 420);
+
+  assert.equal(imageObject({ url: `${ORIGIN}/a.png`, width: 800, height: 600 }), null);
+  assert.deepEqual(imageObject({ url: `${ORIGIN}/a.png`, license: `${ORIGIN}/license`, creator: { name: "Sample" } }), {
+    "@context": "https://schema.org",
+    "@type": "ImageObject",
+    url: `${ORIGIN}/a.png`,
+    contentUrl: `${ORIGIN}/a.png`,
+    creator: { "@type": "Person", name: "Sample" },
+    license: `${ORIGIN}/license`,
+  });
+  const crops = [`${ORIGIN}/16x9.png`, { url: `${ORIGIN}/4x3.png`, width: 800, height: 600 }];
+  const images = /** @type {unknown[]} */ (article({ url: `${ORIGIN}/p`, headline: "T", image: crops }).image);
+  assert.equal(images[0], crops[0]);
+  assert.equal(/** @type {Record<string, unknown>} */ (images[1])["@type"], "ImageObject");
+  assert.throws(() => article({ url: `${ORIGIN}/p`, headline: "T", image: { url: `${ORIGIN}/s.png`, width: 200, height: 200 } }), /under Google's 50000 pixels/);
+});
+
+const CARD = headHtml(headTags({ origin: ORIGIN, path: "/", title: "", description: "", image: { url: "/c.png", width: 1200, height: 630, alt: "A card" } }).filter((tag) => "property" in tag && tag.property.startsWith("og:image")));
 const page = (/** @type {string} */ path, /** @type {string} */ title, /** @type {string} */ description, canonical = `${ORIGIN}${path}`) =>
-  `<html><head><title>${title}</title><meta name="description" content="${description}"><link rel="canonical" href="${canonical}"><meta property="og:title" content="${title}"><meta property="og:image" content="${ORIGIN}/c.png"></head>`;
+  `<html><head><title>${title}</title><meta name="description" content="${description}"><link rel="canonical" href="${canonical}"><meta property="og:title" content="${title}">${CARD}</head>`;
 
 test("the audit finds a broken link through a trailing slash, a redirect chain once, a link to a redirect and a duplicate title", () => {
   const { findings, pages, summary } = auditPages(
     [
       { url: `${ORIGIN}/`, status: 200, html: `${page("/", "Same", "one")}<body><a href="/gone/#top">x</a><a href="/older">o</a><a href="https://other.example/">y</a></body></html>` },
-      { url: `${ORIGIN}/b`, status: 200, html: `${page("/b", "Same", "two")}<body></body></html>`, inSitemap: true },
+      { url: `${ORIGIN}/b`, status: 200, html: `${page("/b", "Same", "two")}<body><img src="/i/IMG_0042.JPG" alt="IMG_0042"><img src="/rule.svg" alt=""></body></html>`, inSitemap: true },
+      { url: `${ORIGIN}/bare`, status: 200, html: `${page("/bare", "Bare", "three").replace(CARD, headHtml(headTags({ origin: ORIGIN, path: "/", title: "", description: "", image: "/c.png" }).filter((tag) => "property" in tag && tag.property.startsWith("og:image"))))}</html>` },
       { url: `${ORIGIN}/gone`, status: 404 },
       { url: `${ORIGIN}/old`, status: 301, location: "/older" },
       { url: `${ORIGIN}/older`, status: 301, location: "/oldest" },
@@ -80,6 +107,8 @@ test("the audit finds a broken link through a trailing slash, a redirect chain o
   );
   const checks = findings.map((finding) => `${finding.check} ${finding.url}`).sort();
   assert.deepEqual(checks, [
+    `card-incomplete ${ORIGIN}/bare`,
+    `image-alt-filename ${ORIGIN}/b`,
     `link-broken ${ORIGIN}/`,
     `link-redirect ${ORIGIN}/`,
     `redirect-chain ${ORIGIN}/old`,
@@ -87,7 +116,8 @@ test("the audit finds a broken link through a trailing slash, a redirect chain o
     `title-duplicate ${ORIGIN}/b`,
   ]);
   assert.equal(findings.find((finding) => finding.check === "redirect-chain")?.detail, `${ORIGIN}/old -> ${ORIGIN}/older -> ${ORIGIN}/oldest -> ${ORIGIN}/b`);
-  assert.equal(pages, 6);
+  assert.equal(findings.find((finding) => finding.check === "card-incomplete")?.detail, "no og:image:width, og:image:height, og:image:alt, so the card is drawn late or unnamed");
+  assert.equal(pages, 7);
   assert.equal(summary["title-duplicate"], 2);
 });
 

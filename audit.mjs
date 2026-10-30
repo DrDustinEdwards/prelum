@@ -104,7 +104,14 @@ export function auditPages(pages, { origin, sitemap }) {
     const robots = `${meta(head, "name", "robots") ?? ""} ${header(page.headers, "x-robots-tag")}`;
     if (inSitemap(page) && /noindex/i.test(robots)) add(url, "sitemap-noindex", "error", "the sitemap lists a noindex page");
     if (!meta(head, "property", "og:title")) add(url, "og-title-missing", "warning", "no og:title, so a shared link's card falls back to a guess");
-    if (!meta(head, "property", "og:image")) add(url, "card-missing", "warning", "no og:image, so a shared link has no card");
+    const card = meta(head, "property", "og:image");
+    if (!card) add(url, "card-missing", "warning", "no og:image, so a shared link has no card");
+    else {
+      // What `headTags` writes from an image object; a bare image URL writes none of them.
+      const missing = ["og:image:type", "og:image:width", "og:image:height", "og:image:alt"].filter((property) => !meta(head, "property", property));
+      if (!card.startsWith("https://")) missing.unshift("an absolute https og:image");
+      if (missing.length > 0) add(url, "card-incomplete", "warning", `no ${missing.join(", ")}, so the card is drawn late or unnamed`);
+    }
 
     for (const script of jsonLdBlocks(html)) {
       try {
@@ -114,7 +121,9 @@ export function auditPages(pages, { origin, sitemap }) {
       }
     }
     for (const img of tags(html, "img")) {
+      // alt="" is a decorative image, and right; a file name for alt is read aloud as one.
       if (img.alt === undefined) add(url, "image-alt-missing", "warning", `no alt on ${img.src ?? "an image"}`);
+      else if (isFileName(img.alt, img.src)) add(url, "image-alt-filename", "warning", `the alt on ${img.src ?? "an image"} is a file name, "${img.alt}"`);
     }
     for (const target of new Set(internalLinks(html, url, origin).map(normalize))) {
       const linked = byUrl.get(target);
@@ -222,6 +231,24 @@ async function fetchPage(fetcher, url, method, body) {
   } catch (error) {
     return { url, status: 0, error: error instanceof Error ? error.message : String(error) };
   }
+}
+
+/**
+ * Whether an alt is a file name: the image's own, with or without its extension, or any name ending in an image extension.
+ * @param {string} alt @param {string | undefined} src
+ */
+function isFileName(alt, src) {
+  const text = alt.trim().toLowerCase();
+  if (!text) return false;
+  if (/^[^\s/]+\.(avif|gif|jpe?g|png|svg|webp)$/.test(text)) return true;
+  const name = (src ?? "").split(/[?#]/)[0].split("/").pop() ?? "";
+  let file = name.toLowerCase();
+  try {
+    file = decodeURIComponent(file);
+  } catch {
+    // A malformed escape is compared as written.
+  }
+  return file !== "" && (text === file || text === file.replace(/\.[a-z0-9]+$/, ""));
 }
 
 /** @param {AuditPage} page */

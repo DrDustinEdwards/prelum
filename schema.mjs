@@ -60,12 +60,69 @@ export function website({ origin, name, description, searchUrl, publisher }) {
   });
 }
 
+/** Google's least for an Article image, width times height (https://developers.google.com/search/docs/appearance/structured-data/article). */
+export const ARTICLE_IMAGE_MIN_PIXELS = 50_000;
+
+/**
+ * @typedef {object} ImageInput
+ * @property {string} url the image file itself, absolute
+ * @property {number} [width] in pixels
+ * @property {number} [height]
+ * @property {string} [caption]
+ * @property {string} [creditText] the name credited where the image is published
+ * @property {{ name: string, type?: "Person" | "Organization" }} [creator] a Person unless `type` says Organization
+ * @property {string} [copyrightNotice]
+ * @property {string} [license] a page that says how the image may be used
+ * @property {string} [acquireLicensePage] a page that says how to license it
+ */
+
+/**
+ * An image as an ImageObject, for `primaryImageOfPage` on a page that is not an article, or one of an Article's `image`s. Its
+ * rights (`creditText`, `creator`, `copyrightNotice`, `license`, `acquireLicensePage`) are written when known.
+ *
+ * @param {ImageInput} image
+ * @returns {SchemaNode}
+ */
+export function pageImage({ url, width, height, caption, creditText, creator, copyrightNotice, license, acquireLicensePage }) {
+  return thing("ImageObject", {
+    url,
+    contentUrl: url,
+    width,
+    height,
+    caption,
+    creditText,
+    creator: creator ? { "@type": creator.type ?? "Person", name: creator.name } : undefined,
+    copyrightNotice,
+    license,
+    acquireLicensePage,
+  });
+}
+
+/**
+ * An image's license metadata, which Google Images shows as its credit and Licensable badge
+ * (https://developers.google.com/search/docs/appearance/structured-data/image-license-metadata): null unless one of `creator`,
+ * `creditText`, `copyrightNotice` or `license` is known, since Google requires one of them beside `contentUrl`. The badge
+ * needs `license`, and `acquireLicensePage` is recommended with it. One node per licensable image on the page.
+ *
+ * @param {ImageInput} image
+ * @returns {SchemaNode | null}
+ */
+export function imageObject(image) {
+  const { creditText, creator, copyrightNotice, license } = image;
+  return creditText || creator?.name || copyrightNotice || license ? pageImage(image) : null;
+}
+
+/**
+ * @typedef {string | ImageInput | SchemaNode} ArticleImage a URL, an image to write as an ImageObject, or a node `pageImage` built
+ */
+
 /**
  * @typedef {object} ArticleInput
  * @property {string} url
  * @property {string} headline
  * @property {string | null} [description]
- * @property {string | string[]} [image]
+ * @property {ArticleImage | ArticleImage[]} [image] Google asks for several crops, 16:9, 4:3 and 1:1, each at least
+ *   `ARTICLE_IMAGE_MIN_PIXELS`; one whose `width` and `height` are given and smaller is refused
  * @property {Date | number | string | null} [published]
  * @property {Date | number | string | null} [modified]
  * @property {string[]} [tags]
@@ -75,7 +132,8 @@ export function website({ origin, name, description, searchUrl, publisher }) {
  */
 
 /**
- * An article, with its dates from the same `articleDates` the Open Graph tags use.
+ * An article, with its dates from the same `articleDates` the Open Graph tags use. A URL image is written as it is, and an
+ * `ImageInput` as `pageImage` writes it.
  *
  * @param {ArticleInput} article
  */
@@ -84,7 +142,7 @@ export function article({ url, headline, description, image, published, modified
   return thing(type, {
     headline,
     description,
-    image,
+    image: Array.isArray(image) ? image.map((each) => articleImage(url, each)) : image && articleImage(url, image),
     datePublished: dates.published,
     dateModified: dates.modified,
     keywords: tags && tags.length > 0 ? tags.join(", ") : undefined,
@@ -137,6 +195,16 @@ export function faqPage(faqs) {
       acceptedAnswer: { "@type": "Answer", text: faq.answer },
     })),
   });
+}
+
+/** @param {string} url the article's @param {ArticleImage} image @returns {string | SchemaNode} */
+function articleImage(url, image) {
+  if (typeof image === "string" || "@type" in image) return image;
+  const { width, height } = /** @type {ImageInput} */ (image);
+  if (width && height && width * height < ARTICLE_IMAGE_MIN_PIXELS) {
+    throw new Error(`article ${url}: image ${image.url} is ${width}x${height}, under Google's ${ARTICLE_IMAGE_MIN_PIXELS} pixels`);
+  }
+  return pageImage(/** @type {ImageInput} */ (image));
 }
 
 /** @param {SchemaNode} fields */

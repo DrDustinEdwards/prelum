@@ -1,7 +1,7 @@
 {
-  "renderVersion": "6",
+  "renderVersion": "7",
   "hashes": {
-    "prose": "91bdc30a4ce2f492aed6513fb719e8bf67b21360260e9c39f0c363cb62cbe8ad",
+    "prose": "46b6d10fa322f02e515c42f7212761224eecdf054919420ff54f25ad7727816d",
     "math": "408890dc1a14ed77efc201768c94ca54fd5d72ff34b93dcada831bd6cf974fb4",
     "untrusted-math": "1bb1db2df1689abe3cddcaee30a7477b52500e5fc725697c9531c0d7a3ebf6c8",
     "code": "4e3b81df0691aebfffd86706f127bf102e06e2aee40cc83dd5c023efa20544d1",
