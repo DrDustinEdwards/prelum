@@ -222,20 +222,33 @@ export type SiteHead = {
      * the site's feeds, linked from every page
      */
     feeds?: HeadFeed[] | undefined;
+    /**
+     * the names of the section pages a breadcrumb trail passes through, by path
+     * (`{ "/blog": "Blog" }`); a path not named here is left out of the trail
+     */
+    sections?: Record<string, string> | undefined;
 };
 /**
  * One page's head: `title` is the page's own title, without the suffix, unless `fullTitle` says it is already the whole
- * `<title>`. `feeds` are added to the site's.
+ * `<title>`. `feeds` are added to the site's. `pageType` is the WebPage subtype (`CollectionPage` for a list, `AboutPage`,
+ * `ProfilePage`, `SearchResultsPage`); `breadcrumbs` is the trail from the home page down, in place of the one built from
+ * `sections`, or false for none.
  */
 export type PageHead = Omit<HeadInput, "origin" | "siteName" | "image" | "locale"> & {
     image?: HeadImage | string | null;
     fullTitle?: boolean;
+    pageType?: string;
+    breadcrumbs?: Array<{
+        name: string;
+        path: string;
+    }> | false;
 };
 /**
  * The per-site head builder every site wrote around `headTags`: the site's facts once, then a function a route's `meta`
  * calls with the page's. The `<title>` is `searchTitle(title, suffix)` (the suffix dropped and the title cut where both do
  * not fit) and the share card keeps the whole title as `socialTitle`; the description is cut at a word to
- * `SERP_DESCRIPTION_LIMIT`, and the share card keeps it whole.
+ * `SERP_DESCRIPTION_LIMIT`, and the share card keeps it whole. An indexable page also gets its WebPage and BreadcrumbList
+ * as one JSON-LD graph, joined to the site's `website` node by its `@id`, so no page goes without them.
  */
 export function defineHead(site: SiteHead): (page: PageHead) => HeadTag[];
 /**
