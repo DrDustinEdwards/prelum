@@ -347,8 +347,8 @@ export async function buildSpecimen(outDir) {
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   copyTree(join(HERE, "static"), outDir);
-  const headersFile = join(outDir, "_headers");
-  writeFileSync(headersFile, readFileSync(headersFile, "utf8").replace("{{SITE_HEADERS}}", Object.entries(SITE_HEADERS).map(([name, value]) => `  ${name}: ${value}`).join("\n")));
+  const headersPath = join(outDir, "_headers");
+  writeFileSync(headersPath, readFileSync(headersPath, "utf8").replace("{{SITE_HEADERS}}", Object.entries(SITE_HEADERS).map(([name, value]) => `  ${name}: ${value}`).join("\n")));
   writeStyles(outDir);
   // The remembered theme before first paint (a plain script in the head), and the letterhead's behavior.
   writeFileSync(join(outDir, "theme.js"), await bundle("theme.mjs", "iife"));

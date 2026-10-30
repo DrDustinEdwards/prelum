@@ -11,7 +11,7 @@ export const SERP_DESCRIPTION_LIMIT = 155;
  * @typedef {{ title: string }
  *   | { name: string, content: string }
  *   | { property: string, content: string }
- *   | { tagName: "link", rel: string, href: string, type?: string }
+ *   | { tagName: "link", rel: string, href: string, type?: string, title?: string }
  *   | { "script:ld+json": Record<string, unknown> }} HeadTag
  * The descriptor shapes React Router's `meta` export takes, so a route returns `headTags(...)` as it is.
  */
@@ -49,7 +49,26 @@ export const SERP_DESCRIPTION_LIMIT = 155;
  * @property {ArticleFacts} [article] `article:*` tags; pass the same facts to the schema's `article` so the two agree
  * @property {string} [markdown] the page's Markdown copy (`markdownPath(path)` from `llms`), absolute or a path on `origin`, linked as
  *   `<link rel="alternate" type="text/markdown">` so an agent can find it
+ * @property {HeadFeed[]} [feeds] the site's or the page's feeds, each linked as `<link rel="alternate">` so a reader finds it
+ * @property {boolean} [keepTrailingSlash] keep a trailing slash on `path` in the canonical and `og:url`; by default
+ *   `/about/` is written `/about` (the home page stays `/`), so one page has one canonical URL. A route served only with its
+ *   slash (a podcast feed's page at `/feed/podcast/`) keeps it.
  */
+
+/**
+ * @typedef {object} HeadFeed
+ * @property {"rss" | "atom" | "json" | (string & {})} type `rss`, `atom` and `json` name the usual media types; any other
+ *   value is written as the type
+ * @property {string} href absolute, or a path on `origin`
+ * @property {string} [title] e.g. "Germomics (RSS)"
+ */
+
+/** @type {Record<string, string>} */
+const FEED_TYPES = {
+  rss: "application/rss+xml",
+  atom: "application/atom+xml",
+  json: "application/feed+json",
+};
 
 /**
  * The full head of a public page: title, description, canonical, Open Graph and Twitter. `twitter:card` is always
@@ -61,7 +80,7 @@ export const SERP_DESCRIPTION_LIMIT = 155;
  */
 export function headTags(input) {
   const { origin, path, title, description, siteName, type = "website", locale, noindex, article } = input;
-  const url = input.canonical ?? absoluteUrl(origin, path);
+  const url = input.canonical ?? absoluteUrl(origin, input.keepTrailingSlash ? path : withoutTrailingSlash(path));
   const image = typeof input.image === "string" ? { url: input.image } : input.image;
   const imageUrl = absoluteUrl(origin, image.url);
   const socialTitle = input.socialTitle ?? title;
@@ -74,6 +93,12 @@ export function headTags(input) {
     { tagName: "link", rel: "canonical", href: url },
   ];
   if (input.markdown) tags.push({ tagName: "link", rel: "alternate", type: "text/markdown", href: absoluteUrl(origin, input.markdown) });
+  for (const feed of input.feeds ?? []) {
+    /** @type {HeadTag} */
+    const link = { tagName: "link", rel: "alternate", type: FEED_TYPES[feed.type] ?? feed.type, href: absoluteUrl(origin, feed.href) };
+    if (feed.title) link.title = feed.title;
+    tags.push(link);
+  }
   if (noindex) tags.push({ name: "robots", content: "noindex, follow" });
   if (siteName) tags.push({ property: "og:site_name", content: siteName });
   tags.push(
@@ -129,6 +154,13 @@ function iso(value) {
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 }
 
+/** `/about/` is `/about`; `/` and an absolute URL are kept. @param {string} path */
+function withoutTrailingSlash(path) {
+  if (/^https?:\/\//.test(path)) return path;
+  const bare = path.replace(/\/+(?=$|[?#])/, "");
+  return bare === "" || /^[?#]/.test(bare) ? `/${bare}` : bare;
+}
+
 /**
  * A path on `origin` made absolute; an absolute URL is kept as it is.
  *
@@ -150,13 +182,15 @@ export function absoluteUrl(origin, path) {
 export function headHtml(tags) {
   return tags
     .map((tag) => {
+      // A link first, as React Router reads them: a feed's link carries a `title` too.
+      if ("tagName" in tag) {
+        const type = tag.type ? ` type="${escapeXml(tag.type)}"` : "";
+        const title = tag.title ? ` title="${escapeXml(tag.title)}"` : "";
+        return `<link rel="${escapeXml(tag.rel)}"${type}${title} href="${escapeXml(tag.href)}">`;
+      }
       if ("title" in tag) return `<title>${escapeXml(tag.title)}</title>`;
       if ("script:ld+json" in tag) {
         return `<script type="application/ld+json">${jsonLdText(tag["script:ld+json"])}</script>`;
-      }
-      if ("tagName" in tag) {
-        const type = tag.type ? ` type="${escapeXml(tag.type)}"` : "";
-        return `<link rel="${escapeXml(tag.rel)}"${type} href="${escapeXml(tag.href)}">`;
       }
       const [key, value] = "property" in tag ? ["property", tag.property] : ["name", tag.name];
       return `<meta ${key}="${escapeXml(value)}" content="${escapeXml(tag.content)}">`;
@@ -189,4 +223,88 @@ export function truncateForSerp(text, limit) {
 export function searchTitle(title, suffix) {
   const full = `${title}${suffix}`;
   return full.length <= SERP_TITLE_LIMIT ? full : truncateForSerp(title, SERP_TITLE_LIMIT);
+}
+
+/**
+ * @typedef {object} SiteHead
+ * @property {string} origin the site's production origin
+ * @property {string} siteName `og:site_name`
+ * @property {HeadImage | string} image the site's default card, for a page without its own
+ * @property {string} [suffix] what follows a page's title in `<title>`, e.g. " | Foxing"; `searchTitle` drops it where the
+ *   two do not fit
+ * @property {string} [locale] `og:locale`, e.g. `en_US`
+ * @property {HeadFeed[]} [feeds] the site's feeds, linked from every page
+ */
+
+/**
+ * @typedef {Omit<HeadInput, "origin" | "siteName" | "image" | "locale"> & {
+ *   image?: HeadImage | string | null,
+ *   fullTitle?: boolean,
+ * }} PageHead
+ * One page's head: `title` is the page's own title, without the suffix, unless `fullTitle` says it is already the whole
+ * `<title>`. `feeds` are added to the site's.
+ */
+
+/**
+ * The per-site head builder every site wrote around `headTags`: the site's facts once, then a function a route's `meta`
+ * calls with the page's. The `<title>` is `searchTitle(title, suffix)` (the suffix dropped and the title cut where both do
+ * not fit) and the share card keeps the whole title as `socialTitle`; the description is cut at a word to
+ * `SERP_DESCRIPTION_LIMIT`, and the share card keeps it whole.
+ *
+ * @param {SiteHead} site
+ * @returns {(page: PageHead) => HeadTag[]}
+ */
+export function defineHead(site) {
+  return ({ fullTitle, image, feeds, ...page }) => {
+    const title = fullTitle ? page.title : searchTitle(page.title, site.suffix ?? "");
+    return headTags({
+      ...page,
+      origin: site.origin,
+      siteName: site.siteName,
+      locale: site.locale,
+      image: image ?? site.image,
+      title,
+      socialTitle: page.socialTitle ?? (title === page.title ? undefined : page.title),
+      description: truncateForSerp(page.description, SERP_DESCRIPTION_LIMIT),
+      socialDescription: page.socialDescription ?? page.description,
+      feeds: [...(site.feeds ?? []), ...(feeds ?? [])],
+    });
+  };
+}
+
+/** @type {Record<string, string>} */
+const NAMED_ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", ndash: "–", mdash: "—", hellip: "…",
+  lsquo: "‘", rsquo: "’", ldquo: "“", rdquo: "”", copy: "©", reg: "®", trade: "™", middot: "·", bull: "•" };
+
+/**
+ * A meta tag's text from HTML (an excerpt, an abstract title): scripts, styles and tags dropped, entities decoded, white
+ * space collapsed, then cut at a word to `limit` (by default `SERP_DESCRIPTION_LIMIT`; `Infinity` keeps it whole). An
+ * entity it does not know is kept as written. The result is text, so it is escaped where it is written, as every tag is.
+ *
+ * @param {string} html
+ * @param {number} [limit]
+ */
+export function metaText(html, limit = SERP_DESCRIPTION_LIMIT) {
+  const text = html
+    .replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&(?:#(\d+)|#x([\da-f]+)|([a-z]+));/gi, (entity, decimal, hex, name) => {
+      if (name) return NAMED_ENTITIES[name.toLowerCase()] ?? entity;
+      const code = decimal ? Number(decimal) : Number.parseInt(hex, 16);
+      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : entity;
+    })
+    .replace(/\s+/g, " ")
+    .trim();
+  return truncateForSerp(text, limit);
+}
+
+/**
+ * Minutes to read at 200 words a minute, rounded, never less than one. Words are runs of non-space, so Markdown syntax
+ * counts, as the sites' published reading times were counted; pass HTML through `metaText(html, Infinity)` first.
+ *
+ * @param {string} text
+ */
+export function readingMinutes(text) {
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
 }

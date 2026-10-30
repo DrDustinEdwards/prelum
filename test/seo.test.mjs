@@ -8,8 +8,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { auditPages, crawlSite } from "../audit.mjs";
-import { headHtml, headTags, SERP_TITLE_LIMIT, searchTitle, truncateForSerp } from "../head.mjs";
-import { aiTxt, DENIED_BOTS, robotsDocument } from "../robots.mjs";
+import { defineHead, headHtml, headTags, metaText, SERP_TITLE_LIMIT, searchTitle, truncateForSerp } from "../head.mjs";
+import { llmsResponse } from "../llms.mjs";
+import { aiTxt, DENIED_BOTS, robotsDocument, robotsResponse } from "../robots.mjs";
 import { article, jsonLd } from "../schema.mjs";
 
 const ORIGIN = "https://example.com";
@@ -151,4 +152,35 @@ test("a cut title fits the limit with its ellipsis and drops the site suffix, an
   const title = `Dustin&#x27;s ${"x".repeat(SERP_TITLE_LIMIT - 9)}`;
   const { findings } = auditPages([{ url: `${ORIGIN}/`, status: 200, html: `${page("/", title, "one")}<body></body></html>` }], { origin: ORIGIN });
   assert.equal(findings.filter((finding) => finding.check === "title-long").length, 0);
+});
+
+test("a request on any other origin is a preview: robots.txt disallows everything and nothing is cached or indexed", async () => {
+  const live = robotsResponse({ origin: ORIGIN, request: new Request(`${ORIGIN}/robots.txt`), disallow: ["/admin"] });
+  const body = await live.text();
+  assert.ok(body.includes("Disallow: /admin") && body.includes(`# LLM guide: ${ORIGIN}/llms.txt`));
+  assert.equal(live.headers.get("x-robots-tag"), null);
+  assert.equal(live.headers.get("tdm-reservation"), "1");
+
+  const preview = robotsResponse({ origin: ORIGIN, request: new Request("https://sample.workers.dev/robots.txt") });
+  assert.equal(await preview.text(), "User-agent: *\nDisallow: /\n");
+  assert.equal(preview.headers.get("cache-control"), "no-store");
+
+  const llms = llmsResponse({ origin: ORIGIN, request: new Request(`${ORIGIN}/llms.txt`), body: "# Sample\n" });
+  assert.equal(llms.headers.get("x-robots-tag"), "noindex");
+});
+
+test("the canonical drops a trailing slash but keeps the home page's and an opted-out route's", () => {
+  const head = defineHead({ origin: ORIGIN, siteName: "Sample", image: "/card.png", suffix: " | Sample" });
+  const canonical = (/** @type {Record<string, unknown>} */ page) => {
+    const tag = head({ title: "T", description: "D", path: "/", ...page }).find((tag) => "rel" in tag && tag.rel === "canonical");
+    return tag && "href" in tag ? tag.href : undefined;
+  };
+  assert.equal(canonical({ path: "/about/" }), `${ORIGIN}/about`);
+  assert.equal(canonical({ path: "/" }), `${ORIGIN}/`);
+  assert.equal(canonical({ path: "/feed/podcast/", keepTrailingSlash: true }), `${ORIGIN}/feed/podcast/`);
+});
+
+test("metaText decodes entities only after the tags are gone, so escaped markup stays text", () => {
+  assert.equal(metaText("<p>Tom &amp; Jerry&#39;s <b>&lt;script&gt;</b>&nbsp;tale</p><script>x()</script>"), "Tom & Jerry's <script> tale");
+  assert.equal(metaText("A &bogus; entity"), "A &bogus; entity");
 });
