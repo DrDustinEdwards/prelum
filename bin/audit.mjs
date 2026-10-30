@@ -5,7 +5,8 @@
 //   prelum-audit --origin https://example.com [--from https://preview.example.workers.dev] [--max-pages 3000]
 //
 // --from fetches the pages from another host (a preview) while the canonicals are still checked against --origin.
-// Each finding is printed as a GitHub annotation. Exits 1 when any finding is an error, so a scheduled job goes red.
+// Each finding is printed as a GitHub annotation. Exits 1 when any finding is an error, so a scheduled job goes red, and 2
+// when the site does not answer at all, so an outage is never read as findings.
 
 import { parseArgs } from "node:util";
 
@@ -25,6 +26,11 @@ const viaFrom = (input, init) => {
 };
 const fetcher = from ? viaFrom : fetch;
 
+const home = await fetcher(`${origin}/`).catch((error) => error);
+if (!(home instanceof Response) || home.status >= 500) {
+  console.error(`prelum-audit: ${origin} did not answer: ${home instanceof Response ? home.status : home.message}`);
+  process.exit(2);
+}
 const { pages, sitemap } = await crawlSite({ origin, fetch: fetcher, maxPages: Number(values["max-pages"]) });
 const report = auditPages(pages, { origin, sitemap });
 for (const finding of report.findings) {
