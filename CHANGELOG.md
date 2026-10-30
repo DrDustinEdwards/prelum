@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `prelum-audit` bin: crawls a live site from its sitemap with `crawlSite` and runs `auditPages`, printing each finding as a
+  GitHub annotation and exiting 1 on any error, so a scheduled job goes red the day a page loses its title, description or
+  canonical. `--from` fetches from a preview host while canonicals are checked against `--origin`.
+
 ## 0.18.0 (2026-10-30)
 
 ### Added
