@@ -4,6 +4,14 @@
 
 ### Added
 
+- `prelum-audit` bin: crawls a live site from its sitemap with `crawlSite` and runs `auditPages`, printing each finding as a
+  GitHub annotation and exiting 1 on any error (2 when the site does not answer), so a scheduled job goes red the day a page loses its title,
+  description or canonical. `--from` fetches from a preview host while canonicals are checked against `--origin`.
+- `defineHead` adds a JSON-LD graph to every indexable page: a `WebPage` (or the page's `pageType`, such as
+  `CollectionPage`) joined to the site's `website` node by `@id`, and a `BreadcrumbList` from the home page through the
+  sections `site.sections` names (`{ "/blog": "Blog" }`) to the page. A page passes its own `breadcrumbs`, or `false` for none.
+- `robotsDocument` writes `Content-Signal: search=yes, ai-input=yes, ai-train=no` (`CONTENT_SIGNAL`) in every group;
+  `contentSignal` replaces it.
 - The share image is one object, `{ url, width, height, type, alt }`. `headTags` now writes `og:image:type`, read from the
   file's extension (`.jpg`, `.png`, `.webp`, `.avif`, `.gif`, `.svg`) when `type` is not given, and cuts
   `twitter:image:alt` at a word to X's 420 characters. A bare URL is still read; the docs and types steer to the object.
@@ -20,6 +28,7 @@
 
 ### Changed
 
+- `headTags` sends `robots: max-image-preview:large` on every indexable page, so Google can show the whole share image.
 - `RENDER_VERSION` is 7. A decorative image (`![](x)`, `alt=""`) is no longer wrapped in its `image-link`: a link whose only
   content has an empty alt has no name.
 - `sitemapDocument`'s `images` docs say what a page passes: the images it shows, a rendered page's `mediaRefs` of form

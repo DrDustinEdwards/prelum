@@ -242,6 +242,7 @@
     "unist-util-visit": "5.2.0"
   },
   "bin": {
-    "prelum-indexnow": "./bin/indexnow.mjs"
+    "prelum-indexnow": "./bin/indexnow.mjs",
+    "prelum-audit": "./bin/audit.mjs"
   }
 }

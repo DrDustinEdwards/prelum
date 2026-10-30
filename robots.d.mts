@@ -55,7 +55,17 @@ export type RobotsInput = {
      * a preview or workers.dev copy: every crawler is told `Disallow: /`
      */
     preview?: boolean | undefined;
+    /**
+     * defaults to `CONTENT_SIGNAL`
+     */
+    contentSignal?: string | undefined;
 };
+/**
+ * Cloudflare's Content Signals (contentsignals.org): pages may be indexed for search and used as input to an AI answer, but
+ * not used to train, the same policy ai.txt and the TDMRep header state. Written in every group, since a crawler that matches
+ * a named group reads only that group.
+ */
+export const CONTENT_SIGNAL: string;
 /**
  * The TDM Reservation Protocol header (W3C TDMRep): text and data mining rights are reserved, the EU DSM Article 4 opt-out,
  * which is what lets a training crawler be charged rather than mine for free. Every public response carries it. There is no

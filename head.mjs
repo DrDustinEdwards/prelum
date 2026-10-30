@@ -116,7 +116,8 @@ export function headTags(input) {
     if (feed.title) link.title = feed.title;
     tags.push(link);
   }
-  if (noindex) tags.push({ name: "robots", content: "noindex, follow" });
+  // Without max-image-preview:large, Google shows only a thumbnail of the card in Discover and image results.
+  tags.push({ name: "robots", content: noindex ? "noindex, follow" : "max-image-preview:large" });
   if (siteName) tags.push({ property: "og:site_name", content: siteName });
   tags.push(
     { property: "og:type", content: type },
@@ -260,30 +261,37 @@ export function searchTitle(title, suffix) {
  *   two do not fit
  * @property {string} [locale] `og:locale`, e.g. `en_US`
  * @property {HeadFeed[]} [feeds] the site's feeds, linked from every page
+ * @property {Record<string, string>} [sections] the names of the section pages a breadcrumb trail passes through, by path
+ *   (`{ "/blog": "Blog" }`); a path not named here is left out of the trail
  */
 
 /**
  * @typedef {Omit<HeadInput, "origin" | "siteName" | "image" | "locale"> & {
  *   image?: HeadImage | string | null,
  *   fullTitle?: boolean,
+ *   pageType?: string,
+ *   breadcrumbs?: Array<{ name: string, path: string }> | false,
  * }} PageHead
  * One page's head: `title` is the page's own title, without the suffix, unless `fullTitle` says it is already the whole
- * `<title>`. `feeds` are added to the site's.
+ * `<title>`. `feeds` are added to the site's. `pageType` is the WebPage subtype (`CollectionPage` for a list, `AboutPage`,
+ * `ProfilePage`, `SearchResultsPage`); `breadcrumbs` is the trail from the home page down, in place of the one built from
+ * `sections`, or false for none.
  */
 
 /**
  * The per-site head builder every site wrote around `headTags`: the site's facts once, then a function a route's `meta`
  * calls with the page's. The `<title>` is `searchTitle(title, suffix)` (the suffix dropped and the title cut where both do
  * not fit) and the share card keeps the whole title as `socialTitle`; the description is cut at a word to
- * `SERP_DESCRIPTION_LIMIT`, and the share card keeps it whole.
+ * `SERP_DESCRIPTION_LIMIT`, and the share card keeps it whole. An indexable page also gets its WebPage and BreadcrumbList
+ * as one JSON-LD graph, joined to the site's `website` node by its `@id`, so no page goes without them.
  *
  * @param {SiteHead} site
  * @returns {(page: PageHead) => HeadTag[]}
  */
 export function defineHead(site) {
-  return ({ fullTitle, image, feeds, ...page }) => {
+  return ({ fullTitle, image, feeds, pageType, breadcrumbs, ...page }) => {
     const title = fullTitle ? page.title : searchTitle(page.title, site.suffix ?? "");
-    return headTags({
+    const tags = headTags({
       ...page,
       origin: site.origin,
       siteName: site.siteName,
@@ -295,7 +303,44 @@ export function defineHead(site) {
       socialDescription: page.socialDescription ?? page.description,
       feeds: [...(site.feeds ?? []), ...(feeds ?? [])],
     });
+    if (page.noindex) return tags;
+    const url = page.canonical ?? absoluteUrl(site.origin, page.keepTrailingSlash ? page.path : withoutTrailingSlash(page.path));
+    const trail = breadcrumbs === false ? [] : (breadcrumbs ?? sectionTrail(site, page.path, page.title));
+    /** @type {Record<string, unknown>[]} */
+    const nodes = [{
+      "@type": pageType ?? "WebPage",
+      "@id": `${url}#webpage`,
+      url,
+      name: page.title,
+      description: page.description,
+      isPartOf: { "@id": `${site.origin}/#website` },
+      ...(trail.length > 1 ? { breadcrumb: { "@id": `${url}#breadcrumb` } } : {}),
+    }];
+    if (trail.length > 1) {
+      nodes.push({
+        "@type": "BreadcrumbList",
+        "@id": `${url}#breadcrumb`,
+        itemListElement: trail.map((crumb, i) => ({ "@type": "ListItem", position: i + 1, name: crumb.name, item: absoluteUrl(site.origin, crumb.path) })),
+      });
+    }
+    tags.push({ "script:ld+json": { "@context": "https://schema.org", "@graph": nodes } });
+    return tags;
   };
+}
+
+/**
+ * Home, each section above the page that `site.sections` names, then the page. The home page's trail is itself alone.
+ *
+ * @param {SiteHead} site
+ * @param {string} path
+ * @param {string} title
+ */
+function sectionTrail(site, path, title) {
+  const bare = withoutTrailingSlash(path).replace(/[?#].*$/, "");
+  if (bare === "/") return [{ name: site.siteName, path: "/" }];
+  const parts = bare.split("/").filter(Boolean);
+  const sections = parts.slice(0, -1).map((_, i) => `/${parts.slice(0, i + 1).join("/")}`).filter((p) => site.sections?.[p]);
+  return [{ name: site.siteName, path: "/" }, ...sections.map((p) => ({ name: site.sections?.[p] ?? "", path: p })), { name: title, path: bare }];
 }
 
 /** @type {Record<string, string>} */

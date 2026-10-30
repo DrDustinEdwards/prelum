@@ -214,3 +214,22 @@ test("metaText decodes entities only after the tags are gone, so escaped markup 
   assert.equal(metaText("<p>Tom &amp; Jerry&#39;s <b>&lt;script&gt;</b>&nbsp;tale</p><script>x()</script>"), "Tom & Jerry's <script> tale");
   assert.equal(metaText("A &bogus; entity"), "A &bogus; entity");
 });
+
+test("defineHead joins each indexable page to the site with a WebPage and the trail through its named sections", () => {
+  const head = defineHead({ origin: ORIGIN, siteName: "Sample", image: "/card.png", sections: { "/blog": "Blog" } });
+  const ld = (/** @type {Record<string, unknown>} */ page) =>
+    head({ title: "A post", description: "D", path: "/blog/2026/a-post/", ...page }).flatMap((tag) => ("script:ld+json" in tag ? [tag["script:ld+json"]] : []));
+  const [post] = ld({});
+  assert.deepEqual(post?.["@graph"], [
+    { "@type": "WebPage", "@id": `${ORIGIN}/blog/2026/a-post#webpage`, url: `${ORIGIN}/blog/2026/a-post`, name: "A post", description: "D",
+      isPartOf: { "@id": `${ORIGIN}/#website` }, breadcrumb: { "@id": `${ORIGIN}/blog/2026/a-post#breadcrumb` } },
+    { "@type": "BreadcrumbList", "@id": `${ORIGIN}/blog/2026/a-post#breadcrumb`, itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Sample", item: `${ORIGIN}/` },
+      { "@type": "ListItem", position: 2, name: "Blog", item: `${ORIGIN}/blog` },
+      { "@type": "ListItem", position: 3, name: "A post", item: `${ORIGIN}/blog/2026/a-post` },
+    ] },
+  ]);
+  const home = JSON.stringify(ld({ path: "/", pageType: "CollectionPage" }));
+  assert.ok(home.includes('"@type":"CollectionPage"') && !home.includes("BreadcrumbList"));
+  assert.deepEqual(ld({ noindex: true }), []);
+});
