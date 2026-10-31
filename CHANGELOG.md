@@ -19,6 +19,8 @@ One frontmatter reader and writer for every site and package (writing and render
   pull request cancels its older runs, and the workflow audit and dependency scan run only when their files change.
 - Specimen: site-runtime 0.50.0. Its `headersFile` writes cross-origin CORP on css, js, mjs, svg and woff2, so the specimen's own
   rule for it is gone (security headers, area 2).
+- Specimen: KaTeX's faces use `font-display: swap` in place of its `block`, so math shows at once in the fallback face (speed,
+  area 7).
 
 ### Fixed
 
