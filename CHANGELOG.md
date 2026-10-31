@@ -11,6 +11,11 @@
   `render-diagram`, `render-packs`, `xml` and the README name Example Co and an `example-` prefix. The render fixtures' media names use the
   `example-` prefix too, so their golden hashes moved with the input; the renderer itself is unchanged, so `RENDER_VERSION` stays 9.
 
+### Specimen
+
+- The specimen's home page writes its head with `headTags`, so it has a share card: `share-card.png` (1200x630) with
+  `og:image:type`, `width`, `height` and `alt`, and the canonical, Open Graph and X tags that come with it.
+
 ## 0.24.0 (2026-10-31)
 
 One frontmatter reader and writer for every site and package (writing and rendering, area 4).
@@ -30,6 +35,8 @@ One frontmatter reader and writer for every site and package (writing and render
   pull request cancels its older runs, and the workflow audit and dependency scan run only when their files change.
 - Specimen: site-runtime 0.50.0. Its `headersFile` writes cross-origin CORP on css, js, mjs, svg and woff2, so the specimen's own
   rule for it is gone (security headers, area 2).
+- Specimen: KaTeX's faces use `font-display: swap` in place of its `block`, so math shows at once in the fallback face (speed,
+  area 7).
 
 ### Fixed
 

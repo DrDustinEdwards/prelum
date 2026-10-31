@@ -17,6 +17,7 @@ import { capsomerTheme } from "capsomer/enarratio-theme";
 import { stylesheet } from "enarratio";
 import { rolldown } from "rolldown";
 
+import { headHtml, headTags } from "../head.mjs";
 import { llmsDocument } from "../llms.mjs";
 import { rssItem } from "../feeds.mjs";
 import { sitemapDocument } from "../sitemap.mjs";
@@ -105,10 +106,12 @@ function writeStyles(outDir) {
   writeFileSync(join(outDir, "site.css"), css);
 
   // KaTeX's stylesheet names its fonts relative to itself. Only the woff2 files are copied: every browser that reads the
-  // stylesheet's first src takes them.
+  // stylesheet's first src takes them. KaTeX ships font-display: block, which hides the math for up to three seconds;
+  // swap shows it in the fallback face at once.
   const katex = dirname(packageFile("katex/dist/katex.min.css"));
   mkdirSync(join(outDir, "katex", "fonts"), { recursive: true });
-  copyFileSync(join(katex, "katex.min.css"), join(outDir, "katex", "katex.min.css"));
+  const katexCss = readFileSync(join(katex, "katex.min.css"), "utf8").replaceAll("font-display:block", "font-display:swap");
+  writeFileSync(join(outDir, "katex", "katex.min.css"), katexCss);
   for (const font of readdirSync(join(katex, "fonts")).filter((f) => f.endsWith(".woff2"))) {
     copyFileSync(join(katex, "fonts", font), join(outDir, "katex", "fonts", font));
   }
@@ -179,7 +182,7 @@ const footerHtml = (version) =>
   familyFooterHtml({
     site: "prelum",
     center: `<div class="cap-family-footer-center">
-<div><p class="cap-family-footer-center-name">Prelum</p><p class="cap-family-footer-about">The family's publishing library: markdown to pages, feeds, sitemaps, llms.txt and search.</p></div>
+<div><p class="cap-family-footer-center-name">Prelum</p><p class="cap-family-footer-about">One publishing library for every site: markdown to pages, feeds, sitemaps, llms.txt and search.</p></div>
 <div class="cap-family-footer-columns">
 <ul class="cap-family-footer-links"><li><a href="/#contents-name">Every element</a></li><li><a href="/elements.json">elements.json</a></li></ul>
 <ul class="cap-family-footer-links"><li><a href="${REPO}">Source, MIT licensed</a></li><li><a href="${REPO}#readme">How to use it</a></li></ul>
@@ -204,17 +207,29 @@ const ICON_LINKS = iconLinks()
   .map((link) => `<link ${Object.entries(link).map(([name, value]) => `${name}="${value}"`).join(" ")}>`)
   .join("\n");
 
+/** The share card (specimen/static/share-card.png), drawn once at the size every card in the network has. */
+const SHARE_CARD = {
+  url: "/share-card.png",
+  width: 1200,
+  height: 630,
+  alt: "Prelum, one publishing library for every site: markdown, feeds, sitemaps, llms.txt and search.",
+};
+
 /**
- * @param {{ title: string, description: string, body: string, version: string }} page
+ * The home page's head comes from Prelum's own headTags, card included; the 404 page has no address to claim.
+ *
+ * @param {{ title: string, description: string, body: string, version: string, path?: string }} page
  */
-function documentHtml({ title, description, body, version }) {
+function documentHtml({ title, description, body, version, path }) {
+  const head = path
+    ? headHtml(headTags({ origin: ORIGIN, path, title, description, siteName: "Prelum", image: SHARE_CARD }))
+    : `<title>${escapeXml(title)}</title>\n<meta name="description" content="${escapeXml(description)}">`;
   return `<!doctype html>
 <html lang="en" data-family="${FAMILY}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeXml(title)}</title>
-<meta name="description" content="${escapeXml(description)}">
+${head}
 ${ICON_LINKS}
 <link rel="stylesheet" href="/site.css">
 <link rel="stylesheet" href="/katex/katex.min.css">
@@ -393,6 +408,7 @@ ${await outputsSection(version, elements.length + 1)}
   const index = documentHtml({
     title: "Prelum specimen",
     description: `Every element Prelum ${version} renders from markdown, with its source, in both themes.`,
+    path: "/",
     body,
     version,
   });
