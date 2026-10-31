@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.20.0 (2026-10-31)
+
+### Added
+
+- `prelum-chart-audit` bin: the live check for charts (area 10). It crawls a site with `crawlSite` and opens every page in
+  headless Chromium, with scripts off and in light and dark, and reports each chart's misses against the charts checklist
+  as GitHub annotations titled with the item (B1, B2, B3, B18, B27, B28, B30, C1, C2, D6, F) and the page as proof. The CSV
+  link, source line and Capsomer frame are warnings until Enarratio 0.4.0 and the frame roll out (`--strict-frame` makes them
+  errors). `playwright-core` 1.63.0 and `axe-core` 4.14.0 are new optional peers.
+
 ## 0.19.0 (2026-10-30)
 
 ### Added
