@@ -6,6 +6,7 @@
 
 import { receiveCspReport } from "@dustinedwards/site-runtime/csp-report";
 import { UNCACHED } from "@dustinedwards/site-runtime/edge-cache";
+import { applyHeaderSet } from "@dustinedwards/site-runtime/headers";
 import { withPreloadHeader } from "@dustinedwards/site-runtime/preload";
 import { PAGE_PRELOADS, REPORT_PATH, SITE_HEADERS as HEADERS } from "./headers.mjs";
 
@@ -34,6 +35,8 @@ export default {
     const asset = await env.ASSETS.fetch(request);
     if (!(asset.headers.get("Content-Type") ?? "").startsWith("text/html")) return asset;
     const page = new Response(asset.body, asset);
+    // The 404 page answers any path, so no `_headers` rule names its charset; applyHeaderSet adds charset=utf-8 (ASVS 4.1.1).
+    applyHeaderSet(page.headers, {});
     // The 404 page is never stored; _headers gives every file the same short public cache.
     if (page.status >= 400) page.headers.set("Cache-Control", UNCACHED);
     // Early Hints: the zone answers a page carrying a preload Link header with a 103 first (site-runtime ./preload).
