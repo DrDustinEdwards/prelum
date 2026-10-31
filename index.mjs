@@ -5,3 +5,4 @@ export * from "./llms.mjs";
 export * from "./frontmatter.mjs";
 export * from "./search.mjs";
 export * from "./slug.mjs";
+export * from "./text.mjs";

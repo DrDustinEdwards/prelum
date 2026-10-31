@@ -56,6 +56,16 @@ export const HOSTILE_INPUTS = [
   { name: "footnote markup", source: "x[^1]\n\n[^1]: <script>alert(1)</script>" },
   { name: "table cell markup", source: "| a |\n| - |\n| <img src=x onerror=alert(1)> |" },
   { name: "comment breakout", source: "<!-- --><script>alert(1)</script><!-- -->" },
+  { name: "javascript video", source: ':::video{src="javascript:alert(1)" title="x" silent}\n:::' },
+  { name: "javascript captions", source: ':::video{src="/a.mp4" title="x" captions="javascript:alert(1)"}\n:::' },
+  { name: "javascript transcript", source: '::audio{src="/a.mp3" title="x" transcript="javascript:alert(1)"}' },
+  { name: "embed from an unknown host", source: '::embed[x]{url="https://example.com/evil"}' },
+  { name: "embed id carrying markup", source: '::embed[x]{url="https://youtu.be/\\"><script>alert(1)</script>"}' },
+  { name: "javascript button", source: '::button[x]{href="javascript:alert(1)"}' },
+  { name: "javascript bookmark", source: '::bookmark[x]{url="javascript:alert(1)"}' },
+  { name: "callout title carrying markup", source: "> [!NOTE] <img src=x onerror=alert(1)>\n> body" },
+  { name: "abbr title carrying markup", source: ':abbr[x]{title="\\" onmouseover=\\"alert(1)"}' },
+  { name: "code title carrying markup", source: '```js title="<script>alert(1)</script>"\ncode\n```' },
   { name: "long bracket run", source: "[".repeat(20000) },
 ];
 

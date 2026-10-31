@@ -8,7 +8,9 @@ const IMAGE_NAMESPACE = "http://www.google.com/schemas/sitemap-image/1.1";
  * @property {Date | number | string | null} [lastmod]
  * @property {string} [changefreq] expanded layout only (Google ignores it)
  * @property {number} [priority] 0 to 1, expanded layout only (Google ignores it)
- * @property {string[]} [images] absolute URLs of the images on the page, listed in Google's image sitemap extension
+ * @property {string[]} [images] absolute URLs of the images the page shows, listed in Google's image sitemap extension. A
+ *   rendered page's are the `mediaRefs` entries `render` returns with form `markdown-image` or `figure-directive`, each key
+ *   made the image's absolute URL again. Another host is allowed (a media host verified in Search Console); 1,000 at most
  */
 
 /**

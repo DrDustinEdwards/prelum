@@ -1,6 +1,6 @@
 {
   "name": "@drdustinedwards/site-helpers",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt and llms-full.txt, Markdown copy, frontmatter, head tag, JSON-LD, robots.txt, IndexNow, site audit and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, and the markdown pipeline they all render with, once.",
   "type": "module",
   "license": "MIT",
@@ -17,6 +17,10 @@
     "./slug": {
       "types": "./slug.d.mts",
       "default": "./slug.mjs"
+    },
+    "./text": {
+      "types": "./text.d.mts",
+      "default": "./text.mjs"
     },
     "./feeds": {
       "types": "./feeds.d.mts",
@@ -78,6 +82,14 @@
       "types": "./render-safe.d.mts",
       "default": "./render-safe.mjs"
     },
+    "./render/enhance": {
+      "types": "./render-enhance.d.mts",
+      "default": "./render-enhance.mjs"
+    },
+    "./render/audit": {
+      "types": "./render-audit.d.mts",
+      "default": "./render-audit.mjs"
+    },
     "./render/conformance": {
       "types": "./render-conformance.d.mts",
       "default": "./render-conformance.mjs"
@@ -118,12 +130,14 @@
     "@mermaid-js/mermaid-cli": "11.17.0",
     "@shikijs/rehype": "4.5.0",
     "@shikijs/transformers": "4.5.0",
+    "axe-core": "4.14.0",
     "enarratio": "^0.3.1",
     "hast-util-from-html": "2.0.3",
     "hast-util-to-string": "3.0.1",
     "katex": "0.16.47",
     "linkedom": "0.18.14",
     "parse5": "8.0.1",
+    "playwright-core": "1.63.0",
     "puppeteer": "25.16.0",
     "rehype-autolink-headings": "7.1.0",
     "rehype-katex": "7.0.1",
@@ -134,6 +148,7 @@
     "remark-math": "6.0.0",
     "remark-parse": "11.0.0",
     "remark-rehype": "11.1.2",
+    "remark-smartypants": "3.0.3",
     "shiki": "4.5.0",
     "unified": "11.0.5",
     "unist-util-visit": "5.2.0"
@@ -146,6 +161,9 @@
       "optional": true
     },
     "@shikijs/transformers": {
+      "optional": true
+    },
+    "axe-core": {
       "optional": true
     },
     "enarratio": {
@@ -164,6 +182,9 @@
       "optional": true
     },
     "parse5": {
+      "optional": true
+    },
+    "playwright-core": {
       "optional": true
     },
     "puppeteer": {
@@ -196,6 +217,9 @@
     "remark-rehype": {
       "optional": true
     },
+    "remark-smartypants": {
+      "optional": true
+    },
     "shiki": {
       "optional": true
     },
@@ -217,7 +241,8 @@
     "@types/hast": "3.0.5",
     "@types/mdast": "4.0.4",
     "@types/node": "24.19.2",
-    "capsomer": "github:DrDustinEdwards/capsomer#v0.49.0",
+    "axe-core": "4.14.0",
+    "capsomer": "github:DrDustinEdwards/capsomer#v0.50.0",
     "enarratio": "0.3.1",
     "hast-util-from-html": "2.0.3",
     "hast-util-to-string": "3.0.1",
@@ -225,6 +250,7 @@
     "linkedom": "0.18.14",
     "oxlint": "1.89.0",
     "parse5": "8.0.1",
+    "playwright-core": "1.63.0",
     "puppeteer": "25.16.0",
     "rehype-autolink-headings": "7.1.0",
     "rehype-katex": "7.0.1",
@@ -235,6 +261,7 @@
     "remark-math": "6.0.0",
     "remark-parse": "11.0.0",
     "remark-rehype": "11.1.2",
+    "remark-smartypants": "3.0.3",
     "rolldown": "1.2.15",
     "shiki": "4.5.0",
     "typescript": "5.9.3",
@@ -243,6 +270,8 @@
   },
   "bin": {
     "prelum-indexnow": "./bin/indexnow.mjs",
-    "prelum-audit": "./bin/audit.mjs"
+    "prelum-audit": "./bin/audit.mjs",
+    "prelum-content": "./bin/content.mjs",
+    "prelum-chart-audit": "./bin/chart-audit.mjs"
   }
 }

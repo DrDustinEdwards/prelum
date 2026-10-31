@@ -8,10 +8,11 @@
  */
 /**
  * @typedef {object} HeadImage
- * @property {string} url absolute, or a path on `origin`
- * @property {number} [width]
+ * @property {string} url absolute https, or a path on `origin`
+ * @property {number} [width] in pixels; with `height`, a crawler can draw the card before it has fetched the image
  * @property {number} [height]
- * @property {string} [alt]
+ * @property {string} [type] the media type, e.g. `image/png`; read from the file's extension when not given
+ * @property {string} [alt] what the image shows, for a reader who cannot see it
  */
 /**
  * @typedef {object} ArticleFacts
@@ -26,7 +27,8 @@
  * @property {string} path
  * @property {string} title the `<title>`, with any site suffix already on it
  * @property {string} description
- * @property {HeadImage | string} image the page's card, or the site's default: a card is always sent
+ * @property {HeadImage | string} image the page's card, or the site's default: a card is always sent. Pass the object with its
+ *   size and alt; a bare URL is still read, but writes a card without them, and the audit flags it
  * @property {string} [siteName]
  * @property {string} [socialTitle] `og:title` and `twitter:title`, where they differ from `title`
  * @property {string} [socialDescription]
@@ -40,8 +42,9 @@
  */
 /**
  * The full head of a public page: title, description, canonical, Open Graph and Twitter. `twitter:card` is always
- * `summary_large_image`, because the image is required: a card without one renders as a bare link. An absent date writes no
- * tag, since an empty `article:published_time` claims there is no date.
+ * `summary_large_image`, because the image is required: a card without one renders as a bare link. The image's type is read
+ * from its extension when not given, and `twitter:image:alt` is cut to X's 420 characters. An absent date writes no tag,
+ * since an empty `article:published_time` claims there is no date.
  *
  * @param {HeadInput} input
  * @returns {HeadTag[]}
@@ -116,11 +119,21 @@ export type HeadTag = {
 };
 export type HeadImage = {
     /**
-     * absolute, or a path on `origin`
+     * absolute https, or a path on `origin`
      */
     url: string;
+    /**
+     * in pixels; with `height`, a crawler can draw the card before it has fetched the image
+     */
     width?: number | undefined;
     height?: number | undefined;
+    /**
+     * the media type, e.g. `image/png`; read from the file's extension when not given
+     */
+    type?: string | undefined;
+    /**
+     * what the image shows, for a reader who cannot see it
+     */
     alt?: string | undefined;
 };
 export type ArticleFacts = {
@@ -144,7 +157,8 @@ export type HeadInput = {
     title: string;
     description: string;
     /**
-     * the page's card, or the site's default: a card is always sent
+     * the page's card, or the site's default: a card is always sent. Pass the object with its size and alt; a bare URL is
+     * still read, but writes a card without them, and the audit flags it
      */
     image: HeadImage | string;
     siteName?: string | undefined;
@@ -207,7 +221,7 @@ export type SiteHead = {
      */
     siteName: string;
     /**
-     * the site's default card, for a page without its own
+     * the site's default card, for a page without its own: `{ url, width, height, alt }`, as `HeadInput`'s `image`
      */
     image: HeadImage | string;
     /**
@@ -257,8 +271,3 @@ export function defineHead(site: SiteHead): (page: PageHead) => HeadTag[];
  * entity it does not know is kept as written. The result is text, so it is escaped where it is written, as every tag is.
  */
 export function metaText(html: string, limit?: number): string;
-/**
- * Minutes to read at 200 words a minute, rounded, never less than one. Words are runs of non-space, so Markdown syntax
- * counts, as the sites' published reading times were counted; pass HTML through `metaText(html, Infinity)` first.
- */
-export function readingMinutes(text: string): number;

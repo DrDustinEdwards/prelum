@@ -16,12 +16,16 @@ export const SERP_DESCRIPTION_LIMIT = 155;
  * The descriptor shapes React Router's `meta` export takes, so a route returns `headTags(...)` as it is.
  */
 
+/** X cuts `twitter:image:alt` at 420 characters, so a longer alt is cut at a word to fit. */
+const TWITTER_ALT_LIMIT = 420;
+
 /**
  * @typedef {object} HeadImage
- * @property {string} url absolute, or a path on `origin`
- * @property {number} [width]
+ * @property {string} url absolute https, or a path on `origin`
+ * @property {number} [width] in pixels; with `height`, a crawler can draw the card before it has fetched the image
  * @property {number} [height]
- * @property {string} [alt]
+ * @property {string} [type] the media type, e.g. `image/png`; read from the file's extension when not given
+ * @property {string} [alt] what the image shows, for a reader who cannot see it
  */
 
 /**
@@ -38,7 +42,8 @@ export const SERP_DESCRIPTION_LIMIT = 155;
  * @property {string} path
  * @property {string} title the `<title>`, with any site suffix already on it
  * @property {string} description
- * @property {HeadImage | string} image the page's card, or the site's default: a card is always sent
+ * @property {HeadImage | string} image the page's card, or the site's default: a card is always sent. Pass the object with its
+ *   size and alt; a bare URL is still read, but writes a card without them, and the audit flags it
  * @property {string} [siteName]
  * @property {string} [socialTitle] `og:title` and `twitter:title`, where they differ from `title`
  * @property {string} [socialDescription]
@@ -64,6 +69,17 @@ export const SERP_DESCRIPTION_LIMIT = 155;
  */
 
 /** @type {Record<string, string>} */
+const IMAGE_TYPES = {
+  avif: "image/avif",
+  gif: "image/gif",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  png: "image/png",
+  svg: "image/svg+xml",
+  webp: "image/webp",
+};
+
+/** @type {Record<string, string>} */
 const FEED_TYPES = {
   rss: "application/rss+xml",
   atom: "application/atom+xml",
@@ -72,8 +88,9 @@ const FEED_TYPES = {
 
 /**
  * The full head of a public page: title, description, canonical, Open Graph and Twitter. `twitter:card` is always
- * `summary_large_image`, because the image is required: a card without one renders as a bare link. An absent date writes no
- * tag, since an empty `article:published_time` claims there is no date.
+ * `summary_large_image`, because the image is required: a card without one renders as a bare link. The image's type is read
+ * from its extension when not given, and `twitter:image:alt` is cut to X's 420 characters. An absent date writes no tag,
+ * since an empty `article:published_time` claims there is no date.
  *
  * @param {HeadInput} input
  * @returns {HeadTag[]}
@@ -110,6 +127,8 @@ export function headTags(input) {
   );
   if (locale) tags.push({ property: "og:locale", content: locale });
   tags.push({ property: "og:image", content: imageUrl });
+  const imageType = image.type ?? imageTypeOf(imageUrl);
+  if (imageType) tags.push({ property: "og:image:type", content: imageType });
   if (image.width) tags.push({ property: "og:image:width", content: String(image.width) });
   if (image.height) tags.push({ property: "og:image:height", content: String(image.height) });
   if (image.alt) tags.push({ property: "og:image:alt", content: image.alt });
@@ -120,8 +139,14 @@ export function headTags(input) {
     { name: "twitter:description", content: socialDescription },
     { name: "twitter:image", content: imageUrl },
   );
-  if (image.alt) tags.push({ name: "twitter:image:alt", content: image.alt });
+  if (image.alt) tags.push({ name: "twitter:image:alt", content: truncateForSerp(image.alt, TWITTER_ALT_LIMIT) });
   return tags;
+}
+
+/** The media type an image URL's extension names, or undefined for one it does not know. @param {string} url */
+function imageTypeOf(url) {
+  const extension = /\.([a-z0-9]+)$/i.exec(url.split(/[?#]/)[0])?.[1];
+  return extension ? IMAGE_TYPES[extension.toLowerCase()] : undefined;
 }
 
 /** @param {ArticleFacts} article @returns {HeadTag[]} */
@@ -230,7 +255,8 @@ export function searchTitle(title, suffix) {
  * @typedef {object} SiteHead
  * @property {string} origin the site's production origin
  * @property {string} siteName `og:site_name`
- * @property {HeadImage | string} image the site's default card, for a page without its own
+ * @property {HeadImage | string} image the site's default card, for a page without its own: `{ url, width, height, alt }`,
+ *   as `HeadInput`'s `image`
  * @property {string} [suffix] what follows a page's title in `<title>`, e.g. " | Foxing"; `searchTitle` drops it where the
  *   two do not fit
  * @property {string} [locale] `og:locale`, e.g. `en_US`
@@ -341,15 +367,4 @@ export function metaText(html, limit = SERP_DESCRIPTION_LIMIT) {
     .replace(/\s+/g, " ")
     .trim();
   return truncateForSerp(text, limit);
-}
-
-/**
- * Minutes to read at 200 words a minute, rounded, never less than one. Words are runs of non-space, so Markdown syntax
- * counts, as the sites' published reading times were counted; pass HTML through `metaText(html, Infinity)` first.
- *
- * @param {string} text
- */
-export function readingMinutes(text) {
-  const words = text.trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.round(words / 200));
 }

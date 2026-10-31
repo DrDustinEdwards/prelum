@@ -11,6 +11,16 @@
 - The specimen's static text files are served with `charset=utf-8`, and its stylesheets, scripts and fonts with
   `Cross-Origin-Resource-Policy: cross-origin` (site-runtime 0.43.0 `headersFile({ charset: true })`, `corpFor`).
 
+## 0.20.0 (2026-10-31)
+
+### Added
+
+- `prelum-chart-audit` bin: the live check for charts (area 10). It crawls a site with `crawlSite` and opens every page in
+  headless Chromium, with scripts off and in light and dark, and reports each chart's misses against the charts checklist
+  as GitHub annotations titled with the item (B1, B2, B3, B18, B27, B28, B30, C1, C2, D6, F) and the page as proof. The CSV
+  link, source line and Capsomer frame are warnings until Enarratio 0.4.0 and the frame roll out (`--strict-frame` makes them
+  errors). `playwright-core` 1.63.0 and `axe-core` 4.14.0 are new optional peers.
+
 ## 0.19.0 (2026-10-30)
 
 ### Added
@@ -23,10 +33,64 @@
   sections `site.sections` names (`{ "/blog": "Blog" }`) to the page. A page passes its own `breadcrumbs`, or `false` for none.
 - `robotsDocument` writes `Content-Signal: search=yes, ai-input=yes, ai-train=no` (`CONTENT_SIGNAL`) in every group;
   `contentSignal` replaces it.
+- The share image is one object, `{ url, width, height, type, alt }`. `headTags` now writes `og:image:type`, read from the
+  file's extension (`.jpg`, `.png`, `.webp`, `.avif`, `.gif`, `.svg`) when `type` is not given, and cuts
+  `twitter:image:alt` at a word to X's 420 characters. A bare URL is still read; the docs and types steer to the object.
+- `imageObject(image)` in `schema`: an image's license metadata for Google Images (`contentUrl`, `creditText`,
+  `creator: { name, type }`, `copyrightNotice`, `license`, `acquireLicensePage`), or null when none of `creator`,
+  `creditText`, `copyrightNotice` and `license` is known, since Google requires one. `pageImage(image)` is the same
+  ImageObject without that condition, for `primaryImageOfPage` on a page that is not an article.
+- `article`'s `image` takes `{ url, width, height }` objects beside URLs, so a site passes its 16:9, 4:3 and 1:1 crops with
+  their sizes; one whose size is given and under `ARTICLE_IMAGE_MIN_PIXELS` (50,000) is refused with the article and image
+  named. A URL is written as before.
+- The audit's `card-incomplete` warning: a page whose `og:image` is not absolute https, or has no `og:image:type`, `width`,
+  `height` or `alt` (a card from a bare URL). `image-alt-filename` warns on an image whose alt is a file name, its own or
+  any ending in an image extension. `alt=""` stays right: it is a decorative image.
+- The blocks Ghost, WordPress and GitHub give writers, in every site's renderer (`render-blocks.mjs`):
+  - Callouts: `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` and `[!CAUTION]`, with an optional title after the marker,
+    as `<div class="callout callout-note" role="note">` with a `callout-title` paragraph.
+  - `:::video{src title captions poster width}` and `::audio{src title transcript}`. Video requires captions (WCAG 1.2.2)
+    unless marked `silent`; audio requires a transcript link (WCAG 1.2.1). `preload="metadata"`, no autoplay. A video or
+    audio file written as an image is refused instead of becoming a broken `<img>`.
+  - `::embed[Title]{url}` for YouTube (no-cookie host), Vimeo (`dnt=1`), Spotify and SoundCloud: a link to the original
+    with the player URL beside it, so the page makes no request to the service until a reader clicks. Any other URL is
+    refused.
+  - `:::gallery` (2 to 9 images, each with alt text), `::button[Label]{href}`, `::bookmark[Title]{url description}`.
+  - `width=wide` and `width=full` on `:::figure`, `:::gallery`, `:::video` and `::embed` (classes `width-wide`,
+    `width-full`).
+  - `:::faq` (moved from Foxhound): Q: and A: lines as a `<dl class="faq">`, returned as `faq` for FAQPage JSON-LD.
+  - `::postlink[slug]` and `::postlink[slug|text]` (moved from Foxhound), resolved by `options.postLink`; every slug asked
+    for is returned as `postLinks`.
+  - `:kbd[…]`, `:abbr[…]{title}`, `:mark[…]`, `:sub[…]`, `:sup[…]`.
+  - A fence's `title="app.ts"` wraps the block in `<figure class="code-frame">` with a `code-title` caption.
+- Smart punctuation (SmartyPants, Astro's default) with TeX dashes: `--` is an en dash, `---` an em dash.
+  `smartPunctuation: false` turns it off. Sites install `remark-smartypants` 3.0.3 beside the other pipeline packages.
+- render returns `words`, `readingMinutes`, `excerpt` (the first paragraph, at most 300 characters) and `warnings` (a
+  skipped heading level, an image without alt text), counted from the rendered tree.
+- `text` module: `wordCount` (Unicode words, Intl.Segmenter), `readingMinutes(words, images)` (238 words a minute after
+  Brysbaert 2019, plus Medium's image time) and `excerpt(text, max)`.
+- `likeContains(text)` in `search`: a LIKE pattern with `%`, `_` and `\` escaped, for `LIKE ? ESCAPE '\'`.
+- `render/enhance`: `enhance({ root, toc, article })`, the reader script for rendered writing, moved from dustinedwards.info:
+  reading progress, the table of contents' current section, code copy buttons, heading link copy, footnote previews (WCAG
+  1.4.13), the image lightbox, Markdown copy, a link to selected text, and click-to-load embeds that re-check the player host.
+- `render/audit` and the `prelum-content` command: the live check for writing. It crawls a site's sitemap and reports more
+  than one h1 or none, skipped heading levels, duplicate ids, in-page links that land on nothing, images without alt text or
+  a size, markdown leaking into the page, and stored HTML whose `data-render-version` is behind the pipeline.
+- The conformance corpus gains 10 hostile inputs for the new blocks (54 in all).
 
 ### Changed
-
 - `headTags` sends `robots: max-image-preview:large` on every indexable page, so Google can show the whole share image.
+- `RENDER_VERSION` is 7. A decorative image (`![](x)`, `alt=""`) is no longer wrapped in its `image-link`: a link whose only
+  content has an empty alt has no name.
+- `sitemapDocument`'s `images` docs say what a page passes: the images it shows, a rendered page's `mediaRefs` of form
+  `markdown-image` and `figure-directive` made absolute URLs again.
+- An h1 in a body moves every heading down a level: the page's title is its h1.
+- A single tilde is text (`H~2~O`); strikethrough is `~~…~~` only.
+- The `assertSafe` allowlist covers h4 to h6, which it refused before, and every element the new blocks write.
+
+### Removed
+
+- `readingMinutes(text)` from `head`, added in 0.18.0 and imported by no site: `text`'s `readingMinutes` is the one rule.
 
 ## 0.18.0 (2026-10-30)
 

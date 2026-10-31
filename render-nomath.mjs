@@ -23,9 +23,23 @@ import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
+import remarkSmartypants from "remark-smartypants";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
 
+import {
+  BLOCK_DIRECTIVES,
+  remarkCallouts,
+  remarkCodeFrames,
+  remarkEmbeds,
+  remarkFaq,
+  remarkGallery,
+  remarkInlineMarks,
+  remarkLinkBlocks,
+  remarkMedia,
+  remarkOutline,
+  remarkPostLinks,
+} from "./render-blocks.mjs";
 import {
   CORE_DIRECTIVES,
   remarkDetails,
@@ -36,6 +50,7 @@ import {
 import { ContentError } from "./render-error.mjs";
 import { LQIP_STYLE, assertSafe, srcsetUrls } from "./render-safe.mjs";
 import { isAllowedUrl } from "./render-url.mjs";
+import { excerpt, readingMinutes, wordCount } from "./text.mjs";
 
 export { ContentError, isAllowedUrl };
 
@@ -43,7 +58,7 @@ export { ContentError, isAllowedUrl };
  * Bumped whenever the output changes for the same input. A site stores it beside its rendered HTML and re-renders on a mismatch; Carrel's
  * health check reads it from meta.capabilities.render. test/render-golden.test.mjs fails when the output moves and this does not.
  */
-export const RENDER_VERSION = "6";
+export const RENDER_VERSION = "7";
 
 /** A source over this is refused before it is parsed: a 200,000-character bracket run took 2.8 s, which a Worker cannot be sent. */
 export const DEFAULT_MAX_BYTES = 512 * 1024;
@@ -71,6 +86,9 @@ const encoder = new TextEncoder();
  * @property {HighlightOptions} [highlight] Without it a code block is plain <pre><code class="language-x">.
  * @property {number} [maxBytes] Refuse a source longer than this many UTF-8 bytes. Default 512 KB.
  * @property {number} [maxDepth] Refuse a source nested deeper than this. Default 100.
+ * @property {(slug: string) => Promise<{ url: string, title: string } | null>} [postLink] Resolves `::postlink[slug]` to the post's
+ *   current address and title. Without it `::postlink[…]` stays text.
+ * @property {boolean} [smartPunctuation] Curly quotes, dashes and ellipses (SmartyPants, Astro's default). On unless false.
  * @property {boolean | { tags: ReadonlySet<string>, attributes: ReadonlySet<string> }} [assertSafe] Run the output scan on the result and
  *   throw when it finds an element or attribute outside the allowlist. Off by default; `true` uses the allowlist derived from the
  *   conformance corpus, an object supplies a site's own.
@@ -143,10 +161,14 @@ function remarkCollectMedia(sink, keyOf) {
         case "definition":
           add(node.url, imageIds.has(node.identifier) ? "markdown-image" : "link", node);
           break;
+        case "leafDirective":
         case "containerDirective":
           if (node.name === "figure") {
             add(node.attributes?.src, "figure-directive", node);
             add(node.attributes?.dark, "figure-directive", node);
+          }
+          if (node.name === "video" || node.name === "audio") {
+            for (const key of ["src", "poster", "captions", "transcript"]) add(node.attributes?.[key], "media-directive", node);
           }
           break;
         // Regex, not a parser, so every URL-carrying attribute is caught; over-detection only refuses a delete.
@@ -287,11 +309,13 @@ function rehypeImageSources(file, resolveImage, pending, imageProps) {
         : [];
 
       // Links to the unsized original, which srcset never serves. A figure's light and dark pair is excluded, as diagrams are: an
-      // anchor around the display: none half would be a focusable link with no name. An author's own link wins.
+      // anchor around the display: none half would be a focusable link with no name. So is a decorative image (`![](x)`, alt ""):
+      // its link would have no name either. An author's own link wins.
       const themed = Array.isArray(classes) && (classes.includes("figure-light") || classes.includes("figure-dark"));
       const wrappable =
         !themed &&
         src.length > 0 &&
+        node.properties?.alt !== "" &&
         parent &&
         typeof index === "number" &&
         parent.children[index] === node &&
@@ -385,6 +409,35 @@ function rehypeCollectToc(sink) {
 }
 
 /**
+ * The reading facts, counted from the rendered tree so they are the words a reader sees: no markdown syntax, no directive attributes.
+ * Runs before the autolinks append their "#" and before KaTeX doubles each expression.
+ *
+ * @param {{ words: number, images: number, excerpt: string }} sink
+ */
+function rehypeCollectText(sink) {
+  return (/** @type {import("hast").Root} */ tree) => {
+    /** @type {string[]} */
+    const parts = [];
+    /** @param {any} node */
+    const walk = (node) => {
+      if (node.type === "text") parts.push(node.value);
+      if (node.type !== "element" && node.type !== "root") return;
+      const classes = node.properties?.className ?? [];
+      if (Array.isArray(classes) && classes.includes("sr-only")) return;
+      if (node.tagName === "img" && !classes.includes?.("figure-dark")) sink.images += 1;
+      for (const child of node.children ?? []) {
+        walk(child);
+        if (child.type === "element") parts.push(" ");
+      }
+    };
+    walk(tree);
+    sink.words = wordCount(parts.join(""));
+    const lead = tree.children.find((child) => child.type === "element" && child.tagName === "p");
+    sink.excerpt = lead ? excerpt(hastToString(lead), 300) : "";
+  };
+}
+
+/**
  * @typedef {object} RenderInput
  * @property {string} file label used in error messages
  * @property {string} body markdown with any frontmatter already stripped
@@ -416,7 +469,7 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   }
 
   const packs = options.packs ?? [];
-  const known = [...CORE_DIRECTIVES, ...packs.flatMap((pack) => pack.directives)];
+  const known = [...CORE_DIRECTIVES, ...BLOCK_DIRECTIVES, ...packs.flatMap((pack) => pack.directives)];
   const runs = packs.map((pack) => pack.setup({ file, body }));
 
   /** @type {Array<{ depth: number, id: string, text: string }>} */
@@ -429,6 +482,13 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   /** @type {Array<{ file: string, tag: string, url: string }>} */
   const blockedUrls = [];
   const hasMath = { value: false };
+  /** @type {Array<{ question: string, answer: string }>} */
+  const faq = [];
+  /** @type {string[]} */
+  const postLinks = [];
+  /** @type {Array<{ line: number | null, message: string }>} */
+  const warnings = [];
+  const reading = { words: 0, images: 0, excerpt: "" };
 
   const keyOf = options.media?.keyOf ?? (() => null);
   // One lookup per src in a render: a resolver that reads D1 or R2 pays once for an image used twice.
@@ -441,7 +501,8 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   const imageProps = options.media?.imageProps ?? (() => null);
 
   /** @type {any} */
-  const processor = unified().use(remarkParse).use(remarkGfm);
+  // singleTilde off: a lone tilde is prose (H~2~O, ~5 km), and the GFM spec makes single-tilde strikethrough optional.
+  const processor = unified().use(remarkParse).use(remarkGfm, { singleTilde: false });
   if (math) processor.use(math.parse);
   processor
     .use(remarkDirective)
@@ -454,7 +515,21 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
     // Before remarkFigure, which erases the directive the media form is read from.
     .use(remarkCollectMedia, mediaRefs, keyOf)
     .use(remarkFigure, file)
-    .use(remarkDetails, file);
+    .use(remarkDetails, file)
+    .use(remarkCallouts)
+    .use(remarkInlineMarks, file)
+    .use(remarkMedia, file)
+    .use(remarkEmbeds, file)
+    .use(remarkGallery, file)
+    .use(remarkLinkBlocks, file)
+    // Reads the block's source, so before anything rewrites its text.
+    .use(remarkFaq, file, body, faq)
+    .use(remarkCodeFrames)
+    .use(remarkOutline, warnings);
+  if (options.postLink) processor.use(remarkPostLinks, options.postLink, postLinks, faq);
+  // After every block that reads text as written: a post link's slug and a FAQ's source must not gain curly quotes. Old-school dashes,
+  // as in TeX: -- is an en dash, --- an em dash.
+  if (options.smartPunctuation !== false) processor.use(remarkSmartypants, { dashes: "oldschool" });
 
   for (const run of runs) {
     for (const [plugin, ...args] of run.remark) processor.use(plugin, ...args);
@@ -470,6 +545,7 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   processor
     .use(rehypeSlug)
     .use(rehypeCollectToc, toc)
+    .use(rehypeCollectText, reading)
     .use(rehypeAutolinkHeadings, {
       // Keyboard-reachable on purpose; the aria-label is the name, because # is not one. It carries the heading, so a links list is
       // not a column of identical "Link to this section" entries. Called before the # is appended, so the text is the heading's alone.
@@ -514,6 +590,13 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
     toc,
     hasMath: hasMath.value,
     mediaRefs,
+    faq,
+    postLinks,
+    words: reading.words,
+    readingMinutes: readingMinutes(reading.words, reading.images),
+    excerpt: reading.excerpt,
+    // Facts about one render for the editor to show, like blockedUrls.
+    warnings,
     // Not a durable field: a fact about one render, and hashing it would churn on a blocked URL.
     blockedUrls,
     renderVersion: RENDER_VERSION,

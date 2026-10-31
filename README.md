@@ -17,14 +17,15 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `xml` | `escapeXml`, `cdata`, `rfc822`, `isoDay`, `absolutizeUrls`, `jsonLdText`, `mathToTex` |
 | `slug` | `slugify(text, { max })` |
 | `feeds` | `rssDocument`, `rssItem`, `atomDocument`, `atomEntry`, `jsonFeedDocument`, `feedItem` (`itemPath` moves where a post lives) |
-| `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` list it in the image sitemap |
+| `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` (absolute URLs of the images the page shows: a rendered page's `mediaRefs` of form `markdown-image` and `figure-directive`, made URLs again) list them in the image sitemap |
 | `llms` | `llmsDocument`, `llmsLink`; `llmsFullDocument`, `markdownPage`, `markdownPath`, `prefersMarkdown`, `markdownResponse` (llms-full.txt and each page's Markdown copy); `llmsResponse` (the whole /llms.txt response) |
 | `frontmatter` | `frontmatter(source)`: the `---` header of a Markdown file as `{ data, body }` |
 | `head` | `defineHead(site)` (the per-site builder: `(page) => HeadTag[]`), `headTags(input)` (title, description, canonical, the Markdown copy's and the feeds' links, Open Graph, Twitter, `article:*`), `headHtml(tags)`, `metaText(html, limit)`, `readingMinutes(text)`, `absoluteUrl`, `articleDates`, `searchTitle(title, suffix)`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT` |
-| `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage` |
+| `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage`, `imageObject(image)` (an image's license metadata), `pageImage(image)` (an ImageObject, for `primaryImageOfPage`), `ARTICLE_IMAGE_MIN_PIXELS` |
 | `robots` | `robotsDocument(input)`, `aiTxt(input)`, `robotsResponse(input)`, `aiTxtResponse(input)` (the whole responses), `plainTextResponse`, `isPreviewRequest`, `robotsNotes`, `PLAIN_TEXT_CACHE_CONTROL`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
 | `indexnow` | `submitIndexNow(input)`, `keyFileResponse(key, headers)` (the `/<key>.txt` file), `recentSitemapUrls(xml, { days })`; the `prelum-indexnow` bin |
 | `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-audit` bin |
+| `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-chart-audit` bin |
 | `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` (D1's FTS5); `staticSearchIndex(pages)` at build and `staticSearch(index, query)` in the browser, `searchWords`, for a site with no database |
 | `render`, `render/nomath` | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl` |
 | `render/packs` | `editorialPack`, the `RenderPack` shape a site's own directives take |
@@ -46,8 +47,15 @@ What they hold every site to:
 
 - The canonical, `og:url` and every absolute URL come from the site's production origin, never the request's, so a workers.dev
   copy cannot claim to be the page.
-- A card image is required, so `twitter:card` is always `summary_large_image`. An absent date writes no tag, and the Open Graph
-  dates and the Article schema's come from one `articleDates`.
+- A card image is required, so `twitter:card` is always `summary_large_image`. It is one object, `{ url, width, height, type,
+  alt }`, written as `og:image` and its `type`, `width`, `height` and `alt`, and `twitter:image` and `twitter:image:alt` (cut
+  to X's 420 characters); `type` is read from the extension when not given. A bare URL is still read, but its card has no size
+  or alt and the audit flags it. An absent date writes no tag, and the Open Graph dates and the Article schema's come from one
+  `articleDates`.
+- An Article's `image` takes several crops (Google asks for 16:9, 4:3 and 1:1), each a URL or `{ url, width, height }`; one
+  whose size is given and under 50,000 pixels is refused. `imageObject` writes an image's license metadata (`contentUrl`,
+  `creditText`, `creator`, `copyrightNotice`, `license`, `acquireLicensePage`) for Google Images, and returns null when no
+  rights field is known. A page that is not an article names its image with `primaryImageOfPage: pageImage(image)`.
 - `thing` drops empty fields, and `website` has no SearchAction without a real search URL: structured data claims nothing the
   page cannot back.
 - robots.txt repeats the disallow list in every named group (a crawler uses only its own group), and a preview gets
@@ -65,8 +73,9 @@ What they hold every site to:
 `audit` runs the checks a site audit leads with over pages a crawl already fetched (`crawlSite`, Cloudflare Browser Run's
 `/crawl`, or a site's own test): missing, long or duplicate titles and descriptions; a missing canonical, one off the production
 origin, or one that points away from a page the sitemap lists; a sitemap URL that redirects, is broken or is noindex (by meta tag
-or `X-Robots-Tag`); redirect chains; links to broken pages or to redirects; JSON-LD that does not parse; images with no `alt`;
-and pages with no `og:title` or card image. `auditPages` is pure and returns `{ findings, pages, summary }`, `summary` counting
+or `X-Robots-Tag`); redirect chains; links to broken pages or to redirects; JSON-LD that does not parse; images with no `alt`
+(`alt=""` is a decorative image, and right) or a file name for one; and pages with no `og:title` or card image, or a card without
+an https URL, type, size or alt. `auditPages` is pure and returns `{ findings, pages, summary }`, `summary` counting
 findings by check.
 
 `crawlSite` is the crawl, with its `fetch` passed in so a scheduled job (Capsid's, against each live site) runs it as it is and
@@ -82,6 +91,20 @@ const origin = "https://example.com";
 const { pages, sitemap } = await crawlSite({ origin, fetch });
 const { findings, summary } = auditPages(pages, { origin, sitemap });
 ```
+
+`prelum-chart-audit --origin https://example.com [--from <preview origin>] [--chart-kb 100] [--strict-frame]` is the live
+check for charts (area 10 of the completeness scoreboard). It crawls with `crawlSite`, then opens every page (and the
+same-origin iframes they show) in headless Chromium: with scripts off, and with scripts on in the light and dark schemes. For
+every Enarratio chart, or the Capsomer frame (`figure.cap-chart`) it sits in, it reports each miss as a GitHub annotation titled
+with its checklist item and the page as proof: no SVG, title, finding sentence, caption or data table with scripts off (B2, B18,
+B30); an SVG without `role="img"` and a name, or a table without scoped `th` and a caption (B28); text under 4.5:1 or a mark or
+legend swatch under 3:1 as painted, custom properties resolved, in either scheme (B1); text under 12 px (B3); an axe-core
+violation inside the chart in either scheme (B27); a chart over `--chart-kb` of inline HTML (D6); a page that loads Recharts,
+Chart.js, ApexCharts, ECharts, Highcharts, Plotly, Nivo or visx, or draws an SVG chart by hand (F). The CSV link (C1), the
+source line (C2) and the frame (F) are warnings until Enarratio 0.4.0 and the frame reach the sites; `--strict-frame` makes
+them errors. It exits 0 with no errors, 1 with any, 2 when it could not run. `playwright-core` and `axe-core` are optional
+peers; without them it installs the pinned versions into a cache directory once. It drives Playwright's Chromium, else the
+system Chrome, else `CHART_AUDIT_CHROME`.
 
 ## For agents: llms-full.txt and a Markdown copy of each page
 
@@ -111,14 +134,15 @@ if (prefersMarkdown(request.headers.get("Accept")) || url.pathname.endsWith(".md
 
 Markdown in, a safe HTML fragment out (carrel/design-markdown-pipeline.md). It is dustinedwards-info's renderer, moved here so every
 site that publishes Carrel's writing renders it the same way. The `render` import is deliberately light: it holds the parser, the
-directives every site gets (`:::figure`, with a `dark` twin for a drawing that differs by theme, and `:::details`), math, the table of contents and the URL policy. What a site decides it injects:
+blocks every site gets (below), math, the table of contents and the URL policy. What a site decides it injects:
 
 ```js
 import { render } from "@drdustinedwards/site-helpers/render";
 import { editorialPack } from "@drdustinedwards/site-helpers/render/packs";
 import { createHighlight } from "@drdustinedwards/site-helpers/render/highlight";
 
-const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion } = await render({
+const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion, faq, postLinks, words, readingMinutes, excerpt, warnings } =
+  await render({
   file: "content/posts/example.md", // for error messages
   body, // markdown with any frontmatter already stripped
   resolveImage, // async (src) => ({ width, height, placeholder? })
@@ -130,21 +154,48 @@ const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion } = 
     maxBytes: 512 * 1024, // refused before parsing
     maxDepth: 100, // refused after parsing
     assertSafe: true, // scan the output and throw on anything outside the allowlist; off by default
+    postLink: async (slug) => ({ url, title }), // resolves ::postlink[slug]; null leaves it visible as code
+    smartPunctuation: true, // curly quotes, -- en dash, --- em dash; the default
   },
 });
 ```
+
+**What writers get**, measured against Ghost's cards, WordPress's core blocks, GitHub's alerts and Astro's defaults. Each block
+refuses what it cannot render well, with the line and the fix:
+
+| Write | Renders |
+| --- | --- |
+| CommonMark and GFM: tables, task lists, `~~strike~~`, autolinks, footnotes | Scrollable tables, labeled checkboxes, footnotes with back links |
+| `> [!NOTE]` (TIP, IMPORTANT, WARNING, CAUTION), optional title after it | `<div class="callout callout-note" role="note">` |
+| `:::figure{src alt credit dark width}` | Figure, caption, credit, a dark-theme twin; `width=wide` or `width=full` |
+| `:::gallery` with 2 to 9 images | `<figure class="gallery">` grid |
+| `:::video{src title captions poster}`, `::audio{src title transcript}` | Native players; captions or a transcript required |
+| `::embed[Title]{url}` (YouTube, Vimeo, Spotify, SoundCloud) | A link carrying the player URL; `render/enhance` loads the player on a click |
+| `::button[Label]{href}`, `::bookmark[Title]{url description}` | A button link, a link card |
+| `:::details{summary}`, `:::faq` with Q: and A: lines | Native `<details>`, a `<dl class="faq">` returned as `faq` |
+| `::postlink[slug\|text]` | A link to the post's current address |
+| `:kbd[]`, `:abbr[]{title}`, `:mark[]`, `:sub[]`, `:sup[]` | The inline elements raw HTML would need |
+| ```` ```js title="app.ts" {2} ```` | Highlighted code with a file name and marked lines |
+
+An h1 in the body moves every heading down a level, quotes and dashes are typeset (SmartyPants, `--` en, `---` em), and a
+skipped heading level or an image without alt text comes back in `warnings` for the editor to show. `words`, `readingMinutes`
+(the `text` module's rule) and `excerpt` are counted from the rendered tree.
 
 **A site with no math** imports `render` from `render/nomath` instead: the same pipeline and options, with `$` as plain text (so
 `$3,000 to $6,500` is prices, not an expression) and `hasMath` always false. KaTeX, remark-math and rehype-katex are imported only by
 `render`, so they never enter that site's bundle (about 1.6 MB raw) and need not be installed.
 
 The output is a fragment: no `<html>`, no layout. A site gives it its own layout and its own CSS for the classes the pipeline emits
-(`heading-anchor`, `table-scroll`, `image-link`, `post-details`, `figure-credit`, `figure-light` and `figure-dark`, and a pack's own); a change to one of them is a new
-`renderVersion`.
+(`heading-anchor`, `table-scroll`, `image-link`, `post-details`, `figure-credit`, `figure-light`, `figure-dark`, `width-wide`, `width-full`,
+`callout`, `callout-<type>`, `callout-title`, `media`, `media-video`, `media-audio`, `media-transcript`, `embed`, `embed-<service>`,
+`embed-link`, `gallery`, `gallery-grid`, `button-row`, `button`, `bookmark` and its parts, `faq`, `faq-item`, `code-frame`,
+`code-title`, and a pack's own); a change to one of them is a new
+`renderVersion`. An image links to its original (`image-link`) unless it is decorative: `![](x)` writes `alt=""` and no link,
+which would have no name.
 
 **Safe by construction, then checked.** Raw HTML in the source is dropped before it becomes markup, the URL policy runs last, and
 KaTeX runs with `trust` off. Those are three options one edit could flip, so `render/safe` scans the rendered output with a parser
-(parse5) against an allowlist, and `render/conformance` holds 44 hostile inputs every site runs against its own configured renderer:
+(parse5) against an allowlist, and `render/conformance` holds 54 hostile inputs every site runs against its own configured renderer:
 
 ```js
 import { runConformance } from "@drdustinedwards/site-helpers/render/conformance";

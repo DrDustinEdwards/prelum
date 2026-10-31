@@ -63,3 +63,7 @@ export function remarkModelDirective(kind: {
 export function rehypeModelMarker(marker: string, render: (model: any, caption: any[], node: any) => any[]): (models: any[]) => (/** @type {import("hast").Root} */ tree: import("hast").Root) => void;
 /** The directives the core handles itself. A pack adds its own names to the list the guard checks. */
 export const CORE_DIRECTIVES: string[];
+/**
+ * The width class a figure, gallery, video or embed asks for: Ghost's regular, wide and full. The site's stylesheet sets the widths.
+ */
+export function widthClass(file: string, node: any, name: string): string[];

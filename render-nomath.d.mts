@@ -22,7 +22,7 @@ export function renderWith({ file, body, resolveImage, options }: RenderInput, m
  * Bumped whenever the output changes for the same input. A site stores it beside its rendered HTML and re-renders on a mismatch; Carrel's
  * health check reads it from meta.capabilities.render. test/render-golden.test.mjs fails when the output moves and this does not.
  */
-export const RENDER_VERSION: "6";
+export const RENDER_VERSION: "7";
 /** A source over this is refused before it is parsed: a 200,000-character bracket run took 2.8 s, which a Worker cannot be sent. */
 export const DEFAULT_MAX_BYTES: number;
 /** The deepest nesting of markdown nodes allowed (lists in quotes in lists), so a hostile source cannot recurse the stack. */
@@ -75,6 +75,14 @@ export type RenderOptions = {
      */
     maxDepth?: number;
     /**
+     * Resolves `::postlink[slug]` to the post's current address and title. Without it `::postlink[…]` stays text.
+     */
+    postLink?: (slug: string) => Promise<{ url: string; title: string } | null>;
+    /**
+     * Curly quotes, dashes and ellipses (SmartyPants, Astro's default). On unless false.
+     */
+    smartPunctuation?: boolean;
+    /**
      * Run the output scan on the result and
      * throw when it finds an element or attribute outside the allowlist. Off by default; `true` uses the allowlist derived from the
      * conformance corpus, an object supplies a site's own.
@@ -108,6 +116,18 @@ export type RenderResult = {
         key: string;
         source: string;
     }>;
+    /** Every :::faq pair, as the page shows it, for FAQPage JSON-LD. */
+    faq: Array<{ question: string; answer: string }>;
+    /** Every slug a ::postlink asked for, found or not: the site's backlink index. */
+    postLinks: string[];
+    /** Words a reader sees, counted by text.mjs's rule. */
+    words: number;
+    /** Minutes to read, from words and images. */
+    readingMinutes: number;
+    /** The first paragraph as plain text, at most 300 characters. */
+    excerpt: string;
+    /** An h1 moved down, a skipped heading level, an image without alt text: for the editor to show. */
+    warnings: Array<{ line: number | null; message: string }>;
 };
 export type RenderInput = {
     /**
