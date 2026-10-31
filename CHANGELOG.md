@@ -1,6 +1,15 @@
 # Changelog
 
-## Unreleased
+## 0.23.0 (2026-10-31)
+
+Post charts in Capsomer's chart frame (charts, area 10).
+
+### Changed
+
+- `RENDER_VERSION` is 9. `:::chart` output sits in Capsomer 0.53's chart frame: Enarratio's figure (still `figure.chart-figure.enarratio`,
+  with the author's caption in it) is wrapped in `div.cap-chart > div.cap-chart-figure`, the markup Capsomer's `frameHtml(figure)` writes,
+  so `prelum-chart-audit`'s frame check (F) passes for it. Prelum writes the markup itself and does not depend on Capsomer. A site styles
+  the frame with Capsomer's `components/chart-frame/chart-frame.css`, which the specimen now loads.
 
 ### Specimen
 
