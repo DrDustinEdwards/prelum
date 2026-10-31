@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- devkit v0.20.3. CI now runs devkit's workflow audit (actionlint and zizmor) and its dependency audit (OSV-Scanner), and
+  `.no-bloat.json` records the test and comment counts.
+
 ## 0.21.0 (2026-10-31)
 
 Charts move to Enarratio 0.4 (the charts checklist, area 10).
