@@ -1,9 +1,20 @@
 # Changelog
 
-## Unreleased
+## 0.24.0 (2026-10-31)
+
+One frontmatter reader and writer for every site and package (writing and rendering, area 4).
+
+### Added
+
+- `splitSource`, `joinSource`, `readKey`, `readList`, `setBlock` and `setRawKey` in `frontmatter`: site-api 0.17.0's block reader and
+  writer, moved here. A write replaces only the block it names, and every other block, comment and unknown key comes back byte for
+  byte. site-api re-exports them, and Capsomer's and Carrel's own header readers are replaced by them.
 
 ### Changed
 
+- `frontmatter(source)` is built on the same reader. Values in double quotes are read as JSON strings (`"a\"b"` is `a"b`), single
+  quotes take `''` as one quote, the fences may carry trailing spaces, and `body` starts after the blank lines that follow the
+  closing fence.
 - CI: devkit 0.20.8. The family check is now the shared-code check (`shared.yml`, `.shared.json`, `devkit-shared`). A newer push to a
   pull request cancels its older runs, and the workflow audit and dependency scan run only when their files change.
 
