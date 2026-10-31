@@ -12,6 +12,11 @@
   link an icon (error), an Apple touch icon and a manifest (warnings), and the manifest must name the site and list 192, 512
   and maskable icons (warnings) that all load (error).
 
+### Fixed
+
+- `defineHead`: a page that passes `fullTitle` no longer puts the site's suffix in its WebPage name and last breadcrumb
+  ("Viruses · Germomics" becomes "Viruses") when the site sets `suffix`.
+
 ## 0.20.0 (2026-10-31)
 
 ### Added

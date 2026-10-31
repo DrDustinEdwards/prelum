@@ -234,6 +234,9 @@ test("defineHead joins each indexable page to the site with a WebPage and the tr
   const home = JSON.stringify(ld({ path: "/", pageType: "CollectionPage" }));
   assert.ok(home.includes('"@type":"CollectionPage"') && !home.includes("BreadcrumbList"));
   assert.deepEqual(ld({ noindex: true }), []);
+  const full = defineHead({ origin: ORIGIN, siteName: "Sample", image: "/card.png", suffix: " · Sample", sections: { "/blog": "Blog" } });
+  const named = JSON.stringify(full({ title: "A post · Sample", fullTitle: true, description: "D", path: "/blog/a-post" }));
+  assert.ok(named.includes('"name":"A post","description"') && !named.includes('"name":"A post · Sample"'));
 });
 
 test("auditIcons passes the files prelum-icons writes and names a favicon that is not an image and a manifest icon that is gone", async () => {
