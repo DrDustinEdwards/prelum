@@ -376,16 +376,16 @@ main {
   block-size: auto;
 }
 /* The paragraph and list rules above leave a chart's own parts alone (:not(.enarratio *)): they put the summary flush under
-   the chart's buttons and indented the legend. A chart's links (the source and "Download CSV") are semibold in the link
+   the chart's buttons and indented the legend. A chart's links (the source, "Download CSV", and Enarratio 0.5's "Download SVG" and "Download PNG" buttons) are semibold in the link
    color with no underline, the family's link style, over Enarratio's color: inherit; its tick labels take proportional
    figures, because the interface face's tabular set gives the comma and the 1 a full figure's width ("1 , 600"). Capsomer's
    capsomer/enarratio.css carries the same two rules from the release after v0.55.0. */
-.enarratio :is(.enarratio-source, .enarratio-note, .enarratio-caption) a {
+.enarratio :is(.enarratio-source, .enarratio-note, .enarratio-caption) :is(a, .enarratio-export) {
   color: var(--accent-text);
   font-weight: 600;
   text-decoration: none;
 }
-.enarratio :is(.enarratio-source, .enarratio-note, .enarratio-caption) a:hover {
+.enarratio :is(.enarratio-source, .enarratio-note, .enarratio-caption) :is(a, .enarratio-export):hover {
   color: var(--accent-hover);
 }
 .enarratio svg :is([data-enarratio-mark$="tick label"], .enarratio-numeric) {
