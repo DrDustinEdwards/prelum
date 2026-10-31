@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { EMBED_FRAME_SOURCES, EMBED_PROVIDERS, embedPlayerUrl } from "../render-embeds.mjs";
+import { EMBED_FRAME_SOURCES } from "@dustinedwards/site-runtime/embeds";
+import { EMBED_PROVIDERS, embedPlayerUrl } from "../render-embeds.mjs";
 
 /** @param {string} url */
 function player(url) {
@@ -42,5 +43,6 @@ test("each service's URL becomes its player, built only from the checked parts, 
   assert.equal(embedPlayerUrl("https://www.google.com/search?q=x"), null);
   assert.equal(embedPlayerUrl("https://www.instagram.com.example.com/p/x/embed/"), null);
   assert.equal(embedPlayerUrl("javascript:alert(1)"), null);
-  assert.ok(EMBED_FRAME_SOURCES.includes("https://music.amazon.co.uk") && !EMBED_FRAME_SOURCES.includes("https://player.vimeo.com"));
+  // A site lets the players in through site-runtime's list, so every player built here must be on it.
+  assert.deepEqual(EMBED_PROVIDERS.map((p) => p.origin).filter((o) => !EMBED_FRAME_SOURCES.includes(o)), []);
 });

@@ -1,7 +1,7 @@
 // @ts-check
-// The services `::embed` may load, shared by the renderer (render-blocks.mjs), the click handler (render-enhance.mjs) and each
-// site's Content Security Policy (`EMBED_FRAME_SOURCES` goes to site-runtime's `frame` sources). Dependency-free, so the browser
-// bundle can import it.
+// The services `::embed` may load, shared by the renderer (render-blocks.mjs) and the click handler (render-enhance.mjs). A site's
+// policy lets the players in through site-runtime's `embeds` opt-in (@dustinedwards/site-runtime/embeds, whose list the test holds
+// every player here to). Dependency-free, so the browser bundle can import it.
 
 /**
  * @typedef {object} EmbedProvider
@@ -142,9 +142,6 @@ export const EMBED_PROVIDERS = [
 
 /** A Bluesky post URL by handle, which the renderer refuses with how to get the DID form. */
 export const BLUESKY_HANDLE = /^https:\/\/bsky\.app\/profile\/(?!did:)[^/]+\/post\/[a-z2-7]{13}\/?$/;
-
-/** The players' origins, for a site's CSP `frame-src` (site-runtime's `frame` sources). */
-export const EMBED_FRAME_SOURCES = [...new Set(EMBED_PROVIDERS.map((p) => p.origin))];
 
 /**
  * The player URL when it is on a known player's origin and path, otherwise null. render/enhance checks the URL again because it reads

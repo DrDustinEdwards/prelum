@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- `EMBED_FRAME_SOURCES` is removed from `./render/embeds`: the players' origins live in site-runtime (`@dustinedwards/site-runtime/embeds`,
+  0.66.0), whose `embeds` opt-in also hands them autoplay, encrypted-media, fullscreen and picture-in-picture and keeps COEP
+  Report-Only, without which every player was blocked. The test holds every player here to that list. The specimen's headers
+  take it from its registry entry. `RENDER_VERSION` is unchanged.
+
 ## 0.28.0
 
 Embeds limited to the services Dustin uses, with Vimeo removed (see the first items under Changed). Images and media (area 6, round 2): diagrams sized, one high image per page, animations that move and can be paused, the library's
