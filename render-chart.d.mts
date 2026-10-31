@@ -9,11 +9,13 @@ export function buildChartModel(attrs: Record<string, string>, csv: string): {
     columns: string[];
     rows: string[][];
     html: string;
+    issues: string[];
 };
 /**
  * The figure Enarratio drew, as hast. Parsed rather than allowDangerousHtml, which would open raw HTML
- * in every post. The author's caption replaces Enarratio's own and sits where it does, above the
- * data table; the outer figure takes Enarratio's classes and data attributes, so there is one figure.
+ * in every post. Enarratio's figcaption is the head (title and finding). The author's caption is the
+ * caption under the chart, where Enarratio puts its own; the outer figure takes Enarratio's classes
+ * and data attributes, so there is one figure.
  *
  * @param {ReturnType<typeof buildChartModel>} model
  * @param {any[]} captionChildren hast for an author-written caption, may be empty

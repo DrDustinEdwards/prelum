@@ -25,6 +25,8 @@ export const HOSTILE_INPUTS = [
   { name: "javascript link, tab", source: "[x](<java\tscript:alert(1)>)" },
   { name: "javascript link, null byte", source: "[x](<java\u0000script:alert(1)>)" },
   { name: "data link", source: "[x](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)" },
+  // A chart's CSV link is the one data: URL allowed, and only with download, which markdown cannot write.
+  { name: "data csv link", source: "[x](data:text/csv;charset=utf-8,a%2Cb)" },
   { name: "vbscript link", source: "[x](vbscript:msgbox(1))" },
   { name: "file link", source: "[x](file:///etc/passwd)" },
   { name: "protocol-relative link", source: "[x](//example.com/x)" },
