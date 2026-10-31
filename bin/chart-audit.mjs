@@ -404,8 +404,8 @@ async function readCharts({ measured, libraries, tags }) {
     const finding = own(".cap-chart-summary, .enarratio-summary, .enarratio-finding");
     const table = unit.querySelector("table");
     const names = svgs.map((svg) => {
-      const labelled = (svg.getAttribute("aria-labelledby") ?? "").split(/\s+/).map((/** @type {string} */ id) => text(document.getElementById(id))).join(" ").trim();
-      return { role: svg.getAttribute("role") ?? "none", name: (svg.getAttribute("aria-label") ?? "").trim() || labelled || text(svg.querySelector(":scope > title")) };
+      const labeledBy = (svg.getAttribute("aria-labelledby") ?? "").split(/\s+/).map((/** @type {string} */ id) => text(document.getElementById(id))).join(" ").trim();
+      return { role: svg.getAttribute("role") ?? "none", name: (svg.getAttribute("aria-label") ?? "").trim() || labeledBy || text(svg.querySelector(":scope > title")) };
     });
     const kind = [...new Set([unit, ...Array.from(unit.querySelectorAll("[data-enarratio]"))].map((el) => el.getAttribute("data-enarratio")).filter(Boolean))].join("+") || "frame";
     const label = unit.id ? `#${unit.id}` : `"${(title || names[0]?.name || kind).slice(0, 60)}"`;
