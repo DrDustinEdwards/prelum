@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.22.1 (2026-10-31)
+
+### Fixed
+
+- `prelum-content` runs from a plain install again. `RENDER_VERSION` moved to its own module (`render-version.mjs`), so the
+  check no longer loads the renderer and its optional peers; installed alone, as the devkit scoreboard installs it, it
+  stopped on the missing `hast-util-to-string`.
+
 ## 0.22.0 (2026-10-31)
 
 One set of icon files on every site, and two fixes to the page graph (search and sharing, area 1).
