@@ -3,13 +3,15 @@
 // audit that compares URLs by their exact spelling misses a broken link written with a trailing slash or a fragment, and
 // one that lets a workers.dev canonical or a redirect chain through calls a site clean that search engines do not. A cut
 // title that runs past the limit with its "...", or an entity the audit reads as extra characters, warns on every page. An
-// image's license node without a rights field, or an Article image under Google's size, is structured data Google ignores.
+// image's license node without a rights field, or an Article image under Google's size, is structured data Google ignores. A favicon that answers HTML, or a manifest icon that 404s, is a blank tab and a broken
+// install that no page check sees.
 
 import assert from "node:assert/strict";
 import test from "node:test";
 
 import { auditPages, crawlSite } from "../audit.mjs";
 import { defineHead, headHtml, headTags, metaText, SERP_TITLE_LIMIT, searchTitle, truncateForSerp } from "../head.mjs";
+import { auditIcons, icoFile, iconLinks, webManifest } from "../icons.mjs";
 import { llmsResponse } from "../llms.mjs";
 import { aiTxt, DENIED_BOTS, robotsDocument, robotsResponse } from "../robots.mjs";
 import { article, imageObject, jsonLd } from "../schema.mjs";
@@ -232,4 +234,29 @@ test("defineHead joins each indexable page to the site with a WebPage and the tr
   const home = JSON.stringify(ld({ path: "/", pageType: "CollectionPage" }));
   assert.ok(home.includes('"@type":"CollectionPage"') && !home.includes("BreadcrumbList"));
   assert.deepEqual(ld({ noindex: true }), []);
+});
+
+test("auditIcons passes the files prelum-icons writes and names a favicon that is not an image and a manifest icon that is gone", async () => {
+  const ico = icoFile([16, 32].map((size) => ({ size, png: new Uint8Array(size) })));
+  assert.deepEqual(Array.from(ico.subarray(0, 6)), [0, 0, 1, 0, 2, 0]);
+  assert.equal(new DataView(ico.buffer).getUint32(6 + 16 + 12, true), 6 + 32 + 16);
+  const head = iconLinks().map((link) => `<link rel="${link.rel}" href="${link.href}">`).join("");
+  const site = (/** @type {Record<string, Response>} */ overrides) => {
+    /** @type {Record<string, () => Response>} */
+    const files = {
+      "/": () => new Response(`<html><head>${head}</head></html>`, { headers: { "content-type": "text/html" } }),
+      "/site.webmanifest": () => Response.json(webManifest({ name: "Sample", themeColor: "#000000", backgroundColor: "#ffffff" })),
+    };
+    return /** @type {typeof fetch} */ (async (input) => {
+      const path = new URL(String(input)).pathname;
+      if (overrides[path]) return overrides[path];
+      return files[path]?.() ?? new Response("png", { headers: { "content-type": "image/png" } });
+    });
+  };
+  assert.deepEqual(await auditIcons({ origin: "https://example.com", fetch: site({}) }), []);
+  const broken = await auditIcons({
+    origin: "https://example.com",
+    fetch: site({ "/favicon.ico": new Response("<html>", { headers: { "content-type": "text/html" } }), "/icon-maskable-512.png": new Response("", { status: 404 }) }),
+  });
+  assert.deepEqual(broken.map((finding) => [finding.check, new URL(finding.url).pathname]), [["icon-missing", "/favicon.ico"], ["icon-broken", "/icon-maskable-512.png"]]);
 });

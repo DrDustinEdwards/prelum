@@ -25,6 +25,7 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `robots` | `robotsDocument(input)`, `aiTxt(input)`, `robotsResponse(input)`, `aiTxtResponse(input)` (the whole responses), `plainTextResponse`, `isPreviewRequest`, `robotsNotes`, `PLAIN_TEXT_CACHE_CONTROL`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
 | `indexnow` | `submitIndexNow(input)`, `keyFileResponse(key, headers)` (the `/<key>.txt` file), `recentSitemapUrls(xml, { days })`; the `prelum-indexnow` bin |
 | `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-audit` bin |
+| `icons` | `ICONS` (the file paths), `iconLinks()`, `webManifest(site)`, `icoFile(images)`, `auditIcons({ origin, fetch })`; the `prelum-icons` bin |
 | `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-chart-audit` bin |
 | `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` (D1's FTS5); `staticSearchIndex(pages)` at build and `staticSearch(index, query)` in the browser, `searchWords`, for a site with no database |
 | `render`, `render/nomath` | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl` |
@@ -91,6 +92,16 @@ const origin = "https://example.com";
 const { pages, sitemap } = await crawlSite({ origin, fetch });
 const { findings, summary } = auditPages(pages, { origin, sitemap });
 ```
+
+Every site serves the same icon files at the same paths (`ICONS`): `/favicon.ico` (16, 32 and 48 pixels, since Google asks for
+a multiple of 48 linked from the home page), `/icon.svg`, `/apple-touch-icon.png` (180 pixels on the brand color, since iOS
+fills transparency with black), `/icon-192.png`, `/icon-512.png`, `/icon-maskable-512.png` and `/site.webmanifest`.
+`prelum-icons --svg mark.svg --background "#4F2D7F" [--maskable mark-maskable.svg] [--out public]` draws the images from one
+SVG, the maskable one with the mark inside the safe circle (W3C, "Icon masks") unless a drawn one is given; it needs
+`@resvg/resvg-js`, an optional peer. `iconLinks()` is the root route's `links`, and `webManifest(site)` the manifest's JSON.
+`prelum-audit` runs `auditIcons` with the pages: a favicon that does not answer an image, a home page without an icon, Apple
+touch icon or manifest link, and a manifest without a name, a 192 and a 512 pixel icon and a maskable one, or with an icon that
+does not load.
 
 `prelum-chart-audit --origin https://example.com [--from <preview origin>] [--chart-kb 100] [--strict-frame]` is the live
 check for charts (area 10 of the completeness scoreboard). It crawls with `crawlSite`, then opens every page (and the
