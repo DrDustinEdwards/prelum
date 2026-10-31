@@ -1,7 +1,7 @@
 /**
  * @param {string} key
  * @param {string} theme one of DIAGRAM_THEMES
- * @param {string} assetPrefix the site's asset name prefix, for example "dustin-edwards-"
+ * @param {string} assetPrefix the site's asset name prefix, for example "example-"
  */
 export function diagramAssetPath(key: string, theme: string, assetPrefix: string): string;
 /**

@@ -9,7 +9,8 @@
   "assets": {
     "directory": "./specimen/dist",
     "binding": "ASSETS",
-    "run_worker_first": true,
+    // The Worker (specimen/worker.mjs) answers every page; the static folders go straight to the asset server.
+    "run_worker_first": ["/*", "!/fonts/*", "!/katex/*", "!/images/*", "!/diagrams/*"],
     "not_found_handling": "404-page"
   },
   "routes": [{ "pattern": "prelum.dustinedwards.info", "custom_domain": true }],

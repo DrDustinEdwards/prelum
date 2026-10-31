@@ -1,5 +1,5 @@
-// Holds the package to the output the sites already publish. test/fixtures/ is each site's own output, captured by
-// scripts/capture-site-helper-fixtures.mjs in dustinedwards-info (PROVENANCE.json names the commits), and the package must
+// Holds the package to the output the sites already publish. test/fixtures/ keeps the byte layout of each site's own
+// output as it was captured (PROVENANCE.json), with sample content in place of the sites' own, and the package must
 // reproduce it byte for byte from the same data, so a change here shows up as a changed fixture.
 
 import assert from "node:assert/strict";
@@ -47,18 +47,18 @@ function entriesOf(/** @type {string} */ xml, /** @type {RegExp} */ lastmodPatte
   });
 }
 
-test("sitemap: this site's document is reproduced byte for byte", () => {
-  const xml = fixture("dustinedwards-sitemap.xml");
+test("sitemap: a compact document is reproduced byte for byte", () => {
+  const xml = fixture("sitemap-compact.xml");
   assert.equal(sitemapDocument(entriesOf(xml, /^\d{4}-\d{2}-\d{2}$/)), xml);
 });
 
-test("sitemap: germomics' compact document with no trailing newline is reproduced byte for byte", () => {
-  const xml = fixture("germomics-sitemap.xml");
+test("sitemap: a compact document with no trailing newline is reproduced byte for byte", () => {
+  const xml = fixture("sitemap-compact-no-newline.xml");
   assert.equal(sitemapDocument(entriesOf(xml, /^\d{4}-\d{2}-\d{2}$/), { trailingNewline: false }), xml);
 });
 
-test("sitemap: foxhound's expanded document with datetimes, changefreq and priority is reproduced byte for byte", () => {
-  const xml = fixture("foxhound-sitemap.xml");
+test("sitemap: an expanded document with datetimes, changefreq and priority is reproduced byte for byte", () => {
+  const xml = fixture("sitemap-expanded.xml");
   assert.equal(
     sitemapDocument(entriesOf(xml, /^\d{4}-\d{2}-\d{2}T/), { layout: "expanded", lastmodFormat: "datetime" }),
     xml,
@@ -117,13 +117,13 @@ function llmsParts(/** @type {string} */ text) {
   };
 }
 
-test("llms: germomics' file is reproduced byte for byte from its parts", () => {
-  const text = fixture("germomics-llms.txt");
+test("llms: a file of link sections is reproduced byte for byte from its parts", () => {
+  const text = fixture("llms-links.txt");
   assert.equal(llmsDocument(llmsParts(text)), text);
 });
 
-test("llms: foxhound's file, prose sections and all, is reproduced byte for byte from its parts", () => {
-  const text = fixture("foxhound-llms.txt");
+test("llms: a file with prose sections is reproduced byte for byte from its parts", () => {
+  const text = fixture("llms-prose.txt");
   const [head, ...sectionTexts] = text.split(/\n## /);
   const [title, summary, ...intro] = head.trimEnd().split("\n\n");
   const sections = sectionTexts.map((section) => {
@@ -196,13 +196,13 @@ test("frontmatter blocks: a write changes only the block it names, and every oth
 });
 
 test("xml: the sites' feed fragments are the primitives' output", () => {
-  const germomics = fixture("germomics-site-feed.xml");
-  assert.ok(germomics.includes(`<title>${escapeXml(`Why phages win: notes & "questions" <draft>`)}</title>`));
-  assert.ok(germomics.includes(`<pubDate>${rfc822("2026-06-21 09:30:00")}</pubDate>`));
-  assert.ok(germomics.includes(`<pubDate>${rfc822("2026-05-02T08:00:00Z")}</pubDate>`));
-  const foxhound = fixture("foxhound-feed.rss");
-  assert.ok(foxhound.includes(`<title>${cdata(`Recovering failed payments: what works & what "doesn't"`)}</title>`));
-  assert.ok(foxhound.includes(`<pubDate>${rfc822(new Date("2026-08-01T12:00:00.000Z"))}</pubDate>`));
+  const escaped = fixture("feed.xml");
+  assert.ok(escaped.includes(`<title>${escapeXml(`Spring update: notes & "questions" <draft>`)}</title>`));
+  assert.ok(escaped.includes(`<pubDate>${rfc822("2026-06-21 09:30:00")}</pubDate>`));
+  assert.ok(escaped.includes(`<pubDate>${rfc822("2026-05-02T08:00:00Z")}</pubDate>`));
+  const wrapped = fixture("feed-cdata.rss");
+  assert.ok(wrapped.includes(`<title>${cdata(`Getting started: what works & what "doesn't"`)}</title>`));
+  assert.ok(wrapped.includes(`<pubDate>${rfc822(new Date("2026-08-01T12:00:00.000Z"))}</pubDate>`));
 });
 
 test("search: a quote inside a term is doubled, so the term cannot leave its quotes", () => {
@@ -211,7 +211,7 @@ test("search: a quote inside a term is doubled, so the term cannot leave its quo
 });
 
 test("search: operators and hyphens stay literal text", () => {
-  assert.equal(toMatchExpression({ terms: ["NEAR", "t-cell"], phrases: ["exact words"] }), `"exact words" AND "NEAR" AND "t-cell"`);
+  assert.equal(toMatchExpression({ terms: ["NEAR", "e-mail"], phrases: ["exact words"] }), `"exact words" AND "NEAR" AND "e-mail"`);
 });
 
 test("search: only the last term takes the prefix star, and nothing to match is null", () => {

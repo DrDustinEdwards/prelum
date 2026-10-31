@@ -1,0 +1,68 @@
+# Example Co
+
+> Example Co publishes guides, release notes and field notes for a small team. Every page is free to read and may be cited with a link.
+
+Example Co is a small publishing project. It keeps its writing in plain Markdown, renders it once, and serves the same words as HTML, as a feed and as Markdown for agents. Pages are grouped by kind: guides explain how to do one thing, release notes say what changed, and field notes record what the team saw. Nothing on the site requires an account, and nothing is behind a paywall. The archive lists every page with its date and tags, and each page links to the ones it builds on.
+
+## Products
+
+- [Guides](https://example.com/products/guides): Step-by-step pages for one task each, from getting started to the annual report. Each guide names what it assumes and links to the pages it builds on.
+- [Release notes](https://example.com/products/release-notes): What changed in each release, with the date and a link to the full list. Older notes stay up; see https://example.com/archive for every release.
+- [Field notes](https://example.com/products/field-notes): Short records of what the team saw and tried, with photos and data where there are any. See https://example.com/archive for the full list.
+- [Reports](https://example.com/products/reports): The annual report and the spring update, with their tables and charts. See https://example.com/data for the data behind them.
+
+## Pricing
+
+- Guides: free, no account required
+- Release notes: free, published with each release
+- Field notes: free, with photos and data where there are any
+- Reports: free, with every table available as CSV
+- No sign-up, no tracking cookies
+- Contact: https://example.com/contact
+
+## Key pages
+
+- [Homepage](https://example.com)
+- [Products overview](https://example.com/products)
+- [Pricing](https://example.com/pricing)
+- [Events](https://example.com/events)
+- [Docs](https://example.com/docs)
+- [Getting started](https://example.com/getting-started)
+- [Blog](https://example.com/blog)
+
+## Documentation
+
+- [Getting started guide](https://example.com/docs/getting-started)
+- [Writing guide](https://example.com/docs/writing)
+- [Style guide](https://example.com/docs/style)
+- [Data guide](https://example.com/docs/data)
+- [Release guide](https://example.com/docs/releases)
+
+## Blog
+
+Guides, release notes and field notes from the team: [https://example.com/blog](https://example.com/blog). Browse by topic at https://example.com/blog/tag/guides, https://example.com/blog/tag/news.
+
+## For agents
+
+Example Co serves every page as Markdown at the same path with .md added, so an agent can read a page without parsing HTML. The site also serves llms.txt and llms-full.txt, and each page names its canonical URL.
+
+Most pages are short: a guide, a release note or a field note, each with a title, a date, tags and a summary. The archive lists them all, newest first, and the feeds carry the same summaries. A page that changes keeps its URL, and its date of last change is in the sitemap.
+
+There is no form, no comment box and no account to sign in to: the site only publishes.
+
+Photos carry alt text, and every chart has a data table beside it, so an agent reads the same numbers a reader sees.
+
+## Technical
+
+- Written in Markdown and rendered once on each change; the same words go out as HTML, RSS and Markdown
+- Hosted as a static site behind a CDN
+- No tracking cookies and no third-party scripts
+- Every page is available without JavaScript
+
+## Crawling permissions
+
+This site welcomes indexing by AI crawlers, LLM training pipelines, RAG systems, and search engines. All content on public pages is freely accessible and may be cited.
+
+Full content: https://example.com/llms-full.txt
+
+Contact: hello@example.com

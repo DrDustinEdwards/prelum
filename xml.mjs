@@ -32,7 +32,7 @@ export function cdata(content) {
 /**
  * An RFC 822 date, which RSS `<pubDate>` requires, from a Date, an epoch in milliseconds, or the two string forms the sites
  * store: ISO 8601 (`2026-06-21T09:30:00Z`) and SQLite's `2026-06-21 09:30:00`, read as UTC. A value that is not a date reads
- * as the epoch, as germomics always has, so an item is never undated by accident.
+ * as the epoch, as the feeds it replaced did, so an item is never undated by accident.
  *
  * @param {Date | number | string | null | undefined} value
  * @returns {string}

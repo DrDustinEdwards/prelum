@@ -31,11 +31,22 @@ style from the markup.
   `role="region"` and `aria-label` from its frame title (`Code: app.ts`), else its language (`Code: TypeScript`), else `Code`. The
   allowlist gains `pre role` and `pre aria-label`.
 - The URL policy allows `tel:`, for phone links. A dialer runs nothing.
+- Sample content no longer comes from one site. The test fixtures that hold the package to the sites' output keep their captured
+  byte layout but carry example.com content, under names that say what each one tests (`sitemap-compact.xml`, `llms-prose.txt`,
+  `feed-cdata.rss` and the rest); the two unused captures, with a real biography in one, are gone. The specimen's lists, table,
+  code, details, pull quote and bar chart use neutral examples in place of lab samples and sequencing reads. Doc examples in `head`,
+  `render-diagram`, `render-packs`, `xml` and the README name Example Co and an `example-` prefix. The render fixtures' media names use the
+  `example-` prefix too, so their golden hashes moved with the input.
 
 ### Specimen
 
 - The Links element shows every kind, with Capsomer's family list and MDN's icon, fetched once and committed in
   `specimen/link-icons/` (an empty file is a host with none, so builds and tests reach no other site).
+- The specimen's Worker is site-runtime v0.52.0's `staticSite` in place of its own code: the same https redirect, report endpoint,
+  preload Link and charset, plus the site's own prefetch rules at `/speculation-rules.json` with the `Speculation-Rules`
+  header on every page (in place of Cloudflare's generic ones) and `Server-Timing`. A page asked for with a cookie is
+  `private, no-store`, as the 404 page already was. The fonts, KaTeX, images and diagrams no longer run the Worker
+  (`run_worker_first`). The page looks the same: home page screenshots before and after are identical.
 - The specimen's home page writes its head with `headTags`, so it has a share card: `share-card.png` (1200x630) with
   `og:image:type`, `width`, `height` and `alt`, and the canonical, Open Graph and X tags that come with it.
 

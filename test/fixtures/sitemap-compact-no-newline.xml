@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://example.com/</loc></url>
+  <url><loc>https://example.com/notes</loc></url>
+  <url><loc>https://example.com/writing</loc></url>
+  <url><loc>https://example.com/archive</loc></url>
+  <url><loc>https://example.com/data</loc></url>
+  <url><loc>https://example.com/events</loc></url>
+  <url><loc>https://example.com/subscribe</loc></url>
+  <url><loc>https://example.com/about</loc></url>
+  <url><loc>https://example.com/about/alex-rivera</loc></url>
+  <url><loc>https://example.com/privacy</loc></url>
+  <url><loc>https://example.com/terms</loc></url>
+  <url><loc>https://example.com/contact</loc></url>
+  <url><loc>https://example.com/members</loc></url>
+  <url><loc>https://example.com/volume/1</loc></url>
+  <url><loc>https://example.com/volume/2</loc></url>
+  <url><loc>https://example.com/spring-update</loc><lastmod>2026-07-01</lastmod></url>
+  <url><loc>https://example.com/field-notes</loc><lastmod>2026-05-02</lastmod></url>
+  <url><loc>https://example.com/no-date</loc></url>
+</urlset>
