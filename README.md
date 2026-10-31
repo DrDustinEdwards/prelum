@@ -163,6 +163,15 @@ pages behind it. It exits 0 with no errors, 1 with any, 2 when it could not run.
 peers; without them it installs the pinned versions into a cache directory once. It drives Playwright's Chromium, else the
 system Chrome, else `CHART_AUDIT_CHROME`.
 
+## Accessibility statement
+
+`accessibilityStatement({ siteName, contact: { href, label }, date, conformance, limitations, measures })` (`./accessibility`) is
+the page every public site serves at `ACCESSIBILITY_PATH` (`/accessibility`; devkit-a11y fails S6 without it). It returns
+`{ title, description, body }`, the body Markdown in the W3C WAI generator's sections (the commitment, WCAG 2.2 AA and the
+conformance status, measures, known limitations, how to report a problem, the date). The site renders `body` with `render` in its
+own layout and links the page from the footer. `limitations` are the open findings of the site's latest devkit-a11y report, one
+sentence each; until `conformance` is `"full"` the statement also names the hand checks still owed (NVDA and VoiceOver, signed-in pages).
+
 ## For agents: llms-full.txt and a Markdown copy of each page
 
 After Cloudflare's Nimbus (MIT; its notice is in `llms.mjs`). A page's Markdown copy is `markdownPage({ title, url,

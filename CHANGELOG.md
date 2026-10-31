@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.28.0 (2026-10-31)
+
+- `./accessibility`: `accessibilityStatement({ siteName, contact, date, conformance, limitations, measures })` returns the
+  statement every public site serves at `/accessibility` (devkit-a11y S6) as Markdown, in the W3C WAI generator's sections: the
+  commitment, the standard (WCAG 2.2 AA) and conformance status, measures, known limitations, how to report a problem, and the
+  date. A site passes its name, contact route and review date, and the open findings from its latest devkit-a11y report; the
+  hand-check gaps are added until `conformance` is "full". Also `ACCESSIBILITY_PATH`, `ACCESSIBILITY_STANDARD`,
+  `HAND_CHECK_LIMITATIONS`. No change to `render` or RENDER_VERSION.
 
 ## 0.28.0
 

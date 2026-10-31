@@ -30,6 +30,10 @@
       "types": "./sitemap.d.mts",
       "default": "./sitemap.mjs"
     },
+    "./accessibility": {
+      "types": "./accessibility.d.mts",
+      "default": "./accessibility.mjs"
+    },
     "./llms": {
       "types": "./llms.d.mts",
       "default": "./llms.mjs"
