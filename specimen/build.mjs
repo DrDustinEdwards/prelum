@@ -105,10 +105,12 @@ function writeStyles(outDir) {
   writeFileSync(join(outDir, "site.css"), css);
 
   // KaTeX's stylesheet names its fonts relative to itself. Only the woff2 files are copied: every browser that reads the
-  // stylesheet's first src takes them.
+  // stylesheet's first src takes them. KaTeX ships font-display: block, which hides the math for up to three seconds;
+  // swap shows it in the fallback face at once.
   const katex = dirname(packageFile("katex/dist/katex.min.css"));
   mkdirSync(join(outDir, "katex", "fonts"), { recursive: true });
-  copyFileSync(join(katex, "katex.min.css"), join(outDir, "katex", "katex.min.css"));
+  const katexCss = readFileSync(join(katex, "katex.min.css"), "utf8").replaceAll("font-display:block", "font-display:swap");
+  writeFileSync(join(outDir, "katex", "katex.min.css"), katexCss);
   for (const font of readdirSync(join(katex, "fonts")).filter((f) => f.endsWith(".woff2"))) {
     copyFileSync(join(katex, "fonts", font), join(outDir, "katex", "fonts", font));
   }
