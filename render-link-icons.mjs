@@ -126,6 +126,167 @@ async function fetchCapped(url, max, { fetch, timeoutMs }) {
   }
 }
 
+/** The icon is shown at 16 CSS pixels; 32 covers a 2x screen, and a bigger one only costs bytes and decoding. */
+export const LINK_ICON_SIZE = /** @type {const} */ (32);
+
+const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
+  let c = n;
+  for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  return c >>> 0;
+});
+
+/** @param {Uint8Array} bytes */
+const crc32 = (bytes) => {
+  let c = 0xffffffff;
+  for (const byte of bytes) c = (CRC_TABLE[(c ^ byte) & 0xff] ?? 0) ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+};
+
+/** @param {Uint8Array} bytes @param {"compress" | "decompress"} way */
+const zlib = async (bytes, way) => {
+  const stream = new Blob([/** @type {BlobPart} */ (bytes)]).stream().pipeThrough(way === "compress" ? new CompressionStream("deflate") : new DecompressionStream("deflate"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+};
+
+/**
+ * A PNG shrunk to `size` pixels a side by averaging, with alpha weighted so a transparent edge does not darken, as an 8-bit RGBA PNG.
+ * Only the forms favicons use are read (8-bit gray, RGB, RGBA and gray-alpha, and palettes of 1 to 8 bits, not interlaced); any other,
+ * or one already small enough, comes back as it was.
+ *
+ * @param {Uint8Array} png
+ * @param {number} size
+ */
+async function shrinkPng(png, size) {
+  const view = new DataView(png.buffer, png.byteOffset, png.byteLength);
+  const width = view.getUint32(16);
+  const height = view.getUint32(20);
+  const [depth, color, , , interlace] = png.slice(24, 29);
+  const channels = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 }[color ?? -1];
+  if (Math.max(width, height) <= size || !channels || interlace || (color !== 3 && depth !== 8) || ![1, 2, 4, 8].includes(depth ?? 0)) return png;
+  /** @type {Uint8Array[]} */
+  const data = [];
+  let palette = new Uint8Array(0);
+  let alphas = new Uint8Array(0);
+  for (let at = 8; at + 8 <= png.length; ) {
+    const length = view.getUint32(at);
+    const type = String.fromCharCode(...png.slice(at + 4, at + 8));
+    const body = png.slice(at + 8, at + 8 + length);
+    if (type === "IDAT") data.push(body);
+    if (type === "PLTE") palette = body;
+    if (type === "tRNS") alphas = body;
+    at += 12 + length;
+  }
+  const raw = await zlib(new Uint8Array(await new Blob(/** @type {BlobPart[]} */ (data)).arrayBuffer()), "decompress");
+  const bpp = Math.max(1, ((depth ?? 8) * channels) >> 3);
+  const stride = Math.ceil((width * channels * (depth ?? 8)) / 8);
+  const rgba = new Uint8Array(width * height * 4);
+  let previous = new Uint8Array(stride);
+  for (let y = 0; y < height; y += 1) {
+    const filter = raw[y * (stride + 1)];
+    const line = raw.slice(y * (stride + 1) + 1, (y + 1) * (stride + 1));
+    for (let i = 0; i < stride; i += 1) {
+      const a = i >= bpp ? (line[i - bpp] ?? 0) : 0;
+      const b = previous[i] ?? 0;
+      const c = i >= bpp ? (previous[i - bpp] ?? 0) : 0;
+      const p = a + b - c;
+      const pa = Math.abs(p - a);
+      const pb = Math.abs(p - b);
+      const pc = Math.abs(p - c);
+      const predictor = [0, a, b, (a + b) >> 1, pa <= pb && pa <= pc ? a : pb <= pc ? b : c][filter ?? 0] ?? 0;
+      line[i] = ((line[i] ?? 0) + predictor) & 0xff;
+    }
+    previous = line;
+    for (let x = 0; x < width; x += 1) {
+      const out = (y * width + x) * 4;
+      if (color === 3) {
+        const bit = x * (depth ?? 8);
+        const index = ((line[bit >> 3] ?? 0) >> (8 - (depth ?? 8) - (bit & 7))) & ((1 << (depth ?? 8)) - 1);
+        rgba.set([palette[index * 3] ?? 0, palette[index * 3 + 1] ?? 0, palette[index * 3 + 2] ?? 0, alphas[index] ?? 255], out);
+      } else {
+        const px = line.slice(x * channels, x * channels + channels);
+        const gray = channels <= 2;
+        rgba.set([px[0] ?? 0, gray ? (px[0] ?? 0) : (px[1] ?? 0), gray ? (px[0] ?? 0) : (px[2] ?? 0), channels === 2 ? (px[1] ?? 255) : channels === 4 ? (px[3] ?? 255) : 255], out);
+      }
+    }
+  }
+  // Box averaging: each output pixel takes every source pixel it overlaps, weighted by the overlap.
+  const scale = Math.max(width, height) / size;
+  const w = Math.max(1, Math.round(width / scale));
+  const h = Math.max(1, Math.round(height / scale));
+  const out = new Uint8Array((w * 4 + 1) * h);
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      const sum = [0, 0, 0, 0];
+      let area = 0;
+      for (let sy = Math.floor(y * scale); sy < Math.min(height, Math.ceil((y + 1) * scale)); sy += 1) {
+        const wy = Math.min(sy + 1, (y + 1) * scale) - Math.max(sy, y * scale);
+        for (let sx = Math.floor(x * scale); sx < Math.min(width, Math.ceil((x + 1) * scale)); sx += 1) {
+          const weight = wy * (Math.min(sx + 1, (x + 1) * scale) - Math.max(sx, x * scale));
+          const at = (sy * width + sx) * 4;
+          const alpha = (rgba[at + 3] ?? 0) * weight;
+          for (let k = 0; k < 3; k += 1) sum[k] = (sum[k] ?? 0) + (rgba[at + k] ?? 0) * alpha;
+          sum[3] = (sum[3] ?? 0) + alpha;
+          area += weight;
+        }
+      }
+      const alpha = sum[3] ?? 0;
+      const at = y * (w * 4 + 1) + 1 + x * 4;
+      out.set(alpha > 0 ? [0, 1, 2].map((k) => Math.round((sum[k] ?? 0) / alpha)) : [0, 0, 0], at);
+      out[at + 3] = Math.round(alpha / area);
+    }
+  }
+  /** @param {string} type @param {Uint8Array} body */
+  const chunk = (type, body) => {
+    const typed = new Uint8Array([...type].map((ch) => ch.charCodeAt(0)).concat([...body]));
+    const bytes = new Uint8Array(12 + body.length);
+    const frame = new DataView(bytes.buffer);
+    frame.setUint32(0, body.length);
+    bytes.set(typed, 4);
+    frame.setUint32(8 + body.length, crc32(typed));
+    return bytes;
+  };
+  const header = new Uint8Array(13);
+  new DataView(header.buffer).setUint32(0, w);
+  new DataView(header.buffer).setUint32(4, h);
+  header.set([8, 6, 0, 0, 0], 8);
+  const parts = [png.slice(0, 8), chunk("IHDR", header), chunk("IDAT", await zlib(out, "compress")), chunk("IEND", new Uint8Array(0))];
+  return new Uint8Array(await new Blob(/** @type {BlobPart[]} */ (parts)).arrayBuffer());
+}
+
+/**
+ * An icon no bigger than it is shown needs to be. A favicon.ico holds several sizes: the smallest that covers LINK_ICON_SIZE is
+ * kept, alone, and one that is a PNG is shrunk like any PNG. Other types (an SVG scales; a GIF, JPEG or WebP favicon is rare) are
+ * kept as they are, as is anything this cannot read.
+ *
+ * @param {{ bytes: Uint8Array, type: string }} icon
+ * @returns {Promise<{ bytes: Uint8Array, type: string }>}
+ */
+export async function fitLinkIcon(icon) {
+  try {
+    if (icon.type === "image/png") return { bytes: await shrinkPng(icon.bytes, LINK_ICON_SIZE), type: icon.type };
+    if (icon.type !== "image/x-icon") return icon;
+    const view = new DataView(icon.bytes.buffer, icon.bytes.byteOffset, icon.bytes.byteLength);
+    const entries = Array.from({ length: view.getUint16(4, true) }, (_, i) => {
+      const at = 6 + i * 16;
+      return { size: icon.bytes[at] || 256, entry: icon.bytes.slice(at, at + 16), length: view.getUint32(at + 8, true), offset: view.getUint32(at + 12, true) };
+    }).filter((e) => e.offset + e.length <= icon.bytes.length);
+    const covering = entries.filter((e) => e.size >= LINK_ICON_SIZE).sort((a, b) => a.size - b.size);
+    const best = covering[0] ?? entries.sort((a, b) => b.size - a.size)[0];
+    if (!best) return icon;
+    const image = icon.bytes.slice(best.offset, best.offset + best.length);
+    // A PNG inside is served as the PNG it is, shrunk; a bitmap stays in an ICO of its own.
+    if (linkIconType(image) === "image/png") return { bytes: await shrinkPng(image, LINK_ICON_SIZE), type: "image/png" };
+    const one = new Uint8Array(22 + image.length);
+    one.set([0, 0, 1, 0, 1, 0]);
+    one.set(best.entry, 6);
+    new DataView(one.buffer).setUint32(18, 22, true);
+    one.set(image, 22);
+    return { bytes: one, type: icon.type };
+  } catch {
+    return icon;
+  }
+}
+
 /**
  * The host's own icon: /favicon.ico, then the first `<link rel="icon">` of its home page. Never a third-party icon service.
  *
@@ -137,7 +298,7 @@ async function fetchLinkIcon(host, options) {
   const image = async (/** @type {string} */ url) => {
     const got = await fetchCapped(url, options.maxBytes, options);
     const type = got && linkIconType(got.bytes);
-    return got && type ? { bytes: got.bytes, type } : null;
+    return got && type ? fitLinkIcon({ bytes: got.bytes, type }) : null;
   };
   const direct = await image(`https://${host}/favicon.ico`);
   if (direct) return direct;

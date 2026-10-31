@@ -92,7 +92,8 @@ test("the built site carries the index generated from the sources, names Prelum'
     for (const page of pages) {
       const html = readFileSync(join(out, page), "utf8");
       assert.doesNotMatch(html, /<meta[^>]+name="generator"/i, `${page} carries a generator tag`);
-      assert.doesNotMatch(html, /<script(?![^>]*\ssrc="\/)/i, `${page} carries an inline or outside script`);
+      // A JSON-LD block is data, which no browser runs and the page policy does not cover.
+      assert.doesNotMatch(html, /<script(?![^>]*\ssrc="\/)(?![^>]*\stype="application\/ld\+json")/i, `${page} carries an inline or outside script`);
       assert.match(html, new RegExp(`<footer>[\\s\\S]*Release ${version.replace(/\./g, "\\.")}<`), `${page} footer`);
     }
     const page = readFileSync(join(out, "index.html"), "utf8");

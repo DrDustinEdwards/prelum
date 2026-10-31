@@ -24,8 +24,18 @@ const TWITTER_ALT_LIMIT = 420;
  * @property {string} url absolute https, or a path on `origin`
  * @property {number} [width] in pixels; with `height`, a crawler can draw the card before it has fetched the image
  * @property {number} [height]
- * @property {string} [type] the media type, e.g. `image/png`; read from the file's extension when not given
+ * @property {string} [type] the media type the URL is served as, e.g. `image/webp`. Without it the type is read from the file's
+ *   extension, but only for a URL with no query: a resized size (`/media/photo.jpg?w=1200`) is served as WebP or AVIF whatever
+ *   its name says, so a site passes the type it serves, and none is written rather than a wrong one
  * @property {string} [alt] what the image shows, for a reader who cannot see it
+ */
+
+/**
+ * @typedef {object} HeadVideo A video the page plays, as `og:video` (render's `videos` gives a body's)
+ * @property {string} url the file, or for an embed its player (`embedUrl`); absolute https, or a path on `origin`
+ * @property {string} [type] `video/mp4`, or `text/html` for a player; read from a file's extension when not given
+ * @property {number} [width]
+ * @property {number} [height]
  */
 
 /**
@@ -52,6 +62,8 @@ const TWITTER_ALT_LIMIT = 420;
  * @property {string} [locale] e.g. `en_US`
  * @property {boolean} [noindex]
  * @property {ArticleFacts} [article] `article:*` tags; pass the same facts to the schema's `article` so the two agree
+ * @property {HeadVideo[]} [videos] the page's videos, each as `og:video` with its type and size; pass the same to the schema's
+ *   `videoObject`
  * @property {string} [markdown] the page's Markdown copy (`markdownPath(path)` from `llms`), absolute or a path on `origin`, linked as
  *   `<link rel="alternate" type="text/markdown">` so an agent can find it
  * @property {HeadFeed[]} [feeds] the site's or the page's feeds, each linked as `<link rel="alternate">` so a reader finds it
@@ -80,6 +92,15 @@ const IMAGE_TYPES = {
 };
 
 /** @type {Record<string, string>} */
+const VIDEO_TYPES = {
+  m4v: "video/mp4",
+  mov: "video/quicktime",
+  mp4: "video/mp4",
+  ogv: "video/ogg",
+  webm: "video/webm",
+};
+
+/** @type {Record<string, string>} */
 const FEED_TYPES = {
   rss: "application/rss+xml",
   atom: "application/atom+xml",
@@ -88,8 +109,8 @@ const FEED_TYPES = {
 
 /**
  * The full head of a public page: title, description, canonical, Open Graph and Twitter. `twitter:card` is always
- * `summary_large_image`, because the image is required: a card without one renders as a bare link. The image's type is read
- * from its extension when not given, and `twitter:image:alt` is cut to X's 420 characters. An absent date writes no tag,
+ * `summary_large_image`, because the image is required: a card without one renders as a bare link. The image's type is the one
+ * passed, else its extension's when the URL has no query, and `twitter:image:alt` is cut to X's 420 characters. An absent date writes no tag,
  * since an empty `article:published_time` claims there is no date.
  *
  * @param {HeadInput} input
@@ -127,11 +148,20 @@ export function headTags(input) {
   );
   if (locale) tags.push({ property: "og:locale", content: locale });
   tags.push({ property: "og:image", content: imageUrl });
-  const imageType = image.type ?? imageTypeOf(imageUrl);
+  const imageType = image.type ?? typeOf(imageUrl, IMAGE_TYPES);
   if (imageType) tags.push({ property: "og:image:type", content: imageType });
   if (image.width) tags.push({ property: "og:image:width", content: String(image.width) });
   if (image.height) tags.push({ property: "og:image:height", content: String(image.height) });
   if (image.alt) tags.push({ property: "og:image:alt", content: image.alt });
+  for (const video of input.videos ?? []) {
+    const videoUrl = absoluteUrl(origin, video.url);
+    tags.push({ property: "og:video", content: videoUrl });
+    if (videoUrl.startsWith("https:")) tags.push({ property: "og:video:secure_url", content: videoUrl });
+    const videoType = video.type ?? typeOf(videoUrl, VIDEO_TYPES);
+    if (videoType) tags.push({ property: "og:video:type", content: videoType });
+    if (video.width) tags.push({ property: "og:video:width", content: String(video.width) });
+    if (video.height) tags.push({ property: "og:video:height", content: String(video.height) });
+  }
   if (article) tags.push(...articleTags(article));
   tags.push(
     { name: "twitter:card", content: "summary_large_image" },
@@ -143,10 +173,17 @@ export function headTags(input) {
   return tags;
 }
 
-/** The media type an image URL's extension names, or undefined for one it does not know. @param {string} url */
-function imageTypeOf(url) {
-  const extension = /\.([a-z0-9]+)$/i.exec(url.split(/[?#]/)[0])?.[1];
-  return extension ? IMAGE_TYPES[extension.toLowerCase()] : undefined;
+/**
+ * The media type a URL's extension names, or undefined for one it does not know or a URL with a query, whose response a transform
+ * may serve as another type than its name.
+ *
+ * @param {string} url
+ * @param {Record<string, string>} types
+ */
+function typeOf(url, types) {
+  if (/[?]/.test(url)) return undefined;
+  const extension = /\.([a-z0-9]+)$/i.exec(url.split("#")[0] ?? "")?.[1];
+  return extension ? types[extension.toLowerCase()] : undefined;
 }
 
 /** @param {ArticleFacts} article @returns {HeadTag[]} */

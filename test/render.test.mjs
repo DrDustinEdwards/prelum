@@ -2,6 +2,7 @@
 // highlighting) are the only parts that know about the site.
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { UPLOAD_HEADERS } from "@dustinedwards/site-runtime/headers";
 
@@ -33,11 +34,13 @@ test("render returns the contract: a fragment, the outline, and what the page ci
     "faq",
     "hasMath",
     "html",
+    "images",
     "mediaRefs",
     "postLinks",
     "readingMinutes",
     "renderVersion",
     "toc",
+    "videos",
     "warnings",
     "words",
   ]);
@@ -186,8 +189,8 @@ test("details requires a summary and refuses a heading inside, which would hide 
   assert.deepEqual(toc, []);
 });
 
-test("images: the site's media rules decide srcset, the wrapping link and the citation; the first image is eager", async () => {
-  const body = "![one](/media/example-a-0123456789abcdef-640x480.png)\n\n![two](/static/b.png)\n\n![three](/media/example-c-fedcba9876543210-100x100.png)\n\n![](/static/rule.svg)";
+test("images: the site's media rules decide srcset, the link, the citation and the media query; the library's credit shows; an animation pauses; a page has one high", async () => {
+  const body = "![one](/media/example-a-0123456789abcdef-640x480.png)\n\n![two](/static/b.png)\n\n![three](/media/example-c-fedcba9876543210-100x100.png)\n\n![\"\"](/static/rule.svg)";
   const { html, mediaRefs } = await core(body, { media });
 
   // AVIF first, so a browser that reads it takes it; the <img> keeps the WebP srcset for the rest.
@@ -204,6 +207,31 @@ test("images: the site's media rules decide srcset, the wrapping link and the ci
       { key: "example-c-fedcba9876543210-100x100.png", form: "markdown-image", detail: "line 5" },
     ],
   );
+
+  const { html: shown, images } = await site(fixture("directives"));
+  // B5, C7: the credit and the license in words under the picture, whose paragraph becomes its figure; an author's credit wins.
+  assert.match(shown, /<figure class="image-figure"><a class="image-link"[^>]*>.*<\/a><figcaption><span class="figure-credit">Sample Lab · CC BY 4\.0<\/span><\/figcaption><\/figure>/);
+  assert.match(shown, /<figcaption><p>A caption with <em>emphasis<\/em>\.<\/p><span class="figure-credit">Photo: Someone<\/span><\/figcaption>/);
+  assert.deepEqual(images.at(-1), {
+    src: "/media/example-credited-0123456789abcdef-1200x800.jpg",
+    alt: "A photograph from the library",
+    width: 1200,
+    height: 800,
+    creditText: "Sample Lab",
+    copyrightNotice: "CC BY 4.0",
+  });
+  // A9: the still keeps its media query, so the GIF moves unless the reader asks for less motion. B7: a pause for everyone, without
+  // script, whose still stays hidden until the site's stylesheet shows it.
+  assert.match(shown, /<source type="image\/webp" srcset="[^"]+still=1 640w[^"]*" sizes="[^"]+" media="\(prefers-reduced-motion: reduce\)">/);
+  assert.match(shown, /<picture class="motion-still" style="display:none">.*?<img src="[^"]+\.gif\?w=640&#x26;still=1"[^>]* width="320" height="240" loading="lazy" decoding="async"><\/picture><label class="motion-pause"><input type="checkbox"> Pause animation<\/label><\/span>/);
+
+  // A5: one `priority` passed to every render of a page leaves one image high on the page; false leaves none.
+  const priority = { taken: false };
+  const cover = await core("![a](/a.png)", { priority });
+  const next = await core("![b](/b.png)", { priority });
+  assert.match(cover.html, /fetchpriority="high"/);
+  assert.doesNotMatch(next.html, /fetchpriority|loading="eager"/);
+  assert.doesNotMatch((await core("![c](/c.png)", { priority: false })).html, /fetchpriority/);
 });
 
 test("an author's own link around an image wins, and the image is not wrapped twice", async () => {
@@ -315,7 +343,8 @@ test("the editorial pack: sidenotes, pull quotes, swatches, charts and diagrams,
   assert.match(html, /<span class="swatch"><span class="swatch-chip" style="--swatch:#6B4FBB" aria-hidden="true"><\/span><code class="swatch-label">#6B4FBB<\/code><\/span>/);
   assert.match(html, /<span class="swatch-chip" style="--swatch:#FFF" aria-hidden="true"><\/span><code class="swatch-label">the brand<\/code>/);
   assert.equal((html.match(/<div class="cap-chart" data-prelum-chart="[^"]*"><div class="cap-chart-figure"><figure class="chart-figure enarratio"/g) ?? []).length, 2);
-  assert.match(html, /src="\/diagrams\/example-4efabcc1-light\.svg"/);
+  // Sized from the drawing (A4), lazy (A6) and announced as an image by VoiceOver (B6).
+  assert.match(html, /src="\/diagrams\/example-4efabcc1-light\.svg" alt="Box A points to box B" role="img" width="120" height="180" loading="lazy" decoding="async"/);
   assert.match(html, /src="\/diagrams\/example-4efabcc1-dark\.svg"/);
   assert.deepEqual(diagrams, [{ key: "4efabcc1", source: "graph TD\n  A --> B" }]);
 
@@ -365,8 +394,10 @@ test("diagram assets are named by the site's prefix, and the key moves with the 
   const crlf = await core(':::diagram{alt="x"}\n```mermaid\r\ngraph TD\r\n  A --> B\r\n```\n:::', {
     packs: [(await import("../render-packs.mjs")).editorialPack({ assetPrefix: "other-" })],
   });
-  assert.match(lf.html, /src="\/diagrams\/other-4efabcc1-light\.svg"/);
+  assert.match(lf.html, /src="\/diagrams\/other-4efabcc1-light\.svg" alt="x" role="img" loading="lazy"/);
   assert.deepEqual(crlf.diagrams, lf.diagrams);
+  // Not drawn yet: unsized, and the editor is told why.
+  assert.match(lf.warnings[0]?.message ?? "", /"4efabcc1" is not drawn yet/);
 });
 
 test("the blocks every site gets: callouts, media, embeds, galleries, links, FAQs and inline marks, each refused with a reason when misused", async () => {
@@ -378,11 +409,23 @@ test("the blocks every site gets: callouts, media, embeds, galleries, links, FAQ
   assert.match(html, /<kbd>Ctrl<\/kbd>.*<abbr title="HyperText Markup Language">HTML<\/abbr>.*<mark>highlight<\/mark>, H<sub>2<\/sub>O/);
   // A lone tilde is prose, and SmartyPants curls quotes and writes TeX's dashes.
   assert.match(html, /H~2~O stays prose, “quotes” curl – and dashes—too…/);
-  assert.match(html, /<video [^>]*controls preload="metadata"[^>]*aria-label="A short demo"><track kind="captions"/);
+  // The poster's size is the player's (A4); audio loads nothing until played (E3).
+  assert.match(html, /<video [^>]*controls preload="metadata"[^>]*aria-label="A short demo" width="640" height="360"><track kind="captions"/);
+  assert.match(html, /<audio [^>]*preload="none"/);
   assert.match(html, /<figure class="media media-video width-wide">/);
   assert.match(html, /<a href="\/writing\/talk-transcript">Transcript: A talk<\/a>/);
   // No request to the service until a click: a link with the no-cookie player beside it.
   assert.match(html, /<a class="embed-link" href="https:\/\/www\.youtube\.com\/watch\?v=dQw4w9WgXcQ" data-embed-src="https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ\?autoplay=1"/);
+  // The lite embed: the site's own poster with a play button, the title as the link's name (E1).
+  assert.match(html, /<img class="embed-poster[^"]*" src="\/media\/example-keynote-[^"]+" alt=""[^>]* width="1280" height="720"[^>]*><\/picture><span class="embed-play" aria-hidden="true"><\/span><span class="embed-label">Watch on YouTube: A keynote<\/span><\/a>/);
+  assert.deepEqual(
+    result.videos.map((v) => [v.kind, v.embedUrl ?? v.url, v.width]),
+    [
+      ["file", "/media/example-demo-0123456789abcdef.mp4", 640],
+      ["embed", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ", undefined],
+      ["embed", "https://player.vimeo.com/video/123456789?dnt=1", undefined],
+    ],
+  );
   assert.equal((html.match(/<li><a class="image-link"/g) ?? []).length, 2);
   assert.match(html, /<figcaption>Two pictures side by side\.<\/figcaption>/);
   assert.match(html, /<p class="button-row"><a href="\/join" class="button">Join the list<\/a><\/p>/);
@@ -404,12 +447,17 @@ test("the blocks every site gets: callouts, media, embeds, galleries, links, FAQ
   assert.match(linked.html, /<dd>In <a href="\/writing\/new">New<\/a>\.<\/dd>/);
   assert.deepEqual(linked.faq, [{ question: "Where?", answer: "In New." }]);
 
-  const outline = await core("Intro words here.\n\n## A\n\n#### Too deep\n\n![](/x.png)");
-  assert.deepEqual(outline.warnings.map((w) => w.line), [5, 7]);
+  const outline = await core("Intro words here.\n\n## A\n\n#### Too deep");
+  assert.deepEqual(outline.warnings.map((w) => w.line), [5]);
   assert.equal(outline.excerpt, "Intro words here.");
 
   await refuses(core("![a clip](/media/clip.mp4)"), /links \/media\/clip\.mp4, a video or audio file\. Write :::video or :::audio/);
   await refuses(core(':::video{src="/a.mp4" title="x"}\n:::'), /requires a captions attribute/);
+  await refuses(core(':::video{src="/a.mp4" title="x" silent}\n:::'), /requires a poster attribute/);
+  // A missing alt is refused (B1); `![""](x)` is the author saying it is decorative.
+  await refuses(core("Text.\n\n![](/a.png)"), /line 3 of the body \/a\.png has no alt text\. Say what it shows, or write !\[""\]/);
+  await refuses(core("![ ][a]\n\n[a]: /a.png"), /has no alt text/);
+  assert.match((await core('![""](/a.png)')).html, /<img src="\/a\.png" alt=""/);
   await refuses(core('::audio{src="/a.mp3" title="x"}'), /requires a transcript attribute/);
   await refuses(core('::embed[x]{url="https://example.com/v"}'), /cannot embed .* Embeds come from youtube, vimeo, spotify, soundcloud/);
   await refuses(core('::embed{url="https://youtu.be/dQw4w9WgXcQ"}'), /requires a title/);
@@ -469,7 +517,12 @@ test("an icon is the host's own, fetched once, and anything the step cannot vouc
     "https://a.example/i.png?v=1&x=2": PNG,
     "https://b.example/favicon.ico": '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
     "https://c.example/favicon.ico": Uint8Array.from({ length: 70 * 1024 }, (_, i) => PNG[i] ?? 0),
+    "https://d.example/favicon.ico": new Uint8Array(readFileSync(new URL("./fixtures/icon-48.png", import.meta.url))),
   });
+  // A 48 px favicon, shown at 16: kept at 32, which covers a 2x screen (A7), as a PNG a browser decodes.
+  assert.equal(await lookupLinkIcon("d.example", net), "image/png");
+  const shrunk = /** @type {Uint8Array} */ (net.kept.get("d.example")?.bytes);
+  assert.deepEqual(Array.from(shrunk.slice(16, 24)), [0, 0, 0, 32, 0, 0, 0, 32]);
   assert.equal(await lookupLinkIcon("a.example", net), "image/png");
   assert.equal(await lookupLinkIcon("a.example", net), "image/png");
   assert.equal(net.asked.filter((url) => url.startsWith("https://a.example/")).length, 3, "favicon.ico, the page, its icon; then the store");

@@ -2,7 +2,7 @@
  * @typedef {object} RenderInput
  * @property {string} file label used in error messages
  * @property {string} body markdown with any frontmatter already stripped
- * @property {(src: string) => Promise<{ width: number, height: number, placeholder?: string } | null>} resolveImage
+ * @property {(src: string) => Promise<ImageFacts | null>} resolveImage
  * @property {RenderOptions} [options]
  *
  * @typedef {object} MathPlugins What render.mjs passes in; without it there is no math syntax and `$` is text.
@@ -32,15 +32,55 @@ export type MediaOptions = {
      */
     keyOf?: (raw: string) => string | null;
     /**
-     * Responsive attributes for an image, and the href of the link that wraps it (the unsized original). `sources` (each a MIME type
-     * and a srcset, AVIF first) wrap the image in a <picture>; site-runtime's ./image writes them. Null leaves the image as written.
+     * Responsive attributes for an image, and the href of the link that wraps it (the unsized original). `sources` (each a MIME type,
+     * a srcset and an optional media query, AVIF first) wrap the image in a <picture>; site-runtime's ./image writes them, and its GIF
+     * sources under `(prefers-reduced-motion: reduce)` also give the animation a pause control. Null leaves the image as written.
      */
     imageProps?: (src: string) => {
         srcSet?: string;
         sizes?: string;
         href?: string;
-        sources?: Array<{ type: string; srcSet: string }>;
+        sources?: Array<{ type: string; srcSet: string; media?: string }>;
     } | null;
+};
+/** What the site's resolver knows of an image: its size and placeholder, and the library's credit and license. */
+export type ImageFacts = {
+    width: number;
+    height: number;
+    /** A base64 data: URL shown while the image loads. */
+    placeholder?: string;
+    /** Who made it, shown under the picture and written as the ImageObject's creditText. */
+    credit?: string;
+    /** The terms: a URL is the ImageObject's license; words (CC BY 4.0) are shown beside the credit and written as its copyrightNotice. */
+    license?: string;
+};
+/**
+ * An image the body shows, with what an ImageObject (schema `imageObject`) and the image sitemap need; `src` as written, for the site
+ * to make absolute. A decorative image, a dark-theme twin and an embed's poster are left out.
+ */
+export type RenderedImage = {
+    src: string;
+    alt: string;
+    width?: number;
+    height?: number;
+    creditText?: string;
+    copyrightNotice?: string;
+    license?: string;
+};
+/** A video the body plays, for the page's `og:video` and VideoObject (schema `videoObject`). */
+export type RenderedVideo = {
+    /** A :::video file, or an ::embed player. */
+    kind: "file" | "embed";
+    /** The file, or the page on the service. */
+    url: string;
+    title: string;
+    /** The player an embed loads. */
+    embedUrl?: string;
+    poster?: string;
+    captions?: string;
+    /** The poster's. */
+    width?: number;
+    height?: number;
 };
 /**
  * Code highlighting, injected so the core does not bundle a grammar set.
@@ -83,6 +123,12 @@ export type RenderOptions = {
      * fetched and an away link has no icon.
      */
     linkIcons?: import("./render-link-icons.mjs").LinkIconOptions;
+    /**
+     * The page's one fetchpriority=high. A page that renders several bodies makes one `{ taken: false }` and passes it to each render,
+     * in page order, so only the page's first image takes it; `{ taken: true }` when the page's LCP image is outside the body, or
+     * `false`, gives every body image lazy loading. Without it each render's first image takes it.
+     */
+    priority?: { taken: boolean } | false;
     /**
      * Curly quotes, dashes and ellipses (SmartyPants, Astro's default). On unless false.
      */
@@ -131,7 +177,11 @@ export type RenderResult = {
     readingMinutes: number;
     /** The first paragraph as plain text, at most 300 characters. */
     excerpt: string;
-    /** An h1 moved down, a skipped heading level, an image without alt text: for the editor to show. */
+    /** Every image the body shows, in order, with its size and rights, for the page's ImageObjects and image sitemap. */
+    images: RenderedImage[];
+    /** Every video the body plays, in order, for `og:video` and VideoObject. */
+    videos: RenderedVideo[];
+    /** An h1 moved down, a skipped heading level, an undrawn diagram, a video with no size: for the editor to show. */
     warnings: Array<{ line: number | null; message: string }>;
 };
 export type RenderInput = {
@@ -143,11 +193,7 @@ export type RenderInput = {
      * markdown with any frontmatter already stripped
      */
     body: string;
-    resolveImage: (src: string) => Promise<{
-        width: number;
-        height: number;
-        placeholder?: string;
-    } | null>;
+    resolveImage: (src: string) => Promise<ImageFacts | null>;
     options?: RenderOptions;
 };
 /**

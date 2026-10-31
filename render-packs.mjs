@@ -5,7 +5,7 @@
 import { visit } from "unist-util-visit";
 
 import { buildChartModel, renderChartHast } from "./render-chart.mjs";
-import { buildDiagramModel, renderDiagramHast } from "./render-diagram.mjs";
+import { DIAGRAM_THEMES, buildDiagramModel, diagramAssetPath, diagramSize, renderDiagramHast } from "./render-diagram.mjs";
 import {
   refuseHeading,
   rehypeModelMarker,
@@ -306,9 +306,11 @@ const remarkDiagram = remarkModelDirective({
  *   `:::chart{src="..."}` cites (a URL or a media path), at render time; without it a `src` is refused
  * @param {boolean} [options.strictCharts] refuse a chart with no title, author text above reading grade 9 or too many
  *   series, where the default renders it with a warning (E4)
+ * @param {Record<string, { width: number, height: number }>} [options.diagramSizes] the DIAGRAM_SIZES_FILE drawDiagrams writes
+ *   beside the drawings, which sizes each diagram's images; a diagram it does not list is rendered unsized, with a warning
  * @returns {RenderPack}
  */
-export function editorialPack({ assetPrefix, chartData, strictCharts = false }) {
+export function editorialPack({ assetPrefix, chartData, strictCharts = false, diagramSizes = {} }) {
   const remarkChart = remarkModelDirective({
     name: "chart",
     marker: "data-chart",
@@ -316,7 +318,7 @@ export function editorialPack({ assetPrefix, chartData, strictCharts = false }) 
     what: "data",
     build: (/** @type {Record<string, string>} */ attrs, /** @type {string} */ csv) => buildChartModel(attrs, csv, { strict: strictCharts }),
   });
-  const rehypeDiagram = rehypeModelMarker("data-diagram", renderDiagramHast(assetPrefix));
+  const rehypeDiagram = rehypeModelMarker("data-diagram", renderDiagramHast(assetPrefix, diagramSizes));
   return {
     name: "editorial",
     directives: ["chart", "diagram", "pullquote", "sidenote", "swatch"],
@@ -341,6 +343,10 @@ export function editorialPack({ assetPrefix, chartData, strictCharts = false }) 
         result: () => {
           for (const chart of charts) {
             for (const message of chart.issues) warn({ line: null, message: `:::chart "${chart.title || chart.type}": ${message}` });
+          }
+          for (const diagram of diagrams) {
+            if (DIAGRAM_THEMES.every((theme) => diagramSize(diagramSizes, diagramAssetPath(diagram.key, theme, assetPrefix)))) continue;
+            warn({ line: null, message: `:::diagram "${diagram.title || diagram.key}" is not drawn yet, so its images are unsized until it is and the body is rendered again` });
           }
           return { diagrams: diagrams.map((/** @type {any} */ d) => ({ key: d.key, source: d.source })) };
         },

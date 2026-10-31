@@ -15,7 +15,8 @@ export function mermaidConfig(theme: "light" | "dark", colors: Record<string, st
 };
 /**
  * Draws what is missing (or everything, with `force`), audits each drawing before writing it, and returns the files no
- * diagram names, for the caller to prune.
+ * diagram names, for the caller to prune, and each drawing's size, which it also writes to DIAGRAM_SIZES_FILE in `dir`
+ * for the site to pass to editorialPack's `diagramSizes`.
  */
 export function drawDiagrams(options: {
     diagrams: Array<{ key: string; source: string; label?: string }>;
@@ -26,7 +27,7 @@ export function drawDiagrams(options: {
     colours?: Record<"light" | "dark", Record<string, string>>; // codespell:ignore colours
     force?: boolean;
     log?: (line: string) => void;
-}): Promise<{ written: string[]; current: number; stale: string[] }>;
+}): Promise<{ written: string[]; current: number; stale: string[]; sizes: Record<string, { width: number; height: number }> }>;
 /** Deletes the named files from `dir`. */
 export function pruneDiagrams(dir: string, names: string[]): Promise<void>;
 /** Every color a drawing can paint must be one of the palette's. */

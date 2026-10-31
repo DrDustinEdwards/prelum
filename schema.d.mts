@@ -59,13 +59,46 @@ export function pageImage({ url, width, height, caption, creditText, creator, co
 export function imageObject(image: ImageInput): SchemaNode | null;
 /** Google's least for an Article image, width times height (https://developers.google.com/search/docs/appearance/structured-data/article). */
 export const ARTICLE_IMAGE_MIN_PIXELS: 50000;
+/** The crops Google asks an Article's image in, widest first. */
+export const ARTICLE_IMAGE_RATIOS: readonly ["16x9", "4x3", "1x1"];
+/**
+ * An Article's `image` set: one picture cut at each of Google's three ratios, each with the picture's rights, in Google's order.
+ * A crop whose size is not its ratio is refused.
+ */
+export function articleImageSet(
+    crops: Partial<Record<(typeof ARTICLE_IMAGE_RATIOS)[number], { url: string; width: number; height: number }>>,
+    rights?: Omit<ImageInput, "url" | "width" | "height">,
+): ImageInput[];
+export type VideoInput = {
+    /** the video's title */
+    name: string;
+    /** its poster, absolute */
+    thumbnailUrl: string;
+    uploadDate: Date | number | string;
+    description?: string | undefined;
+    /** the file, absolute (a :::video) */
+    contentUrl?: string | undefined;
+    /** the player (an ::embed) */
+    embedUrl?: string | undefined;
+    width?: number | undefined;
+    height?: number | undefined;
+    /** ISO 8601, e.g. `PT1M33S` */
+    duration?: string | undefined;
+    /** the words, or a caption file's address */
+    transcript?: string | undefined;
+};
+/**
+ * A VideoObject, which Google needs to show a video in results: `name`, `thumbnailUrl`, `uploadDate` and one of `contentUrl` or
+ * `embedUrl` are required, and one missing is refused.
+ */
+export function videoObject(video: VideoInput): SchemaNode;
 /**
  * @typedef {object} ArticleInput
  * @property {string} url
  * @property {string} headline
  * @property {string | null} [description]
- * @property {ArticleImage | ArticleImage[]} [image] Google asks for several crops, 16:9, 4:3 and 1:1, each at least
- *   `ARTICLE_IMAGE_MIN_PIXELS`; one whose `width` and `height` are given and smaller is refused
+ * @property {ArticleImage | ArticleImage[]} [image] Google asks for several crops, 16:9, 4:3 and 1:1 (`articleImageSet` builds
+ *   them), each at least `ARTICLE_IMAGE_MIN_PIXELS`; one whose `width` and `height` are given and smaller is refused
  * @property {Date | number | string | null} [published]
  * @property {Date | number | string | null} [modified]
  * @property {string[]} [tags]

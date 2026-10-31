@@ -13,6 +13,9 @@ export const CALLOUTS = /** @type {const} */ (["note", "tip", "important", "warn
 
 const CALLOUT_LINE = /^\[!(note|tip|important|warning|caution)\][ \t]*([^\n]*)(?:\n|$)/i;
 
+/** `![""](x)`, straight or curly quotes: the author's word that the image is decorative. */
+const DECORATIVE_ALT = /^(?:""|\u201c\u201d)$/;
+
 const MEDIA_FILE = /\.(?:mp4|m4v|mov|webm|ogv|mp3|m4a|aac|oga|ogg|wav|flac)(?:[?#]|$)/i;
 
 /** @param {any} node @param {string} name */
@@ -100,17 +103,30 @@ export function remarkInlineMarks(file) {
 }
 
 /**
- * :::video and :::audio, with the caption as the directive's content. Video requires captions (WCAG 1.2.2) unless it is marked silent;
- * audio requires a transcript (WCAG 1.2.1). preload=metadata so a page with a video does not download it, and no autoplay. A media file
- * written as an image is refused here, before it becomes a broken <img>.
+ * :::video and :::audio, with the caption as the directive's content. Video requires captions (WCAG 1.2.2) unless it is marked silent,
+ * and a poster, which is what a reader sees before playing and whose size the renderer gives the player so nothing shifts; audio requires
+ * a transcript (WCAG 1.2.1). A video preloads metadata and audio nothing, and neither autoplays. A media file written as an image is
+ * refused here, before it becomes a broken <img>.
+ *
+ * An image with no alt text is refused too: a missing alt is a forgotten one far more often than a decorative one. `![""](x)`, the
+ * empty alt written out as HTML writes it, marks an image the reader loses nothing without.
  *
  * @param {string} file
  */
 export function remarkMedia(file) {
   return (/** @type {import("mdast").Root} */ tree) => {
     visit(tree, (node) => {
-      if (node.type === "image" && MEDIA_FILE.test(node.url)) {
-        throw new ContentError(file, `${where(node, "an image")} links ${node.url}, a video or audio file. Write :::video or :::audio`);
+      if (node.type === "image" || node.type === "imageReference") {
+        const url = node.type === "image" ? node.url : `[${node.label ?? node.identifier}]`;
+        if (node.type === "image" && MEDIA_FILE.test(url)) {
+          throw new ContentError(file, `${where(node, "an image")} links ${url}, a video or audio file. Write :::video or :::audio`);
+        }
+        const alt = (node.alt ?? "").trim();
+        if (!alt) {
+          throw new ContentError(file, `${where(node, "an image")} ${url} has no alt text. Say what it shows, or write ![""](…) if it is decorative`);
+        }
+        if (DECORATIVE_ALT.test(alt)) node.alt = "";
+        return;
       }
       if ((node.type !== "containerDirective" && node.type !== "leafDirective") || !["video", "audio"].includes(node.name)) return;
       const name = `:::${node.name}`;
@@ -123,7 +139,7 @@ export function remarkMedia(file) {
 
       if (node.name === "video") {
         const captions = urlAttribute(file, node, name, "captions", !("silent" in attrs));
-        const poster = urlAttribute(file, node, name, "poster", false);
+        const poster = urlAttribute(file, node, name, "poster");
         const track = captions
           ? [element("track", { kind: "captions", src: captions, srcLang: attrs.lang ?? "en", label: attrs.label ?? "English", default: true })]
           : [];
@@ -138,7 +154,7 @@ export function remarkMedia(file) {
       const transcript = urlAttribute(file, node, name, "transcript");
       node.data = { hName: "figure", hProperties: { className: ["media", "media-audio"] } };
       node.children = [
-        element("audio", { src, controls: true, preload: "metadata", ariaLabel: title }),
+        element("audio", { src, controls: true, preload: "none", ariaLabel: title }),
         element("p", { className: ["media-transcript"] }, [{ type: "link", url: transcript, children: [{ type: "text", value: `Transcript: ${title}` }] }]),
         ...caption(children),
       ];
@@ -181,9 +197,11 @@ export const EMBED_PROVIDERS = [
 ];
 
 /**
- * `::embed[Title]{url="https://youtu.be/…"}`. It renders as a link to the original with the player URL beside it, so the page makes no
- * request to the service until a reader asks: without script the link opens the service, and render/enhance swaps it for the player on a
- * click. The title names the player's iframe, which WCAG requires.
+ * `::embed[Title]{url="https://youtu.be/…" poster="/media/…"}`. It renders as a link to the original with the player URL beside it, so the
+ * page makes no request to the service until a reader asks: without script the link opens the service, and render/enhance swaps it for
+ * the player on a click. The link is a poster with a play button (the lite embed): the `poster`, a picture on the site's own origin,
+ * never the service's thumbnail, which would tell the service who is reading; without one, the site's card. The title names the link and
+ * the player's iframe, which WCAG requires, so the poster's alt is empty.
  *
  * @param {string} file
  */
@@ -198,13 +216,16 @@ export function remarkEmbeds(file) {
         if (!match) continue;
         if (!title) throw new ContentError(file, `${where(node, "::embed")} requires a title: ::embed[What it shows]{url="…"}`);
         const children = /** @type {any[]} */ (node.type === "containerDirective" ? node.children : []);
+        const poster = urlAttribute(file, node, "::embed", "poster", false);
         node.data = {
           hName: "figure",
           hProperties: { className: ["embed", `embed-${provider.name}`, ...widthClass(file, node, "::embed")] },
         };
         node.children = [
           element("a", { className: ["embed-link"], href: url, dataEmbedSrc: provider.player(match, url), dataEmbedTitle: title }, [
-            { type: "text", value: `${provider.label}: ${title}` },
+            ...(poster ? [element("img", { className: ["embed-poster"], src: poster, alt: "" })] : []),
+            element("span", { className: ["embed-play"], ariaHidden: "true" }),
+            element("span", { className: ["embed-label"] }, [{ type: "text", value: `${provider.label}: ${title}` }]),
           ]),
           ...caption(children),
         ];
@@ -418,9 +439,8 @@ export function remarkCodeFrames() {
 }
 
 /**
- * The body sits under the page's own h1, so an h1 in it moves every heading down a level, and a skipped level (an h2 then an h4) or an
- * image with no alt text is returned as a warning for the editor to show. Warnings, not refusals: decorative images may have empty alt,
- * and an old post with an odd outline must still render.
+ * The body sits under the page's own h1, so an h1 in it moves every heading down a level, and a skipped level (an h2 then an h4) is
+ * returned as a warning for the editor to show: a warning, not a refusal, so an old post with an odd outline still renders.
  *
  * @param {Array<{ line: number | null, message: string }>} sink
  */
@@ -430,9 +450,6 @@ export function remarkOutline(sink) {
     const headings = [];
     visit(tree, (node) => {
       if (node.type === "heading") headings.push(node);
-      if (node.type === "image" && !node.alt?.trim()) {
-        sink.push({ line: node.position?.start?.line ?? null, message: `image ${node.url} has no alt text; fine only if it is decorative` });
-      }
     });
     if (headings.some((h) => h.depth === 1)) {
       for (const heading of headings) heading.depth = /** @type {any} */ (Math.min(heading.depth + 1, 6));
