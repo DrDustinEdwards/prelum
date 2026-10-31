@@ -245,7 +245,7 @@ refuses what it cannot render well, with the line and the fix:
 | `:::figure{src alt credit dark width}` | Figure, caption, credit, a dark-theme twin; `width=wide` or `width=full` |
 | `:::gallery` with 2 to 9 images | `<figure class="gallery">` grid |
 | `:::video{src title captions poster}`, `::audio{src title transcript}` | Native players; captions (or `silent`) and a poster, or a transcript, required. The video takes its poster's size; audio preloads nothing |
-| `::embed[Title]{url poster}` (YouTube, TikTok, Spotify, SoundCloud, Apple Podcasts, Amazon Music, Google Maps, X, Bluesky, Instagram) | A lite embed: the site's own poster (optional), a play button for video and audio, and the title, in a link carrying the player URL; `render/enhance` loads the player on a click. The site adds `EMBED_FRAME_SOURCES` (`./render/embeds`) to its CSP `frame` sources |
+| `::embed[Title]{url poster}` (YouTube, TikTok, Spotify, SoundCloud, Apple Podcasts, Amazon Music, Google Maps, X, Bluesky, Instagram) | A lite embed: the site's own poster (optional), a play button for video and audio, and the title, in a link carrying the player URL; `render/enhance` loads the player on a click. The site declares site-runtime's `embeds` opt-in, which lets the players into its CSP and Permissions-Policy |
 | `![alt](src)`, `![""](src)` | An image; one with no alt is refused, and `![""](src)` marks a decorative one. The library's credit and license show under it |
 | `::button[Label]{href}`, `::bookmark[Title]{url description}` | A button link, a link card |
 | `:::details{summary}`, `:::faq` with Q: and A: lines | Native `<details>`, a `<dl class="faq">` returned as `faq` |
