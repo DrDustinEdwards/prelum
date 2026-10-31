@@ -1,5 +1,5 @@
 {
-  "renderVersion": "13",
+  "renderVersion": "14",
   "hashes": {
     "prose": "a4a122fe3d7a4529506922967dfc71b1dabd7a89bc61c72f534fdbcff6894521",
     "math": "408890dc1a14ed77efc201768c94ca54fd5d72ff34b93dcada831bd6cf974fb4",
@@ -7,6 +7,6 @@
     "code": "da58e773ef717cc0db8495c6c24434042ad0e84f55a396ca58c72a2538974c9e",
     "directives": "2b4e5da3d73c2eb803289aef9f5a0b3a1f1511f4525e804b7db23b701813ce42",
     "charts": "4fc378c2d20d21f29b71a5edbf11732f6c4c6b5a65240ffd1f0cb3b8d3aba97d",
-    "blocks": "bc0b85e41480beebb494996fa894e9947afa2a58f2fb1f1b4f14c68863719f41"
+    "blocks": "fe3169ea41fb65e5cf2d754128b4a374c4a50aef163f633e46cf8934d1ceed5d"
   }
 }

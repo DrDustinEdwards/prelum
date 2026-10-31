@@ -16,7 +16,7 @@ What the demo shows.
 
 ::embed[A keynote]{url="https://www.youtube.com/watch?v=dQw4w9WgXcQ" poster="/media/example-keynote-0123456789abcdef-1280x720.jpg"}
 
-::embed[A talk on Vimeo]{url="https://vimeo.com/123456789"}
+::embed[An episode on Spotify]{url="https://open.spotify.com/episode/0123456789abcdefABCDEF"}
 
 :::gallery{width=full}
 ![The first picture](/media/example-one-0123456789abcdef-640x480.png)

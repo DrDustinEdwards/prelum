@@ -3,7 +3,10 @@
 // embeds. It is dustinedwards-info's app/enhance/blog.ts moved here, so every site that renders with this pipeline decorates the same
 // markup the same way. Every one is an addition: without script the page reads, links and opens images as plain HTML.
 //
-// Browser-only and dependency-free. Nothing runs on import; a site calls `enhance()` once the document is parsed.
+// Browser-only; its one import (render-embeds.mjs) is dependency-free too. Nothing runs on import; a site calls `enhance()` once the
+// document is parsed.
+
+import { embedPlayerUrl } from "./render-embeds.mjs";
 
 // The directive matches the first occurrence, so a short phrase can land on the wrong paragraph.
 const FRAGMENT_MIN_CHARS = 12;
@@ -18,8 +21,6 @@ const GROW_NAME = "lightbox-figure";
 
 const SELECTION_LABEL = "Copy link to selection";
 
-// The hosts render-blocks.mjs writes player URLs for. Checked again here because the attribute is read from the live DOM.
-const EMBED_HOSTS = new Set(["www.youtube-nocookie.com", "player.vimeo.com", "open.spotify.com", "w.soundcloud.com"]);
 
 let started = false;
 
@@ -59,21 +60,6 @@ function textFragment(selected) {
     return `${encodePart(words.slice(0, edge).join(" "))},${encodePart(words.slice(-edge).join(" "))}`;
   }
   return encodePart(text);
-}
-
-/**
- * The player URL when it is https on a known player host, otherwise null.
- *
- * @param {string} src
- * @returns {string | null}
- */
-function playerUrl(src) {
-  try {
-    const url = new URL(src);
-    return url.protocol === "https:" && EMBED_HOSTS.has(url.hostname) ? url.href : null;
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -565,7 +551,7 @@ export function enhance(options = {}) {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const link = event.target instanceof Element ? event.target.closest(`${root} a.embed-link[data-embed-src]`) : null;
       if (!(link instanceof HTMLAnchorElement)) return;
-      const src = playerUrl(link.dataset.embedSrc ?? "");
+      const src = embedPlayerUrl(link.dataset.embedSrc ?? "");
       if (!src) return;
       event.preventDefault();
 
