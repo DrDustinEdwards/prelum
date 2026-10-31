@@ -28,14 +28,15 @@ export function lookupLinkIcon(host: string, options: LinkIconOptions): Promise<
  */
 export function linkIconSrc(path: string, host: string, type: string): string;
 /**
- * The route: the stored icon with a year's immutable cache, nosniff and a sandboxing policy; a 404 for a host with no icon or the
- * wrong extension; null when the path is not under `path`.
+ * The route: the stored icon with a year's immutable cache and `headers`, the site's set for a file it did not write
+ * (site-runtime's UPLOAD_HEADERS: nosniff and a sandboxing policy), required; a 404 for a host with no icon or the wrong
+ * extension; null when the path is not under `path`.
  *
  * @param {string} pathname
  * @param {Pick<LinkIconStore, "get">} store
- * @param {{ path?: string }} [options]
+ * @param {{ headers: Readonly<Record<string, string>>, path?: string }} options
  */
-export function linkIconResponse(pathname: string, store: Pick<LinkIconStore, "get">, options?: { path?: string }): Promise<Response | null>;
+export function linkIconResponse(pathname: string, store: Pick<LinkIconStore, "get">, options: { headers: Readonly<Record<string, string>>; path?: string }): Promise<Response | null>;
 /**
  * The site's own storage. A host with no usable icon is put with no bytes and an empty type, so it is not fetched again; delete
  * the entry to try it again.

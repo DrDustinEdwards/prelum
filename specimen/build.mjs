@@ -10,6 +10,7 @@ import { createRequire } from "node:module";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { integrityHash } from "@dustinedwards/site-runtime/csp";
 import { securityTxt } from "@dustinedwards/site-runtime/security-txt";
 import { familyFooterHtml } from "capsomer/behavior/family-footer";
 import { letterheadHtml } from "capsomer/behavior/site-header";
@@ -25,7 +26,7 @@ import { RENDER_VERSION, render } from "../render.mjs";
 import { iconLinks, webManifest } from "../icons.mjs";
 import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
 import { absolutizeUrls, escapeXml, mathToTex } from "../xml.mjs";
-import { HEADERS_FILE, PAGE_PRELOADS } from "./headers.mjs";
+import { PAGE_PRELOADS } from "./worker.mjs";
 import { ASSET_PREFIX, DIAGRAM_CONFIG_FILE, FAMILY, ICON_DIR, ORIGIN, diagramConfig, elementIndex, loadElements, options, renderElement, resolveImage, splitHeader } from "./specimen.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -215,12 +216,14 @@ const SHARE_CARD = {
   alt: "Prelum, one publishing library for every site: markdown, feeds, sitemaps, llms.txt and search.",
 };
 
+/** The `integrity` of the page's two scripts, from their built bytes. @typedef {{ theme: string, specimen: string }} Scripts */
+
 /**
  * The home page's head comes from Prelum's own headTags, card included; the 404 page has no address to claim.
  *
- * @param {{ title: string, description: string, body: string, version: string, path?: string }} page
+ * @param {{ title: string, description: string, body: string, version: string, path?: string, scripts: Scripts }} page
  */
-function documentHtml({ title, description, body, version, path }) {
+function documentHtml({ title, description, body, version, path, scripts }) {
   const head = path
     ? headHtml(headTags({ origin: ORIGIN, path, title, description, siteName: "Prelum", image: SHARE_CARD }))
     : `<title>${escapeXml(title)}</title>\n<meta name="description" content="${escapeXml(description)}">`;
@@ -233,7 +236,7 @@ ${head}
 ${ICON_LINKS}
 <link rel="stylesheet" href="/site.css">
 <link rel="stylesheet" href="/katex/katex.min.css">
-<script src="/theme.js"></script>
+<script src="/theme.js" integrity="${scripts.theme}" crossorigin="anonymous"></script>
 </head>
 <body>
 ${HEADER}
@@ -241,7 +244,7 @@ ${HEADER}
 ${body}
 </div>
 <footer><div class="cap-page">${footerHtml(version)}</div></footer>
-<script type="module" src="/specimen.js"></script>
+<script type="module" src="/specimen.js" integrity="${scripts.specimen}" crossorigin="anonymous"></script>
 </body>
 </html>
 `;
@@ -369,14 +372,18 @@ export async function buildSpecimen(outDir) {
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   copyTree(join(HERE, "static"), outDir);
-  writeFileSync(join(outDir, "_headers"), HEADERS_FILE);
   writeFileSync(join(outDir, "site.webmanifest"), JSON.stringify(webManifest({ name: "Prelum specimen", shortName: "Prelum", themeColor: "#4f2d7f", backgroundColor: "#4f2d7f" })));
   writeStyles(outDir);
   const missing = PAGE_PRELOADS.links.filter(({ href }) => !existsSync(join(outDir, href.slice(1))));
   if (missing.length) throw new Error(`preloads name files the build did not write: ${missing.map(({ href }) => href).join(", ")}`);
   // The remembered theme before first paint (a plain script in the head), and the letterhead's behavior.
-  writeFileSync(join(outDir, "theme.js"), await bundle("theme.mjs", "iife"));
-  writeFileSync(join(outDir, "specimen.js"), await bundle("specimen.mjs", "esm"));
+  // Each tag carries its file's sha384 and crossorigin, which Integrity-Policy needs of every script (a classic one included).
+  const theme = await bundle("theme.mjs", "iife");
+  const specimen = await bundle("specimen.mjs", "esm");
+  writeFileSync(join(outDir, "theme.js"), theme);
+  writeFileSync(join(outDir, "specimen.js"), specimen);
+  /** @type {Scripts} */
+  const scripts = { theme: await integrityHash(theme), specimen: await integrityHash(specimen) };
   copyDiagrams(outDir, rendered.flatMap((r) => r.diagrams));
   // The icons the renders found, at the path the pages name; an empty file is a host with none.
   mkdirSync(join(outDir, "link-icons"));
@@ -416,6 +423,7 @@ ${await outputsSection(version, elements.length + 1)}
     path: "/",
     body,
     version,
+    scripts,
   });
   assertUniqueIds(index);
   writeFileSync(join(outDir, "index.html"), index);
@@ -427,6 +435,7 @@ ${await outputsSection(version, elements.length + 1)}
       description: "There is no page at this address.",
       body: `<main id="main" tabindex="-1">\n<h1>Not found</h1>\n<p>There is no page at this address. The specimen is at <a href="/">prelum.dustinedwards.info</a>, and the code at <a href="${REPO}">github.com/DrDustinEdwards/prelum</a>.</p>\n</main>`,
       version,
+      scripts,
     }),
   );
 

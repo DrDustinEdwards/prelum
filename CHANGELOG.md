@@ -6,6 +6,18 @@
   specimen.yml. It deploys with `DEPLOY_SHA`, waits for `/health` (site-runtime 0.60.0's `staticSite`) to report the commit,
   checks the home page and rolls back on a refusal; IndexNow runs after it. No library change.
 
+### Changed
+
+- `linkIconResponse` takes the site's header set for a file it did not write, `{ headers: UPLOAD_HEADERS }` (site-runtime),
+  and requires it: security headers are site-runtime's, so Prelum no longer writes its own nosniff and sandbox policy.
+
+### Specimen
+
+- Headers come from the specimen's entry in site-runtime's registry: the Worker is `staticSite({ site: prelum })` and `_headers` is
+  written by `site-runtime-headers` (with the TDMRep header), so `specimen/headers.mjs` is gone. The page adds COEP with
+  report-to, Integrity-Policy and Trusted Types in Report-Only, and both script tags carry a sha384 `integrity` and
+  `crossorigin`.
+
 ## 0.27.1 (2026-10-31)
 
 - `render-version.d.mts` declares `RENDER_VERSION: "12"`, as `render-version.mjs` exports; it still said "10", so a site that types its stored

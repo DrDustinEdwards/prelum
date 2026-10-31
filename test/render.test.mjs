@@ -3,6 +3,7 @@
 
 import assert from "node:assert/strict";
 import test from "node:test";
+import { UPLOAD_HEADERS } from "@dustinedwards/site-runtime/headers";
 
 import { DEFAULT_MAX_BYTES, DEFAULT_MAX_DEPTH, RENDER_VERSION, ContentError, render } from "../render.mjs";
 import { htmlHasMath } from "../render-math.mjs";
@@ -481,12 +482,11 @@ test("an icon is the host's own, fetched once, and anything the step cannot vouc
   assert.equal(await lookupLinkIcon("10.0.0.1", net), null);
   assert.ok(!net.asked.some((url) => /localhost|10\.0\.0\.1/.test(url)));
 
-  const served = /** @type {Response} */ (await linkIconResponse("/link-icons/a.example.png", net.store));
+  const served = /** @type {Response} */ (await linkIconResponse("/link-icons/a.example.png", net.store, { headers: UPLOAD_HEADERS }));
   assert.equal(served.status, 200);
   assert.equal(served.headers.get("Content-Type"), "image/png");
-  assert.equal(served.headers.get("X-Content-Type-Options"), "nosniff");
   assert.match(String(served.headers.get("Cache-Control")), /immutable/);
-  assert.equal((await linkIconResponse("/link-icons/a.example.svg", net.store))?.status, 404);
-  assert.equal((await linkIconResponse("/link-icons/b.example.svg", net.store))?.status, 404);
-  assert.equal(await linkIconResponse("/writing/a", net.store), null);
+  assert.equal((await linkIconResponse("/link-icons/a.example.svg", net.store, { headers: UPLOAD_HEADERS }))?.status, 404);
+  assert.equal((await linkIconResponse("/link-icons/b.example.svg", net.store, { headers: UPLOAD_HEADERS }))?.status, 404);
+  assert.equal(await linkIconResponse("/writing/a", net.store, { headers: UPLOAD_HEADERS }), null);
 });
