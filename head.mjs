@@ -273,7 +273,8 @@ export function searchTitle(title, suffix) {
  *   breadcrumbs?: Array<{ name: string, path: string }> | false,
  * }} PageHead
  * One page's head: `title` is the page's own title, without the suffix, unless `fullTitle` says it is already the whole
- * `<title>`. `feeds` are added to the site's. `pageType` is the WebPage subtype (`CollectionPage` for a list, `AboutPage`,
+ * `<title>`, in which case the site's suffix is taken off it for the page's name in the graph and its breadcrumb. `feeds`
+ * are added to the site's. `pageType` is the WebPage subtype (`CollectionPage` for a list, `AboutPage`,
  * `ProfilePage`, `SearchResultsPage`); `breadcrumbs` is the trail from the home page down, in place of the one built from
  * `sections`, or false for none.
  */
@@ -305,13 +306,14 @@ export function defineHead(site) {
     });
     if (page.noindex) return tags;
     const url = page.canonical ?? absoluteUrl(site.origin, page.keepTrailingSlash ? page.path : withoutTrailingSlash(page.path));
-    const trail = breadcrumbs === false ? [] : (breadcrumbs ?? sectionTrail(site, page.path, page.title));
+    const name = fullTitle && site.suffix && page.title.endsWith(site.suffix) ? page.title.slice(0, -site.suffix.length) : page.title;
+    const trail = breadcrumbs === false ? [] : (breadcrumbs ?? sectionTrail(site, page.path, name, page.keepTrailingSlash));
     /** @type {Record<string, unknown>[]} */
     const nodes = [{
       "@type": pageType ?? "WebPage",
       "@id": `${url}#webpage`,
       url,
-      name: page.title,
+      name,
       description: page.description,
       isPartOf: { "@id": `${site.origin}/#website` },
       ...(trail.length > 1 ? { breadcrumb: { "@id": `${url}#breadcrumb` } } : {}),
@@ -334,13 +336,15 @@ export function defineHead(site) {
  * @param {SiteHead} site
  * @param {string} path
  * @param {string} title
+ * @param {boolean} [keepSlash] a site whose pages live at a trailing slash keeps it on every crumb, as on the canonical
  */
-function sectionTrail(site, path, title) {
+function sectionTrail(site, path, title, keepSlash) {
   const bare = withoutTrailingSlash(path).replace(/[?#].*$/, "");
   if (bare === "/") return [{ name: site.siteName, path: "/" }];
+  const at = (/** @type {string} */ p) => (keepSlash ? `${p}/` : p);
   const parts = bare.split("/").filter(Boolean);
   const sections = parts.slice(0, -1).map((_, i) => `/${parts.slice(0, i + 1).join("/")}`).filter((p) => site.sections?.[p]);
-  return [{ name: site.siteName, path: "/" }, ...sections.map((p) => ({ name: site.sections?.[p] ?? "", path: p })), { name: title, path: bare }];
+  return [{ name: site.siteName, path: "/" }, ...sections.map((p) => ({ name: site.sections?.[p] ?? "", path: at(p) })), { name: title, path: at(bare) }];
 }
 
 /** @type {Record<string, string>} */

@@ -2,10 +2,27 @@
 
 ## Unreleased
 
+### Added
+
+- `icons`: the icon files every site serves, at one set of paths (`ICONS`), `iconLinks()` for the root route's `links`,
+  `webManifest(site)` for `/site.webmanifest`, and `icoFile(images)`. The `prelum-icons` bin draws favicon.ico (16, 32, 48),
+  the 180 pixel Apple touch icon on the brand color, the 192 and 512 pixel icons and a maskable one from one SVG, with
+  `@resvg/resvg-js` (a new optional peer).
+- `prelum-audit` checks the site's icons with `auditIcons`: `/favicon.ico` must answer an image (error), the home page must
+  link an icon (error), an Apple touch icon and a manifest (warnings), and the manifest must name the site and list 192, 512
+  and maskable icons (warnings) that all load (error).
+
 ### Changed
 
 - devkit v0.20.3. CI now runs devkit's workflow audit (actionlint and zizmor) and its dependency audit (OSV-Scanner), and
   `.no-bloat.json` records the test and comment counts.
+
+### Fixed
+
+- `defineHead`: a page that passes `fullTitle` no longer puts the site's suffix in its WebPage name and last breadcrumb
+  ("Viruses · Germomics" becomes "Viruses") when the site sets `suffix`.
+- `defineHead`: with `keepTrailingSlash`, the breadcrumb built from `sections` keeps the trailing slash on each crumb, as the
+  canonical does, instead of pointing at the address that redirects.
 
 ## 0.21.0 (2026-10-31)
 

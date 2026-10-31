@@ -54,6 +54,10 @@
       "types": "./indexnow.d.mts",
       "default": "./indexnow.mjs"
     },
+    "./icons": {
+      "types": "./icons.d.mts",
+      "default": "./icons.mjs"
+    },
     "./audit": {
       "types": "./audit.d.mts",
       "default": "./audit.mjs"
@@ -128,6 +132,7 @@
   },
   "peerDependencies": {
     "@mermaid-js/mermaid-cli": "11.17.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@shikijs/rehype": "4.5.0",
     "@shikijs/transformers": "4.5.0",
     "axe-core": "4.14.0",
@@ -155,6 +160,9 @@
   },
   "peerDependenciesMeta": {
     "@mermaid-js/mermaid-cli": {
+      "optional": true
+    },
+    "@resvg/resvg-js": {
       "optional": true
     },
     "@shikijs/rehype": {
@@ -236,6 +244,7 @@
     "@fontsource-variable/source-serif-4": "5.3.1",
     "@mermaid-js/mermaid-cli": "11.17.0",
     "@observablehq/plot": "0.6.17",
+    "@resvg/resvg-js": "2.6.2",
     "@shikijs/rehype": "4.5.0",
     "@shikijs/transformers": "4.5.0",
     "@types/hast": "3.0.5",
@@ -271,6 +280,7 @@
   "bin": {
     "prelum-indexnow": "./bin/indexnow.mjs",
     "prelum-audit": "./bin/audit.mjs",
+    "prelum-icons": "./bin/icons.mjs",
     "prelum-content": "./bin/content.mjs",
     "prelum-chart-audit": "./bin/chart-audit.mjs"
   }
