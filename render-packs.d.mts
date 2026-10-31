@@ -51,12 +51,14 @@ export function remarkChartSource(file: string, chartData: ((src: string, contex
  *   series, where the default renders it with a warning (E4)
  * @returns {RenderPack}
  */
-export function editorialPack({ assetPrefix, chartData, strictCharts }: {
+export function editorialPack({ assetPrefix, chartData, strictCharts, diagramSizes }: {
     assetPrefix: string;
     chartData?: (src: string, context: {
         file: string;
     }) => string | Promise<string>;
     strictCharts?: boolean;
+    /** The DIAGRAM_SIZES_FILE drawDiagrams writes beside the drawings: each drawing's size, by file name. */
+    diagramSizes?: Record<string, { width: number; height: number }>;
 }): RenderPack;
 export type RenderPack = {
     name: string;

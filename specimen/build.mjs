@@ -17,7 +17,8 @@ import { capsomerTheme } from "capsomer/enarratio-theme";
 import { stylesheet } from "enarratio";
 import { rolldown } from "rolldown";
 
-import { headHtml, headTags } from "../head.mjs";
+import { absoluteUrl, headHtml, headTags } from "../head.mjs";
+import { graph, imageObject, jsonLd, videoObject } from "../schema.mjs";
 import { llmsDocument } from "../llms.mjs";
 import { rssItem } from "../feeds.mjs";
 import { sitemapDocument } from "../sitemap.mjs";
@@ -216,13 +217,18 @@ const SHARE_CARD = {
 };
 
 /**
- * The home page's head comes from Prelum's own headTags, card included; the 404 page has no address to claim.
+ * The home page's head comes from Prelum's own headTags, card included, with its videos and the JSON-LD for its pictures and
+ * videos; the 404 page has no address to claim.
  *
- * @param {{ title: string, description: string, body: string, version: string, path?: string }} page
+ * @param {{ title: string, description: string, body: string, version: string, path?: string,
+ *   media?: { videos: import("../head.mjs").HeadVideo[], schema: import("../schema.mjs").SchemaNode[] } }} page
  */
-function documentHtml({ title, description, body, version, path }) {
+function documentHtml({ title, description, body, version, path, media }) {
   const head = path
-    ? headHtml(headTags({ origin: ORIGIN, path, title, description, siteName: "Prelum", image: SHARE_CARD }))
+    ? headHtml([
+        ...headTags({ origin: ORIGIN, path, title, description, siteName: "Prelum", image: SHARE_CARD, videos: media?.videos }),
+        ...(media?.schema.length ? [jsonLd(graph(media.schema))] : []),
+      ])
     : `<title>${escapeXml(title)}</title>\n<meta name="description" content="${escapeXml(description)}">`;
   return `<!doctype html>
 <html lang="en" data-family="${FAMILY}">
@@ -293,11 +299,12 @@ ${feed === html ? "" : codeView("In the RSS item", feed)}
  *
  * @param {string} version
  * @param {number} no its number on the page
+ * @param {{ taken: boolean }} priority the page's
  */
-async function outputsSection(version, no) {
+async function outputsSection(version, no, priority) {
   const text = readFileSync(join(HERE, "sample-post.md"), "utf8");
   const { header: meta, source: body } = splitHeader("specimen/sample-post.md", text, ["title", "slug", "description", "date"]);
-  const { html } = await render({ file: "specimen/sample-post.md", body, resolveImage, options });
+  const { html } = await render({ file: "specimen/sample-post.md", body, resolveImage, options: { ...options, priority } });
   const post = {
     slug: meta.slug ?? "",
     title: meta.title ?? "",
@@ -360,7 +367,9 @@ export async function buildSpecimen(outDir) {
   const elements = loadElements();
   /** @type {Awaited<ReturnType<typeof renderElement>>[]} */
   const rendered = [];
-  for (const element of elements) rendered.push(await renderElement(element));
+  // One page, one fetchpriority=high: the elements render in page order and share the page's.
+  const priority = { taken: false };
+  for (const element of elements) rendered.push(await renderElement(element, priority));
 
   // Only an earlier build is deleted: a mistyped outDir must not take the working tree with it.
   if (existsSync(outDir) && readdirSync(outDir).length > 0 && !existsSync(join(outDir, "elements.json"))) {
@@ -408,14 +417,28 @@ ${indexRow(elements.length + 1, "#outputs", "One source, three outputs", "page, 
 </ol>
 </nav>
 ${elements.map((e, i) => elementSection(e, rendered[i]?.html ?? "", i + 1)).join("\n")}
-${await outputsSection(version, elements.length + 1)}
+${await outputsSection(version, elements.length + 1, priority)}
 </main>`;
+  // What a site does with a render's images and videos: an ImageObject for each picture with known rights, a VideoObject and
+  // og:video for each video, and every picture in the image sitemap.
+  const images = [...new Map(rendered.flatMap((r) => r.images).map((i) => [i.src, i])).values()];
+  const videos = rendered.flatMap((r) => r.videos).filter((v) => v.kind === "file");
+  const media = {
+    videos: videos.map((v) => ({ url: v.url, width: v.width, height: v.height })),
+    schema: [
+      ...images.map((i) => imageObject({ ...i, url: absoluteUrl(ORIGIN, i.src) })).filter((node) => node !== null),
+      ...videos.map((v) =>
+        videoObject({ name: v.title, thumbnailUrl: absoluteUrl(ORIGIN, v.poster ?? ""), uploadDate: "2026-10-31", contentUrl: absoluteUrl(ORIGIN, v.url), width: v.width, height: v.height }),
+      ),
+    ],
+  };
   const index = documentHtml({
     title: "Prelum specimen",
     description: `Every element Prelum ${version} renders from markdown, with its source, in both themes.`,
     path: "/",
     body,
     version,
+    media,
   });
   assertUniqueIds(index);
   writeFileSync(join(outDir, "index.html"), index);
@@ -440,7 +463,7 @@ ${await outputsSection(version, elements.length + 1)}
     securityTxt({ origin: ORIGIN, contact: "security@dustinedwards.info", expires: SECURITY_TXT_EXPIRES }),
   );
   writeFileSync(join(outDir, `${INDEXNOW_KEY}.txt`), INDEXNOW_KEY);
-  writeFileSync(join(outDir, "sitemap.xml"), sitemapDocument([{ loc: `${ORIGIN}/` }]));
+  writeFileSync(join(outDir, "sitemap.xml"), sitemapDocument([{ loc: `${ORIGIN}/`, images: images.map((i) => absoluteUrl(ORIGIN, i.src)) }]));
 
   /** @type {string[]} */
   const files = [];

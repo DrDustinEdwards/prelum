@@ -69,9 +69,38 @@ const encoder = new TextEncoder();
  *
  * @typedef {object} MediaOptions What a site decides about its images; the core knows none of it.
  * @property {(raw: string) => string | null} [keyOf] The key a URL cites, or null when it is not media. Collected into mediaRefs.
- * @property {(src: string) => { srcSet?: string, sizes?: string, href?: string, sources?: Array<{ type: string, srcSet: string }> } | null} [imageProps]
- *   Responsive attributes for an image, and the href of the link that wraps it (the unsized original). `sources` (each a MIME type and
- *   a srcset, AVIF first) wrap the image in a <picture>; site-runtime's ./image writes them. Null leaves the image as written.
+ * @property {(src: string) => { srcSet?: string, sizes?: string, href?: string, sources?: Array<{ type: string, srcSet: string, media?: string }> } | null} [imageProps]
+ *   Responsive attributes for an image, and the href of the link that wraps it (the unsized original). `sources` (each a MIME type, a
+ *   srcset and an optional media query, AVIF first) wrap the image in a <picture>; site-runtime's ./image writes them, and its GIF
+ *   sources under `(prefers-reduced-motion: reduce)` also give the animation a pause control. Null leaves the image as written.
+ *
+ * @typedef {object} ImageFacts What the site's resolver knows of an image: its size and placeholder, and the library's credit and license.
+ * @property {number} width
+ * @property {number} height
+ * @property {string} [placeholder] a base64 data: URL shown while the image loads
+ * @property {string} [credit] who made it, shown under the picture and written as the ImageObject's creditText
+ * @property {string} [license] the terms: a URL is the ImageObject's license, words (CC BY 4.0) are shown beside the credit and written
+ *   as its copyrightNotice
+ *
+ * @typedef {object} RenderedImage An image the body shows, with what an ImageObject (schema `imageObject`) and the image sitemap need;
+ *   `src` as written, for the site to make absolute. A decorative image, a dark-theme twin and an embed's poster are left out.
+ * @property {string} src
+ * @property {string} alt
+ * @property {number} [width]
+ * @property {number} [height]
+ * @property {string} [creditText]
+ * @property {string} [copyrightNotice]
+ * @property {string} [license]
+ *
+ * @typedef {object} RenderedVideo A video the body plays, for the page's `og:video` and VideoObject (schema `videoObject`).
+ * @property {"file" | "embed"} kind a :::video file, or an ::embed player
+ * @property {string} url the file, or the page on the service
+ * @property {string} title
+ * @property {string} [embedUrl] the player an embed loads
+ * @property {string} [poster]
+ * @property {string} [captions]
+ * @property {number} [width] the poster's
+ * @property {number} [height]
  *
  * @typedef {object} HighlightOptions Code highlighting, injected so the core does not bundle a grammar set.
  * @property {() => Promise<[unknown, ...unknown[]]>} plugin The rehype plugin and its arguments, as render-highlight.mjs builds them.
@@ -88,6 +117,10 @@ const encoder = new TextEncoder();
  *   contract reads (render-links.mjs). Without it every kind but away and family is still written.
  * @property {import("./render-links.mjs").LinkIconOptions} [linkIcons] The store an away link's icon is kept in, fetched once from
  *   the host on a miss (render-link-icons.mjs). Without it nothing is fetched and an away link has no icon.
+ * @property {{ taken: boolean } | false} [priority] The page's one fetchpriority=high. A page that renders several bodies (a cover's
+ *   caption, a post and its notes) makes one `{ taken: false }` and passes it to each render, in page order, so only the page's first
+ *   image takes it; `{ taken: true }` when the page's LCP image is outside the body, or `false`, gives every body image lazy loading.
+ *   Without it each render's first image takes it.
  * @property {boolean} [smartPunctuation] Curly quotes, dashes and ellipses (SmartyPants, Astro's default). On unless false.
  * @property {boolean | { tags: ReadonlySet<string>, attributes: ReadonlySet<string> }} [assertSafe] Run the output scan on the result and
  *   throw when it finds an element or attribute outside the allowlist. Off by default; `true` uses the allowlist derived from the
@@ -167,7 +200,7 @@ function remarkCollectMedia(sink, keyOf) {
             add(node.attributes?.src, "figure-directive", node);
             add(node.attributes?.dark, "figure-directive", node);
           }
-          if (node.name === "video" || node.name === "audio") {
+          if (node.name === "video" || node.name === "audio" || node.name === "embed") {
             for (const key of ["src", "poster", "captions", "transcript"]) add(node.attributes?.[key], "media-directive", node);
           }
           break;
@@ -366,44 +399,191 @@ function rehypeUrlProtocols(file, sink) {
   };
 }
 
+/** Under this media query a site's sources are an animation's first frame (site-runtime's ./image writes them for a GIF). */
+const REDUCED_MOTION = /prefers-reduced-motion:\s*reduce/;
+
+/** A source's `media`: a media query, nothing that could close the attribute or reach a URL. */
+const MEDIA_QUERY = /^[a-z0-9\s():,.-]+$/i;
+
+/** @param {string} tagName @param {Record<string, unknown>} properties @param {any[]} [children] @returns {import("hast").Element} */
+const el = (tagName, properties, children = []) => ({ type: "element", tagName, properties: /** @type {any} */ (properties), children });
+
+/** @param {any} node @param {string} name */
+const hasClass = (node, name) => [node?.properties?.className ?? []].flat().includes(name);
+
+/**
+ * The resolver's credit and license as the page shows them, and as an ImageObject takes them: a license that is a URL is Google's
+ * `license`, one that is words (CC BY 4.0, a copyright line) is the notice, shown beside the credit.
+ *
+ * @param {ImageFacts | null} facts
+ */
+function rightsOf(facts) {
+  const credit = facts?.credit?.trim() || undefined;
+  const license = facts?.license?.trim() || undefined;
+  const licenseUrl = license && /^https?:\/\//.test(license) && isAllowedUrl(license) ? license : undefined;
+  const notice = license && !licenseUrl ? license : undefined;
+  return { credit, licenseUrl, notice, shown: [credit, notice].filter(Boolean).join(" · ") };
+}
+
+/**
+ * The library's credit, shown under the picture: in its figure's caption unless the author wrote a credit there, else the paragraph that
+ * holds only the picture becomes a figure with it as the caption. A picture inside a sentence shows none (its rights still reach the
+ * page's ImageObject).
+ *
+ * @param {import("hast").Element} shown the outermost element written for the image
+ * @param {Map<any, any>} parents
+ * @param {string} text
+ */
+function showCredit(shown, parents, text) {
+  let box = parents.get(shown);
+  while (box && box.type === "element" && box.tagName !== "figure" && box.tagName !== "p") box = parents.get(box);
+  if (!box || box.type !== "element") return;
+  if (box.tagName === "p") {
+    const own = box.children.filter((/** @type {any} */ c) => !(c.type === "text" && c.value.trim() === ""));
+    if (own.length !== 1 || own[0] !== shown) return;
+    box.tagName = "figure";
+    box.properties = { className: ["image-figure"] };
+  }
+  const credit = el("span", { className: ["figure-credit"] }, [{ type: "text", value: text }]);
+  let caption = box.children.find((/** @type {any} */ c) => c.type === "element" && c.tagName === "figcaption");
+  if (!caption) {
+    caption = el("figcaption", {});
+    box.children.push(caption);
+  }
+  /** @type {any[]} */
+  const credits = [];
+  visit(caption, "element", (c) => {
+    if (hasClass(c, "figure-credit")) credits.push(c);
+  });
+  // The author's credit wins; a gallery lists each picture's credit once.
+  if (credits.length > 0 && !credits.some((c) => c.data?.fromLibrary)) return;
+  if (credits.some((c) => hastToString(c) === text)) return;
+  credit.data = { fromLibrary: true };
+  caption.children.push(...(caption.children.length > 0 ? [{ type: "text", value: " " }] : []), credit);
+}
+
+/**
+ * An animation with a still for reduced motion also gets a control that stops it for everyone (WCAG 2.2.2): a checkbox, so it works
+ * without script, and the still hidden by an inline style, so a page without the stylesheet shows the animation alone (not `hidden`,
+ * which Capsomer's reset holds with !important in a layer no component can outrank). The site's stylesheet (Capsomer's prose blocks)
+ * shows the still with !important and hides the animation while the box is checked, and hides the control under reduced motion,
+ * where the still already shows. The still is lazy, so it costs nothing until it is asked for.
+ *
+ * @param {import("hast").Element} animated
+ * @param {import("hast").Element} img
+ * @param {Array<{ type: string, srcSet: string, media?: string }>} stills
+ */
+function motionControl(animated, img, stills) {
+  const webp = stills.find((s) => s.type === "image/webp") ?? stills[stills.length - 1];
+  const src = srcsetUrls(webp?.srcSet ?? "")[0];
+  if (!webp || !src) return animated;
+  const { alt, width, height, sizes } = /** @type {Record<string, unknown>} */ (img.properties);
+  const still = el(
+    "picture",
+    { className: ["motion-still"], style: "display:none" },
+    [
+      ...stills.filter((s) => s !== webp).map((s) => el("source", { type: s.type, srcSet: s.srcSet, ...(sizes ? { sizes } : {}) })),
+      el("img", { src, srcSet: webp.srcSet, ...(sizes ? { sizes } : {}), alt, width, height, loading: "lazy", decoding: "async" }),
+    ],
+  );
+  const control = el("label", { className: ["motion-pause"] }, [el("input", { type: "checkbox" }), { type: "text", value: " Pause animation" }]);
+  return el("span", { className: ["motion"] }, [animated, still, control]);
+}
+
 /**
  * The anchor and srcset come from one decision in one visitor so they cannot disagree about a storage tier. The first image is eager
- * with fetchpriority=high: it is usually the LCP. The site decides, through media.imageProps, which images are responsive; an image it
- * returns null for keeps the attributes the resolver gives it and nothing more.
+ * with fetchpriority=high: it is usually the LCP, and a page that renders several bodies passes one `priority` to all of them so only
+ * the page's first takes it. The site decides, through media.imageProps, which images are responsive; an image it returns null for
+ * keeps the attributes the resolver gives it and nothing more. The resolver's size also sizes a diagram, a video (from its poster) and
+ * an embed's poster, and its credit and license are shown and returned for the page's ImageObjects.
  *
  * @param {string} file
- * @param {(src: string) => Promise<{ width: number, height: number, placeholder?: string } | null>} resolveImage
+ * @param {(src: string) => Promise<ImageFacts | null>} resolveImage
  * @param {Array<Promise<void>>} pending
- * @param {(src: string) => { srcSet?: string, sizes?: string, href?: string, sources?: Array<{ type: string, srcSet: string }> } | null} imageProps
+ * @param {NonNullable<MediaOptions["imageProps"]>} imageProps
+ * @param {{ taken: boolean }} priority
+ * @param {{ images: RenderedImage[], videos: RenderedVideo[], warnings: Array<{ line: number | null, message: string }>, after: Array<() => void> }} sinks
  */
-function rehypeImageSources(file, resolveImage, pending, imageProps) {
-  let seen = 0;
+function rehypeImageSources(file, resolveImage, pending, imageProps, priority, sinks) {
   return (/** @type {import("hast").Root} */ tree) => {
+    /** @type {Map<any, any>} */
+    const parents = new Map();
+    visit(tree, (node, _index, parent) => {
+      if (parent) parents.set(node, parent);
+    });
+    /** @param {string} src @param {(facts: ImageFacts | null) => void} then */
+    const resolved = (src, then) => pending.push(resolveImage(src).then(then));
+
     visit(tree, "element", (node, index, parent) => {
+      if (node.tagName === "video" && node.properties?.poster) {
+        const video = node;
+        const track = video.children.find((c) => c.type === "element" && c.tagName === "track");
+        /** @type {RenderedVideo} */
+        const entry = {
+          kind: "file",
+          url: String(video.properties.src ?? ""),
+          title: String(video.properties.ariaLabel ?? ""),
+          poster: String(video.properties.poster),
+          ...(track?.type === "element" ? { captions: String(track.properties?.src ?? "") } : {}),
+        };
+        sinks.videos.push(entry);
+        sinks.after.push(() => {
+          if (!entry.width) sinks.warnings.push({ line: null, message: `video ${entry.url} has no size: the site has none for its poster ${entry.poster}` });
+        });
+        resolved(entry.poster, (size) => {
+          video.properties = { ...video.properties, width: size?.width, height: size?.height };
+          Object.assign(entry, size ? { width: size.width, height: size.height } : {});
+        });
+        return;
+      }
+      if (node.tagName === "a" && hasClass(node, "embed-link")) {
+        const poster = node.children.find((c) => c.type === "element" && c.tagName === "img");
+        sinks.videos.push({
+          kind: "embed",
+          url: String(node.properties?.href ?? ""),
+          // The player without the autoplay a click asks for.
+          embedUrl: String(node.properties?.dataEmbedSrc ?? "").replace(/[?&]autoplay=1$/, ""),
+          title: String(node.properties?.dataEmbedTitle ?? ""),
+          ...(poster?.type === "element" ? { poster: String(poster.properties?.src ?? "") } : {}),
+        });
+        return;
+      }
       if (node.tagName !== "img") return;
-      // A diagram's asset is rendered by a later build step and may not exist yet. Checked by class, not plugin order, so moving this
-      // plugin cannot re-enable it.
       const classes = node.properties?.className ?? [];
-      if (Array.isArray(classes) && classes.includes("diagram-image")) return;
       const src = String(node.properties?.src ?? "");
       // Left for rehypeUrlProtocols to show as text: no wrapper link, and the site's resolver is never handed a hostile URL.
       if (!isAllowedUrl(src)) return;
+      // A diagram's asset is drawn by a build step; its size comes from the drawing (render-diagram.mjs). Checked by class, not plugin
+      // order, so moving this plugin cannot re-enable it.
+      if (Array.isArray(classes) && classes.includes("diagram-image")) return;
 
       const props = imageProps(src);
       // srcset and the placeholder are written after rehypeUrlProtocols has run, so they are checked here: a candidate URL outside the
       // policy drops the srcset, and a placeholder that is not the base64 form drops the placeholder.
       const responsive =
         props?.srcSet && srcsetUrls(props.srcSet).every(isAllowedUrl) ? { srcSet: props.srcSet, sizes: props.sizes } : {};
-      // Each format the site offers becomes a <source>, AVIF before WebP, so the browser takes the first it reads (Astro's <Picture>).
-      // Only beside a valid srcset, and each source is held to the same URL policy, so one bad candidate drops that source alone.
+      // Each format the site offers becomes a <source>, AVIF before WebP, so the browser takes the first it reads (Astro's <Picture>),
+      // with its media query, which is how an animation's still reaches a reader who asks for reduced motion. Only beside a valid
+      // srcset, and each source is held to the same URL policy, so one bad candidate drops that source alone.
       const sources = responsive.srcSet
-        ? (props?.sources ?? []).filter((s) => /^image\/[a-z0-9.+-]+$/.test(s.type) && s.srcSet && srcsetUrls(s.srcSet).every(isAllowedUrl))
+        ? (props?.sources ?? []).filter(
+            (s) =>
+              /^image\/[a-z0-9.+-]+$/.test(s.type) &&
+              s.srcSet &&
+              srcsetUrls(s.srcSet).every(isAllowedUrl) &&
+              (s.media === undefined || MEDIA_QUERY.test(s.media)),
+          )
         : [];
+      const stills = sources.filter((s) => s.media && REDUCED_MOTION.test(s.media));
 
       // Links to the unsized original, which srcset never serves. A figure's light and dark pair is excluded, as diagrams are: an
-      // anchor around the display: none half would be a focusable link with no name. So is a decorative image (`![](x)`, alt ""):
+      // anchor around the display: none half would be a focusable link with no name. So is a decorative image (`![""](x)`, alt ""):
       // its link would have no name either. An author's own link wins.
       const themed = Array.isArray(classes) && (classes.includes("figure-light") || classes.includes("figure-dark"));
+      const poster = hasClass(node, "embed-poster");
+      // An author's link (or an embed's) is never wrapped again, and holds no pause control: a checkbox in an <a> is an interactive
+      // element inside another.
+      const inLink = parent?.type === "element" && parent.tagName === "a";
       const wrappable =
         !themed &&
         src.length > 0 &&
@@ -411,69 +591,81 @@ function rehypeImageSources(file, resolveImage, pending, imageProps) {
         parent &&
         typeof index === "number" &&
         parent.children[index] === node &&
-        !(parent.type === "element" && parent.tagName === "a");
+        !inLink;
       /** @type {import("hast").Element} */
-      const shown =
+      const picture =
         sources.length > 0
-          ? {
-              type: "element",
-              tagName: "picture",
-              properties: {},
-              children: [
-                ...sources.map((s) => ({
-                  type: /** @type {const} */ ("element"),
-                  tagName: "source",
-                  properties: { type: s.type, srcSet: s.srcSet, ...(responsive.sizes ? { sizes: responsive.sizes } : {}) },
-                  children: [],
-                })),
+          ? el(
+              "picture",
+              {},
+              [
+                ...sources.map((s) =>
+                  el("source", { type: s.type, srcSet: s.srcSet, ...(responsive.sizes ? { sizes: responsive.sizes } : {}), ...(s.media ? { media: s.media } : {}) }),
+                ),
                 node,
               ],
-            }
+            )
           : node;
-      if (wrappable) {
-        parent.children[index] = {
-          type: "element",
-          tagName: "a",
-          properties: { className: ["image-link"], href: props?.href ?? src },
-          children: [shown],
-        };
-      } else if (shown !== node && parent && typeof index === "number" && parent.children[index] === node) {
+      const linked = wrappable ? el("a", { className: ["image-link"], href: props?.href ?? src }, [picture]) : picture;
+      const shown = stills.length > 0 && !themed && !inLink ? motionControl(linked, node, stills) : linked;
+      if (shown !== node && parent && typeof index === "number" && parent.children[index] === node) {
         parent.children[index] = shown;
+        parents.set(shown, parent);
       }
 
       // Counted after every exclusion, so the first image that gets attributes gets the eager pair. A themed half is never first: an
       // eager image loads while display: none, so the hidden half would take the priority, and a lazy one loads only once shown.
-      if (!themed) seen += 1;
-      const first = !themed && seen === 1;
+      const first = !themed && !priority.taken;
+      if (first) priority.taken = true;
+      const dark = Array.isArray(classes) && classes.includes("figure-dark");
 
-      pending.push(
+      /** @type {ImageFacts | null} */
+      let facts = null;
+      // In document order once every lookup is back, so a gallery's credits and the image list do not depend on which came first.
+      if (!dark && !poster) {
+        sinks.after.push(() => {
+          const rights = rightsOf(facts);
+          if (rights.shown) showCredit(shown, parents, rights.shown);
+          if (node.properties.alt === "") return;
+          sinks.images.push({
+            src,
+            alt: String(node.properties.alt ?? ""),
+            ...(facts?.width && facts.height ? { width: facts.width, height: facts.height } : {}),
+            ...(rights.credit ? { creditText: rights.credit } : {}),
+            ...(rights.notice ? { copyrightNotice: rights.notice } : {}),
+            ...(rights.licenseUrl ? { license: rights.licenseUrl } : {}),
+          });
+        });
+      }
+
+      resolved(src, (size) => {
+        facts = size;
         // null: a site that stores no sizes; the image is written unsized rather than refused.
-        resolveImage(src).then((size) => {
-          const { width, height, placeholder } = size ?? {};
-          const lqip = placeholder ? `background-image:url("${placeholder}")` : "";
-          node.properties = {
-            ...node.properties,
-            ...responsive,
-            width,
-            height,
-            loading: first ? "eager" : "lazy",
-            decoding: "async",
-            // fetchpriority=high is a budget: several images marked high is the same as none.
-            ...(first ? { fetchpriority: "high" } : {}),
-            // The inline style carries only the per-image URL.
-            ...(LQIP_STYLE.test(lqip)
-              ? {
-                  className: [
-                    ...(Array.isArray(node.properties?.className) ? node.properties.className : []),
-                    "has-lqip",
-                  ],
-                  // Only the form render-safe.mjs allows: base64 holds no quote, parenthesis or space.
-                  style: lqip,
-                }
-              : {}),
-          };
-        }),
-      );
+        const { width, height, placeholder } = size ?? {};
+        const lqip = placeholder ? `background-image:url("${placeholder}")` : "";
+        node.properties = {
+          ...node.properties,
+          ...responsive,
+          width,
+          height,
+          loading: first ? "eager" : "lazy",
+          decoding: "async",
+          // fetchpriority=high is a budget: several images marked high is the same as none.
+          ...(first ? { fetchpriority: "high" } : {}),
+          // The inline style carries only the per-image URL.
+          ...(LQIP_STYLE.test(lqip)
+            ? {
+                className: [...(Array.isArray(node.properties?.className) ? node.properties.className : []), "has-lqip"],
+                // Only the form render-safe.mjs allows: base64 holds no quote, parenthesis or space.
+                style: lqip,
+              }
+            : {}),
+        };
+        if (shown !== linked) {
+          const still = /** @type {any} */ (shown.children[1]).children.at(-1);
+          still.properties = { ...still.properties, width, height };
+        }
+      });
     });
   };
 }
@@ -533,7 +725,7 @@ function rehypeCollectText(sink) {
  * @typedef {object} RenderInput
  * @property {string} file label used in error messages
  * @property {string} body markdown with any frontmatter already stripped
- * @property {(src: string) => Promise<{ width: number, height: number, placeholder?: string } | null>} resolveImage
+ * @property {(src: string) => Promise<ImageFacts | null>} resolveImage
  * @property {RenderOptions} [options]
  *
  * @typedef {object} MathPlugins What render.mjs passes in; without it there is no math syntax and `$` is text.
@@ -581,6 +773,13 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   /** @type {Array<{ line: number | null, message: string }>} */
   const warnings = [];
   const reading = { words: 0, images: 0, excerpt: "" };
+  const media = {
+    images: /** @type {RenderedImage[]} */ ([]),
+    videos: /** @type {RenderedVideo[]} */ ([]),
+    warnings,
+    after: /** @type {Array<() => void>} */ ([]),
+  };
+  const priority = options.priority === false ? { taken: true } : (options.priority ?? { taken: false });
 
   const keyOf = options.media?.keyOf ?? (() => null);
   // One lookup per src in a render: a resolver that reads D1 or R2 pays once for an image used twice.
@@ -652,7 +851,7 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   // After rehypeSlug, rehypeCollectToc and the autolinks: they read heading text, and after KaTeX that text is the expression twice
   // over (MathML plus HTML), ruining ids and the toc. Option 3 in the header: KATEX_OPTIONS leaves `trust` off.
   if (math) processor.use(math.html, math.options);
-  processor.use(rehypeImageSources, file, resolveOnce, pending, imageProps);
+  processor.use(rehypeImageSources, file, resolveOnce, pending, imageProps, priority, media);
   // After the image links exist, which it tells from an author's link by their class.
   processor.use(rehypeLinks, options.links ?? {}, options.linkIcons, pending);
 
@@ -669,6 +868,7 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   const tree = processor.parse(body);
   const transformed = await processor.run(tree);
   await Promise.all(pending);
+  for (const step of media.after) step();
   const html = processor.stringify(transformed);
 
   if (options.assertSafe) {
@@ -687,6 +887,8 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
     toc,
     hasMath: hasMath.value,
     mediaRefs,
+    images: media.images,
+    videos: media.videos,
     faq,
     postLinks,
     words: reading.words,

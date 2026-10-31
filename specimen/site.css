@@ -207,6 +207,121 @@ main {
   margin-block-start: 0.25em;
   font-size: 0.8125rem;
 }
+/* A picture whose paragraph became its figure to carry the library's credit. */
+.prose .image-figure {
+  inline-size: fit-content;
+  max-inline-size: 100%;
+}
+/* An animation's pause control: while it is checked the still shows and the animation hides. Under reduced motion the
+   still already shows in the animation's place, so the control goes. The still is hidden by an inline style until then,
+   which only !important outranks. */
+.prose .motion {
+  display: inline-block;
+  max-inline-size: 100%;
+  vertical-align: top;
+}
+.prose .motion > :where(:not(.motion-still)) {
+  display: block;
+}
+.prose .motion-pause {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  margin-block-start: 0.4em;
+  font-family: var(--ui);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.prose .motion-pause input {
+  inline-size: 1.1em;
+  block-size: 1.1em;
+  margin: 0;
+  accent-color: var(--primary);
+}
+.prose .motion:has(.motion-pause input:checked) > :not(.motion-still, .motion-pause) {
+  display: none;
+}
+.prose .motion:has(.motion-pause input:checked) > .motion-still {
+  display: block !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .prose .motion-pause {
+    display: none;
+  }
+}
+.prose video {
+  display: block;
+  max-inline-size: 100%;
+  block-size: auto;
+  border-radius: 6px;
+}
+/* The lite embed: the site's poster under a play button, the service's name and the title along the foot; a click loads the
+   player in its place (render/enhance), and without script the link opens the service. */
+.prose .embed-link {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--raised);
+  color: var(--text);
+  text-decoration: none;
+}
+.prose .embed-link > picture,
+.prose .embed-link > img {
+  grid-area: 1 / 1;
+  inline-size: 100%;
+  block-size: 100%;
+}
+.prose .embed-link img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  border-radius: 0;
+}
+.prose .embed-play {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  inline-size: 4.25rem;
+  block-size: 3rem;
+  border-radius: 0.75rem;
+  background: rgb(0 0 0 / 0.72);
+  transition: background-color 150ms ease;
+}
+.prose .embed-play::before {
+  content: "";
+  margin-inline-start: 0.25rem;
+  border-block: 0.6rem solid transparent;
+  border-inline-start: 1rem solid #fff;
+}
+.prose .embed-link:is(:hover, :focus-visible) .embed-play {
+  background: var(--primary);
+}
+.prose .embed-label {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  padding: 1.5em 0.9em 0.6em;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.75));
+  color: #fff;
+  font-family: var(--ui);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.prose .embed-link:not(:has(img)) .embed-label {
+  background: none;
+  color: var(--text);
+}
+@media (forced-colors: active) {
+  .prose .embed-play {
+    border: 2px solid ButtonText;
+  }
+  .prose .embed-play::before {
+    border-inline-start-color: ButtonText;
+  }
+}
 .table-scroll {
   overflow-x: auto;
   margin: 1.25em 0;

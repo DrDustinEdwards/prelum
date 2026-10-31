@@ -11,6 +11,13 @@ export const LINK_ICON_TIMEOUT_MS: number;
  * @param {Uint8Array} bytes
  */
 export function linkIconType(bytes: Uint8Array): string | null;
+/** The icon is shown at 16 CSS pixels; 32 covers a 2x screen. */
+export const LINK_ICON_SIZE: 32;
+/**
+ * An icon no bigger than it is shown needs to be: a PNG over LINK_ICON_SIZE is shrunk to it, and a favicon.ico keeps only the
+ * smallest size that covers it (as a PNG when that one is). Anything else, or anything it cannot read, comes back as it was.
+ */
+export function fitLinkIcon(icon: { bytes: Uint8Array; type: string }): Promise<{ bytes: Uint8Array; type: string }>;
 /**
  * The stored icon's type for a host, fetching it once from the host (/favicon.ico, then its home page's `<link rel="icon">`) and
  * storing it on a miss; null when the host has none the step will serve. Never throws.

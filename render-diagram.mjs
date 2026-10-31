@@ -26,6 +26,9 @@ export const DIAGRAM_ASSET_DIR = "diagrams";
 
 export const DIAGRAM_THEMES = ["light", "dark"];
 
+/** The file drawDiagrams writes beside the drawings: each drawing's width and height, by file name, for the renderer to size it. */
+export const DIAGRAM_SIZES_FILE = "sizes.json";
+
 /**
  * Posts check out as LF and the rest of the tree as CRLF; without this, clones on different OSes
  * compute different keys for the same diagram.
@@ -77,14 +80,17 @@ export function buildDiagramModel(attrs, source) {
 
 /**
  * Two images switched by display: none in the site's stylesheet, because an <img> SVG cannot see the page's custom
- * properties and the theme comes from a cookie, not prefers-color-scheme. No width or height: the
- * asset may not exist yet and the pipeline cannot read the filesystem.
+ * properties and the theme comes from a cookie, not prefers-color-scheme. Each is sized from its drawing, as `sizes`
+ * (the site's DIAGRAM_SIZES_FILE) records it, so nothing shifts as it loads; a diagram not drawn yet is unsized until
+ * the body is rendered again. Lazy, since a diagram is rarely the first thing a page shows, and role="img", which
+ * VoiceOver needs to announce an SVG in an <img> by its alt.
  *
  * @param {string} assetPrefix the site's asset name prefix
+ * @param {Record<string, { width: number, height: number }>} [sizes] each drawing's size, by file name
  * @returns {(model: ReturnType<typeof buildDiagramModel>, captionChildren: any[]) => any[]} the rehype renderer
  *   `captionChildren` is hast for an author-written caption, may be empty
  */
-export const renderDiagramHast = (assetPrefix) => (model, captionChildren) => {
+export const renderDiagramHast = (assetPrefix, sizes = {}) => (model, captionChildren) => {
   /** @type {any[]} */
   const children = [];
 
@@ -94,11 +100,17 @@ export const renderDiagramHast = (assetPrefix) => (model, captionChildren) => {
   }
 
   for (const theme of DIAGRAM_THEMES) {
+    const src = diagramAssetPath(model.key, theme, assetPrefix);
+    const size = diagramSize(sizes, src);
     children.push(
       h("img", {
         className: ["diagram-image", `diagram-${theme}`],
-        src: diagramAssetPath(model.key, theme, assetPrefix),
+        src,
         alt: model.alt,
+        role: "img",
+        ...(size ? { width: size.width, height: size.height } : {}),
+        loading: "lazy",
+        decoding: "async",
       }, []),
     );
   }
@@ -109,3 +121,14 @@ export const renderDiagramHast = (assetPrefix) => (model, captionChildren) => {
 
   return children;
 };
+
+/**
+ * A drawing's size from the site's sizes file, or null when it is not drawn yet.
+ *
+ * @param {Record<string, { width: number, height: number }>} sizes
+ * @param {string} src the asset path diagramAssetPath gives
+ */
+export function diagramSize(sizes, src) {
+  const size = sizes[src.slice(src.lastIndexOf("/") + 1)];
+  return size && size.width > 0 && size.height > 0 ? size : null;
+}

@@ -9,12 +9,13 @@ export const REPORT_PATH = "/csp-report";
 
 /**
  * Nothing unlisted, no forms, no inline script (the pages have none), and Cloudflare Web Analytics. The beacon is injected by
- * the edge (automatic setup) and reports to this origin's /cdn-cgi/rum, which connect-src's 'self' covers.
+ * the edge (automatic setup) and reports to this origin's /cdn-cgi/rum, which connect-src's 'self' covers. media-src plays the
+ * :::video element's clip and its captions from the specimen itself (the builder writes 'self' twice, which a browser reads once).
  */
 export const PAGE_CSP = buildContentSecurityPolicy({
   denyUnlisted: true,
   noForms: true,
-  sources: { img: ["data:"] },
+  sources: { img: ["data:"], media: ["'self'"] },
   styleAttributesInline: true,
   cloudflareWebAnalytics: true,
   reportUri: REPORT_PATH,

@@ -5,6 +5,10 @@ A caption with *emphasis*.
 :::figure{src="/media/example-chart-light-0123456789abcdef-640x360.svg" dark="/media/example-chart-dark-0123456789abcdef-640x360.svg" alt="A drawing with a twin for the dark theme"}
 :::
 
+![A loop of a plaque forming](/media/example-loop-0123456789abcdef-320x240.gif)
+
+![A photograph from the library](/media/example-credited-0123456789abcdef-1200x800.jpg)
+
 :::details{summary="Long methods"}
 The details body, with a [link](https://example.com).
 :::

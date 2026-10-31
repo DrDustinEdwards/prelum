@@ -14,7 +14,7 @@ import { defineHead, headHtml, headTags, metaText, SERP_TITLE_LIMIT, searchTitle
 import { auditIcons, icoFile, iconLinks, webManifest } from "../icons.mjs";
 import { llmsResponse } from "../llms.mjs";
 import { aiTxt, DENIED_BOTS, robotsDocument, robotsResponse } from "../robots.mjs";
-import { article, imageObject, jsonLd } from "../schema.mjs";
+import { article, articleImageSet, imageObject, jsonLd, videoObject } from "../schema.mjs";
 
 const ORIGIN = "https://example.com";
 
@@ -66,13 +66,33 @@ test("headHtml escapes attributes and keeps </script> inside JSON-LD from ending
   assert.ok(headHtml(tags).includes(`<link rel="alternate" type="text/markdown" href="${ORIGIN}/post.md">`));
 });
 
-test("a share image writes its type from the extension and X's alt within 420 characters; schema images claim only what is known", () => {
+test("a share image's type is the one served, never a resized URL's extension; X's alt fits 420 characters; schema claims only what is known", () => {
   const alt = `A ${"long ".repeat(100)}alt`;
-  const tags = headTags({ origin: ORIGIN, path: "/p", title: "T", description: "D", image: { url: "/c.JPG?v=2", width: 1200, height: 630, alt } });
-  const content = (/** @type {string} */ key) => tags.map((tag) => ("content" in tag && (("property" in tag && tag.property === key) || ("name" in tag && tag.name === key)) ? tag.content : null)).find(Boolean);
+  const head = (/** @type {Partial<import("../head.mjs").HeadInput>} */ more) => {
+    const tags = headTags({ origin: ORIGIN, path: "/p", title: "T", description: "D", image: "/c.JPG", ...more });
+    return (/** @type {string} */ key) => tags.map((tag) => ("content" in tag && (("property" in tag && tag.property === key) || ("name" in tag && tag.name === key)) ? tag.content : null)).find(Boolean);
+  };
+  const content = head({ image: { url: "/c.JPG", width: 1200, height: 630, alt } });
   assert.equal(content("og:image:type"), "image/jpeg");
   assert.equal(content("og:image:alt"), alt);
   assert.ok((content("twitter:image:alt") ?? "").length <= 420);
+  // C3: a size URL is served as WebP or AVIF whatever its name says, so only the type the site passes is written.
+  assert.equal(head({ image: "/media/c.jpg?w=1200&r=40x21" })("og:image:type"), undefined);
+  assert.equal(head({ image: { url: "/media/c.jpg?w=1200&r=40x21", type: "image/webp" } })("og:image:type"), "image/webp");
+  // E4: each video the page plays.
+  const video = head({ videos: [{ url: "/media/demo.mp4", width: 640, height: 360 }, { url: "https://www.youtube-nocookie.com/embed/x", type: "text/html" }] });
+  assert.equal(video("og:video:secure_url"), `${ORIGIN}/media/demo.mp4`);
+  assert.equal(video("og:video:type"), "video/mp4");
+  assert.equal(video("og:video:width"), "640");
+  assert.deepEqual(
+    videoObject({ name: "Demo", thumbnailUrl: `${ORIGIN}/p.jpg`, uploadDate: "2026-10-31", contentUrl: `${ORIGIN}/demo.mp4`, width: 640, height: 360 }),
+    { "@context": "https://schema.org", "@type": "VideoObject", name: "Demo", thumbnailUrl: `${ORIGIN}/p.jpg`, uploadDate: "2026-10-31T00:00:00.000Z", contentUrl: `${ORIGIN}/demo.mp4`, width: 640, height: 360 },
+  );
+  assert.throws(() => videoObject({ name: "Demo", thumbnailUrl: "", uploadDate: "2026-10-31", contentUrl: "x" }), /are required/);
+  // C6: the three crops in Google's order, each with the picture's rights, and a crop that is not its ratio refused.
+  const set = articleImageSet({ "1x1": { url: "/s", width: 1200, height: 1200 }, "16x9": { url: "/w", width: 1200, height: 675 } }, { creditText: "Sample" });
+  assert.deepEqual(set.map((i) => [i.url, i.creditText]), [["/w", "Sample"], ["/s", "Sample"]]);
+  assert.throws(() => articleImageSet({ "4x3": { url: "/x", width: 1200, height: 675 } }), /not 4:3/);
 
   assert.equal(imageObject({ url: `${ORIGIN}/a.png`, width: 800, height: 600 }), null);
   assert.deepEqual(imageObject({ url: `${ORIGIN}/a.png`, license: `${ORIGIN}/license`, creator: { name: "Sample" } }), {

@@ -20,14 +20,22 @@ export const media = {
     if (!src.startsWith("/media/")) return null;
     const key = src.slice("/media/".length);
     const srcSet = (/** @type {string} */ f) => [640, 1024, 1408].map((w) => `/media/${key}?w=${w}${f} ${w}w`).join(", ");
+    // A GIF as site-runtime's ./image offers it: its first frame under reduced motion, then the animated WebP.
+    const still = "(prefers-reduced-motion: reduce)";
     return {
       srcSet: srcSet(""),
       sizes: "(min-width: 46rem) 704px, calc(100vw - 2rem)",
       href: `/media/${key}`,
-      sources: [
-        { type: "image/avif", srcSet: srcSet("&f=avif") },
-        { type: "image/webp", srcSet: srcSet("") },
-      ],
+      sources: key.endsWith(".gif")
+        ? [
+            { type: "image/avif", srcSet: srcSet("&f=avif&still=1"), media: still },
+            { type: "image/webp", srcSet: srcSet("&still=1"), media: still },
+            { type: "image/webp", srcSet: srcSet("") },
+          ]
+        : [
+            { type: "image/avif", srcSet: srcSet("&f=avif") },
+            { type: "image/webp", srcSet: srcSet("") },
+          ],
     };
   },
 };
@@ -38,12 +46,17 @@ export async function resolveImage(src) {
   const dimensions = /-(\d+)x(\d+)\./.exec(src);
   const width = dimensions ? Number(dimensions[1]) : 800;
   const height = dimensions ? Number(dimensions[2]) : 600;
+  // The library's credit and license, which only some files carry.
+  const rights = src.includes("-credited-") ? { credit: "Sample Lab", license: "CC BY 4.0" } : {};
   return src.startsWith("/media/")
-    ? { width, height, placeholder: "data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==" }
+    ? { width, height, placeholder: "data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==", ...rights }
     : { width, height };
 }
 
-export const packs = [editorialPack({ assetPrefix: "example-" })];
+/** What drawDiagrams writes to sizes.json for the corpus's one diagram. */
+export const diagramSizes = { "example-4efabcc1-light.svg": { width: 120, height: 180 }, "example-4efabcc1-dark.svg": { width: 120, height: 180 } };
+
+export const packs = [editorialPack({ assetPrefix: "example-", diagramSizes })];
 
 export const highlight = createHighlight();
 

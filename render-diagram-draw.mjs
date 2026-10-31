@@ -3,14 +3,14 @@
 // gives its colors by role; the role map, Mermaid's configuration, the drawing and the color audit are shared here.
 
 import { existsSync } from "node:fs";
-import { mkdir, readdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, unlink, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 
 import { renderMermaid } from "@mermaid-js/mermaid-cli";
 import { parseHTML } from "linkedom";
 import puppeteer from "puppeteer";
 
-import { DIAGRAM_THEMES, diagramAssetPath } from "./render-diagram.mjs";
+import { DIAGRAM_SIZES_FILE, DIAGRAM_THEMES, diagramAssetPath } from "./render-diagram.mjs";
 
 /**
  * Every Mermaid theme variable a diagram paints with, by the role its color plays. Everything khroma would otherwise
@@ -151,7 +151,8 @@ function sizeRoot(svg, label) {
  *   force?: boolean,
  *   log?: (line: string) => void,
  * }} options
- * @returns {Promise<{ written: string[], current: number, stale: string[] }>}
+ * @returns {Promise<{ written: string[], current: number, stale: string[], sizes: Record<string, { width: number, height: number }> }>}
+ *   `sizes` is also written to DIAGRAM_SIZES_FILE in `dir`, for the site to pass to editorialPack's `diagramSizes`
  */
 export async function drawDiagrams({ diagrams, dir, assetPrefix, colors: given, colours, force = false, log = console.log }) { // codespell:ignore colours
   // `colours`, the British spelling, is the option's old name, still taken so no site breaks. codespell:ignore colours
@@ -196,9 +197,19 @@ export async function drawDiagrams({ diagrams, dir, assetPrefix, colors: given, 
     await browser?.close();
   }
 
-  const live = new Set(diagrams.flatMap((d) => themes.map((t) => fileName(d.key, t))));
-  const stale = (await readdir(dir)).filter((name) => name.endsWith(".svg") && !live.has(name));
-  return { written, current: diagrams.length * themes.length - outstanding.length, stale };
+  const live = [...new Set(diagrams.flatMap((d) => themes.map((t) => fileName(d.key, t))))].sort();
+  const stale = (await readdir(dir)).filter((name) => name.endsWith(".svg") && !live.includes(name));
+  // Every drawing's size, read back from the root sizeRoot wrote, so the renderer sizes its <img> (DIAGRAM_SIZES_FILE).
+  /** @type {Record<string, { width: number, height: number }>} */
+  const sizes = {};
+  for (const name of live) {
+    const root = (await readFile(join(dir, name), "utf8")).match(/<svg\b[^>]*>/)?.[0] ?? "";
+    const width = Number(/\swidth="(\d+)"/.exec(root)?.[1]);
+    const height = Number(/\sheight="(\d+)"/.exec(root)?.[1]);
+    if (width > 0 && height > 0) sizes[name] = { width, height };
+  }
+  await writeFile(join(dir, DIAGRAM_SIZES_FILE), `${JSON.stringify(sizes, null, 2)}\n`, "utf8");
+  return { written, current: diagrams.length * themes.length - outstanding.length, stale, sizes };
 }
 
 /**
