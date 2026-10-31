@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.22.0 (2026-10-31)
+
+One set of icon files on every site, and two fixes to the page graph (search and sharing, area 1).
 
 ### Added
 
