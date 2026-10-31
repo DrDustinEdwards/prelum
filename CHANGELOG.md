@@ -2,11 +2,18 @@
 
 ## Unreleased
 
-### Changed
+### Specimen
 
 - The specimen's home page writes its head with `headTags`, so it has a share card: `share-card.png` (1200x630) with
   `og:image:type`, `width`, `height` and `alt`, and the canonical, Open Graph and X tags that come with it.
-- devkit v0.20.7, site-runtime v0.48.0 and capsomer v0.54.0.
+- Every specimen page now sends a preload Link header for its stylesheet, Schibsted Grotesk and Source Serif 4, so the zone
+  answers with Early Hints (site-runtime `withPreloadHeader`, the same three files as Carrel's public site). The build
+  refuses to finish when it did not write one of them. The 404 page is sent `private, no-store`. The published library
+  does not change.
+
+### Changed
+
+- The ai-author check installs devkit v0.20.7, the release its workflow is pinned to.
 
 ## 0.22.1 (2026-10-31)
 
