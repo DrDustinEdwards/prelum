@@ -16,6 +16,8 @@
 
 - `defineHead`: a page that passes `fullTitle` no longer puts the site's suffix in its WebPage name and last breadcrumb
   ("Viruses · Germomics" becomes "Viruses") when the site sets `suffix`.
+- `defineHead`: with `keepTrailingSlash`, the breadcrumb built from `sections` keeps the trailing slash on each crumb, as the
+  canonical does, instead of pointing at the address that redirects.
 
 ## 0.20.0 (2026-10-31)
 
