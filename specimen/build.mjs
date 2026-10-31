@@ -24,7 +24,7 @@ import { RENDER_VERSION, render } from "../render.mjs";
 import { iconLinks, webManifest } from "../icons.mjs";
 import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
 import { absolutizeUrls, escapeXml, mathToTex } from "../xml.mjs";
-import { HEADERS_FILE } from "./headers.mjs";
+import { HEADERS_FILE, PAGE_PRELOADS } from "./headers.mjs";
 import { ASSET_PREFIX, DIAGRAM_CONFIG_FILE, FAMILY, ORIGIN, diagramConfig, elementIndex, loadElements, options, renderElement, resolveImage, splitHeader } from "./specimen.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -355,6 +355,8 @@ export async function buildSpecimen(outDir) {
   writeFileSync(join(outDir, "_headers"), HEADERS_FILE);
   writeFileSync(join(outDir, "site.webmanifest"), JSON.stringify(webManifest({ name: "Prelum specimen", shortName: "Prelum", themeColor: "#4f2d7f", backgroundColor: "#4f2d7f" })));
   writeStyles(outDir);
+  const missing = PAGE_PRELOADS.links.filter(({ href }) => !existsSync(join(outDir, href.slice(1))));
+  if (missing.length) throw new Error(`preloads name files the build did not write: ${missing.map(({ href }) => href).join(", ")}`);
   // The remembered theme before first paint (a plain script in the head), and the letterhead's behavior.
   writeFileSync(join(outDir, "theme.js"), await bundle("theme.mjs", "iife"));
   writeFileSync(join(outDir, "specimen.js"), await bundle("specimen.mjs", "esm"));

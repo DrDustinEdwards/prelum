@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Specimen
+
+- Every specimen page now sends a preload Link header for its stylesheet, Schibsted Grotesk and Source Serif 4, so the zone
+  answers with Early Hints (site-runtime `withPreloadHeader`, the same three files as Carrel's public site). The build
+  refuses to finish when it did not write one of them. The 404 page is sent `private, no-store`. The published library
+  does not change.
 - The specimen serves the shared icon set (`prelum-icons` from its P mark on #4f2d7f, `iconLinks()` and `webManifest()`),
   with `manifest-src 'self'` in its page policy; `favicon.svg` is gone.
 
