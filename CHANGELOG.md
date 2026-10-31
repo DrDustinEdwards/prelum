@@ -2,14 +2,51 @@
 
 ## Unreleased
 
+## 0.25.0 (2026-10-31)
+
+Charts that fit a phone, and a chart check that sees what it missed (charts, area 10).
+
+### Added
+
+- `render/chart-enhance` (browser): `enhanceCharts(root?, options?)` adds Enarratio's enhancement layer (`enarratio/enhance`:
+  keyboard walk, focus announcements, tooltips, legend filters, a sortable table) to every `:::chart`, and redraws each to its
+  frame's width when that is narrower than the 700 px drawing, so a post's chart fits a 320 px phone instead of scrolling
+  sideways. Bar, line and area are drawn again by `enarratio/lite` (a line chart under 400 px without its end labels, which
+  keep 96 px whatever the width, so its lines fill the frame; the legend names the series); a dot chart swaps in a 240 px
+  drawing the server wrote. A
+  site adds one import to the script it bundles (README, "Charts in posts"); it is same-origin with no inline script, so a hash
+  CSP holds. Without it the chart reads as before.
+- `:::chart{src="..."}` (E3): the CSV may be cited by URL or media path, read at render time by the site's
+  `editorialPack({ chartData })` loader. Prelum fetches nothing itself; a `src` without the loader is refused.
+- `editorialPack({ strictCharts: true })` (E4) refuses a chart with no title, author text above reading grade 9 or too many
+  series (`STRICT_CHART_ISSUES`), so Carrel can block a publish on them. The default still renders them with a warning.
+  `buildChartModel(attrs, csv, { strict })` takes the same option.
+- `prelum-chart-audit`: a 320 px pass that fails C12 when a drawing overflows its frame sideways or chart text is under 12 px;
+  `--pages <file | comma list>` for pages no link reaches; repeated `--start <url>`, opened first in every browser context so a
+  demo route's session cookie opens the pages behind it.
+
 ### Changed
 
+- `RENDER_VERSION` is 10. A `:::chart` frame carries `data-prelum-chart`, what `render/chart-enhance` redraws it from, and the
+  render allowlist admits it. Charts are drawn by Enarratio 0.4.1 (devDependency 0.4.0 before).
+- `prelum-chart-audit` is strict by default: a missing CSV link (C1), source line (C2) or frame (F) is an error.
+  `--no-strict-frame` makes them warnings; `--strict-frame` is still accepted.
+- `prelum-chart-audit` B28 accepts `role="group"` with `aria-roledescription="chart"` for an enhanced chart (WAI-ARIA APG),
+  as well as `role="img"`.
+- `prelum-chart-audit` accepts an inline primitive (Enarratio's `inline: true` sparkline, heat strip, progress ring, uptime
+  strip or timeline, in no figure) without a frame, title, caption, CSV or table when it is `role="img"` with a name that
+  states its values or finding, or `aria-hidden` beside visible text that gives the numbers; otherwise B18 (README).
 - Sample content no longer comes from one site. The test fixtures that hold the package to the sites' output keep their captured
   byte layout but carry example.com content, under names that say what each one tests (`sitemap-compact.xml`, `llms-prose.txt`,
   `feed-cdata.rss` and the rest); the two unused captures, with a real biography in one, are gone. The specimen's lists, table,
   code, details, pull quote and bar chart use neutral examples in place of lab samples and sequencing reads. Doc examples in `head`,
   `render-diagram`, `render-packs`, `xml` and the README name Example Co and an `example-` prefix. The render fixtures' media names use the
-  `example-` prefix too, so their golden hashes moved with the input; the renderer itself is unchanged, so `RENDER_VERSION` stays 9.
+  `example-` prefix too, so their golden hashes moved with the input.
+
+### Fixed
+
+- `prelum-chart-audit` reads a `url(#id)` fill as its pattern's base `<rect>` or its gradient's first stop before measuring
+  contrast. Enarratio's textured series (the dei CV's "Output by year") read as 1.00:1 false positives.
 
 ### Specimen
 
@@ -20,6 +57,11 @@
   (`run_worker_first`). The page looks the same: home page screenshots before and after are identical.
 - The specimen's home page writes its head with `headTags`, so it has a share card: `share-card.png` (1200x630) with
   `og:image:type`, `width`, `height` and `alt`, and the canonical, Open Graph and X tags that come with it.
+- `/specimen.js` calls `enhanceCharts()`, so the four charts redraw to a 320 px screen and take Enarratio's enhancement.
+- The specimen's prose paragraph and list rules leave a chart's own parts alone, so the summary no longer sits flush under the
+  chart's buttons and the legend is no longer indented. A chart's source and "Download CSV" links are semibold in the link
+  color with no underline, and its tick labels take proportional figures ("1,600", not "1 , 600", which the interface face's
+  tabular comma made).
 
 ## 0.24.0 (2026-10-31)
 

@@ -4,7 +4,7 @@
 // and in the light and dark color schemes.
 //
 //   prelum-chart-audit --origin https://example.com [--from https://preview.example.workers.dev] [--max-pages 1500]
-//               [--chart-kb 100] [--strict-frame]
+//               [--chart-kb 100] [--no-strict-frame] [--pages <file | comma list>] [--start <url>]...
 //
 // A chart is an Enarratio figure or piece (`.enarratio[data-enarratio]`), or the Capsomer frame it sits in (`.cap-chart`, Capsomer 0.53).
 // Each finding is a GitHub annotation titled with its checklist item, its proof the page's URL:
@@ -12,16 +12,23 @@
 //   B2   with scripts off there is no SVG, or the chart is drawn only by script
 //   B18  no visible title, finding sentence or caption, with scripts off
 //   B30  no data table, with scripts off
-//   B28  the SVG is not role="img" with an accessible name; the table has no th, a th without scope, or no caption
+//   B28  the SVG is not role="img" (or, enhanced, role="group" with aria-roledescription="chart") with an accessible name;
+//        the table has no th, a th without scope, or no caption
 //   B1   chart text under 4.5:1, or a mark or legend swatch under 3:1, against what is painted behind it (light and dark)
 //   B3   chart text drawn under 12 px at the default zoom
 //   B27  axe-core (WCAG 2.2 A and AA) reports a violation inside the chart (light and dark)
 //   D6   the chart's inline HTML is over --chart-kb
 //   F    the page loads another chart library, or draws an SVG chart outside Enarratio; the chart is not in the frame
 //   C1   no CSV link; C2 no source line
+//   C12  at 320 px wide (scripts on), the drawing overflows its frame sideways, or chart text is drawn under 12 px
 //
-// C1, C2 and the frame are warnings until Enarratio 0.4.0 (CSV and source) and Capsomer's frame reach the sites, so the check
-// does not fail every site on its first day; --strict-frame makes them errors. A page the browser could not open is titled G:
+// An inline primitive (Enarratio's `inline: true`: a bare sparkline, heat strip, progress ring, uptime strip or timeline in a stat
+// tile or a table row, outside any figure) needs no frame, title, caption, CSV or table. It passes when it is role="img" with a
+// name that states its values or finding, or when it is aria-hidden beside visible text that gives the numbers; else B18.
+//
+// C1, C2 and the frame are errors; --no-strict-frame makes them warnings (--strict-frame, the old opt-in, is still accepted).
+// --pages adds pages to the crawl (a file of URLs or paths, one per line, or a comma list), for charts no link reaches; each
+// --start URL is opened first in every browser context, so a demo route that sets a session cookie opens the pages behind it. A page the browser could not open is titled G:
 // an error when it answers 200 with an empty body (broken for every reader), a warning otherwise. Exits 0 with no errors, 1 with any, and 2 when it could not run: the site or its sitemap does not
 // answer, no page opened, or no browser started.
 //
@@ -30,7 +37,7 @@
 // the system Chrome, else the browser at CHART_AUDIT_CHROME.
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -63,10 +70,13 @@ const { values } = parseArgs({
     "max-pages": { type: "string", default: "1500" },
     "chart-kb": { type: "string", default: "100" },
     "strict-frame": { type: "boolean", default: false },
+    "no-strict-frame": { type: "boolean", default: false },
+    pages: { type: "string" },
+    start: { type: "string", multiple: true, default: [] },
   },
 });
 if (!values.origin) {
-  console.error("usage: prelum-chart-audit --origin https://example.com [--from https://preview.example] [--max-pages 1500] [--chart-kb 100] [--strict-frame]");
+  console.error("usage: prelum-chart-audit --origin https://example.com [--from https://preview.example] [--max-pages 1500] [--chart-kb 100] [--no-strict-frame] [--pages <file | a,b>] [--start <url>]...");
   process.exit(2);
 }
 const origin = values.origin.replace(/\/$/, "");
@@ -75,7 +85,18 @@ const served = (/** @type {string} */ url) => (from && url.startsWith(origin) ? 
 /** @type {typeof fetch} */
 const fetcher = (input, init) => fetch(served(typeof input === "string" ? input : input instanceof URL ? input.href : input.url), init);
 const budget = Number(values["chart-kb"]) * 1024;
-const frameSeverity = values["strict-frame"] ? "error" : "warning";
+const frameSeverity = values["no-strict-frame"] ? "warning" : "error";
+// The narrow pass: a phone in portrait, the width WCAG 1.4.10 (reflow) names.
+const NARROW = 320;
+const at = (/** @type {string} */ ref) => new URL(ref, `${origin}/`).href;
+/** @type {string[]} */
+const extra = values.pages
+  ? (existsSync(values.pages) ? readFileSync(values.pages, "utf8").split(/\r?\n/) : values.pages.split(","))
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#"))
+      .map(at)
+  : [];
+const starts = (values.start ?? []).map(at);
 
 const home = await fetcher(`${origin}/`).catch((error) => error);
 if (!(home instanceof Response) || home.status >= 500) {
@@ -83,7 +104,7 @@ if (!(home instanceof Response) || home.status >= 500) {
   process.exit(2);
 }
 const { pages, sitemap } = await crawlSite({ origin, fetch: fetcher, maxPages: 3000 });
-if (sitemap.length === 0) {
+if (sitemap.length === 0 && extra.length === 0) {
   console.error(`prelum-chart-audit: ${origin}/sitemap.xml lists no pages, or did not load, so there is nothing to crawl`);
   process.exit(2);
 }
@@ -100,6 +121,8 @@ const enqueue = (/** @type {string} */ url) => {
   paths.add(path);
   queue.push(parsed.href);
 };
+// The named pages first, so --max-pages never drops them.
+for (const url of extra) enqueue(url);
 for (const page of pages) {
   if (page.status === 200 && (page.html !== undefined || /html/i.test(String(/** @type {Record<string, string>} */ (page.headers ?? {})["content-type"] ?? "")))) enqueue(page.url);
   else if (page.status >= 300 && page.status < 400 && page.location) enqueue(new URL(page.location, page.url).href);
@@ -120,7 +143,23 @@ const contexts = {
   off: await newContext(browser, "light", false),
   light: await newContext(browser, "light", true),
   dark: await newContext(browser, "dark", true),
+  narrow: await newContext(browser, "light", true, NARROW),
 };
+// A start URL sets what the pages behind it need (a demo session cookie) in each context, before any page is read.
+for (const url of starts) {
+  for (const context of Object.values(contexts)) {
+    const page = await context.newPage();
+    try {
+      const response = await page.goto(served(url), { waitUntil: "load", timeout: 30_000 });
+      if (!response || response.status() >= 400) throw new Error(`answered ${response?.status() ?? "nothing"}`);
+    } catch (error) {
+      console.error(`prelum-chart-audit: the start URL ${url} did not open: ${String(error instanceof Error ? error.message : error).split("\n")[0]}`);
+      process.exit(2);
+    } finally {
+      await page.close();
+    }
+  }
+}
 
 /** @type {Finding[]} */
 const findings = [];
@@ -187,12 +226,19 @@ async function auditPage(url) {
   if (light.units.length === 0 && light.drawn.length === 0 && libraries.size === 0) return { charts: 0, findings: [] };
   const off = await visit(contexts.off, url, false);
   const dark = await visit(contexts.dark, url, true);
+  const narrow = await visit(contexts.narrow, url, true, true);
   /** @type {Finding[]} */
   const out = [];
   const add = (/** @type {"error" | "warning"} */ severity, /** @type {string} */ item, /** @type {string} */ detail) => out.push({ severity, item, url, detail });
 
   for (const unit of off.units) {
     const name = `${unit.label} (${unit.kind})`;
+    if (unit.inline) {
+      // An inline primitive carries its own words, or sits beside the words that carry its numbers.
+      if (!unit.inline.ok) add("error", "B18", `${name}: an inline primitive whose ${unit.inline.hidden ? "visible neighbor gives no numbers" : "name states no values or finding"}`);
+      for (const svg of unit.svgs) if (!svg.roleOk) add("error", "B28", `${name}: the SVG has role="${svg.role}", not role="img"`);
+      continue;
+    }
     if (!unit.drawing) add("error", "B2", `${name}: no SVG with scripts off`);
     if (!unit.title) add("error", "B18", `${name}: no visible title`);
     if (!unit.finding) add("error", "B18", `${name}: no finding sentence in the HTML`);
@@ -205,7 +251,7 @@ async function auditPage(url) {
       if (!unit.table.caption) add("error", "B28", `${name}: the data table has no caption`);
     }
     for (const svg of unit.svgs) {
-      if (svg.role !== "img") add("error", "B28", `${name}: the SVG has role="${svg.role}", not role="img"`);
+      if (!svg.roleOk) add("error", "B28", `${name}: the SVG has role="${svg.role}", not role="img" (or role="group" with aria-roledescription="chart" when enhanced)`);
       if (!svg.name) add("error", "B28", `${name}: the SVG has no accessible name`);
     }
     if (unit.bytes > budget) add("error", "D6", `${name}: ${(unit.bytes / 1024).toFixed(1)} kB of inline HTML, over the ${values["chart-kb"]} kB budget`);
@@ -228,6 +274,12 @@ async function auditPage(url) {
       for (const v of m.axe) add("error", "B27", `${name}, ${scheme}: axe ${v}`);
     }
   }
+  for (const unit of narrow.units) {
+    const name = `${unit.label} (${unit.kind}), ${NARROW} px`;
+    if (unit.overflow) add("error", "C12", `${name}: the drawing is ${unit.overflow.content} px wide in a ${unit.overflow.box} px frame, so it scrolls sideways`);
+    const small = unit.measured?.smallText;
+    if (small) add("error", "C12", `${name}: ${small.count} text under 12 px, smallest "${small.sample}" at ${small.px.toFixed(1)} px`);
+  }
   for (const library of libraries) add("error", "F", `loads ${library}; every chart is drawn by Enarratio`);
   for (const library of light.libraryCharts) add("error", "B2", `a ${library} chart is drawn in the browser, so with scripts off there is no chart, text or table`);
   for (const svg of new Set([...off.drawn, ...light.drawn])) add("error", "F", `an SVG chart drawn outside Enarratio: ${svg}`);
@@ -239,8 +291,9 @@ async function auditPage(url) {
  * @param {BrowserContext} context
  * @param {string} url
  * @param {boolean} measured
+ * @param {boolean} [narrow] the 320 px pass: overflow and text size, no axe
  */
-async function visit(context, url, measured) {
+async function visit(context, url, measured, narrow = false) {
   const page = await context.newPage();
   /** @type {string[]} */
   const scriptUrls = [];
@@ -261,9 +314,9 @@ async function visit(context, url, measured) {
     if (measured) {
       await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => undefined);
       await page.evaluate(settle);
-      await page.evaluate(axeSource);
+      if (!narrow) await page.evaluate(axeSource);
     }
-    const result = await page.evaluate(readCharts, { measured, libraries: LIBRARIES.map(([name, container, , global]) => /** @type {const} */ ([name, container, global])), tags: AXE_TAGS });
+    const result = await page.evaluate(readCharts, { measured, narrow, libraries: LIBRARIES.map(([name, container, , global]) => /** @type {const} */ ([name, container, global])), tags: AXE_TAGS });
     for (const url of scriptUrls) if (!scripts.has(url)) scripts.set(url, page.request.get(url).then((r) => r.text()).catch(() => ""));
     return { ...result, scripts: scriptUrls };
   } finally {
@@ -291,9 +344,9 @@ function settle() {
 /**
  * In the page: every chart, what the checks read from it, and with `measured` its painted contrast, text sizes and axe
  * violations; plus the chart libraries the page carries and the SVG charts it draws outside Enarratio.
- * @param {{ measured: boolean, libraries: Array<readonly [string, string | null, string | null]>, tags: string[] }} input
+ * @param {{ measured: boolean, narrow: boolean, libraries: Array<readonly [string, string | null, string | null]>, tags: string[] }} input
  */
-async function readCharts({ measured, libraries, tags }) {
+async function readCharts({ measured, narrow, libraries, tags }) {
   const text = (/** @type {Element | null | undefined} */ el) => (el?.textContent ?? "").replace(/\s+/g, " ").trim();
   const shown = (/** @type {Element} */ el) => {
     const box = el.getBoundingClientRect();
@@ -306,7 +359,21 @@ async function readCharts({ measured, libraries, tags }) {
     if (libraryContainers && el.closest(libraryContainers)) continue;
     roots.add(el.closest(".cap-chart") ?? el.closest("figure.enarratio") ?? el);
   }
-  const units = [...roots].filter((unit) => unit.getAttribute("data-state") !== "nodata");
+  // A frame showing no data, or Capsomer's refusal in place of a chart, carries no figure to check.
+  const units = [...roots].filter((unit) => !["nodata", "refused"].includes(unit.getAttribute("data-state") ?? ""));
+  const PRIMITIVES = ["sparkline", "heat-strip", "progress-ring", "uptime-strip", "timeline"];
+  // At the narrow width: a frame that scrolls (its content wider than its box), or a drawing wider than the chart around it.
+  const overflowOf = (/** @type {Element} */ unit) => {
+    for (const el of [unit, ...Array.from(unit.querySelectorAll(".enarratio-frame, .cap-chart-figure, .cap-chart-body, figure.enarratio"))]) {
+      if (el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 0) return { content: el.scrollWidth, box: el.clientWidth };
+    }
+    const outer = (unit.matches("svg") ? unit.parentElement : unit)?.getBoundingClientRect();
+    for (const svg of Array.from(unit.querySelectorAll("svg")).concat(unit.matches("svg") ? [/** @type {any} */ (unit)] : [])) {
+      const box = svg.getBoundingClientRect();
+      if (outer && box.width > 0 && box.right > outer.right + 1) return { content: Math.round(box.width), box: Math.round(outer.width) };
+    }
+    return null;
+  };
 
   // Paint on a one-pixel canvas, so any CSS color syntax and any alpha composite as the browser would.
   const ctx = /** @type {CanvasRenderingContext2D} */ (Object.assign(document.createElement("canvas"), { width: 1, height: 1 }).getContext("2d", { willReadFrequently: true }));
@@ -347,7 +414,8 @@ async function readCharts({ measured, libraries, tags }) {
       shapesOf.set(svg, Array.from(svg.querySelectorAll("rect, circle, ellipse, path, polygon")).flatMap((shape) => {
         const style = getComputedStyle(shape);
         const alpha = Number(style.fillOpacity) * Number(style.opacity);
-        return isColor(style.fill) && alpha > 0 ? [{ el: shape, box: shape.getBoundingClientRect(), fill: style.fill, alpha }] : [];
+        const fill = solid(style.fill);
+        return isColor(fill) && alpha > 0 ? [{ el: shape, box: shape.getBoundingClientRect(), fill, alpha }] : [];
       }));
     }
     const box = el.getBoundingClientRect();
@@ -390,6 +458,26 @@ async function readCharts({ measured, libraries, tags }) {
     return grids.get(raw);
   };
   const isColor = (/** @type {string} */ paint) => Boolean(paint) && !/^(none|transparent|url\()|^rgba\([^)]*,\s*0\)$/.test(paint);
+  // A fill of url(#id) is painted by a pattern or a gradient: read it as the pattern's base <rect> (Enarratio's texture fills
+  // draw the series color first, the texture over it) or the gradient's first stop, or it would read as nothing painted.
+  /** @type {(paint: string, depth?: number) => string} */
+  const solid = (paint, depth = 0) => {
+    const ref = /^url\(\s*["']?#([^"')]+)["']?\s*\)/.exec(paint ?? "");
+    if (!ref || depth > 3) return paint;
+    const target = document.getElementById(ref[1]);
+    if (!target) return paint;
+    const tag = target.tagName.toLowerCase();
+    if (tag === "pattern") {
+      /** @type {Element | undefined} */
+      const base = Array.from(target.querySelectorAll("rect")).find((rect) => isColor(solid(getComputedStyle(rect).fill, depth + 1)));
+      return base ? solid(getComputedStyle(base).fill, depth + 1) : paint;
+    }
+    if (tag === "lineargradient" || tag === "radialgradient") {
+      const stop = target.querySelector("stop");
+      return stop ? getComputedStyle(stop).stopColor : paint;
+    }
+    return paint;
+  };
   const describe = (/** @type {Element} */ el) => {
     const mark = el.closest("[data-enarratio-mark]")?.getAttribute("data-enarratio-mark");
     return `<${el.tagName.toLowerCase()}${mark ? ` in ${mark}` : ""}>`;
@@ -399,15 +487,40 @@ async function readCharts({ measured, libraries, tags }) {
     unit.setAttribute("data-chart-audit", String(index));
     const own = (/** @type {string} */ selector) => (unit.matches(selector) ? unit : unit.querySelector(selector));
     const svgs = [unit, ...Array.from(unit.querySelectorAll("svg"))].filter((el) => el.tagName.toLowerCase() === "svg" && !el.parentElement?.closest("svg") && el.getAttribute("aria-hidden") !== "true");
+    // Enarratio's `inline: true` primitive: the bare drawing, outside any figure or frame.
+    // Enarratio's `inline: true` primitives: bare drawings, in no Enarratio figure, alone or in a frame that is not a chart's (a
+    // Capsomer stat tile, a table cell). The unit is inline when every Enarratio drawing in it is one.
+    const pieces = [unit, ...Array.from(unit.querySelectorAll("[data-enarratio]"))].filter((el) => el.hasAttribute("data-enarratio"));
+    const bare = pieces.length > 0 && !unit.matches("figure.enarratio") && !unit.querySelector("figure.enarratio") && pieces.every((el) => PRIMITIVES.includes(el.getAttribute("data-enarratio") ?? ""));
+    /** @type {null | { hidden: boolean, ok: boolean }} */
+    let inline = null;
+    if (bare) {
+      const verdicts = pieces.map((piece) => {
+        if (piece.getAttribute("aria-hidden") === "true" || piece.closest("[aria-hidden='true']")) {
+          // The words beside it: the nearest ancestor (a stat tile, a table row) with visible text of its own.
+          let near = piece.parentElement;
+          const said = (/** @type {Element} */ el) => (/** @type {HTMLElement} */ (el).innerText ?? "").trim();
+          while (near && near !== document.body && !said(near)) near = near.parentElement;
+          return { hidden: true, ok: Boolean(near) && /\d/.test(said(/** @type {Element} */ (near))) };
+        }
+        const name = (piece.getAttribute("aria-label") ?? "").trim() || (piece.getAttribute("aria-labelledby") ?? "").split(/\s+/).map((/** @type {string} */ id) => text(document.getElementById(id))).join(" ").trim();
+        return { hidden: false, ok: piece.getAttribute("role") === "img" && (/\d/.test(name) || name.split(/\s+/).length >= 4) };
+      });
+      inline = verdicts.find((v) => !v.ok) ?? { hidden: verdicts.every((v) => v.hidden), ok: true };
+    }
     const drawing = own(".enarratio-frame svg, svg.enarratio, div.enarratio, .cap-chart-body svg") ?? svgs[0] ?? null;
     const title = text(own(".enarratio-title, .cap-chart-title"));
     const finding = own(".enarratio-finding, .enarratio-summary, .cap-chart-reason");
     const table = unit.querySelector("table");
     const names = svgs.map((svg) => {
       const labeledBy = (svg.getAttribute("aria-labelledby") ?? "").split(/\s+/).map((/** @type {string} */ id) => text(document.getElementById(id))).join(" ").trim();
-      return { role: svg.getAttribute("role") ?? "none", name: (svg.getAttribute("aria-label") ?? "").trim() || labeledBy || text(svg.querySelector(":scope > title")) };
+      const role = svg.getAttribute("role") ?? "none";
+      // WAI-ARIA APG: a static chart is an image; an enhanced one the reader can enter is a group described as a chart.
+      const roleOk = role === "img" || (role === "group" && (svg.getAttribute("aria-roledescription") ?? "").trim().toLowerCase() === "chart");
+      return { role, roleOk, name: (svg.getAttribute("aria-label") ?? "").trim() || labeledBy || text(svg.querySelector(":scope > title")) };
     });
-    const kind = [...new Set([unit, ...Array.from(unit.querySelectorAll("[data-enarratio]"))].map((el) => el.getAttribute("data-enarratio")).filter(Boolean))].join("+") || "frame";
+    const kindFirst = [...new Set([unit, ...Array.from(unit.querySelectorAll("[data-enarratio]"))].map((el) => el.getAttribute("data-enarratio")).filter(Boolean))].join("+") || "frame";
+    const kind = bare ? `inline ${kindFirst}` : kindFirst;
     const label = unit.id ? `#${unit.id}` : `"${(title || names[0]?.name || kind).slice(0, 60)}"`;
     const sourceText = Array.from(unit.querySelectorAll("p, figcaption, small, footer")).some((el) => /^(sources?|data)\s*:/i.test(text(el)));
     return {
@@ -428,6 +541,8 @@ async function readCharts({ measured, libraries, tags }) {
       csv: Boolean(unit.querySelector("a[href$='.csv' i], a[href*='.csv?' i], a[href^='data:text/csv' i], a[download][href*='csv' i], a.enarratio-csv, .enarratio-csv a")),
       source: Boolean(unit.querySelector(".enarratio-source, .cap-chart-source, [data-chart-source]")) || sourceText,
       frame: unit.matches(".cap-chart"),
+      inline,
+      overflow: narrow ? overflowOf(unit) : null,
       measured: /** @type {null | { lowText: any, lowMark: any, smallText: any, axe: string[] }} */ (null),
     };
   });
@@ -448,7 +563,7 @@ async function readCharts({ measured, libraries, tags }) {
         const style = getComputedStyle(el);
         const svg = el instanceof SVGGraphicsElement ? el : null;
         const ground = svg ? /** @type {Element} */ (svg.ownerSVGElement ?? svg) : el;
-        const color = svg ? style.fill : style.color;
+        const color = svg ? solid(style.fill) : style.color;
         if (isColor(color)) {
           const reading = contrast(el, color, opacity(el, unit) * (svg ? Number(style.fillOpacity) : 1), ground, true);
           if (reading.ratio < 4.5) lowText.push(reading);
@@ -469,8 +584,8 @@ async function readCharts({ measured, libraries, tags }) {
         const grid = gridOf(el);
         const paints = el instanceof SVGElement
           ? [
-              ...(el.tagName.toLowerCase() !== "line" ? [[style.fill, base * Number(style.fillOpacity)]] : []),
-              ...(Number.parseFloat(style.strokeWidth) >= 0.5 ? [[style.stroke, base * Number(style.strokeOpacity)]] : []),
+              ...(el.tagName.toLowerCase() !== "line" ? [[solid(style.fill), base * Number(style.fillOpacity)]] : []),
+              ...(Number.parseFloat(style.strokeWidth) >= 0.5 ? [[solid(style.stroke), base * Number(style.strokeOpacity)]] : []),
             ]
           : [[style.backgroundColor, base]];
         const readings = /** @type {Array<[string, number]>} */ (paints)
@@ -496,7 +611,7 @@ async function readCharts({ measured, libraries, tags }) {
     // @ts-ignore axe is the axe-core source the audit evaluated in the page
     const axe = /** @type {any} */ (window).axe;
     if (units.length > 0 && axe) {
-      const { violations } = await axe.run({ include: [["[data-chart-audit]"]] }, { runOnly: { type: "tag", values: tags }, resultTypes: ["violations"], elementRef: true });
+      const { violations } = narrow ? { violations: [] } : await axe.run({ include: [["[data-chart-audit]"]] }, { runOnly: { type: "tag", values: tags }, resultTypes: ["violations"], elementRef: true });
       for (const violation of violations) {
         /** @type {Map<number, number>} */
         const hits = new Map();
@@ -595,9 +710,9 @@ async function launch(chromium) {
   throw new Error(errors.join("; "));
 }
 
-/** @param {Browser} browser @param {"light" | "dark"} colorScheme @param {boolean} javaScriptEnabled */
-async function newContext(browser, colorScheme, javaScriptEnabled) {
+/** @param {Browser} browser @param {"light" | "dark"} colorScheme @param {boolean} javaScriptEnabled @param {number} [width] */
+async function newContext(browser, colorScheme, javaScriptEnabled, width = 1280) {
   // Headless Chrome's own user agent says HeadlessChrome, which some bot rules refuse; this one names the audit instead.
   const userAgent = `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${browser.version().split(".")[0]}.0.0.0 Safari/537.36 prelum-chart-audit`;
-  return browser.newContext({ colorScheme, javaScriptEnabled, reducedMotion: "reduce", bypassCSP: true, viewport: { width: 1280, height: 900 }, userAgent });
+  return browser.newContext({ colorScheme, javaScriptEnabled, reducedMotion: "reduce", bypassCSP: true, viewport: { width, height: 900 }, userAgent });
 }
