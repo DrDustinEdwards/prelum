@@ -175,13 +175,13 @@ test("the crawl follows a sitemap index and each redirect hop, checks unlisted l
 });
 
 test("a cut title fits the limit with its ellipsis and drops the site suffix, and the audit counts an entity as the one character it stands for", () => {
-  const long = "Dustin Edwards, Professor of Virology, Microbiology, and Science Writing at Tarleton";
+  const long = "Alex Rivera, Director of Research, Operations, and Communications at Example Co";
   const cut = truncateForSerp(long, SERP_TITLE_LIMIT);
   assert.ok(cut.length <= SERP_TITLE_LIMIT, cut);
-  assert.equal(cut, "Dustin Edwards, Professor of Virology, Microbiology, and...");
+  assert.equal(cut, "Alex Rivera, Director of Research, Operations, and...");
   assert.equal(searchTitle("Short", " | Sample"), "Short | Sample");
   assert.equal(searchTitle(long, " | Sample"), cut);
-  const title = `Dustin&#x27;s ${"x".repeat(SERP_TITLE_LIMIT - 9)}`;
+  const title = `Jordan&#x27;s ${"x".repeat(SERP_TITLE_LIMIT - 9)}`;
   const { findings } = auditPages([{ url: `${ORIGIN}/`, status: 200, html: `${page("/", title, "one")}<body></body></html>` }], { origin: ORIGIN });
   assert.equal(findings.filter((finding) => finding.check === "title-long").length, 0);
 });
@@ -209,7 +209,7 @@ test("the canonical drops a trailing slash but keeps the home page's and an opte
   };
   assert.equal(canonical({ path: "/about/" }), `${ORIGIN}/about`);
   assert.equal(canonical({ path: "/" }), `${ORIGIN}/`);
-  assert.equal(canonical({ path: "/feed/podcast/", keepTrailingSlash: true }), `${ORIGIN}/feed/podcast/`);
+  assert.equal(canonical({ path: "/feed/news/", keepTrailingSlash: true }), `${ORIGIN}/feed/news/`);
 });
 
 test("metaText decodes entities only after the tags are gone, so escaped markup stays text", () => {

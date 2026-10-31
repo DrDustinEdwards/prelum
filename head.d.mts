@@ -88,7 +88,7 @@ export function truncateForSerp(text: string, limit: number): string;
  * title cut at a word. Only the `<title>` is shortened; pass the whole title as `socialTitle` and keep it in the heading.
  *
  * @param {string} title
- * @param {string} suffix e.g. " | Foxing"
+ * @param {string} suffix e.g. " | Example Co"
  */
 export function searchTitle(title: string, suffix: string): string;
 /**
@@ -192,8 +192,8 @@ export type HeadInput = {
     feeds?: HeadFeed[] | undefined;
     /**
      * keep a trailing slash on `path` in the canonical and `og:url`; by default `/about/` is written `/about` (the home page
-     * stays `/`), so one page has one canonical URL. A route served only with its slash (a podcast feed's page at
-     * `/feed/podcast/`) keeps it.
+     * stays `/`), so one page has one canonical URL. A route served only with its slash (a feed's page at
+     * `/feed/news/`) keeps it.
      */
     keepTrailingSlash?: boolean | undefined;
 };
@@ -207,7 +207,7 @@ export type HeadFeed = {
      */
     href: string;
     /**
-     * e.g. "Germomics (RSS)"
+     * e.g. "Example Co (RSS)"
      */
     title?: string | undefined;
 };
@@ -225,7 +225,7 @@ export type SiteHead = {
      */
     image: HeadImage | string;
     /**
-     * what follows a page's title in `<title>`, e.g. " | Foxing"; `searchTitle` drops it where the two do not fit
+     * what follows a page's title in `<title>`, e.g. " | Example Co"; `searchTitle` drops it where the two do not fit
      */
     suffix?: string | undefined;
     /**

@@ -387,7 +387,7 @@ export async function buildSpecimen(outDir) {
   const body = `<main id="main" tabindex="-1">
 <header class="page-head">
 <h1>Prelum specimen</h1>
-<p class="page-lead">Every element Prelum renders from markdown, each source beside its output, in the configuration dustinedwards.info uses: the core, the editorial pack and code highlighting. The page follows your system's light or dark setting until you choose one with the button in the letterhead. The list is also at <a href="/elements.json">elements.json</a>, generated from the same sources.</p>
+<p class="page-lead">Every element Prelum renders from markdown, each source beside its output, in the configuration the network's sites use: the core, the editorial pack and code highlighting. The page follows your system's light or dark setting until you choose one with the button in the letterhead. The list is also at <a href="/elements.json">elements.json</a>, generated from the same sources.</p>
 <dl class="cap-form-boxes" data-variant="readings">
 <div class="cap-form-boxes-box"><dt>Release</dt><dd>${escapeXml(version)}</dd></div>
 <div class="cap-form-boxes-box"><dt>Render version</dt><dd>${escapeXml(RENDER_VERSION)}</dd></div>

@@ -2,8 +2,8 @@
 name: Lists
 summary: Ordered, unordered and nested lists.
 ---
-1. Collect the samples
-2. Extract the RNA
-   - keep it on ice
-   - work quickly
-3. Sequence it
+1. Plan the post
+2. Write the draft
+   - keep it short
+   - read it aloud
+3. Publish it

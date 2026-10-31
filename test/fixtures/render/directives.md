@@ -1,8 +1,8 @@
-:::figure{src="/media/dustin-edwards-photo-fedcba9876543210-800x600.webp" alt="A described photograph" credit="Photo: Someone"}
+:::figure{src="/media/example-photo-fedcba9876543210-800x600.webp" alt="A described photograph" credit="Photo: Someone"}
 A caption with *emphasis*.
 :::
 
-:::figure{src="/media/dustin-edwards-chart-light-0123456789abcdef-640x360.svg" dark="/media/dustin-edwards-chart-dark-0123456789abcdef-640x360.svg" alt="A drawing with a twin for the dark theme"}
+:::figure{src="/media/example-chart-light-0123456789abcdef-640x360.svg" dark="/media/example-chart-dark-0123456789abcdef-640x360.svg" alt="A drawing with a twin for the dark theme"}
 :::
 
 :::details{summary="Long methods"}
