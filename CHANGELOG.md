@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 0.27.0 (2026-10-31)
+
+Prelum's chart redraw now lives in Enarratio, shared with Capsomer (charts, area 10).
+
+### Changed
+
+- Enarratio 0.5.0. `render/chart-enhance` redraws through Enarratio's `enarratio/redraw` (the same code moved into Enarratio, which
+  Capsomer's chart-enhance shares); its behavior and `enhanceCharts` are unchanged, and the spec stays in `data-prelum-chart`.
+- `RENDER_VERSION` is 12: Enarratio 0.5 draws `:::chart` differently (the x title sits 1.5em under its ticks, scatter axes are
+  padded, y axes end on a tick, x ticks fit the width, tick labels use proportional figures, and Download SVG and PNG join
+  Download CSV). The allowlist drops `g font-variant`.
+
+### Specimen
+
+- Enarratio 0.5's Download SVG and PNG buttons take the chart link style.
+- The specimen's Capsomer (v0.55.0) still names Enarratio ^0.4.0 as an optional peer; `overrides` in package.json gives it 0.5.0
+  until a Capsomer release names ^0.5.0, then the override goes.
+
 ## 0.26.0 (2026-10-31)
 
 The Prelum side of the family's link contract (Dustin, 2026-10-31): every link a body renders says what kind it is, for Capsomer to
