@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Specimen
+
+- The specimen's home page writes its head with `headTags`, so it has a share card: `share-card.png` (1200x630) with
+  `og:image:type`, `width`, `height` and `alt`, and the canonical, Open Graph and X tags that come with it.
+
 ## 0.24.0 (2026-10-31)
 
 One frontmatter reader and writer for every site and package (writing and rendering, area 4).
