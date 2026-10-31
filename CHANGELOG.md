@@ -7,6 +7,31 @@
 - devkit v0.20.3. CI now runs devkit's workflow audit (actionlint and zizmor) and its dependency audit (OSV-Scanner), and
   `.no-bloat.json` records the test and comment counts.
 
+## 0.21.0 (2026-10-31)
+
+Charts move to Enarratio 0.4 (the charts checklist, area 10).
+
+### Changed
+
+- `RENDER_VERSION` is 8. `:::chart` draws with Enarratio 0.4, so every chart's figure now carries its title and the `alt` as a visible
+  finding in the figure's head (`figcaption.enarratio-head`), a screen reader overview, a summary computed from the data, the source
+  line with a "Download CSV" link, and "Show data". The author's caption is now `div.enarratio-caption` under the drawing (was a
+  `figcaption` above the table). Enarratio is an optional peer at `^0.4.0` (was `^0.3.1`).
+- The one data: URL the output may carry is a chart's CSV download: `a[download]` with a percent-encoded `data:text/csv;charset=utf-8,`
+  href, allowed by `isCsvDownload` (new in `render-url`) in the render and in `assertSafe`. Markdown cannot write `download`, so an
+  author's data: link is still refused (a new hostile input proves it).
+- `prelum-chart-audit` reads Capsomer 0.53's frame (`.cap-chart`, a layout around Enarratio's figure); `figure.cap-chart` is now only
+  the no-data state.
+- The specimen moves to Capsomer v0.53.0, and devkit to v0.20.1 and site-runtime to v0.43.0, the newest releases.
+
+### Added
+
+- `:::chart` attributes: `subtitle`, `notes`, `source` with `source-href`, `byline`, `x-unit` and `y-unit`. A `source-href` without a
+  `source` is refused.
+- What Enarratio reports about a chart a reader would struggle with (no title, an unlabeled axis, text above grade 9, too many series)
+  is a render warning (`warnings`, with the chart's title), for the editor to show. It does not refuse the post.
+- A pack's `setup` gets `warn`, to add to the render's warnings.
+
 ## 0.20.0 (2026-10-31)
 
 ### Added

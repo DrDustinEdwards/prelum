@@ -9,7 +9,7 @@ import { parseFragment } from "parse5";
 
 import { DEFAULT_ALLOWLIST } from "./render-allowlist.mjs";
 import { ContentError } from "./render-error.mjs";
-import { isAllowedUrl } from "./render-url.mjs";
+import { isAllowedUrl, isCsvDownload } from "./render-url.mjs";
 
 /** Attributes whose value is a URL, whatever the element. */
 const URL_ATTRIBUTES = new Set([
@@ -113,7 +113,8 @@ export function scanHtml(html, allowlist = DEFAULT_ALLOWLIST) {
         violations.push({ kind: "attribute", tag, attribute: name });
         continue;
       }
-      if (URL_ATTRIBUTES.has(name.toLowerCase()) && !isAllowedUrl(value)) {
+      const csv = tag === "a" && name === "href" && node.attrs.some((attr) => attr.name === "download") && isCsvDownload(value);
+      if (URL_ATTRIBUTES.has(name.toLowerCase()) && !isAllowedUrl(value) && !csv) {
         violations.push({ kind: "url", tag, attribute: name, detail: value.slice(0, 80) });
       }
       if (name.toLowerCase() === "srcset") {
