@@ -1,6 +1,6 @@
 {
   "name": "@drdustinedwards/site-helpers",
-  "version": "0.22.0",
+  "version": "0.22.1",
   "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt and llms-full.txt, Markdown copy, frontmatter, head tag, JSON-LD, robots.txt, IndexNow, site audit and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, and the markdown pipeline they all render with, once.",
   "type": "module",
   "license": "MIT",
@@ -239,7 +239,7 @@
     }
   },
   "devDependencies": {
-    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.20.5",
+    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.20.7",
     "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.46.0",
     "@fontsource-variable/source-serif-4": "5.3.1",
     "@mermaid-js/mermaid-cli": "11.17.0",
