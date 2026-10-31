@@ -13,8 +13,9 @@ Charts move to Enarratio 0.4 (the charts checklist, area 10).
 - The one data: URL the output may carry is a chart's CSV download: `a[download]` with a percent-encoded `data:text/csv;charset=utf-8,`
   href, allowed by `isCsvDownload` (new in `render-url`) in the render and in `assertSafe`. Markdown cannot write `download`, so an
   author's data: link is still refused (a new hostile input proves it).
-- `prelum-chart-audit` reads Capsomer 0.52's frame (`.cap-chart`, a layout around Enarratio's figure); `figure.cap-chart` is now only
+- `prelum-chart-audit` reads Capsomer 0.53's frame (`.cap-chart`, a layout around Enarratio's figure); `figure.cap-chart` is now only
   the no-data state.
+- The specimen moves to Capsomer v0.53.0, and devkit to v0.20.1 and site-runtime to v0.43.0, the newest releases.
 
 ### Added
 

@@ -6,7 +6,7 @@
 //   prelum-chart-audit --origin https://example.com [--from https://preview.example.workers.dev] [--max-pages 1500]
 //               [--chart-kb 100] [--strict-frame]
 //
-// A chart is an Enarratio figure or piece (`.enarratio[data-enarratio]`), or the Capsomer frame it sits in (`.cap-chart`, Capsomer 0.52).
+// A chart is an Enarratio figure or piece (`.enarratio[data-enarratio]`), or the Capsomer frame it sits in (`.cap-chart`, Capsomer 0.53).
 // Each finding is a GitHub annotation titled with its checklist item, its proof the page's URL:
 //
 //   B2   with scripts off there is no SVG, or the chart is drawn only by script
