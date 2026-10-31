@@ -7,6 +7,7 @@ import test from "node:test";
 import { DEFAULT_MAX_BYTES, DEFAULT_MAX_DEPTH, RENDER_VERSION, ContentError, render } from "../render.mjs";
 import { htmlHasMath } from "../render-math.mjs";
 import { render as renderNoMath } from "../render-nomath.mjs";
+import { linkIconResponse, lookupLinkIcon } from "../render-link-icons.mjs";
 import { isAllowedUrl } from "../render-url.mjs";
 import { editorialPack } from "../render-packs.mjs";
 import { fixture, highlight, media, resolveImage, siteOptions } from "./render-config.mjs";
@@ -66,7 +67,7 @@ test("render is deterministic: the same input is the same bytes, run after run",
 test("render needs no site: the core renders without media, packs or highlighting", async () => {
   const { html, mediaRefs } = await core(fixture("prose"));
   assert.match(html, /<h2 id="second-heading">/);
-  assert.match(html, /<div class="table-scroll" tabindex="0"><table>/);
+  assert.match(html, /<div class="table-scroll" tabindex="0" role="region" aria-label="Table: [^"]+"><table>/);
   assert.match(html, /<img src="\/media\/example-sample-0123456789abcdef-640x480.png"/);
   assert.doesNotMatch(html, /srcset=/);
   assert.deepEqual(mediaRefs, []);
@@ -137,7 +138,7 @@ test("prose that looks like a directive stays prose; an unknown directive is ref
   const { html } = await core("Meet at 12:30, ratio 4.5:1, see localhost:8080.");
   assert.equal(html, "<p>Meet at 12:30, ratio 4.5:1, see localhost:8080.</p>");
 
-  await refuses(core("one\n\n:::figrue{src=\"/a.png\" alt=\"x\"}\n:::"), /unknown directive ":::figrue" on line 3\. Known directives: details, figure, abbr, /);
+  await refuses(core("one\n\n:::figrue{src=\"/a.png\" alt=\"x\"}\n:::"), /unknown directive ":::figrue" on line 3\. Known directives: details, figure, lang, xref, abbr, /);
   await refuses(core("see :alert here"), /unknown directive ":alert" on line 1/);
   await refuses(core(":::chart{type=\"bar\"}\n:::"), /unknown directive ":::chart"/);
 });
@@ -237,10 +238,10 @@ test("every way a page can cite media is collected, figure directives included",
 
 test("code is plain without a highlighter, and highlighted, labeled and line-marked with one", async () => {
   const plain = await core("```js\nlet a\n```");
-  assert.equal(plain.html, '<pre><code class="language-js">let a\n</code></pre>');
+  assert.equal(plain.html, '<pre tabindex="0" role="region" aria-label="Code: JavaScript"><code class="language-js">let a\n</code></pre>');
 
   const { html } = await core(fixture("code"), { highlight });
-  assert.match(html, /<pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast" style="[^"]*" tabindex="0" data-lang="js">/);
+  assert.match(html, /<pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast" style="[^"]*" data-lang="js" tabindex="0" role="region" aria-label="Code: JavaScript">/);
   assert.match(html, /data-lang="bash"/);
   assert.match(html, /<span class="line highlighted">/);
   assert.match(html, /data-lang="text"/);
@@ -385,7 +386,7 @@ test("the blocks every site gets: callouts, media, embeds, galleries, links, FAQ
   assert.match(html, /<figcaption>Two pictures side by side\.<\/figcaption>/);
   assert.match(html, /<p class="button-row"><a href="\/join" class="button">Join the list<\/a><\/p>/);
   assert.match(html, /<span class="bookmark-host">ghost\.org<\/span>/);
-  assert.match(html, /<figure class="code-frame"><figcaption class="code-title">example\.js<\/figcaption><pre/);
+  assert.match(html, /<figure class="code-frame"><figcaption class="code-title">example\.js<\/figcaption><pre[^>]* aria-label="Code: example\.js">/);
   assert.deepEqual(result.faq, [
     { question: "What is this?", answer: "A fixture." },
     { question: "Does an answer run on?", answer: "It runs on over the next line." },
@@ -414,4 +415,78 @@ test("the blocks every site gets: callouts, media, embeds, galleries, links, FAQ
   await refuses(core(":::gallery\n![one](/a.png)\n:::"), /holds 1 images; a gallery takes 2 to 9/);
   await refuses(core(':::figure{src="/a.png" alt="x" width=huge}\n:::'), /use width=wide or width=full/);
   await refuses(core(":abbr[HTML]"), /requires a title attribute/);
+});
+
+test("a link's kind is read only from what marks it: a path's extension, the whole text, a paragraph of its own", async () => {
+  const { html } = await core(
+    "[q](https://example.com/get?format=pdf) [tld](https://example.zip) [own](https://www.dustinedwards.info/a) " +
+      "[mail](mailto:a@example.com?subject=Hi) [r](/report.PDF)\n\n- [a](/one)\n\n- [b](/two)\n\n[![x](/a.png)](/b)",
+    { links: { origin: "https://dustinedwards.info" } },
+  );
+  // Away, not file: the extension is the query's, and .zip is the host's.
+  assert.match(html, /<a href="https:\/\/example.com\/get\?format=pdf" data-link="away" rel="external">/);
+  assert.match(html, /<a href="https:\/\/example.zip" data-link="away" rel="external">/);
+  assert.match(html, /<a href="https:\/\/www.dustinedwards.info\/a">own<\/a>/);
+  assert.match(html, /data-link="email">mail</);
+  assert.match(html, /data-link="file">r<\/a> <span class="cap-link-meta">PDF<\/span>/);
+  // A loose list's paragraphs and a linked picture are not "next".
+  assert.doesNotMatch(html, /data-link="next"/);
+  // Without the site's origin nothing is called away: its own absolute links would be.
+  assert.doesNotMatch((await core("See [x](https://example.com/).")).html, /data-link/);
+  await refuses(core(":lang[[x](/es/)]{hreflang=not_a_tag}"), /:lang on line 1 of the body needs a language tag/);
+  await refuses(core(":xref[the headings]"), /:xref on line 1 of the body holds exactly one link/);
+});
+
+// The away links' icon step. The network is a fake; nothing here reaches another site.
+const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+/** @param {Record<string, string | Uint8Array>} routes */
+function fakeNetwork(routes) {
+  /** @type {string[]} */
+  const asked = [];
+  /** @type {typeof globalThis.fetch} */
+  const fetch = async (input) => {
+    const url = String(input);
+    asked.push(url);
+    const body = routes[url];
+    return body === undefined ? new Response("no", { status: 404 }) : new Response(/** @type {BodyInit} */ (body));
+  };
+  /** @type {Map<string, { bytes: Uint8Array, type: string }>} */
+  const kept = new Map();
+  const store = {
+    /** @param {string} host */
+    get: async (host) => kept.get(host) ?? null,
+    /** @param {string} host @param {Uint8Array} bytes @param {string} type */
+    put: async (host, bytes, type) => void kept.set(host, { bytes, type }),
+  };
+  return { fetch, store, asked, kept };
+}
+
+test("an icon is the host's own, fetched once, and anything the step cannot vouch for is refused and remembered as none", async () => {
+  const net = fakeNetwork({
+    "https://a.example/": '<head><link href="/i.png?v=1&amp;x=2" rel="shortcut icon"></head>',
+    "https://a.example/i.png?v=1&x=2": PNG,
+    "https://b.example/favicon.ico": '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+    "https://c.example/favicon.ico": Uint8Array.from({ length: 70 * 1024 }, (_, i) => PNG[i] ?? 0),
+  });
+  assert.equal(await lookupLinkIcon("a.example", net), "image/png");
+  assert.equal(await lookupLinkIcon("a.example", net), "image/png");
+  assert.equal(net.asked.filter((url) => url.startsWith("https://a.example/")).length, 3, "favicon.ico, the page, its icon; then the store");
+  // A script in an SVG, and an icon over the cap: refused, and stored empty so the next publish does not ask again.
+  assert.equal(await lookupLinkIcon("b.example", net), null);
+  assert.equal(await lookupLinkIcon("c.example", net), null);
+  assert.equal(net.kept.get("b.example")?.type, "");
+  // Never a private address.
+  assert.equal(await lookupLinkIcon("localhost", net), null);
+  assert.equal(await lookupLinkIcon("10.0.0.1", net), null);
+  assert.ok(!net.asked.some((url) => /localhost|10\.0\.0\.1/.test(url)));
+
+  const served = /** @type {Response} */ (await linkIconResponse("/link-icons/a.example.png", net.store));
+  assert.equal(served.status, 200);
+  assert.equal(served.headers.get("Content-Type"), "image/png");
+  assert.equal(served.headers.get("X-Content-Type-Options"), "nosniff");
+  assert.match(String(served.headers.get("Cache-Control")), /immutable/);
+  assert.equal((await linkIconResponse("/link-icons/a.example.svg", net.store))?.status, 404);
+  assert.equal((await linkIconResponse("/link-icons/b.example.svg", net.store))?.status, 404);
+  assert.equal(await linkIconResponse("/writing/a", net.store), null);
 });

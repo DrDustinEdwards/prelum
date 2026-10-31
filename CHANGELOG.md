@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## 0.26.0 (2026-10-31)
+
+The Prelum side of the family's link contract (Dustin, 2026-10-31): every link a body renders says what kind it is, for Capsomer to
+style from the markup.
+
+
+
+### Changed
+
+- `RENDER_VERSION` is 11: links carry the contract above, and the allowlist gains `a data-link`, `a data-site`, `a hreflang`,
+  `a rel` and `span lang`.
+- A box that scrolls sideways is a named region a keyboard can focus: `div.table-scroll` gains `role="region"` and
+  `aria-label="Table: <first four headers>"` (or `Table`), and every `pre`, highlighted or not, gains `tabindex="0"`,
+  `role="region"` and `aria-label` from its frame title (`Code: app.ts`), else its language (`Code: TypeScript`), else `Code`. The
+  allowlist gains `pre role` and `pre aria-label`.
+- The URL policy allows `tel:`, for phone links. A dialer runs nothing.
+
+### Specimen
+
+- The Links element shows every kind, with Capsomer's family list and MDN's icon, fetched once and committed in
+  `specimen/link-icons/` (an empty file is a host with none, so builds and tests reach no other site).
+
 ## 0.25.0 (2026-10-31)
 
 Charts that fit a phone, and a chart check that sees what it missed (charts, area 10).
