@@ -6,7 +6,7 @@
 //   prelum-chart-audit --origin https://example.com [--from https://preview.example.workers.dev] [--max-pages 1500]
 //               [--chart-kb 100] [--strict-frame]
 //
-// A chart is an Enarratio figure or piece (`.enarratio[data-enarratio]`), or the Capsomer frame it sits in (`figure.cap-chart`).
+// A chart is an Enarratio figure or piece (`.enarratio[data-enarratio]`), or the Capsomer frame it sits in (`.cap-chart`, Capsomer 0.52).
 // Each finding is a GitHub annotation titled with its checklist item, its proof the page's URL:
 //
 //   B2   with scripts off there is no SVG, or the chart is drawn only by script
@@ -211,7 +211,7 @@ async function auditPage(url) {
     if (unit.bytes > budget) add("error", "D6", `${name}: ${(unit.bytes / 1024).toFixed(1)} kB of inline HTML, over the ${values["chart-kb"]} kB budget`);
     if (!unit.csv) add(frameSeverity, "C1", `${name}: no CSV link`);
     if (!unit.source) add(frameSeverity, "C2", `${name}: no source line`);
-    if (!unit.frame) add(frameSeverity, "F", `${name}: not in Capsomer's chart frame (figure.cap-chart)`);
+    if (!unit.frame) add(frameSeverity, "F", `${name}: not in Capsomer's chart frame (.cap-chart)`);
   }
   const offLabels = new Set(off.units.map((unit) => unit.label));
   for (const unit of light.units) {
@@ -302,9 +302,9 @@ async function readCharts({ measured, libraries, tags }) {
   const libraryContainers = libraries.map(([, container]) => container).filter(Boolean).join(", ");
 
   const roots = new Set();
-  for (const el of Array.from(document.querySelectorAll(".enarratio[data-enarratio], figure.cap-chart"))) {
+  for (const el of Array.from(document.querySelectorAll(".enarratio[data-enarratio], .cap-chart"))) {
     if (libraryContainers && el.closest(libraryContainers)) continue;
-    roots.add(el.closest("figure.cap-chart") ?? el.closest("figure.enarratio") ?? el);
+    roots.add(el.closest(".cap-chart") ?? el.closest("figure.enarratio") ?? el);
   }
   const units = [...roots].filter((unit) => unit.getAttribute("data-state") !== "nodata");
 
@@ -401,7 +401,7 @@ async function readCharts({ measured, libraries, tags }) {
     const svgs = [unit, ...Array.from(unit.querySelectorAll("svg"))].filter((el) => el.tagName.toLowerCase() === "svg" && !el.parentElement?.closest("svg") && el.getAttribute("aria-hidden") !== "true");
     const drawing = own(".enarratio-frame svg, svg.enarratio, div.enarratio, .cap-chart-body svg") ?? svgs[0] ?? null;
     const title = text(own(".enarratio-title, .cap-chart-title"));
-    const finding = own(".cap-chart-summary, .enarratio-summary, .enarratio-finding");
+    const finding = own(".enarratio-finding, .enarratio-summary, .cap-chart-reason");
     const table = unit.querySelector("table");
     const names = svgs.map((svg) => {
       const labeledBy = (svg.getAttribute("aria-labelledby") ?? "").split(/\s+/).map((/** @type {string} */ id) => text(document.getElementById(id))).join(" ").trim();
@@ -427,7 +427,7 @@ async function readCharts({ measured, libraries, tags }) {
       bytes: new Blob([unit.outerHTML]).size,
       csv: Boolean(unit.querySelector("a[href$='.csv' i], a[href*='.csv?' i], a[href^='data:text/csv' i], a[download][href*='csv' i], a.enarratio-csv, .enarratio-csv a")),
       source: Boolean(unit.querySelector(".enarratio-source, .cap-chart-source, [data-chart-source]")) || sourceText,
-      frame: unit.matches("figure.cap-chart"),
+      frame: unit.matches(".cap-chart"),
       measured: /** @type {null | { lowText: any, lowMark: any, smallText: any, axe: string[] }} */ (null),
     };
   });

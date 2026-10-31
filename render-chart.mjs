@@ -1,6 +1,6 @@
 // Validation and CSV parsing for the :::chart directive. The drawing is Enarratio's (the site's charts
-// package, as on /cv): its theme supplies the colors, its figure carries the accessible name and the
-// data table. the site's stylesheet is that theme.
+// package, as on /cv): its theme supplies the colors, and its figure carries the title, the finding,
+// the summary, the source, the CSV link and the data table. The site's stylesheet is that theme.
 
 import { areaChart, barChart, lineChart, scatterPlot } from "enarratio/plot";
 import { fromHtml } from "hast-util-from-html";
@@ -121,20 +121,46 @@ function resolveSeries(attrs, columns) {
 }
 
 /**
+ * The figure's words beside the drawing, from the directive's attributes (Enarratio 0.4's options):
+ * a subtitle, notes, a source (linked with `source-href`), a byline and axis units.
+ *
+ * @param {Record<string, string>} attrs
+ */
+function figureWords(attrs) {
+  const text = (/** @type {string} */ name) => (attrs[name] ?? "").trim();
+  const source = text("source");
+  const href = text("source-href");
+  if (href && !source) throw new Error(":::chart source-href needs a source naming where the data come from");
+  return {
+    ...(text("subtitle") ? { subtitle: text("subtitle") } : {}),
+    ...(text("notes") ? { notes: text("notes") } : {}),
+    ...(source ? { source: href ? { name: source, href } : source } : {}),
+    ...(text("byline") ? { byline: text("byline") } : {}),
+    ...(text("x-unit") ? { xUnit: text("x-unit") } : {}),
+    ...(text("y-unit") ? { yUnit: text("y-unit") } : {}),
+  };
+}
+
+/**
  * Draws the model with Enarratio. The data is one row per x and series, keyed by "x", "series" and
  * "value"; the author's column names go back on as the axis labels. Enarratio throws for anything it
  * cannot draw (too many series, a log of zero), and that reaches the build as a ContentError.
  *
  * @param {{ type: string, alt: string, title: string, x: string, yColumns: string[], labels: string[],
- *   points: Array<{ x: string | number, series: string, value: number }>, xIsNumeric: boolean }} model
+ *   points: Array<{ x: string | number, series: string, value: number }>, xIsNumeric: boolean,
+ *   words: Record<string, unknown>, issues: string[] }} model
  * @returns {string} the figure's HTML
  */
 function drawChart(model) {
-  const { type, alt, title, x, yColumns, labels, points, xIsNumeric } = model;
+  const { type, alt, title, x, yColumns, labels, points, xIsNumeric, words, issues } = model;
   const multi = labels.length > 1;
   const common = {
     alt,
     ...(title ? { title } : {}),
+    ...words,
+    // A reader-facing problem (no title, text above grade 9, too many series) is a render warning
+    // the editor shows, not a refused post.
+    onIssue: (/** @type {{ message: string }} */ issue) => issues.push(issue.message),
     width: DEFAULT_WIDTH,
     height: DEFAULT_HEIGHT,
     xLabel: x,
@@ -224,14 +250,18 @@ export function buildChartModel(attrs, csv) {
   });
 
   const title = (attrs.title ?? "").trim();
-  const html = drawChart({ type, alt, title, x, yColumns, labels, points, xIsNumeric });
-  return { type, alt, title, columns, rows, html };
+  /** @type {string[]} */
+  const issues = [];
+  const words = figureWords(attrs);
+  const html = drawChart({ type, alt, title, x, yColumns, labels, points, xIsNumeric, words, issues });
+  return { type, alt, title, columns, rows, html, issues };
 }
 
 /**
  * The figure Enarratio drew, as hast. Parsed rather than allowDangerousHtml, which would open raw HTML
- * in every post. The author's caption replaces Enarratio's own and sits where it does, above the
- * data table; the outer figure takes Enarratio's classes and data attributes, so there is one figure.
+ * in every post. Enarratio's figcaption is the head (title and finding). The author's caption is the
+ * caption under the chart, where Enarratio puts its own; the outer figure takes Enarratio's classes
+ * and data attributes, so there is one figure.
  *
  * @param {ReturnType<typeof buildChartModel>} model
  * @param {any[]} captionChildren hast for an author-written caption, may be empty
@@ -246,19 +276,23 @@ export function renderChartHast(model, captionChildren, figure) {
   const classes = [...(figure.properties.className ?? []), ...(drawn.properties.className ?? [])];
   figure.properties = { ...drawn.properties, className: classes };
 
-  const children = drawn.children.filter(
-    (/** @type {any} */ n) => !(n.type === "element" && n.tagName === "figcaption"),
-  );
+  const isCaption = (/** @type {any} */ n) =>
+    n.type === "element" && n.tagName === "p" && (n.properties.className ?? []).includes("enarratio-caption");
+  const children = drawn.children.filter((/** @type {any} */ n) => !isCaption(n));
   if (captionChildren.length > 0) {
-    const at = children.findIndex((/** @type {any} */ n) => n.type === "element" && n.tagName === "details");
+    // Under the drawing, before the summary, notes, source and data, as Enarratio places a caption.
+    const after = children.findIndex(
+      (/** @type {any} */ n) => n.type === "element" && (n.properties.className ?? []).some((/** @type {string} */ name) => name === "enarratio-frame"),
+    );
+    // A div, not Enarratio's p: the author's caption is markdown and may hold paragraphs.
     /** @type {import("hast").Element} */
     const caption = {
       type: "element",
-      tagName: "figcaption",
+      tagName: "div",
       properties: { className: ["enarratio-caption"] },
       children: captionChildren,
     };
-    children.splice(at === -1 ? children.length : at, 0, caption);
+    children.splice(after === -1 ? children.length : after + 1, 0, caption);
   }
   return children;
 }

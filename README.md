@@ -95,7 +95,7 @@ const { findings, summary } = auditPages(pages, { origin, sitemap });
 `prelum-chart-audit --origin https://example.com [--from <preview origin>] [--chart-kb 100] [--strict-frame]` is the live
 check for charts (area 10 of the completeness scoreboard). It crawls with `crawlSite`, then opens every page (and the
 same-origin iframes they show) in headless Chromium: with scripts off, and with scripts on in the light and dark schemes. For
-every Enarratio chart, or the Capsomer frame (`figure.cap-chart`) it sits in, it reports each miss as a GitHub annotation titled
+every Enarratio chart, or the Capsomer frame (`.cap-chart`, Capsomer 0.52) it sits in, it reports each miss as a GitHub annotation titled
 with its checklist item and the page as proof: no SVG, title, finding sentence, caption or data table with scripts off (B2, B18,
 B30); an SVG without `role="img"` and a name, or a table without scoped `th` and a caption (B28); text under 4.5:1 or a mark or
 legend swatch under 3:1 as painted, custom properties resolved, in either scheme (B1); text under 12 px (B3); an axe-core
