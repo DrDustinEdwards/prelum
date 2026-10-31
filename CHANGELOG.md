@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.23.0 (2026-10-31)
+
+Post charts in Capsomer's chart frame (charts, area 10).
 
 ### Changed
 
