@@ -19,6 +19,8 @@ Post charts in Capsomer's chart frame (charts, area 10).
   does not change.
 - The specimen serves the shared icon set (`prelum-icons` from its P mark on #4f2d7f, `iconLinks()` and `webManifest()`),
   with `manifest-src 'self'` in its page policy; `favicon.svg` is gone.
+- The specimen's 404 page names its charset (`text/html; charset=utf-8`, site-runtime `applyHeaderSet`): it answers any
+  path, so no `_headers` rule could.
 
 ## 0.22.1 (2026-10-31)
 
