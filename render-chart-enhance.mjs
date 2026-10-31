@@ -7,7 +7,8 @@
 //
 // The redraw reads the figure's `data-prelum-chart`: bar, line and area are drawn again by `enarratio/lite`, which draws the same
 // SVG as the server's `enarratio/plot` at any width; a dot chart (only `enarratio/plot` draws one, too heavy for a page) swaps in the
-// 240 px drawing the server wrote beside it once the frame is narrower than 30rem.
+// 240 px drawing the server wrote beside it once the frame is narrower than 30rem. A line chart narrower than 400 px is drawn
+// without its end labels, so its lines fill the frame; the legend names the series.
 
 import { enhance } from "enarratio/enhance";
 import { areaChart, barChart, lineChart } from "enarratio/lite";
@@ -17,6 +18,9 @@ const DRAW = { bar: barChart, line: lineChart, area: areaChart };
 const WIDE_REM = 30;
 // Narrower than this, a redraw would crowd its own axes; the frame scrolls from here down.
 const MIN_WIDTH = 200;
+// Narrower than this, a line chart drops its end labels: they keep 96 px on the right whatever the width, so at a phone's
+// width the lines took under half the frame. The legend above the drawing still names each series.
+const LABELS_MIN_WIDTH = 400;
 
 /** @type {WeakSet<Element>} */
 const started = new WeakSet();
@@ -105,7 +109,8 @@ function drawing(spec, width, original) {
   }
   const draw = DRAW[/** @type {keyof typeof DRAW} */ (spec.chart)];
   if (!draw || width >= full || width < MIN_WIDTH) return { markup: original, key: "original" };
-  const html = draw({ ...spec.options, width, onIssue: () => {} });
+  const labels = spec.options?.directLabels && width < LABELS_MIN_WIDTH ? { directLabels: false } : {};
+  const html = draw({ ...spec.options, ...labels, width, onIssue: () => {} });
   const start = html.indexOf('<div class="enarratio-frame');
   const end = html.indexOf("</svg></div>", start);
   if (start === -1 || end === -1) return { markup: original, key: "original" };

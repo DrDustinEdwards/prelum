@@ -11,7 +11,9 @@ Charts that fit a phone, and a chart check that sees what it missed (charts, are
 - `render/chart-enhance` (browser): `enhanceCharts(root?, options?)` adds Enarratio's enhancement layer (`enarratio/enhance`:
   keyboard walk, focus announcements, tooltips, legend filters, a sortable table) to every `:::chart`, and redraws each to its
   frame's width when that is narrower than the 700 px drawing, so a post's chart fits a 320 px phone instead of scrolling
-  sideways. Bar, line and area are drawn again by `enarratio/lite`; a dot chart swaps in a 240 px drawing the server wrote. A
+  sideways. Bar, line and area are drawn again by `enarratio/lite` (a line chart under 400 px without its end labels, which
+  keep 96 px whatever the width, so its lines fill the frame; the legend names the series); a dot chart swaps in a 240 px
+  drawing the server wrote. A
   site adds one import to the script it bundles (README, "Charts in posts"); it is same-origin with no inline script, so a hash
   CSP holds. Without it the chart reads as before.
 - `:::chart{src="..."}` (E3): the CSV may be cited by URL or media path, read at render time by the site's
@@ -45,6 +47,10 @@ Charts that fit a phone, and a chart check that sees what it missed (charts, are
 - The specimen's home page writes its head with `headTags`, so it has a share card: `share-card.png` (1200x630) with
   `og:image:type`, `width`, `height` and `alt`, and the canonical, Open Graph and X tags that come with it.
 - `/specimen.js` calls `enhanceCharts()`, so the four charts redraw to a 320 px screen and take Enarratio's enhancement.
+- The specimen's prose paragraph and list rules leave a chart's own parts alone, so the summary no longer sits flush under the
+  chart's buttons and the legend is no longer indented. A chart's source and "Download CSV" links are semibold in the link
+  color with no underline, and its tick labels take proportional figures ("1,600", not "1 , 600", which the interface face's
+  tabular comma made).
 
 ## 0.24.0 (2026-10-31)
 
