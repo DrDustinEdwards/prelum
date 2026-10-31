@@ -180,7 +180,8 @@ test("frontmatter: values, quoted values, inline and block lists, and the body a
 test("frontmatter blocks: a write changes only the block it names, and every other byte comes back as it was", () => {
   const source = ["---", 'title: "Every product"', "# kept: a comment", "draft: false", "further_reading:", "  - https://example.com/a", "key_takeaways:", '  - "First."', '  - "Second."', "weird_key: some value: with a colon", "---", "", "The body.", ""].join("\n");
   for (const s of [source, "no frontmatter\n", "---\ntitle: x\n---", "---\r\ntitle: x\r\n---\r\nBody\r\n", "---\n---\nBody", ""]) assert.equal(joinSource(splitSource(s)), s);
-  const { front, body } = splitSource(source);
+  const { front: header, body } = splitSource(source);
+  const front = header ?? "";
   assert.equal(body, "The body.\n");
   assert.equal(readKey(front, "title"), "Every product");
   assert.equal(readKey(front, "weird_key"), "some value: with a colon");
@@ -190,7 +191,7 @@ test("frontmatter blocks: a write changes only the block it names, and every oth
   assert.equal(setRawKey("title: x", "draft", "true"), "title: x\ndraft: true");
   assert.equal(setBlock(front, "key_takeaways", ["key_takeaways:", '  - "One"']), front.replace('key_takeaways:\n  - "First."\n  - "Second."', 'key_takeaways:\n  - "One"'));
   assert.equal(setBlock(front, "further_reading", []), front.replace("further_reading:\n  - https://example.com/a\n", ""));
-  const crlf = splitSource("---\r\ntitle: Hello\r\ntags: [old]\r\n---\r\nBody\r\n").front;
+  const crlf = splitSource("---\r\ntitle: Hello\r\ntags: [old]\r\n---\r\nBody\r\n").front ?? "";
   assert.equal(setRawKey(crlf, "title", '"Hi"'), 'title: "Hi"\r\ntags: [old]');
 });
 
