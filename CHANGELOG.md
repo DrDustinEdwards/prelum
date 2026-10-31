@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- The specimen serves the shared icon set (`prelum-icons` from its P mark on #4f2d7f, `iconLinks()` and `webManifest()`),
+  with `manifest-src 'self'` in its page policy; `favicon.svg` is gone.
+
 ## 0.22.0 (2026-10-31)
 
 One set of icon files on every site, and two fixes to the page graph (search and sharing, area 1).
