@@ -359,7 +359,8 @@ async function readCharts({ measured, narrow, libraries, tags }) {
     if (libraryContainers && el.closest(libraryContainers)) continue;
     roots.add(el.closest(".cap-chart") ?? el.closest("figure.enarratio") ?? el);
   }
-  const units = [...roots].filter((unit) => unit.getAttribute("data-state") !== "nodata");
+  // A frame showing no data, or Capsomer's refusal in place of a chart, carries no figure to check.
+  const units = [...roots].filter((unit) => !["nodata", "refused"].includes(unit.getAttribute("data-state") ?? ""));
   const PRIMITIVES = ["sparkline", "heat-strip", "progress-ring", "uptime-strip", "timeline"];
   // At the narrow width: a frame that scrolls (its content wider than its box), or a drawing wider than the chart around it.
   const overflowOf = (/** @type {Element} */ unit) => {
