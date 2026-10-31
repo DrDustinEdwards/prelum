@@ -238,13 +238,43 @@ export function remarkPullQuote(file) {
   };
 }
 
-const remarkChart = remarkModelDirective({
-  name: "chart",
-  marker: "data-chart",
-  className: "chart-figure",
-  what: "data",
-  build: buildChartModel,
-});
+/**
+ * `:::chart{src="..."}` (E3): the CSV comes from the site's `chartData(src, { file })`, called at render time, in place of the
+ * fenced block. Prelum fetches nothing itself, so without the hook a `src` is refused; with it, the text it returns is the block.
+ *
+ * @param {string} file
+ * @param {((src: string, context: { file: string }) => string | Promise<string>) | undefined} chartData
+ */
+export function remarkChartSource(file, chartData) {
+  return async (/** @type {import("mdast").Root} */ tree) => {
+    /** @type {any[]} */
+    const cited = [];
+    visit(tree, (node) => {
+      if (node.type === "containerDirective" && node.name === "chart" && typeof node.attributes?.src === "string") cited.push(node);
+    });
+    for (const node of cited) {
+      const src = node.attributes.src.trim();
+      const name = `:::chart "${node.attributes.title ?? node.attributes.type ?? src}"`;
+      if (!src) throw new ContentError(file, `${name} has an empty src`);
+      if ((node.children ?? []).some((/** @type {any} */ child) => child.type === "code")) {
+        throw new ContentError(file, `${name} cites src="${src}" and holds a CSV block; give the data one way`);
+      }
+      if (!chartData) {
+        throw new ContentError(file, `${name} cites src="${src}", but this site passes no chartData loader to editorialPack, so there is nothing to read it with`);
+      }
+      /** @type {unknown} */
+      let csv;
+      try {
+        csv = await chartData(src, { file });
+      } catch (error) {
+        throw new ContentError(file, `${name}: src="${src}" did not load: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      if (typeof csv !== "string") throw new ContentError(file, `${name}: the chartData loader returned no text for src="${src}"`);
+      node.children = [...(node.children ?? []), { type: "code", lang: "csv", value: csv.replace(/\r\n?/g, "\n").replace(/\n$/, "") }];
+    }
+  };
+}
+
 const rehypeChart = rehypeModelMarker("data-chart", renderChartHast);
 
 const remarkDiagram = remarkModelDirective({
@@ -272,9 +302,20 @@ const remarkDiagram = remarkModelDirective({
  *
  * @param {object} options
  * @param {string} options.assetPrefix the prefix of the site's diagram assets, for example "dustin-edwards-"
+ * @param {(src: string, context: { file: string }) => string | Promise<string>} [options.chartData] reads the CSV a
+ *   `:::chart{src="..."}` cites (a URL or a media path), at render time; without it a `src` is refused
+ * @param {boolean} [options.strictCharts] refuse a chart with no title, author text above reading grade 9 or too many
+ *   series, where the default renders it with a warning (E4)
  * @returns {RenderPack}
  */
-export function editorialPack({ assetPrefix }) {
+export function editorialPack({ assetPrefix, chartData, strictCharts = false }) {
+  const remarkChart = remarkModelDirective({
+    name: "chart",
+    marker: "data-chart",
+    className: "chart-figure",
+    what: "data",
+    build: (/** @type {Record<string, string>} */ attrs, /** @type {string} */ csv) => buildChartModel(attrs, csv, { strict: strictCharts }),
+  });
   const rehypeDiagram = rehypeModelMarker("data-diagram", renderDiagramHast(assetPrefix));
   return {
     name: "editorial",
@@ -289,6 +330,7 @@ export function editorialPack({ assetPrefix }) {
           [remarkPullQuote, file],
           [remarkSidenote, file],
           [remarkSwatch, file],
+          [remarkChartSource, file, chartData],
           [remarkChart, file, charts],
           [remarkDiagram, file, diagrams],
         ],

@@ -117,6 +117,7 @@ export const DEFAULT_ALLOWLIST = {
     "details class",
     "div aria-label",
     "div class",
+    "div data-prelum-chart",
     "div role",
     "div tabindex",
     "dl class",

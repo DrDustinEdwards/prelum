@@ -11,6 +11,11 @@ export const CHART_TYPES = ["bar", "line", "dot", "area"];
 
 const DEFAULT_WIDTH = 700;
 const DEFAULT_HEIGHT = 360;
+// The dot chart's narrow drawing, put in under 30rem and scaled to the frame: drawn at the frame a 320 px phone leaves (about 240 px), so its text keeps 12 px there.
+const NARROW_WIDTH = 240;
+
+/** The issues `strict` refuses (E4): a reader would struggle with each, and the author can fix each in the directive. */
+export const STRICT_CHART_ISSUES = ["title-missing", "reading-level", "too-many-series"];
 
 /**
  * @param {string} text
@@ -148,10 +153,14 @@ function figureWords(attrs) {
  * "value"; the author's column names go back on as the axis labels. Enarratio throws for anything it
  * cannot draw (too many series, a log of zero), and that reaches the build as a ContentError.
  *
+ * Returns the figure's HTML and what `render/chart-enhance` redraws it from in the browser: for bar, line
+ * and area, the chart and its options, which `enarratio/lite` draws to the same SVG at any width; for dot
+ * (a scatter plot, which only `enarratio/plot` draws), the drawing at 240 px, put in when the frame is narrower than 30rem.
+ *
  * @param {{ type: string, alt: string, title: string, x: string, yColumns: string[], labels: string[],
  *   points: Array<{ x: string | number, series: string, value: number }>, xIsNumeric: boolean,
- *   words: Record<string, unknown>, issues: string[] }} model
- * @returns {string} the figure's HTML
+ *   words: Record<string, unknown>, issues: Array<{ code: string, message: string }> }} model
+ * @returns {{ html: string, redraw: { chart: "bar" | "line" | "area", options: Record<string, unknown> } | { narrow: string } }}
  */
 function drawChart(model) {
   const { type, alt, title, x, yColumns, labels, points, xIsNumeric, words, issues } = model;
@@ -160,14 +169,14 @@ function drawChart(model) {
     alt,
     ...(title ? { title } : {}),
     ...words,
-    // A reader-facing problem (no title, text above grade 9, too many series) is a render warning
-    // the editor shows, not a refused post.
-    onIssue: (/** @type {{ message: string }} */ issue) => issues.push(issue.message),
     width: DEFAULT_WIDTH,
     height: DEFAULT_HEIGHT,
     xLabel: x,
     yLabel: multi ? null : yColumns[0],
   };
+  // A reader-facing problem (no title, text above grade 9, too many series) is a render warning
+  // the editor shows, not a refused post, unless the site renders strictly.
+  const onIssue = (/** @type {{ code: string, message: string }} */ issue) => issues.push({ code: issue.code, message: issue.message });
   const series = multi ? { series: "series", seriesDomain: labels } : {};
   // A one-series chart has no series field, so the label is the value axis' name.
   const data = multi ? points : points.map(({ x: px, value }) => ({ x: px, value }));
@@ -176,26 +185,45 @@ function drawChart(model) {
   const options = /** @type {any} */ ({ ...common, ...keys, ...series, data });
 
   if (type === "bar") {
-    return barChart({ ...options, layout: "grouped" });
+    const bar = { ...options, layout: "grouped" };
+    return { html: barChart({ ...bar, onIssue }), redraw: { chart: "bar", options: bar } };
   }
   // Line, area and scatter read x as a number or a date, never as a category.
   if (!xIsNumeric && type === "dot") {
     throw new Error(`:::chart type "dot" needs a numeric x column, but "${x}" is not numeric`);
   }
   if (type === "dot") {
-    return scatterPlot(options);
+    const narrow = scatterPlot({ ...options, width: NARROW_WIDTH, height: Math.round((DEFAULT_HEIGHT * 5) / 6), onIssue: () => {} });
+    return { html: scatterPlot({ ...options, onIssue }), redraw: { narrow: frameOf(narrow) } };
   }
   const xType = xIsNumeric ? "linear" : "time";
-  return type === "area"
-    ? areaChart({ ...options, xType })
-    : lineChart({ ...options, xType, directLabels: multi });
+  if (type === "area") {
+    const area = { ...options, xType };
+    return { html: areaChart({ ...area, onIssue }), redraw: { chart: "area", options: area } };
+  }
+  const line = { ...options, xType, directLabels: multi };
+  return { html: lineChart({ ...line, onIssue }), redraw: { chart: "line", options: line } };
+}
+
+/**
+ * The drawing's frame (`div.enarratio-frame` and its SVG) out of a figure Enarratio wrote.
+ *
+ * @param {string} html
+ */
+function frameOf(html) {
+  const start = html.indexOf('<div class="enarratio-frame');
+  const end = html.indexOf("</svg></div>", start);
+  if (start === -1 || end === -1) throw new Error("Enarratio returned no drawing frame");
+  return html.slice(start, end + "</svg></div>".length);
 }
 
 /**
  * @param {Record<string, string>} attrs
  * @param {string} csv
+ * @param {{ strict?: boolean }} [options] `strict` refuses the chart on an issue in STRICT_CHART_ISSUES, where
+ *   the default only reports it (E4), so an editor can block a publish on one
  */
-export function buildChartModel(attrs, csv) {
+export function buildChartModel(attrs, csv, { strict = false } = {}) {
   const type = attrs.type;
   if (!type) throw new Error(":::chart requires a type attribute");
   if (!CHART_TYPES.includes(type)) {
@@ -252,11 +280,16 @@ export function buildChartModel(attrs, csv) {
   });
 
   const title = (attrs.title ?? "").trim();
-  /** @type {string[]} */
-  const issues = [];
+  /** @type {Array<{ code: string, message: string }>} */
+  const found = [];
   const words = figureWords(attrs);
-  const html = drawChart({ type, alt, title, x, yColumns, labels, points, xIsNumeric, words, issues });
-  return { type, alt, title, columns, rows, html, issues };
+  const { html, redraw } = drawChart({ type, alt, title, x, yColumns, labels, points, xIsNumeric, words, issues: found });
+  const refused = strict ? found.filter((issue) => STRICT_CHART_ISSUES.includes(issue.code)) : [];
+  if (refused.length > 0) {
+    throw new Error(`:::chart "${title || type}": ${refused.map((issue) => issue.message).join("; ")}`);
+  }
+  const issues = found.map((issue) => issue.message);
+  return { type, alt, title, columns, rows, html, issues, redraw };
 }
 
 /**
@@ -279,7 +312,8 @@ export function renderChartHast(model, captionChildren, figure) {
   const classes = [...(figure.properties.className ?? []), ...(drawn.properties.className ?? [])];
   const inner = h("figure", { ...drawn.properties, className: classes }, []);
   figure.tagName = "div";
-  figure.properties = { className: ["cap-chart"] };
+  // What render/chart-enhance redraws the chart from at the frame's width; without that script the drawing is the server's.
+  figure.properties = { className: ["cap-chart"], dataPrelumChart: JSON.stringify(model.redraw) };
 
   const isCaption = (/** @type {any} */ n) =>
     n.type === "element" && n.tagName === "p" && (n.properties.className ?? []).includes("enarratio-caption");

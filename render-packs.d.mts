@@ -21,6 +21,16 @@ export function remarkSidenote(file: string): (/** @type {import("mdast").Root} 
  */
 export function remarkPullQuote(file: string): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
 /**
+ * `:::chart{src="..."}` (E3): the CSV comes from the site's `chartData(src, { file })`, called at render time, in place of the
+ * fenced block. Prelum fetches nothing itself, so without the hook a `src` is refused; with it, the text it returns is the block.
+ *
+ * @param {string} file
+ * @param {((src: string, context: { file: string }) => string | Promise<string>) | undefined} chartData
+ */
+export function remarkChartSource(file: string, chartData: ((src: string, context: {
+    file: string;
+}) => string | Promise<string>) | undefined): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => Promise<void>;
+/**
  * @typedef {object} RenderPack
  * @property {string} name
  * @property {readonly string[]} directives every directive name the pack handles, so the unknown-directive guard allows them
@@ -35,10 +45,18 @@ export function remarkPullQuote(file: string): (/** @type {import("mdast").Root}
  *
  * @param {object} options
  * @param {string} options.assetPrefix the prefix of the site's diagram assets, for example "dustin-edwards-"
+ * @param {(src: string, context: { file: string }) => string | Promise<string>} [options.chartData] reads the CSV a
+ *   `:::chart{src="..."}` cites (a URL or a media path), at render time; without it a `src` is refused
+ * @param {boolean} [options.strictCharts] refuse a chart with no title, author text above reading grade 9 or too many
+ *   series, where the default renders it with a warning (E4)
  * @returns {RenderPack}
  */
-export function editorialPack({ assetPrefix }: {
+export function editorialPack({ assetPrefix, chartData, strictCharts }: {
     assetPrefix: string;
+    chartData?: (src: string, context: {
+        file: string;
+    }) => string | Promise<string>;
+    strictCharts?: boolean;
 }): RenderPack;
 export type RenderPack = {
     name: string;
