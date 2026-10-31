@@ -6,6 +6,7 @@
 
 - The specimen's home page writes its head with `headTags`, so it has a share card: `share-card.png` (1200x630) with
   `og:image:type`, `width`, `height` and `alt`, and the canonical, Open Graph and X tags that come with it.
+- devkit v0.20.7, site-runtime v0.48.0 and capsomer v0.54.0.
 
 ## 0.22.1 (2026-10-31)
 
