@@ -8,7 +8,8 @@
   byte layout but carry example.com content, under names that say what each one tests (`sitemap-compact.xml`, `llms-prose.txt`,
   `feed-cdata.rss` and the rest); the two unused captures, with a real biography in one, are gone. The specimen's lists, table,
   code, details, pull quote and bar chart use neutral examples in place of lab samples and sequencing reads. Doc examples in `head`,
-  `render-diagram`, `render-packs`, `xml` and the README name Example Co and an `example-` prefix. No rendered output changes.
+  `render-diagram`, `render-packs`, `xml` and the README name Example Co and an `example-` prefix. The render fixtures' media names use the
+  `example-` prefix too, so their golden hashes moved with the input; the renderer itself is unchanged, so `RENDER_VERSION` stays 9.
 
 ## 0.24.0 (2026-10-31)
 
