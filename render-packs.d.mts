@@ -24,11 +24,11 @@ export function remarkPullQuote(file: string): (/** @type {import("mdast").Root}
  * @typedef {object} RenderPack
  * @property {string} name
  * @property {readonly string[]} directives every directive name the pack handles, so the unknown-directive guard allows them
- * @property {(context: { file: string, body: string }) => {
+ * @property {(context: { file: string, body: string, warn: (warning: { line: number | null, message: string }) => void }) => {
  *   remark: Array<[unknown, ...unknown[]]>,
  *   rehype: Array<[unknown, ...unknown[]]>,
  *   result?: () => Record<string, unknown>,
- * }} setup called once per render; `result` is merged into what render returns
+ * }} setup called once per render; `result` is merged into what render returns, and `warn` adds to its warnings
  */
 /**
  * dustinedwards-info's directives, in the order its renderer ran them, so the output is the same bytes.
@@ -47,11 +47,15 @@ export type RenderPack = {
      */
     directives: readonly string[];
     /**
-     * called once per render; `result` is merged into what render returns
+     * called once per render; `result` is merged into what render returns, and `warn` adds to its warnings
      */
     setup: (context: {
         file: string;
         body: string;
+        warn: (warning: {
+            line: number | null;
+            message: string;
+        }) => void;
     }) => {
         remark: Array<[unknown, ...unknown[]]>;
         rehype: Array<[unknown, ...unknown[]]>;

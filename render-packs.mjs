@@ -260,11 +260,11 @@ const remarkDiagram = remarkModelDirective({
  * @typedef {object} RenderPack
  * @property {string} name
  * @property {readonly string[]} directives every directive name the pack handles, so the unknown-directive guard allows them
- * @property {(context: { file: string, body: string }) => {
+ * @property {(context: { file: string, body: string, warn: (warning: { line: number | null, message: string }) => void }) => {
  *   remark: Array<[unknown, ...unknown[]]>,
  *   rehype: Array<[unknown, ...unknown[]]>,
  *   result?: () => Record<string, unknown>,
- * }} setup called once per render; `result` is merged into what render returns
+ * }} setup called once per render; `result` is merged into what render returns, and `warn` adds to its warnings
  */
 
 /**
@@ -279,7 +279,7 @@ export function editorialPack({ assetPrefix }) {
   return {
     name: "editorial",
     directives: ["chart", "diagram", "pullquote", "sidenote", "swatch"],
-    setup({ file }) {
+    setup({ file, warn }) {
       /** @type {any[]} */
       const charts = [];
       /** @type {any[]} */
@@ -296,9 +296,12 @@ export function editorialPack({ assetPrefix }) {
           [rehypeChart, charts],
           [rehypeDiagram, diagrams],
         ],
-        result: () => ({
-          diagrams: diagrams.map((/** @type {any} */ d) => ({ key: d.key, source: d.source })),
-        }),
+        result: () => {
+          for (const chart of charts) {
+            for (const message of chart.issues) warn({ line: null, message: `:::chart "${chart.title || chart.type}": ${message}` });
+          }
+          return { diagrams: diagrams.map((/** @type {any} */ d) => ({ key: d.key, source: d.source })) };
+        },
       };
     },
   };
