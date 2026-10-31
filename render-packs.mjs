@@ -271,7 +271,7 @@ const remarkDiagram = remarkModelDirective({
  * dustinedwards-info's directives, in the order its renderer ran them, so the output is the same bytes.
  *
  * @param {object} options
- * @param {string} options.assetPrefix the prefix of the site's diagram assets, for example "dustin-edwards-"
+ * @param {string} options.assetPrefix the prefix of the site's diagram assets, for example "example-"
  * @returns {RenderPack}
  */
 export function editorialPack({ assetPrefix }) {

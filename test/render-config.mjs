@@ -41,7 +41,7 @@ export async function resolveImage(src) {
     : { width, height };
 }
 
-export const packs = [editorialPack({ assetPrefix: "dustin-edwards-" })];
+export const packs = [editorialPack({ assetPrefix: "example-" })];
 
 export const highlight = createHighlight();
 

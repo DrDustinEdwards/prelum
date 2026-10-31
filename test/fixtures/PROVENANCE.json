@@ -1,32 +1,30 @@
 {
   "capturedAt": "2026-10-06T04:59:14.938Z",
+  "note": "Each file keeps the byte layout of a site's captured output; the words, hosts and paths are sample content (example.com).",
   "sources": {
     "germomics": {
       "repository": "DrDustinEdwards/germomics",
       "commit": "f993d51a139484f210eb4c7111b18105567bd79e",
-      "files": [
-        "site-feed.xml",
-        "llms.txt",
-        "llms-full.txt",
-        "sitemap.xml"
-      ]
+      "files": {
+        "feed.xml": "site-feed.xml",
+        "llms-links.txt": "llms.txt",
+        "sitemap-compact-no-newline.xml": "sitemap.xml"
+      }
     },
     "foxhound": {
       "repository": "DrDustinEdwards/foxhound",
       "commit": "69c122c8cb7f253199e34570b850056e9e536a0e",
-      "files": [
-        "feed.rss",
-        "sitemap.xml",
-        "llms.txt"
-      ]
+      "files": {
+        "feed-cdata.rss": "feed.rss",
+        "sitemap-expanded.xml": "sitemap.xml",
+        "llms-prose.txt": "llms.txt"
+      }
     },
     "dustinedwards": {
       "repository": "DrDustinEdwards/dustinedwards-info",
-      "live": "https://dustinedwards.info",
-      "files": [
-        "sitemap.xml",
-        "llms.txt"
-      ]
+      "files": {
+        "sitemap-compact.xml": "sitemap.xml"
+      }
     }
   }
 }

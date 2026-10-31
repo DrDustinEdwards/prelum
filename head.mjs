@@ -57,7 +57,7 @@ const TWITTER_ALT_LIMIT = 420;
  * @property {HeadFeed[]} [feeds] the site's or the page's feeds, each linked as `<link rel="alternate">` so a reader finds it
  * @property {boolean} [keepTrailingSlash] keep a trailing slash on `path` in the canonical and `og:url`; by default
  *   `/about/` is written `/about` (the home page stays `/`), so one page has one canonical URL. A route served only with its
- *   slash (a podcast feed's page at `/feed/podcast/`) keeps it.
+ *   slash (a feed's page at `/feed/news/`) keeps it.
  */
 
 /**
@@ -65,7 +65,7 @@ const TWITTER_ALT_LIMIT = 420;
  * @property {"rss" | "atom" | "json" | (string & {})} type `rss`, `atom` and `json` name the usual media types; any other
  *   value is written as the type
  * @property {string} href absolute, or a path on `origin`
- * @property {string} [title] e.g. "Germomics (RSS)"
+ * @property {string} [title] e.g. "Example Co (RSS)"
  */
 
 /** @type {Record<string, string>} */
@@ -244,7 +244,7 @@ export function truncateForSerp(text, limit) {
  * title cut at a word. Only the `<title>` is shortened; pass the whole title as `socialTitle` and keep it in the heading.
  *
  * @param {string} title
- * @param {string} suffix e.g. " | Foxing"
+ * @param {string} suffix e.g. " | Example Co"
  */
 export function searchTitle(title, suffix) {
   const full = `${title}${suffix}`;
@@ -257,7 +257,7 @@ export function searchTitle(title, suffix) {
  * @property {string} siteName `og:site_name`
  * @property {HeadImage | string} image the site's default card, for a page without its own: `{ url, width, height, alt }`,
  *   as `HeadInput`'s `image`
- * @property {string} [suffix] what follows a page's title in `<title>`, e.g. " | Foxing"; `searchTitle` drops it where the
+ * @property {string} [suffix] what follows a page's title in `<title>`, e.g. " | Example Co"; `searchTitle` drops it where the
  *   two do not fit
  * @property {string} [locale] `og:locale`, e.g. `en_US`
  * @property {HeadFeed[]} [feeds] the site's feeds, linked from every page
