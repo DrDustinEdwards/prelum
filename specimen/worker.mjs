@@ -1,11 +1,13 @@
 // The specimen's Worker: sends plain HTTP to HTTPS, receives Content-Security-Policy violation reports at /csp-report with
 // site-runtime's shared receiver (logged to Workers Logs, nothing stored), and serves everything else from the static assets in
-// specimen/dist. It runs in front of the assets (run_worker_first) so it sees http: requests, which the assets layer would
+// specimen/dist, with the page's preload header on HTML. It runs in front of the assets (run_worker_first) so it sees http: requests, which the assets layer would
 // otherwise answer directly, as Enarratio's gallery does (enarratio worker/index.ts). site-runtime is a devDependency: the
 // published library never imports this file.
 
 import { receiveCspReport } from "@dustinedwards/site-runtime/csp-report";
-import { REPORT_PATH, SITE_HEADERS as HEADERS } from "./headers.mjs";
+import { UNCACHED } from "@dustinedwards/site-runtime/edge-cache";
+import { withPreloadHeader } from "@dustinedwards/site-runtime/preload";
+import { PAGE_PRELOADS, REPORT_PATH, SITE_HEADERS as HEADERS } from "./headers.mjs";
 
 
 export default {
@@ -29,6 +31,12 @@ export default {
         (await env.CSP_REPORT_RATE_LIMIT.limit({ key: r.headers.get("CF-Connecting-IP") ?? "unknown" })).success;
       return receiveCspReport(request, { headers: HEADERS, allow });
     }
-    return env.ASSETS.fetch(request);
+    const asset = await env.ASSETS.fetch(request);
+    if (!(asset.headers.get("Content-Type") ?? "").startsWith("text/html")) return asset;
+    const page = new Response(asset.body, asset);
+    // The 404 page is never stored; _headers gives every file the same short public cache.
+    if (page.status >= 400) page.headers.set("Cache-Control", UNCACHED);
+    // Early Hints: the zone answers a page carrying a preload Link header with a 103 first (site-runtime ./preload).
+    return withPreloadHeader(page, PAGE_PRELOADS.header);
   },
 };
