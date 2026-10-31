@@ -17,6 +17,8 @@ One frontmatter reader and writer for every site and package (writing and render
   closing fence.
 - CI: devkit 0.20.8. The family check is now the shared-code check (`shared.yml`, `.shared.json`, `devkit-shared`). A newer push to a
   pull request cancels its older runs, and the workflow audit and dependency scan run only when their files change.
+- Specimen: site-runtime 0.50.0. Its `headersFile` writes cross-origin CORP on css, js, mjs, svg and woff2, so the specimen's own
+  rule for it is gone (security headers, area 2).
 
 ## 0.23.0 (2026-10-31)
 
