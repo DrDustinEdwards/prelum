@@ -16,4 +16,4 @@ Prelum is the family's publishing library (`@drdustinedwards/site-helpers`): the
 
 ## Releases
 
-Every change goes in `CHANGELOG.md`. Sites pin a tag (`github:DrDustinEdwards/prelum#vX.Y.Z`); Dustin makes the tags.
+Every change goes in `CHANGELOG.md`. Sites pin a tag (`github:DrDustinEdwards/prelum#vX.Y.Z`). After merging a version bump, tag it through Capsid (`capsid_close_pr` action `tag` or `release`); Capsid's daily maintenance pass also tags any untagged bump.

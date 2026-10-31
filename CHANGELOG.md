@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- CLAUDE.md: releases are tagged through Capsid after the version bump merges (Capsid's daily pass tags any it missed), not by Dustin by hand. No library change.
 - Specimen: deployed by devkit's shared deploy (worker-deploy.yml v0.20.18), a `deploy` job in ci.yml after the checks, in place of
   specimen.yml. It deploys with `DEPLOY_SHA`, waits for `/health` (site-runtime 0.60.0's `staticSite`) to report the commit,
   checks the home page and rolls back on a refusal; IndexNow runs after it. No library change.
