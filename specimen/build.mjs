@@ -21,6 +21,7 @@ import { llmsDocument } from "../llms.mjs";
 import { rssItem } from "../feeds.mjs";
 import { sitemapDocument } from "../sitemap.mjs";
 import { RENDER_VERSION, render } from "../render.mjs";
+import { iconLinks, webManifest } from "../icons.mjs";
 import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
 import { absolutizeUrls, escapeXml, mathToTex } from "../xml.mjs";
 import { HEADERS_FILE, PAGE_PRELOADS } from "./headers.mjs";
@@ -199,6 +200,10 @@ const HEADER = letterheadHtml({
   current: "Home",
 });
 
+const ICON_LINKS = iconLinks()
+  .map((link) => `<link ${Object.entries(link).map(([name, value]) => `${name}="${value}"`).join(" ")}>`)
+  .join("\n");
+
 /**
  * @param {{ title: string, description: string, body: string, version: string }} page
  */
@@ -210,7 +215,7 @@ function documentHtml({ title, description, body, version }) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeXml(title)}</title>
 <meta name="description" content="${escapeXml(description)}">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+${ICON_LINKS}
 <link rel="stylesheet" href="/site.css">
 <link rel="stylesheet" href="/katex/katex.min.css">
 <script src="/theme.js"></script>
@@ -350,6 +355,7 @@ export async function buildSpecimen(outDir) {
   mkdirSync(outDir, { recursive: true });
   copyTree(join(HERE, "static"), outDir);
   writeFileSync(join(outDir, "_headers"), HEADERS_FILE);
+  writeFileSync(join(outDir, "site.webmanifest"), JSON.stringify(webManifest({ name: "Prelum specimen", shortName: "Prelum", themeColor: "#4f2d7f", backgroundColor: "#4f2d7f" })));
   writeStyles(outDir);
   const missing = PAGE_PRELOADS.links.filter(({ href }) => !existsSync(join(outDir, href.slice(1))));
   if (missing.length) throw new Error(`preloads name files the build did not write: ${missing.map(({ href }) => href).join(", ")}`);
