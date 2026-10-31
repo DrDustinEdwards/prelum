@@ -23,7 +23,7 @@ export const REPORTING_ENDPOINTS = reportingEndpoints("csp-endpoint", new URL(RE
 
 /** Every security header the specimen sends: site-runtime's standard set with the page policy and its report endpoint. */
 export const SITE_HEADERS = Object.freeze({
-  ...buildSecurityHeaders(),
+  ...buildSecurityHeaders({ site: "prelum" }),
   "Content-Security-Policy": PAGE_CSP,
   "Reporting-Endpoints": REPORTING_ENDPOINTS,
 });
