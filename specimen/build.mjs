@@ -17,6 +17,7 @@ import { capsomerTheme } from "capsomer/enarratio-theme";
 import { stylesheet } from "enarratio";
 import { rolldown } from "rolldown";
 
+import { headHtml, headTags } from "../head.mjs";
 import { llmsDocument } from "../llms.mjs";
 import { rssItem } from "../feeds.mjs";
 import { sitemapDocument } from "../sitemap.mjs";
@@ -197,17 +198,29 @@ const HEADER = letterheadHtml({
   current: "Home",
 });
 
+/** The share card (specimen/static/share-card.png), drawn once at the size every family card has. */
+const SHARE_CARD = {
+  url: "/share-card.png",
+  width: 1200,
+  height: 630,
+  alt: "Prelum, the family's publishing library: markdown, feeds, sitemaps, llms.txt and search.",
+};
+
 /**
- * @param {{ title: string, description: string, body: string, version: string }} page
+ * The home page's head comes from Prelum's own headTags, card included; the 404 page has no address to claim.
+ *
+ * @param {{ title: string, description: string, body: string, version: string, path?: string }} page
  */
-function documentHtml({ title, description, body, version }) {
+function documentHtml({ title, description, body, version, path }) {
+  const head = path
+    ? headHtml(headTags({ origin: ORIGIN, path, title, description, siteName: "Prelum", image: SHARE_CARD }))
+    : `<title>${escapeXml(title)}</title>\n<meta name="description" content="${escapeXml(description)}">`;
   return `<!doctype html>
 <html lang="en" data-family="${FAMILY}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeXml(title)}</title>
-<meta name="description" content="${escapeXml(description)}">
+${head}
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/site.css">
 <link rel="stylesheet" href="/katex/katex.min.css">
@@ -384,6 +397,7 @@ ${await outputsSection(version, elements.length + 1)}
   const index = documentHtml({
     title: "Prelum specimen",
     description: `Every element Prelum ${version} renders from markdown, with its source, in both themes.`,
+    path: "/",
     body,
     version,
   });
