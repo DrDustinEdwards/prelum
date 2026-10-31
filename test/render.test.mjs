@@ -311,7 +311,7 @@ test("the editorial pack: sidenotes, pull quotes, swatches, charts and diagrams,
   assert.match(html, /<p class="pull-quote" aria-hidden="true">sentence worth raising<\/p>/);
   assert.match(html, /<span class="swatch"><span class="swatch-chip" style="--swatch:#6B4FBB" aria-hidden="true"><\/span><code class="swatch-label">#6B4FBB<\/code><\/span>/);
   assert.match(html, /<span class="swatch-chip" style="--swatch:#FFF" aria-hidden="true"><\/span><code class="swatch-label">the brand<\/code>/);
-  assert.equal((html.match(/<figure class="chart-figure enarratio"/g) ?? []).length, 2);
+  assert.equal((html.match(/<div class="cap-chart"><div class="cap-chart-figure"><figure class="chart-figure enarratio"/g) ?? []).length, 2);
   assert.match(html, /src="\/diagrams\/dustin-edwards-4efabcc1-light\.svg"/);
   assert.match(html, /src="\/diagrams\/dustin-edwards-4efabcc1-dark\.svg"/);
   assert.deepEqual(diagrams, [{ key: "4efabcc1", source: "graph TD\n  A --> B" }]);

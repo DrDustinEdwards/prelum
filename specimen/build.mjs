@@ -77,7 +77,7 @@ function writeStyles(outDir) {
   });
   const capsomer = dirname(packageFile("capsomer/tokens.css"));
   const css = [
-    "/* Built by specimen/build.mjs: Capsomer's fonts, tokens, the specimen's family, base, prose and manual styles, Enarratio's chart styles in Capsomer's theme, and specimen/site.css. */",
+    "/* Built by specimen/build.mjs: Capsomer's fonts, tokens, the specimen's family, base, prose, manual and chart frame styles, Enarratio's chart styles in Capsomer's theme, and specimen/site.css. */",
     inlineCss(packageFile("capsomer/fonts.css")).replaceAll("../fonts/", "fonts/"),
     ...faces,
     inlineCss(join(capsomer, "tokens.css")),
@@ -94,6 +94,8 @@ function writeStyles(outDir) {
     // The family footer every dustinedwards.info site ends with, and the color marks of its Network strip.
     inlineCss(join(capsomer, "..", "tokens", "family-marks.css")),
     inlineCss(join(capsomer, "..", "components", "family-footer", "family-footer.css")),
+    // The frame every :::chart sits in (Capsomer 0.53).
+    inlineCss(join(capsomer, "..", "components", "chart-frame", "chart-frame.css")),
     // Capsomer's tokens.css also maps the --enarratio-* properties onto its tokens (css/enarratio.css). The two agree, being
     // generated from the same tokens; Enarratio 0.1.0-alpha.8 has no color-free base stylesheet, so its full one is used.
     stylesheet(capsomerTheme),

@@ -12,14 +12,15 @@ export function buildChartModel(attrs: Record<string, string>, csv: string): {
     issues: string[];
 };
 /**
- * The figure Enarratio drew, as hast. Parsed rather than allowDangerousHtml, which would open raw HTML
- * in every post. Enarratio's figcaption is the head (title and finding). The author's caption is the
- * caption under the chart, where Enarratio puts its own; the outer figure takes Enarratio's classes
- * and data attributes, so there is one figure.
+ * The figure Enarratio drew, as hast, in Capsomer 0.53's chart frame: the markup of its `frameHtml(figure)`,
+ * `div.cap-chart > div.cap-chart-figure > figure.enarratio`, written here so Capsomer is not a dependency.
+ * Parsed rather than allowDangerousHtml, which would open raw HTML in every post. Enarratio's figcaption
+ * is the head (title and finding). The author's caption is the caption under the chart, where Enarratio
+ * puts its own; the directive's figure takes Enarratio's classes and data attributes, so there is one figure.
  *
  * @param {ReturnType<typeof buildChartModel>} model
  * @param {any[]} captionChildren hast for an author-written caption, may be empty
- * @param {any} figure the directive's figure node, whose properties the chart's merge into
+ * @param {any} figure the directive's figure node, which becomes the frame
  */
 export function renderChartHast(model: ReturnType<typeof buildChartModel>, captionChildren: any[], figure: any): import("hast").ElementContent[];
 export const CHART_TYPES: string[];
