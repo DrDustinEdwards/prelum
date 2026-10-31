@@ -3,7 +3,7 @@
 // image, no markdown syntax leaking into the page, and stored HTML rendered by the current pipeline. Regexes over the HTML, as audit.mjs
 // reads it, so the bin runs with no parser installed.
 
-import { RENDER_VERSION } from "./render-nomath.mjs";
+import { RENDER_VERSION } from "./render-version.mjs";
 
 /**
  * @typedef {import("./audit.mjs").AuditPage} AuditPage

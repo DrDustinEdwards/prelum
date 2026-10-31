@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // prelum-audit: crawl a live site from its sitemap and run auditPages over every page, so a page that lost its title,
-// description, canonical or structured data shows up the day it ships rather than when someone looks.
+// description, canonical or structured data shows up the day it ships rather than when someone looks. `auditIcons` adds the
+// site's favicon, touch icon and manifest.
 //
 //   prelum-audit --origin https://example.com [--from https://preview.example.workers.dev] [--max-pages 3000]
 //
@@ -11,6 +12,7 @@
 import { parseArgs } from "node:util";
 
 import { auditPages, crawlSite } from "../audit.mjs";
+import { auditIcons } from "../icons.mjs";
 
 const { values } = parseArgs({ options: { origin: { type: "string" }, from: { type: "string" }, "max-pages": { type: "string", default: "3000" } } });
 if (!values.origin) {
@@ -33,6 +35,10 @@ if (!(home instanceof Response) || home.status >= 500) {
 }
 const { pages, sitemap } = await crawlSite({ origin, fetch: fetcher, maxPages: Number(values["max-pages"]) });
 const report = auditPages(pages, { origin, sitemap });
+for (const finding of await auditIcons({ origin, fetch: fetcher })) {
+  report.findings.push(finding);
+  report.summary[finding.check] = (report.summary[finding.check] ?? 0) + 1;
+}
 for (const finding of report.findings) {
   console.log(`::${finding.severity} title=${finding.check}::${finding.url} ${finding.detail}`);
 }

@@ -24,7 +24,7 @@ import { sitemapDocument } from "../sitemap.mjs";
 import { RENDER_VERSION, render } from "../render.mjs";
 import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
 import { absolutizeUrls, escapeXml, mathToTex } from "../xml.mjs";
-import { SITE_HEADERS } from "./headers.mjs";
+import { HEADERS_FILE } from "./headers.mjs";
 import { ASSET_PREFIX, DIAGRAM_CONFIG_FILE, FAMILY, ORIGIN, diagramConfig, elementIndex, loadElements, options, renderElement, resolveImage, splitHeader } from "./specimen.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -360,8 +360,7 @@ export async function buildSpecimen(outDir) {
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   copyTree(join(HERE, "static"), outDir);
-  const headersPath = join(outDir, "_headers");
-  writeFileSync(headersPath, readFileSync(headersPath, "utf8").replace("{{SITE_HEADERS}}", Object.entries(SITE_HEADERS).map(([name, value]) => `  ${name}: ${value}`).join("\n")));
+  writeFileSync(join(outDir, "_headers"), HEADERS_FILE);
   writeStyles(outDir);
   // The remembered theme before first paint (a plain script in the head), and the letterhead's behavior.
   writeFileSync(join(outDir, "theme.js"), await bundle("theme.mjs", "iife"));

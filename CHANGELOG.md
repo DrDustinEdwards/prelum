@@ -7,6 +7,81 @@
 - The specimen's home page writes its head with `headTags`, so it has a share card: `share-card.png` (1200x630) with
   `og:image:type`, `width`, `height` and `alt`, and the canonical, Open Graph and X tags that come with it.
 
+## 0.22.1 (2026-10-31)
+
+### Fixed
+
+- `prelum-content` runs from a plain install again. `RENDER_VERSION` moved to its own module (`render-version.mjs`), so the
+  check no longer loads the renderer and its optional peers; installed alone, as the devkit scoreboard installs it, it
+  stopped on the missing `hast-util-to-string`.
+
+## 0.22.0 (2026-10-31)
+
+One set of icon files on every site, and two fixes to the page graph (search and sharing, area 1).
+
+### Added
+
+- `icons`: the icon files every site serves, at one set of paths (`ICONS`), `iconLinks()` for the root route's `links`,
+  `webManifest(site)` for `/site.webmanifest`, and `icoFile(images)`. The `prelum-icons` bin draws favicon.ico (16, 32, 48),
+  the 180 pixel Apple touch icon on the brand color, the 192 and 512 pixel icons and a maskable one from one SVG, with
+  `@resvg/resvg-js` (a new optional peer).
+- `prelum-audit` checks the site's icons with `auditIcons`: `/favicon.ico` must answer an image (error), the home page must
+  link an icon (error), an Apple touch icon and a manifest (warnings), and the manifest must name the site and list 192, 512
+  and maskable icons (warnings) that all load (error).
+
+### Changed
+
+- devkit v0.20.3. CI now runs devkit's workflow audit (actionlint and zizmor) and its dependency audit (OSV-Scanner), and
+  `.no-bloat.json` records the test and comment counts.
+- The specimen's `_headers` is written by site-runtime's `headersFile` from the set the Worker sends (`HEADERS_FILE`,
+  specimen/headers.mjs), replacing the `{{SITE_HEADERS}}` template in specimen/static/_headers; the /diagrams/* policy is
+  built with `buildPolicy`. The page policy drops `connect-src https://cloudflareinsights.com`: the edge-injected beacon
+  reports to the site's own /cdn-cgi/rum. No rendered HTML changes, so `RENDER_VERSION` stays.
+- The specimen's static text files are served with `charset=utf-8`, and its stylesheets, scripts and fonts with
+  `Cross-Origin-Resource-Policy: cross-origin` (site-runtime 0.43.0 `headersFile({ charset: true })`, `corpFor`).
+
+### Fixed
+
+- `defineHead`: a page that passes `fullTitle` no longer puts the site's suffix in its WebPage name and last breadcrumb
+  ("Viruses · Germomics" becomes "Viruses") when the site sets `suffix`.
+- `defineHead`: with `keepTrailingSlash`, the breadcrumb built from `sections` keeps the trailing slash on each crumb, as the
+  canonical does, instead of pointing at the address that redirects.
+
+## 0.21.0 (2026-10-31)
+
+Charts move to Enarratio 0.4 (the charts checklist, area 10).
+
+### Changed
+
+- `RENDER_VERSION` is 8. `:::chart` draws with Enarratio 0.4, so every chart's figure now carries its title and the `alt` as a visible
+  finding in the figure's head (`figcaption.enarratio-head`), a screen reader overview, a summary computed from the data, the source
+  line with a "Download CSV" link, and "Show data". The author's caption is now `div.enarratio-caption` under the drawing (was a
+  `figcaption` above the table). Enarratio is an optional peer at `^0.4.0` (was `^0.3.1`).
+- The one data: URL the output may carry is a chart's CSV download: `a[download]` with a percent-encoded `data:text/csv;charset=utf-8,`
+  href, allowed by `isCsvDownload` (new in `render-url`) in the render and in `assertSafe`. Markdown cannot write `download`, so an
+  author's data: link is still refused (a new hostile input proves it).
+- `prelum-chart-audit` reads Capsomer 0.53's frame (`.cap-chart`, a layout around Enarratio's figure); `figure.cap-chart` is now only
+  the no-data state.
+- The specimen moves to Capsomer v0.53.0, and devkit to v0.20.1 and site-runtime to v0.43.0, the newest releases.
+
+### Added
+
+- `:::chart` attributes: `subtitle`, `notes`, `source` with `source-href`, `byline`, `x-unit` and `y-unit`. A `source-href` without a
+  `source` is refused.
+- What Enarratio reports about a chart a reader would struggle with (no title, an unlabeled axis, text above grade 9, too many series)
+  is a render warning (`warnings`, with the chart's title), for the editor to show. It does not refuse the post.
+- A pack's `setup` gets `warn`, to add to the render's warnings.
+
+## 0.20.0 (2026-10-31)
+
+### Added
+
+- `prelum-chart-audit` bin: the live check for charts (area 10). It crawls a site with `crawlSite` and opens every page in
+  headless Chromium, with scripts off and in light and dark, and reports each chart's misses against the charts checklist
+  as GitHub annotations titled with the item (B1, B2, B3, B18, B27, B28, B30, C1, C2, D6, F) and the page as proof. The CSV
+  link, source line and Capsomer frame are warnings until Enarratio 0.4.0 and the frame roll out (`--strict-frame` makes them
+  errors). `playwright-core` 1.63.0 and `axe-core` 4.14.0 are new optional peers.
+
 ## 0.19.0 (2026-10-30)
 
 ### Added

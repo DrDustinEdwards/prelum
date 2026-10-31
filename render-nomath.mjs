@@ -48,17 +48,12 @@ import {
   remarkUnknownDirectives,
 } from "./render-directives.mjs";
 import { ContentError } from "./render-error.mjs";
+import { RENDER_VERSION } from "./render-version.mjs";
 import { LQIP_STYLE, assertSafe, srcsetUrls } from "./render-safe.mjs";
-import { isAllowedUrl } from "./render-url.mjs";
+import { isAllowedUrl, isCsvDownload } from "./render-url.mjs";
 import { excerpt, readingMinutes, wordCount } from "./text.mjs";
 
-export { ContentError, isAllowedUrl };
-
-/**
- * Bumped whenever the output changes for the same input. A site stores it beside its rendered HTML and re-renders on a mismatch; Carrel's
- * health check reads it from meta.capabilities.render. test/render-golden.test.mjs fails when the output moves and this does not.
- */
-export const RENDER_VERSION = "7";
+export { ContentError, RENDER_VERSION, isAllowedUrl };
 
 /** A source over this is refused before it is parsed: a 200,000-character bracket run took 2.8 s, which a Worker cannot be sent. */
 export const DEFAULT_MAX_BYTES = 512 * 1024;
@@ -260,6 +255,7 @@ function rehypeUrlProtocols(file, sink) {
 
       const url = String(raw);
       if (isAllowedUrl(url)) return;
+      if (isLink && node.properties?.download !== undefined && isCsvDownload(url)) return;
 
       sink.push({ file, tag: node.tagName, url });
 
@@ -470,7 +466,7 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
 
   const packs = options.packs ?? [];
   const known = [...CORE_DIRECTIVES, ...BLOCK_DIRECTIVES, ...packs.flatMap((pack) => pack.directives)];
-  const runs = packs.map((pack) => pack.setup({ file, body }));
+  const runs = packs.map((pack) => pack.setup({ file, body, warn: (warning) => warnings.push(warning) }));
 
   /** @type {Array<{ depth: number, id: string, text: string }>} */
   const toc = [];

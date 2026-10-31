@@ -20,7 +20,7 @@ export default {
     const url = new URL(request.url);
     if (url.protocol === "http:") {
       url.protocol = "https:";
-      // Built by hand rather than with Response.redirect, so the 301 carries the same locked-down headers as specimen/static/_headers.
+      // Built by hand rather than with Response.redirect, so the 301 carries the same locked-down headers as the static files (specimen/headers.mjs).
       return new Response(null, { status: 301, headers: { ...HEADERS, Location: url.toString() } });
     }
     if (url.pathname === REPORT_PATH) {

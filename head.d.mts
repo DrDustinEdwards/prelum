@@ -244,7 +244,8 @@ export type SiteHead = {
 };
 /**
  * One page's head: `title` is the page's own title, without the suffix, unless `fullTitle` says it is already the whole
- * `<title>`. `feeds` are added to the site's. `pageType` is the WebPage subtype (`CollectionPage` for a list, `AboutPage`,
+ * `<title>`, in which case the site's suffix is taken off it for the page's name in the graph and its breadcrumb. `feeds`
+ * are added to the site's. `pageType` is the WebPage subtype (`CollectionPage` for a list, `AboutPage`,
  * `ProfilePage`, `SearchResultsPage`); `breadcrumbs` is the trail from the home page down, in place of the one built from
  * `sections`, or false for none.
  */
