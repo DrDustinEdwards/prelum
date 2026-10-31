@@ -423,7 +423,6 @@ test("the blocks every site gets: callouts, media, embeds, galleries, links, FAQ
     [
       ["file", "/media/example-demo-0123456789abcdef.mp4", 640],
       ["embed", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ", undefined],
-      ["embed", "https://player.vimeo.com/video/123456789?dnt=1", undefined],
     ],
   );
   assert.equal((html.match(/<li><a class="image-link"/g) ?? []).length, 2);
@@ -459,7 +458,8 @@ test("the blocks every site gets: callouts, media, embeds, galleries, links, FAQ
   await refuses(core("![ ][a]\n\n[a]: /a.png"), /has no alt text/);
   assert.match((await core('![""](/a.png)')).html, /<img src="\/a\.png" alt=""/);
   await refuses(core('::audio{src="/a.mp3" title="x"}'), /requires a transcript attribute/);
-  await refuses(core('::embed[x]{url="https://example.com/v"}'), /cannot embed .* Embeds come from youtube, vimeo, spotify, soundcloud/);
+  await refuses(core('::embed[x]{url="https://example.com/v"}'), /cannot embed .* Embeds come from youtube, tiktok, spotify, soundcloud, apple-podcasts, amazon-music, google-maps, x, bluesky, instagram;/);
+  await refuses(core('::embed[x]{url="https://bsky.app/profile/example.com/post/3l6oveex3ii2l"}'), /needs the Bluesky post's DID URL/);
   await refuses(core('::embed{url="https://youtu.be/dQw4w9WgXcQ"}'), /requires a title/);
   await refuses(core(":::gallery\n![one](/a.png)\n:::"), /holds 1 images; a gallery takes 2 to 9/);
   await refuses(core(':::figure{src="/a.png" alt="x" width=huge}\n:::'), /use width=wide or width=full/);

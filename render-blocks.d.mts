@@ -6,13 +6,8 @@ export function remarkCallouts(): (tree: import("mdast").Root) => void;
 export function remarkInlineMarks(file: string): (tree: import("mdast").Root) => void;
 /** :::video (captions required unless silent) and :::audio (transcript required); a media file written as an image is refused. */
 export function remarkMedia(file: string): (tree: import("mdast").Root) => void;
-/** The services an embed may load, each a URL pattern and the player it becomes. */
-export const EMBED_PROVIDERS: Array<{
-    name: string;
-    label: string;
-    pattern: RegExp;
-    player: (match: RegExpExecArray, url: string) => string;
-}>;
+/** The services an embed may load (render-embeds.mjs). */
+export { EMBED_PROVIDERS } from "./render-embeds.mjs";
 /** `::embed[Title]{url}`: a link to the original with the player URL beside it, loaded only on a click. */
 export function remarkEmbeds(file: string): (tree: import("mdast").Root) => void;
 /** :::gallery: two to nine images, each with alt text; other text is the caption. */

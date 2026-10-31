@@ -6,7 +6,10 @@ import { visit } from "unist-util-visit";
 
 import { refuseHeading, widthClass } from "./render-directives.mjs";
 import { ContentError } from "./render-error.mjs";
+import { BLUESKY_HANDLE, EMBED_PROVIDERS } from "./render-embeds.mjs";
 import { isAllowedUrl } from "./render-url.mjs";
+
+export { EMBED_PROVIDERS };
 
 /** GitHub's five alert types, the syntax GitHub, Obsidian and Docusaurus read. */
 export const CALLOUTS = /** @type {const} */ (["note", "tip", "important", "warning", "caution"]);
@@ -163,40 +166,6 @@ export function remarkMedia(file) {
 }
 
 /**
- * The services an embed may load, each a URL pattern and the player it becomes. YouTube is its no-cookie host and Vimeo's player is told
- * not to track. Only the id is taken from the author's URL, checked against a strict pattern, so nothing the author wrote reaches the
- * player URL unescaped.
- *
- * @type {Array<{ name: string, label: string, pattern: RegExp, player: (match: RegExpExecArray, url: string) => string }>}
- */
-export const EMBED_PROVIDERS = [
-  {
-    name: "youtube",
-    label: "Watch on YouTube",
-    pattern: /^https:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?:[?&#].*)?$/,
-    player: (m) => `https://www.youtube-nocookie.com/embed/${m[1]}?autoplay=1`,
-  },
-  {
-    name: "vimeo",
-    label: "Watch on Vimeo",
-    pattern: /^https:\/\/(?:www\.)?vimeo\.com\/(\d{6,12})(?:[/?#].*)?$/,
-    player: (m) => `https://player.vimeo.com/video/${m[1]}?dnt=1&autoplay=1`,
-  },
-  {
-    name: "spotify",
-    label: "Listen on Spotify",
-    pattern: /^https:\/\/open\.spotify\.com\/(track|album|playlist|episode|show)\/([A-Za-z0-9]{22})(?:[?#].*)?$/,
-    player: (m) => `https://open.spotify.com/embed/${m[1]}/${m[2]}`,
-  },
-  {
-    name: "soundcloud",
-    label: "Listen on SoundCloud",
-    pattern: /^https:\/\/soundcloud\.com\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\/?$/,
-    player: (_m, url) => `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}`,
-  },
-];
-
-/**
  * `::embed[Title]{url="https://youtu.be/…" poster="/media/…"}`. It renders as a link to the original with the player URL beside it, so the
  * page makes no request to the service until a reader asks: without script the link opens the service, and render/enhance swaps it for
  * the player on a click. The link is a poster with a play button (the lite embed): the `poster`, a picture on the site's own origin,
@@ -224,16 +193,22 @@ export function remarkEmbeds(file) {
         node.children = [
           element("a", { className: ["embed-link"], href: url, dataEmbedSrc: provider.player(match, url), dataEmbedTitle: title }, [
             ...(poster ? [element("img", { className: ["embed-poster"], src: poster, alt: "" })] : []),
-            element("span", { className: ["embed-play"], ariaHidden: "true" }),
+            ...(provider.kind === "video" || provider.kind === "audio" ? [element("span", { className: ["embed-play"], ariaHidden: "true" })] : []),
             element("span", { className: ["embed-label"] }, [{ type: "text", value: `${provider.label}: ${title}` }]),
           ]),
           ...caption(children),
         ];
         return;
       }
+      if (BLUESKY_HANDLE.test(url)) {
+        throw new ContentError(
+          file,
+          `${where(node, "::embed")} needs the Bluesky post's DID URL: on the post choose Embed post and copy the did:plc: part, as in https://bsky.app/profile/did:plc:…/post/…`,
+        );
+      }
       throw new ContentError(
         file,
-        `${where(node, "::embed")} cannot embed ${JSON.stringify(url)}. Embeds come from ${EMBED_PROVIDERS.map((p) => p.name).join(", ")}; ` +
+        `${where(node, "::embed")} cannot embed ${JSON.stringify(url)}. Embeds come from ${[...new Set(EMBED_PROVIDERS.map((p) => p.name))].join(", ")}; ` +
           "link anything else, or write ::bookmark for a link card",
       );
     });

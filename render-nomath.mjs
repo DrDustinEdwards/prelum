@@ -47,6 +47,7 @@ import {
   remarkNumericTextDirectives,
   remarkUnknownDirectives,
 } from "./render-directives.mjs";
+import { EMBED_PROVIDERS } from "./render-embeds.mjs";
 import { ContentError } from "./render-error.mjs";
 import { rehypeLinks, remarkLinkDirectives } from "./render-links.mjs";
 import { RENDER_VERSION } from "./render-version.mjs";
@@ -537,6 +538,9 @@ function rehypeImageSources(file, resolveImage, pending, imageProps, priority, s
         return;
       }
       if (node.tagName === "a" && hasClass(node, "embed-link")) {
+        // Only a video is a video: a song, a map or a post never becomes og:video or a VideoObject.
+        const href = String(node.properties?.href ?? "");
+        if (!EMBED_PROVIDERS.some((p) => p.kind === "video" && p.pattern.test(href))) return;
         const poster = node.children.find((c) => c.type === "element" && c.tagName === "img");
         sinks.videos.push({
           kind: "embed",

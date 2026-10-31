@@ -90,6 +90,10 @@
       "types": "./render-enhance.d.mts",
       "default": "./render-enhance.mjs"
     },
+    "./render/embeds": {
+      "types": "./render-embeds.d.mts",
+      "default": "./render-embeds.mjs"
+    },
     "./render/chart-enhance": {
       "types": "./render-chart-enhance.d.mts",
       "default": "./render-chart-enhance.mjs"
