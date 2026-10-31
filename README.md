@@ -30,6 +30,7 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` (D1's FTS5); `staticSearchIndex(pages)` at build and `staticSearch(index, query)` in the browser, `searchWords`, for a site with no database |
 | `render`, `render/nomath` | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl` |
 | `render/packs` | `editorialPack`, the `RenderPack` shape a site's own directives take |
+| `render/chart-enhance` (browser) | `enhanceCharts(root?, options?)`: Enarratio's enhancement and the narrow-screen redraw for every `:::chart` |
 | `render/highlight` | `createHighlight`, `LANGUAGES`, `SHIKI_THEMES` |
 | `render/safe` | `assertSafe`, `scanHtml`, `inventory` |
 | `render/conformance` | `HOSTILE_INPUTS`, `runConformance` |
@@ -104,7 +105,29 @@ SVG, the maskable one with the mark inside the safe circle (W3C, "Icon masks") u
 touch icon or manifest link, and a manifest without a name, a 192 and a 512 pixel icon and a maskable one, or with an icon that
 does not load.
 
-`prelum-chart-audit --origin https://example.com [--from <preview origin>] [--chart-kb 100] [--strict-frame]` is the live
+### Charts in posts
+
+`:::chart{type x y alt title ...}` holds its data as a fenced CSV block, or cites it with `src="..."` (a URL or a media path):
+the site's `chartData(src, { file })` loader, passed to `editorialPack`, reads it at render time. Prelum fetches nothing itself,
+so a `src` on a site without the loader is refused. A chart with no title, author text above reading grade 9 or too many series
+renders with a warning; `editorialPack({ strictCharts: true })` refuses it instead, so an editor can block a publish on it.
+
+The chart is drawn on the server at 700 px, so it reads with scripts off. On a narrower screen Enarratio's frame would keep it
+30rem wide and scroll it sideways; `render/chart-enhance` redraws it to the frame's width instead, and adds Enarratio's
+enhancement layer (`enarratio/enhance`: keyboard walk between points, focus announcements, tooltips, legend filters, a sortable
+table). It reads the `data-prelum-chart` attribute on each frame: bar, line and area charts are drawn again by `enarratio/lite`
+(the same SVG as the server's), and a dot chart swaps in a 240 px drawing the server wrote. What a site adds is one import in
+the script it already bundles, which keeps it a same-origin module with no inline script, so a hash CSP holds:
+
+```js
+import { enhanceCharts } from "@drdustinedwards/site-helpers/render/chart-enhance";
+enhanceCharts(); // once the document is parsed; options go to Enarratio's enhance()
+```
+
+A site with no bundle of its own bundles that file into one (`rolldown`, `esbuild`) and loads it with
+`<script type="module" src="/charts.js"></script>`. `enarratio` (0.4.1 or later) is the one dependency; about 80 kB minified.
+
+`prelum-chart-audit --origin https://example.com [--from <preview origin>] [--chart-kb 100] [--no-strict-frame] [--pages <file | a,b>] [--start <url>]` is the live
 check for charts (area 10 of the completeness scoreboard). It crawls with `crawlSite`, then opens every page (and the
 same-origin iframes they show) in headless Chromium: with scripts off, and with scripts on in the light and dark schemes. For
 every Enarratio chart, or the Capsomer frame (`.cap-chart`, Capsomer 0.53) it sits in, it reports each miss as a GitHub annotation titled
@@ -112,9 +135,24 @@ with its checklist item and the page as proof: no SVG, title, finding sentence, 
 B30); an SVG without `role="img"` and a name, or a table without scoped `th` and a caption (B28); text under 4.5:1 or a mark or
 legend swatch under 3:1 as painted, custom properties resolved, in either scheme (B1); text under 12 px (B3); an axe-core
 violation inside the chart in either scheme (B27); a chart over `--chart-kb` of inline HTML (D6); a page that loads Recharts,
-Chart.js, ApexCharts, ECharts, Highcharts, Plotly, Nivo or visx, or draws an SVG chart by hand (F). The CSV link (C1), the
-source line (C2) and the frame (F) are warnings until Enarratio 0.4.0 and the frame reach the sites; `--strict-frame` makes
-them errors. It exits 0 with no errors, 1 with any, 2 when it could not run. `playwright-core` and `axe-core` are optional
+Chart.js, ApexCharts, ECharts, Highcharts, Plotly, Nivo or visx, or draws an SVG chart by hand (F); at 320 px wide, a drawing
+that overflows its frame sideways or chart text under 12 px (C12). A missing CSV link (C1), source line (C2) or frame (F) is an
+error; `--no-strict-frame` makes them warnings (`--strict-frame` is still accepted and changes nothing).
+
+The SVG's role (B28) follows the WAI-ARIA APG: `role="img"` for a static chart, or `role="group"` with
+`aria-roledescription="chart"` for an enhanced one the reader can enter. Before measuring contrast, a `url(#id)` fill or stroke
+is read as its pattern's base `<rect>` (Enarratio's textures paint the series color first) or its gradient's first stop.
+
+**Inline primitives.** A sparkline in a stat tile or an uptime strip in a table row is an inline primitive: Enarratio's
+`inline: true` output, a bare `[data-enarratio]` sparkline, heat strip, progress ring, uptime strip or timeline in no
+`figure.enarratio`, alone or in a frame of its own (a Capsomer stat tile). It needs no frame, title, caption, CSV or table. It
+passes when it is `role="img"` with an `aria-label` (or `aria-labelledby`) that states its values or finding (a number, or a
+sentence of four words or more), or when it is `aria-hidden="true"` beside visible text that gives the numbers (the nearest
+ancestor with text of its own holds a digit). Otherwise it is a B18 error.
+
+`--pages` adds pages the crawl cannot find (a file of URLs or paths, one per line, or a comma list), and each `--start <url>`
+is opened first in every browser context, so a demo route that sets a session cookie (Foxhound's `/demos/dashboard`) opens the
+pages behind it. It exits 0 with no errors, 1 with any, 2 when it could not run. `playwright-core` and `axe-core` are optional
 peers; without them it installs the pinned versions into a cache directory once. It drives Playwright's Chromium, else the
 system Chrome, else `CHART_AUDIT_CHROME`.
 
@@ -161,7 +199,11 @@ const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion, faq
   options: {
     media: { keyOf, imageProps }, // the site's image rules; without them images are left as written. imageProps may return
                                   // sources (AVIF, then WebP) to wrap an image in <picture>
-    packs: [editorialPack({ assetPrefix: "example-" })], // chart, diagram, sidenote, pullquote, swatch
+    packs: [editorialPack({
+      assetPrefix: "example-", // chart, diagram, sidenote, pullquote, swatch
+      chartData: async (src, { file }) => csvText, // reads :::chart{src="..."}; without it a src is refused
+      strictCharts: false, // true refuses a chart with no title, text above grade 9 or too many series
+    })],
     highlight: createHighlight({ wasm }), // without it a code block is plain <pre><code>
     maxBytes: 512 * 1024, // refused before parsing
     maxDepth: 100, // refused after parsing

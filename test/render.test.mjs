@@ -9,6 +9,7 @@ import { htmlHasMath } from "../render-math.mjs";
 import { render as renderNoMath } from "../render-nomath.mjs";
 import { linkIconResponse, lookupLinkIcon } from "../render-link-icons.mjs";
 import { isAllowedUrl } from "../render-url.mjs";
+import { editorialPack } from "../render-packs.mjs";
 import { fixture, highlight, media, resolveImage, siteOptions } from "./render-config.mjs";
 
 /** @param {string} body @param {import("../render.mjs").RenderOptions} [options] */
@@ -312,7 +313,7 @@ test("the editorial pack: sidenotes, pull quotes, swatches, charts and diagrams,
   assert.match(html, /<p class="pull-quote" aria-hidden="true">sentence worth raising<\/p>/);
   assert.match(html, /<span class="swatch"><span class="swatch-chip" style="--swatch:#6B4FBB" aria-hidden="true"><\/span><code class="swatch-label">#6B4FBB<\/code><\/span>/);
   assert.match(html, /<span class="swatch-chip" style="--swatch:#FFF" aria-hidden="true"><\/span><code class="swatch-label">the brand<\/code>/);
-  assert.equal((html.match(/<div class="cap-chart"><div class="cap-chart-figure"><figure class="chart-figure enarratio"/g) ?? []).length, 2);
+  assert.equal((html.match(/<div class="cap-chart" data-prelum-chart="[^"]*"><div class="cap-chart-figure"><figure class="chart-figure enarratio"/g) ?? []).length, 2);
   assert.match(html, /src="\/diagrams\/example-4efabcc1-light\.svg"/);
   assert.match(html, /src="\/diagrams\/example-4efabcc1-dark\.svg"/);
   assert.deepEqual(diagrams, [{ key: "4efabcc1", source: "graph TD\n  A --> B" }]);
@@ -331,8 +332,29 @@ test("the editorial pack: sidenotes, pull quotes, swatches, charts and diagrams,
   await refuses(site(':::sidenote{kind="K"}\n# H\n:::'), /:::sidenote holds a heading on line 2/);
   await refuses(site(':::chart{type="bar" x="a" y="b"}\n```csv\na,b\n1,2\n```\n:::'), /:::chart "bar" requires an alt attribute/);
   await refuses(site(':::chart{type="pie" alt="x"}\n```csv\na,b\n1,2\n```\n:::'), /:::chart type "pie" is not one of bar, line, dot, area/);
+  await refuses(site(':::chart{type="bar" x="a" y="b" alt="x" src="/media/a.csv"}\n:::'), /passes no chartData loader/);
   await refuses(site(':::diagram{alt="x"}\n```text\nA\n```\n:::'), /source must be a ```mermaid fenced block, found ```text/);
   await refuses(site(':::diagram{title="T"}\n```mermaid\nA-->B\n```\n:::'), /:::diagram "T" requires an alt attribute/);
+});
+
+test("a chart's data may come from the site's loader (E3), and strict charts refuse what the default only warns about (E4)", async () => {
+  const pack = (/** @type {object} */ extra) => ({ packs: [editorialPack({ assetPrefix: "x-", ...extra })] });
+  /** @type {string[]} */
+  const asked = [];
+  const chartData = async (/** @type {string} */ src) => {
+    asked.push(src);
+    if (src.endsWith("missing.csv")) throw new Error("404");
+    return "year,posts\r\n2024,3\r\n2025,5\r\n";
+  };
+  const cited = ':::chart{type="bar" x="year" y="posts" alt="Posts rose from 3 to 5" src="/media/posts.csv"}\n:::';
+  const { html, warnings } = await core(cited, pack({ chartData }));
+  assert.deepEqual(asked, ["/media/posts.csv"]);
+  assert.match(html, /<td>5<\/td>/);
+  await refuses(core(cited.replace("posts.csv", "missing.csv"), pack({ chartData })), /src="\/media\/missing.csv" did not load: 404/);
+  await refuses(core(cited.replace("\n:::", "\n```csv\na,b\n1,2\n```\n:::"), pack({ chartData })), /holds a CSV block; give the data one way/);
+  // No title: a warning by default, a refusal when strict.
+  assert.ok(warnings.some((w) => /title/i.test(w.message)), JSON.stringify(warnings));
+  await refuses(core(cited, pack({ chartData, strictCharts: true })), /:::chart "bar": .*title/i);
 });
 
 test("diagram assets are named by the site's prefix, and the key moves with the source, not with line endings", async () => {

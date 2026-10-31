@@ -1,12 +1,12 @@
 {
-  "renderVersion": "10",
+  "renderVersion": "11",
   "hashes": {
     "prose": "a4a122fe3d7a4529506922967dfc71b1dabd7a89bc61c72f534fdbcff6894521",
     "math": "408890dc1a14ed77efc201768c94ca54fd5d72ff34b93dcada831bd6cf974fb4",
     "untrusted-math": "1bb1db2df1689abe3cddcaee30a7477b52500e5fc725697c9531c0d7a3ebf6c8",
     "code": "da58e773ef717cc0db8495c6c24434042ad0e84f55a396ca58c72a2538974c9e",
-    "directives": "7de2b67104db0147f5a8da8a98d92205e441a6dc7a2b2e8c58a03ca233fe151d",
-    "charts": "8e74b79b824d112516f5e7e2072358481065455e581820f3f676ced366e2a0b9",
+    "directives": "fe03d9e2d4893c01d32e133f6422410dceac09e613d2a4171ad22ea11d56a523",
+    "charts": "43a32a5ce162f939536c9c83e3bfc89d162c09e35b0b0f21b75094675e15797b",
     "blocks": "8c41c3fe514ecc94a239567a285178c129848243eefec0e722091b18e4f02dae"
   }
 }
