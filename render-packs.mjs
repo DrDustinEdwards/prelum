@@ -301,7 +301,7 @@ const remarkDiagram = remarkModelDirective({
  * dustinedwards-info's directives, in the order its renderer ran them, so the output is the same bytes.
  *
  * @param {object} options
- * @param {string} options.assetPrefix the prefix of the site's diagram assets, for example "dustin-edwards-"
+ * @param {string} options.assetPrefix the prefix of the site's diagram assets, for example "example-"
  * @param {(src: string, context: { file: string }) => string | Promise<string>} [options.chartData] reads the CSV a
  *   `:::chart{src="..."}` cites (a URL or a media path), at render time; without it a `src` is refused
  * @param {boolean} [options.strictCharts] refuse a chart with no title, author text above reading grade 9 or too many

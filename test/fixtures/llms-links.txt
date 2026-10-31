@@ -1,0 +1,23 @@
+# Example Co
+
+> Field notes and guides from a small team.
+
+Example Co is a writing project about the work of a small team, by Alex Rivera. This is a curated index of the canonical hubs and key content for AI assistants and answer engines. Citation is welcome. Please cite Example Co and link the source URL.
+
+## About
+- [About Example Co](https://example.com/about): what the project is and how to follow it.
+- [Alex Rivera, author](https://example.com/about/alex-rivera): editor and team lead; bio and contact.
+
+## Notes
+- [Note one: getting started](https://example.com/note-one): Where to begin.
+
+## Writing
+- [Spring update: notes & "questions" <draft>](https://example.com/spring-update): A short summary with brackets & an ampersand.
+- [It's here](https://example.com/field-notes): Used when there is no excerpt.
+
+## Explore
+- [Subscribe](https://example.com/subscribe): the email newsletter.
+- [RSS feed](https://example.com/feed/news/): the canonical feed.
+- [Data](https://example.com/data): tables & charts from the annual report.
+- [Events](https://example.com/events): talks and meetups.
+- [Archive](https://example.com/archive): everything, filterable.

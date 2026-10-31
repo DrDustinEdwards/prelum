@@ -199,7 +199,7 @@ const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion, faq
     media: { keyOf, imageProps }, // the site's image rules; without them images are left as written. imageProps may return
                                   // sources (AVIF, then WebP) to wrap an image in <picture>
     packs: [editorialPack({
-      assetPrefix: "dustin-edwards-", // chart, diagram, sidenote, pullquote, swatch
+      assetPrefix: "example-", // chart, diagram, sidenote, pullquote, swatch
       chartData: async (src, { file }) => csvText, // reads :::chart{src="..."}; without it a src is refused
       strictCharts: false, // true refuses a chart with no title, text above grade 9 or too many series
     })],
@@ -317,9 +317,9 @@ Access check and email.
 
 ## Tests
 
-`test/fixtures/` holds each site's own published output, captured from germomics, foxhound and dustinedwards-info.
-`PROVENANCE.json` lists the commits. `test/prelum.test.mjs`
-holds the package to that output byte for byte. A change here changes what three sites publish, so it comes with a re-captured
+`test/fixtures/` holds the sites' published output in its captured byte layout, with sample content (example.com) in
+place of each site's own words. `PROVENANCE.json` lists the commits. `test/prelum.test.mjs`
+holds the package to that output byte for byte. A change here changes what the sites publish, so it comes with a re-captured
 fixture and a reviewed diff.
 
 The tests exist to catch two defects in particular. One is an FTS5 term whose embedded quote is not doubled: the term escapes its

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Example Co Blog</title>
+    <link>https://example.com/blog</link>
+    <description>Guides, release notes and field notes from Example Co.</description>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 01 Aug 2026 12:00:00 GMT</lastBuildDate>
+    <atom:link href="https://example.com/feed.rss" rel="self" type="application/rss+xml"/>
+    <image>
+      <url>https://example.com/favicon.png</url>
+      <title>Example Co Blog</title>
+      <link>https://example.com/blog</link>
+    </image>
+    
+    <item>
+      <title><![CDATA[Getting started: what works & what "doesn't"]]></title>
+      <link>https://example.com/blog/getting-started</link>
+      <guid isPermaLink="true">https://example.com/blog/getting-started</guid>
+      <description><![CDATA[A summary with <angle> brackets & an ampersand.]]></description>
+      <pubDate>Sat, 01 Aug 2026 12:00:00 GMT</pubDate>
+      <author>hello@example.com (Example Co Team)</author>
+      <category>guides</category><category>news</category>
+    </item>
+    <item>
+      <title><![CDATA[Release notes, drafted]]></title>
+      <link>https://example.com/blog/release-notes</link>
+      <guid isPermaLink="true">https://example.com/blog/release-notes</guid>
+      <description><![CDATA[Second summary.]]></description>
+      <pubDate>Fri, 10 Jul 2026 08:00:00 GMT</pubDate>
+      <author>hello@example.com (Example Co Team)</author>
+      <category>releases</category>
+    </item>
+    <item>
+      <title><![CDATA[An undated draft]]></title>
+      <link>https://example.com/blog/undated</link>
+      <guid isPermaLink="true">https://example.com/blog/undated</guid>
+      <description><![CDATA[No date.]]></description>
+      <author>hello@example.com (Example Co Team)</author>
+      
+    </item>
+  </channel>
+</rss>

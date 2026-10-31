@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://example.com/</loc></url>
+  <url><loc>https://example.com/about</loc></url>
+  <url><loc>https://example.com/writing</loc></url>
+  <url><loc>https://example.com/projects</loc></url>
+  <url><loc>https://example.com/colophon</loc></url>
+  <url><loc>https://example.com/privacy</loc></url>
+  <url><loc>https://example.com/contact</loc></url>
+  <url><loc>https://example.com/guides</loc></url>
+  <url><loc>https://example.com/guides/getting-started</loc></url>
+  <url><loc>https://example.com/guides/getting-started/faq</loc></url>
+  <url><loc>https://example.com/projects/field-notes</loc></url>
+  <url><loc>https://example.com/projects/annual-report</loc></url>
+  <url><loc>https://example.com/terms</loc></url>
+  <url><loc>https://example.com/releases/2026-spring/</loc></url>
+  <url><loc>https://example.com/releases/2025-fall/</loc></url>
+  <url><loc>https://example.com/writing/spring-update</loc><lastmod>2026-10-04</lastmod></url>
+  <url><loc>https://example.com/writing/field-notes</loc><lastmod>2026-09-30</lastmod></url>
+  <url><loc>https://example.com/writing/release-notes</loc><lastmod>2026-09-27</lastmod></url>
+  <url><loc>https://example.com/writing/annual-report</loc><lastmod>2026-08-23</lastmod></url>
+  <url><loc>https://example.com/writing/tags/guides</loc></url>
+  <url><loc>https://example.com/writing/tags/news</loc></url>
+</urlset>

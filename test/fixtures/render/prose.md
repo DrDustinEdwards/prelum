@@ -33,7 +33,7 @@ An opening paragraph with *emphasis*, **strong text**, ~~strikethrough~~, `inlin
 
 Prose such as 12:30, 4.5:1 and localhost:8080 stays prose.
 
-![An image with a title](/media/dustin-edwards-sample-0123456789abcdef-640x480.png "Shown on hover")
+![An image with a title](/media/example-sample-0123456789abcdef-640x480.png "Shown on hover")
 
 A decorative image, with no link around it: ![](/static/rule.svg)
 
