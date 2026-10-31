@@ -20,6 +20,12 @@ One frontmatter reader and writer for every site and package (writing and render
 - Specimen: site-runtime 0.50.0. Its `headersFile` writes cross-origin CORP on css, js, mjs, svg and woff2, so the specimen's own
   rule for it is gone (security headers, area 2).
 
+### Fixed
+
+- `prelum-icons` draws a mark that holds a raster image (a PNG logo inside the SVG) on the Apple touch and maskable icons.
+  Those two came out as plain background, because resvg loads no image inside a nested SVG; the mark now goes onto the
+  background already drawn as a PNG, and an image it links by relative path is read from the mark's folder.
+
 ## 0.23.0 (2026-10-31)
 
 Post charts in Capsomer's chart frame (charts, area 10).
