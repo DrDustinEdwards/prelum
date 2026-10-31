@@ -1,12 +1,12 @@
 {
-  "renderVersion": "14",
+  "renderVersion": "15",
   "hashes": {
-    "prose": "a4a122fe3d7a4529506922967dfc71b1dabd7a89bc61c72f534fdbcff6894521",
+    "prose": "fb91e0e5a19c72d8acb17ab64221f3b2bd1a906e44bb3a2cbfcea85e0f892836",
     "math": "408890dc1a14ed77efc201768c94ca54fd5d72ff34b93dcada831bd6cf974fb4",
     "untrusted-math": "1bb1db2df1689abe3cddcaee30a7477b52500e5fc725697c9531c0d7a3ebf6c8",
     "code": "da58e773ef717cc0db8495c6c24434042ad0e84f55a396ca58c72a2538974c9e",
-    "directives": "2b4e5da3d73c2eb803289aef9f5a0b3a1f1511f4525e804b7db23b701813ce42",
-    "charts": "4fc378c2d20d21f29b71a5edbf11732f6c4c6b5a65240ffd1f0cb3b8d3aba97d",
+    "directives": "9d438d51925c52e64bfd84a7b69d7ff0c4961017e892f1e9914e9d084354fc60",
+    "charts": "069c7d74e688d84c8d6e9ae60e7c3226dfc89cc7cdcd66a51a4364de822cd93e",
     "blocks": "fe3169ea41fb65e5cf2d754128b4a374c4a50aef163f633e46cf8934d1ceed5d"
   }
 }

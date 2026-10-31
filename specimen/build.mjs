@@ -370,8 +370,9 @@ export async function buildSpecimen(outDir) {
   const elements = loadElements();
   /** @type {Awaited<ReturnType<typeof renderElement>>[]} */
   const rendered = [];
-  // One page, one fetchpriority=high: the elements render in page order and share the page's.
-  const priority = { taken: false };
+  // One page, at most one fetchpriority=high, shared by the elements in page order. The page opens with words and
+  // its first picture is thousands of pixels down, so it is taken already: no picture here is the largest paint.
+  const priority = { taken: true };
   for (const element of elements) rendered.push(await renderElement(element, priority));
 
   // Only an earlier build is deleted: a mistyped outDir must not take the working tree with it.

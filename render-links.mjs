@@ -273,7 +273,7 @@ export function rehypeLinks(links, icons, pending) {
           /** @type {Promise<string | null>} */ (hosts.get(host)).then((type) => {
             const src = type ? linkIconSrc(iconPath, host, type) : null;
             // No icon: the link is left as it is, and Capsomer draws its arrow.
-            if (src) node.children.unshift({ type: "element", tagName: "img", properties: { className: ["cap-link-icon"], src, alt: "", width: 16, height: 16 }, children: [] });
+            if (src) node.children.unshift({ type: "element", tagName: "img", properties: { className: ["cap-link-icon"], src, alt: "", width: 16, height: 16, loading: "lazy", decoding: "async" }, children: [] });
           }),
         );
       }
