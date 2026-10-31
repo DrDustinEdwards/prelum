@@ -2,12 +2,45 @@
 
 ## Unreleased
 
+## 0.27.0 (2026-10-31)
+
+Prelum's chart redraw now lives in Enarratio, shared with Capsomer (charts, area 10).
+
 ### Changed
 
 - Enarratio 0.5.0. `render/chart-enhance` redraws through Enarratio's `enarratio/redraw` (the same code moved into Enarratio, which
-  Capsomer's chart-enhance shares); its behavior and `enhanceCharts` are unchanged. renderVersion 11: Enarratio 0.5 draws `:::chart`
-  differently (the x title sits 1.5em under its ticks, scatter axes are padded, y axes end on a tick, x ticks fit the width, tick
-  labels use proportional figures, and Download SVG and PNG join Download CSV).
+  Capsomer's chart-enhance shares); its behavior and `enhanceCharts` are unchanged, and the spec stays in `data-prelum-chart`.
+- `RENDER_VERSION` is 12: Enarratio 0.5 draws `:::chart` differently (the x title sits 1.5em under its ticks, scatter axes are
+  padded, y axes end on a tick, x ticks fit the width, tick labels use proportional figures, and Download SVG and PNG join
+  Download CSV). The allowlist drops `g font-variant`.
+
+### Specimen
+
+- Enarratio 0.5's Download SVG and PNG buttons take the chart link style.
+- The specimen's Capsomer (v0.55.0) still names Enarratio ^0.4.0 as an optional peer; `overrides` in package.json gives it 0.5.0
+  until a Capsomer release names ^0.5.0, then the override goes.
+
+## 0.26.0 (2026-10-31)
+
+The Prelum side of the family's link contract (Dustin, 2026-10-31): every link a body renders says what kind it is, for Capsomer to
+style from the markup.
+
+
+
+### Changed
+
+- `RENDER_VERSION` is 11: links carry the contract above, and the allowlist gains `a data-link`, `a data-site`, `a hreflang`,
+  `a rel` and `span lang`.
+- A box that scrolls sideways is a named region a keyboard can focus: `div.table-scroll` gains `role="region"` and
+  `aria-label="Table: <first four headers>"` (or `Table`), and every `pre`, highlighted or not, gains `tabindex="0"`,
+  `role="region"` and `aria-label` from its frame title (`Code: app.ts`), else its language (`Code: TypeScript`), else `Code`. The
+  allowlist gains `pre role` and `pre aria-label`.
+- The URL policy allows `tel:`, for phone links. A dialer runs nothing.
+
+### Specimen
+
+- The Links element shows every kind, with Capsomer's family list and MDN's icon, fetched once and committed in
+  `specimen/link-icons/` (an empty file is a host with none, so builds and tests reach no other site).
 
 ## 0.25.0 (2026-10-31)
 

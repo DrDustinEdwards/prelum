@@ -1,6 +1,6 @@
 // The browser half of :::chart: Enarratio's enhancement layer (keyboard walk, focus announcements, tooltips, legend filters, a
 // sortable table) on every chart Prelum rendered, and a redraw to the frame's width when it is narrower than the drawing, so a
-// post's chart fits a 320 px phone instead of scrolling sideways.
+// post's chart fits a 320 px phone instead of scrolling sideways. Capsomer's ChartFrame does the same for a chart drawn in React.
 //
 // Browser-only, nothing runs on import. A site bundles it into a same-origin script (no inline script, so a hash CSP holds) and
 // calls `enhanceCharts()` once the document is parsed. Without it every chart still reads, with its table, as the server drew it.

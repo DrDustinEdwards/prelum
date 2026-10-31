@@ -31,6 +31,10 @@ An opening paragraph with *emphasis*, **strong text**, ~~strikethrough~~, `inlin
 
 ---
 
+Every kind of link: a [family site](https://capsid.dustinedwards.info/), a [file](/media/cv.pdf), a [file of unknown size](https://example.com/data.csv), a [phone](tel:+15551234567), an address someone@example.com, a DOI [10.1000/xyz123](https://doi.org/10.1000/xyz123), :lang[[a page in Spanish](https://es.example.com/)]{hreflang=es} and a cross-reference to :xref[[the second heading](#second-heading)].
+
+[The next post](/writing/next)
+
 Prose such as 12:30, 4.5:1 and localhost:8080 stays prose.
 
 ![An image with a title](/media/example-sample-0123456789abcdef-640x480.png "Shown on hover")

@@ -1,12 +1,12 @@
 {
-  "renderVersion": "11",
+  "renderVersion": "12",
   "hashes": {
-    "prose": "a626bf4ac62af01edf243b548adeab2e24bdf3d6bd573e58421623b843cf546b",
+    "prose": "a4a122fe3d7a4529506922967dfc71b1dabd7a89bc61c72f534fdbcff6894521",
     "math": "408890dc1a14ed77efc201768c94ca54fd5d72ff34b93dcada831bd6cf974fb4",
     "untrusted-math": "1bb1db2df1689abe3cddcaee30a7477b52500e5fc725697c9531c0d7a3ebf6c8",
-    "code": "4e3b81df0691aebfffd86706f127bf102e06e2aee40cc83dd5c023efa20544d1",
-    "directives": "1f83f1a02a4d9478cc281de013aed8f2394922f86c3adc1786f96432f6188c96",
-    "charts": "1dac9d2f72c0e4e3487aec2361246e717bdce4e6e5db0d3a6ae035d1b34d39a7",
-    "blocks": "2142b77218a594785fa33fcb321d34f81179eed6b37266b3a8296d358657bc29"
+    "code": "da58e773ef717cc0db8495c6c24434042ad0e84f55a396ca58c72a2538974c9e",
+    "directives": "e6b3d3d8fcbd1ce1f38e48f499ffb1f6365144273ae8e7ed94f137572b418bb5",
+    "charts": "4fc378c2d20d21f29b71a5edbf11732f6c4c6b5a65240ffd1f0cb3b8d3aba97d",
+    "blocks": "8c41c3fe514ecc94a239567a285178c129848243eefec0e722091b18e4f02dae"
   }
 }
