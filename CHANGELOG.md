@@ -13,6 +13,11 @@
 
 ### Specimen
 
+- The specimen's Worker is site-runtime v0.52.0's `staticSite` in place of its own code: the same https redirect, report endpoint,
+  preload Link and charset, plus the site's own prefetch rules at `/speculation-rules.json` with the `Speculation-Rules`
+  header on every page (in place of Cloudflare's generic ones) and `Server-Timing`. A page asked for with a cookie is
+  `private, no-store`, as the 404 page already was. The fonts, KaTeX, images and diagrams no longer run the Worker
+  (`run_worker_first`). The page looks the same: home page screenshots before and after are identical.
 - The specimen's home page writes its head with `headTags`, so it has a share card: `share-card.png` (1200x630) with
   `og:image:type`, `width`, `height` and `alt`, and the canonical, Open Graph and X tags that come with it.
 
