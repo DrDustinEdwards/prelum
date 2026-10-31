@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- Enarratio 0.5.0. `render/chart-enhance` redraws through Enarratio's `enarratio/redraw` (the same code moved into Enarratio, which
+  Capsomer's chart-enhance shares); its behavior and `enhanceCharts` are unchanged. renderVersion 11: Enarratio 0.5 draws `:::chart`
+  differently (the x title sits 1.5em under its ticks, scatter axes are padded, y axes end on a tick, x ticks fit the width, tick
+  labels use proportional figures, and Download SVG and PNG join Download CSV).
+
 ## 0.25.0 (2026-10-31)
 
 Charts that fit a phone, and a chart check that sees what it missed (charts, area 10).

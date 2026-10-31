@@ -131,7 +131,6 @@ export const DEFAULT_ALLOWLIST = {
     "g data-enarratio-mark",
     "g fill",
     "g fill-opacity",
-    "g font-variant",
     "g stroke",
     "g stroke-linecap",
     "g stroke-linejoin",
