@@ -16,6 +16,12 @@
 
 - devkit v0.20.3. CI now runs devkit's workflow audit (actionlint and zizmor) and its dependency audit (OSV-Scanner), and
   `.no-bloat.json` records the test and comment counts.
+- The specimen's `_headers` is written by site-runtime's `headersFile` from the set the Worker sends (`HEADERS_FILE`,
+  specimen/headers.mjs), replacing the `{{SITE_HEADERS}}` template in specimen/static/_headers; the /diagrams/* policy is
+  built with `buildPolicy`. The page policy drops `connect-src https://cloudflareinsights.com`: the edge-injected beacon
+  reports to the site's own /cdn-cgi/rum. No rendered HTML changes, so `RENDER_VERSION` stays.
+- The specimen's static text files are served with `charset=utf-8`, and its stylesheets, scripts and fonts with
+  `Cross-Origin-Resource-Policy: cross-origin` (site-runtime 0.43.0 `headersFile({ charset: true })`, `corpFor`).
 
 ### Fixed
 
