@@ -2,7 +2,8 @@
 // call render. Pure predicates: rehypeUrlProtocols in render-nomath.mjs applies them to the rendered tree, and assertSafe applies them to the
 // output.
 
-const ALLOWED_PROTOCOLS = new Set(["https:", "http:", "mailto:"]);
+// tel: for a phone link (data-link="phone"): a dialer, which runs nothing.
+const ALLOWED_PROTOCOLS = new Set(["https:", "http:", "mailto:", "tel:"]);
 
 /**
  * Browsers drop tab and newline anywhere in a URL, so java<TAB>script: is live. Every C0 control and DEL goes, stricter than the

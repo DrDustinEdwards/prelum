@@ -4,6 +4,7 @@
 import { visit } from "unist-util-visit";
 
 import { ContentError, errorMessage } from "./render-error.mjs";
+import { LINK_DIRECTIVES } from "./render-links.mjs";
 
 /**
  * Valueless attributes are dropped: they are indistinguishable from absent ones.
@@ -169,8 +170,8 @@ export function remarkDetails(file) {
   };
 }
 
-/** The directives the core handles itself. A pack adds its own names to the list the guard checks. */
-export const CORE_DIRECTIVES = ["details", "figure"];
+/** The directives the core handles itself (:lang and :xref in render-links.mjs). A pack adds its own names to the list the guard checks. */
+export const CORE_DIRECTIVES = ["details", "figure", ...LINK_DIRECTIVES];
 
 /**
  * An unhandled directive becomes a silent empty <div>, so a typo such as :::figrue loses the figure. Runs after

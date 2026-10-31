@@ -74,6 +74,16 @@ export type RenderOptions = {
      */
     postLink?: (slug: string) => Promise<{ url: string; title: string } | null>;
     /**
+     * The site's origin, the family's sites and the file sizes the link contract reads (render-links.mjs). Without it every kind but
+     * away and family is still written.
+     */
+    links?: import("./render-links.mjs").LinkOptions;
+    /**
+     * The store an away link's icon is kept in, fetched once from the host on a miss (render-link-icons.mjs). Without it nothing is
+     * fetched and an away link has no icon.
+     */
+    linkIcons?: import("./render-link-icons.mjs").LinkIconOptions;
+    /**
      * Curly quotes, dashes and ellipses (SmartyPants, Astro's default). On unless false.
      */
     smartPunctuation?: boolean;

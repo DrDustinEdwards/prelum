@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.25.0 (2026-10-31)
+
+The Prelum side of the family's link contract (Dustin, 2026-10-31): every link a body renders says what kind it is, for Capsomer to
+style from the markup.
+
+### Added
+
+- `render` writes `data-link` on every author link: `away` (with `rel="external"`), `family` (with `data-site`), `file`, `jump`,
+  `email`, `phone`, `lang`, `address`, `next` and `xref`, the first that fits (README, "Links say what they are"). A link off the
+  family carries a hidden `<span class="cap-sr-only"> (opens another site)</span>` whatever its kind; a file link is followed by
+  `<span class="cap-link-meta">PDF, 2.1 MB</span>` and a language link by `<span class="cap-link-meta" lang="es">Español</span>`.
+  Footnote references and the pipeline's own links are left as they were.
+- `links: { origin, family, fileSize }` in the render options: the site's origin (without it no link is away), the family's sites
+  (Capsomer's `FAMILY_SITES`, passed in: Prelum does not depend on Capsomer) and a file-size resolver (an unknown size is left out).
+- `:lang[[text](url)]{hreflang=es}` and `:xref[[text](url)]`, two core directives round an ordinary link. An hreflang Intl does
+  not know is refused.
+- `linkIcons: { store }` and `render/link-icons`: an away host's icon, looked up in the site's store and fetched once from the host
+  (`/favicon.ico`, then its `<link rel="icon">`) on a miss, capped in bytes and time, its type read from its bytes and an SVG that
+  could run or load refused, then written as `<img class="cap-link-icon" alt="">` at the link's start. `linkIconResponse(pathname,
+  store)` is the route that serves it, with a year's immutable cache, nosniff and a sandboxing policy. It lives here, not in
+  site-runtime, because it is a step of rendering a body.
+
+### Changed
+
+- `RENDER_VERSION` is 10: links carry the contract above, and the allowlist gains `a data-link`, `a data-site`, `a hreflang`,
+  `a rel` and `span lang`.
+- The URL policy allows `tel:`, for phone links. A dialer runs nothing.
+
+### Specimen
+
+- The Links element shows every kind, with Capsomer's family list and MDN's icon, fetched once and committed in
+  `specimen/link-icons/` (an empty file is a host with none, so builds and tests reach no other site).
+
 ## 0.24.0 (2026-10-31)
 
 One frontmatter reader and writer for every site and package (writing and rendering, area 4).

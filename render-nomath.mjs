@@ -48,6 +48,7 @@ import {
   remarkUnknownDirectives,
 } from "./render-directives.mjs";
 import { ContentError } from "./render-error.mjs";
+import { rehypeLinks, remarkLinkDirectives } from "./render-links.mjs";
 import { RENDER_VERSION } from "./render-version.mjs";
 import { LQIP_STYLE, assertSafe, srcsetUrls } from "./render-safe.mjs";
 import { isAllowedUrl, isCsvDownload } from "./render-url.mjs";
@@ -83,6 +84,10 @@ const encoder = new TextEncoder();
  * @property {number} [maxDepth] Refuse a source nested deeper than this. Default 100.
  * @property {(slug: string) => Promise<{ url: string, title: string } | null>} [postLink] Resolves `::postlink[slug]` to the post's
  *   current address and title. Without it `::postlink[…]` stays text.
+ * @property {import("./render-links.mjs").LinkOptions} [links] The site's origin, the family's sites and the file sizes the link
+ *   contract reads (render-links.mjs). Without it every kind but away and family is still written.
+ * @property {import("./render-links.mjs").LinkIconOptions} [linkIcons] The store an away link's icon is kept in, fetched once from
+ *   the host on a miss (render-link-icons.mjs). Without it nothing is fetched and an away link has no icon.
  * @property {boolean} [smartPunctuation] Curly quotes, dashes and ellipses (SmartyPants, Astro's default). On unless false.
  * @property {boolean | { tags: ReadonlySet<string>, attributes: ReadonlySet<string> }} [assertSafe] Run the output scan on the result and
  *   throw when it finds an element or attribute outside the allowlist. Off by default; `true` uses the allowlist derived from the
@@ -514,6 +519,7 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
     .use(remarkDetails, file)
     .use(remarkCallouts)
     .use(remarkInlineMarks, file)
+    .use(remarkLinkDirectives, file)
     .use(remarkMedia, file)
     .use(remarkEmbeds, file)
     .use(remarkGallery, file)
@@ -556,6 +562,8 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   // over (MathML plus HTML), ruining ids and the toc. Option 3 in the header: KATEX_OPTIONS leaves `trust` off.
   if (math) processor.use(math.html, math.options);
   processor.use(rehypeImageSources, file, resolveOnce, pending, imageProps);
+  // After the image links exist, which it tells from an author's link by their class.
+  processor.use(rehypeLinks, options.links ?? {}, options.linkIcons, pending);
 
   if (options.highlight) {
     const [plugin, ...args] = await options.highlight.plugin();

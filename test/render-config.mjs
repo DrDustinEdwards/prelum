@@ -3,6 +3,8 @@
 
 import { readFileSync } from "node:fs";
 
+import { FAMILY_SITES } from "capsomer/behavior/family-footer";
+
 import { createHighlight } from "../render-highlight.mjs";
 import { editorialPack } from "../render-packs.mjs";
 
@@ -45,8 +47,25 @@ export const packs = [editorialPack({ assetPrefix: "dustin-edwards-" })];
 
 export const highlight = createHighlight();
 
+/** The link contract's facts: the site's origin, Capsomer's family list, and a size for the corpus's one file. */
+export const links = {
+  origin: "https://dustinedwards.info",
+  family: FAMILY_SITES,
+  /** @param {string} href */
+  fileSize: async (href) => (href.endsWith("/cv.pdf") ? 2_200_000 : null),
+};
+
+/** A store already holding example.com's icon and knowing every other host has none, so no render here reaches the network. */
+export const linkIcons = {
+  store: {
+    /** @param {string} host */
+    get: async (host) => ({ bytes: new Uint8Array(host === "example.com" ? [0x89, 0x50, 0x4e, 0x47] : []), type: host === "example.com" ? "image/png" : "" }),
+    put: async () => {},
+  },
+};
+
 /** The options a site configured like dustinedwards-info passes. */
-export const siteOptions = { packs, media, highlight };
+export const siteOptions = { packs, media, highlight, links, linkIcons };
 
 /** @param {string} name a file in test/fixtures/render, without .md */
 export function fixture(name) {

@@ -3,7 +3,7 @@
 // (test/specimen.test.mjs) both read the elements through this file, so the page, the stored expected output and the index Carrel
 // reads cannot drift apart.
 
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 
@@ -15,6 +15,8 @@ import { visit } from "unist-util-visit";
 import { frontmatter } from "../frontmatter.mjs";
 import { render } from "../render.mjs";
 import { CORE_DIRECTIVES } from "../render-directives.mjs";
+import { FAMILY_SITES } from "capsomer/behavior/family-footer";
+import { linkIconSrc, linkIconType } from "../render-link-icons.mjs";
 import { createHighlight } from "../render-highlight.mjs";
 import { editorialPack } from "../render-packs.mjs";
 
@@ -35,9 +37,38 @@ export const PACKS = {
   editorial: editorial.directives,
 };
 
+const STATIC_DIR = new URL("./static/", import.meta.url);
+
+/**
+ * The away links' icons, committed in specimen/link-icons and copied into the build: a render fetches only a host that has no file
+ * yet, and a host with no icon is an empty file, so CI and the tests reach no other site while the elements name only hosts there.
+ */
+export const ICON_DIR = new URL("./link-icons/", import.meta.url);
+
 export const options = {
   packs: [editorial],
   highlight: createHighlight(),
+  links: {
+    origin: ORIGIN,
+    family: FAMILY_SITES,
+    /** A file in specimen/static is the size it is; anywhere else is unknown. @param {string} href */
+    fileSize: async (href) => {
+      const file = href.startsWith("/") ? new URL(`.${href}`, STATIC_DIR) : null;
+      return file && existsSync(file) ? statSync(file).size : null;
+    },
+  },
+  linkIcons: {
+    store: {
+      /** @param {string} host */
+      get: async (host) => {
+        const name = readdirSync(ICON_DIR).find((f) => f.startsWith(`${host}.`));
+        const bytes = name ? new Uint8Array(readFileSync(new URL(name, ICON_DIR))) : null;
+        return bytes ? { bytes, type: linkIconType(bytes) ?? "" } : null;
+      },
+      /** @param {string} host @param {Uint8Array} bytes @param {string} type */
+      put: async (host, bytes, type) => writeFileSync(new URL(type ? `.${linkIconSrc("", host, type)}` : `${host}.none`, ICON_DIR), bytes),
+    },
+  },
   // The specimen shows only what the pipeline's own allowlist permits.
   assertSafe: true,
 };

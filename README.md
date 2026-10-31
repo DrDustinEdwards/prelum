@@ -34,6 +34,7 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `render/safe` | `assertSafe`, `scanHtml`, `inventory` |
 | `render/conformance` | `HOSTILE_INPUTS`, `runConformance` |
 | `render/math`, `render/url` | `htmlHasMath`, `KATEX_OPTIONS`; `isAllowedUrl` |
+| `render/link-icons` | `linkIconResponse` (the icon route), `lookupLinkIcon`, `linkIconType`, `linkIconSrc`, `LINK_ICON_PATH`, `LINK_ICON_MAX_BYTES`, `LINK_ICON_TIMEOUT_MS` |
 | `render/diagram` | `DIAGRAM_ASSET_DIR`, `DIAGRAM_THEMES`, `diagramAssetPath`: where a `:::diagram`'s drawings live |
 | `render/diagram-draw` (Node, build time) | `drawDiagrams`, `pruneDiagrams`, `auditDiagramSvg`, `mermaidConfig`, `DIAGRAM_ROLES`, `DIAGRAM_ROLE_NAMES` |
 
@@ -167,6 +168,8 @@ const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion, faq
     assertSafe: true, // scan the output and throw on anything outside the allowlist; off by default
     postLink: async (slug) => ({ url, title }), // resolves ::postlink[slug]; null leaves it visible as code
     smartPunctuation: true, // curly quotes, -- en dash, --- em dash; the default
+    links: { origin, family: FAMILY_SITES, fileSize }, // the link contract (below); FAMILY_SITES is Capsomer's
+    linkIcons: { store }, // an away link's icon, fetched once at publish (below); without it nothing is fetched
   },
 });
 ```
@@ -185,6 +188,7 @@ refuses what it cannot render well, with the line and the fix:
 | `::button[Label]{href}`, `::bookmark[Title]{url description}` | A button link, a link card |
 | `:::details{summary}`, `:::faq` with Q: and A: lines | Native `<details>`, a `<dl class="faq">` returned as `faq` |
 | `::postlink[slug\|text]` | A link to the post's current address |
+| `:lang[[Leer en español](url)]{hreflang=es}`, `:xref[[Figure 2](#figure-2)]` | A link in another language, named in itself; an author's cross-reference |
 | `:kbd[]`, `:abbr[]{title}`, `:mark[]`, `:sub[]`, `:sup[]` | The inline elements raw HTML would need |
 | ```` ```js title="app.ts" {2} ```` | Highlighted code with a file name and marked lines |
 
@@ -200,9 +204,43 @@ The output is a fragment: no `<html>`, no layout. A site gives it its own layout
 (`heading-anchor`, `table-scroll`, `image-link`, `post-details`, `figure-credit`, `figure-light`, `figure-dark`, `width-wide`, `width-full`,
 `callout`, `callout-<type>`, `callout-title`, `media`, `media-video`, `media-audio`, `media-transcript`, `embed`, `embed-<service>`,
 `embed-link`, `gallery`, `gallery-grid`, `button-row`, `button`, `bookmark` and its parts, `faq`, `faq-item`, `code-frame`,
-`code-title`, and a pack's own); a change to one of them is a new
+`code-title`, the link contract's `cap-link-meta`, `cap-link-icon` and `cap-sr-only`, and a pack's own); a change to one of them is a new
 `renderVersion`. An image links to its original (`image-link`) unless it is decorative: `![](x)` writes `alt=""` and no link,
 which would have no name.
+
+**Links say what they are** (the family's link contract, which Capsomer styles from the markup alone). Every link the author
+wrote gets one `data-link` kind, the first that fits in this order; the pipeline's own links (heading anchors, image links, buttons,
+bookmarks, embeds, a chart's CSV) and GFM's footnote references keep their markup:
+
+| Kind | When |
+| --- | --- |
+| `xref` | `:xref[[text](url)]`: the author marked it a cross-reference |
+| `lang`, `hreflang` | `:lang[[text](url)]{hreflang=es}`; the tag is canonicalized and an unknown one refused. A following `<span class="cap-link-meta" lang="es">Español</span>` names the language in itself |
+| `jump` | the href is a `#fragment` |
+| `file` | the URL's path (not its query, fragment or host) ends in a file extension (PDF, Word, Excel, PowerPoint, OpenDocument, CSV, TSV, RTF, EPUB, ZIP, GZ, 7Z, audio, video, images, ICS, BIB, RIS); a following `<span class="cap-link-meta">PDF, 2.1 MB</span>`, the size from `links.fileSize(href)` and left out when it returns null |
+| `address` | the text is the link's own URL (scheme, `www.` and a trailing slash aside), a DOI, or the mailto's address |
+| `email`, `phone` | `mailto:` or `tel:` (tel: is allowed by the URL policy for this) |
+| `next` | the only content of a paragraph of the author's own, with words: not a list item's paragraph, not a linked picture |
+| `family`, `data-site` | the host is a family site, matched on `links.family` (Capsomer's `FAMILY_SITES`, `www.` aside) |
+| `away`, `rel="external"` | the host is neither `links.origin`'s nor a family site's; without `links.origin` no link is away |
+
+The host facts hold whatever the kind: a link off the family carries `rel="external"` and `<span class="cap-sr-only"> (opens another
+site)</span>` inside it, and a family link its `data-site`. Prelum does not depend on Capsomer: a site passes `FAMILY_SITES` from
+`capsomer/behavior/family-footer`.
+
+**Outside sites' icons, fetched once.** With `linkIcons: { store }`, each away host's icon is looked up in the site's store
+(`{ get(host) → { bytes, type } | null, put(host, bytes, type) }`, in R2, KV or files) and, on a miss, fetched once from the host
+itself, `/favicon.ico` and then its home page's `<link rel="icon">`, never an icon service: https and a public host name only, 64 KB
+and 3 s a request (`maxBytes`, `timeoutMs`), the type read from the bytes, and an SVG that holds a script, handler, link out or
+`url()` refused. A host with none is stored empty, so it is not asked again. The link then opens with
+`<img class="cap-link-icon" src="/link-icons/<host>.<ext>" alt="" width="16" height="16">` (`path` moves it); without a store or an icon
+it has none and Capsomer draws its arrow. The route is one line, with a year's immutable cache, nosniff and a sandboxing policy:
+
+```js
+import { linkIconResponse } from "@drdustinedwards/site-helpers/render/link-icons";
+const icon = await linkIconResponse(url.pathname, store); // null when the path is not under /link-icons/
+if (icon) return icon;
+```
 
 **Safe by construction, then checked.** Raw HTML in the source is dropped before it becomes markup, the URL policy runs last, and
 KaTeX runs with `trust` off. Those are three options one edit could flip, so `render/safe` scans the rendered output with a parser

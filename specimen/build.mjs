@@ -5,7 +5,7 @@
 //
 //   node specimen/build.mjs [outDir]
 
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,7 +25,7 @@ import { iconLinks, webManifest } from "../icons.mjs";
 import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
 import { absolutizeUrls, escapeXml, mathToTex } from "../xml.mjs";
 import { HEADERS_FILE, PAGE_PRELOADS } from "./headers.mjs";
-import { ASSET_PREFIX, DIAGRAM_CONFIG_FILE, FAMILY, ORIGIN, diagramConfig, elementIndex, loadElements, options, renderElement, resolveImage, splitHeader } from "./specimen.mjs";
+import { ASSET_PREFIX, DIAGRAM_CONFIG_FILE, FAMILY, ICON_DIR, ORIGIN, diagramConfig, elementIndex, loadElements, options, renderElement, resolveImage, splitHeader } from "./specimen.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..");
@@ -363,6 +363,11 @@ export async function buildSpecimen(outDir) {
   writeFileSync(join(outDir, "theme.js"), await bundle("theme.mjs", "iife"));
   writeFileSync(join(outDir, "specimen.js"), await bundle("specimen.mjs", "esm"));
   copyDiagrams(outDir, rendered.flatMap((r) => r.diagrams));
+  // The icons the renders found, at the path the pages name; an empty file is a host with none.
+  mkdirSync(join(outDir, "link-icons"));
+  for (const name of readdirSync(ICON_DIR)) {
+    if (statSync(new URL(name, ICON_DIR)).size > 0) copyFileSync(new URL(name, ICON_DIR), join(outDir, "link-icons", name));
+  }
 
   /** @param {number} no @param {string} href @param {string} name @param {string} fact */
   const indexRow = (no, href, name, fact) =>
