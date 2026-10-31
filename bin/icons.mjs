@@ -8,7 +8,7 @@
 // background, or --maskable as drawn). Needs @resvg/resvg-js, an optional peer.
 
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
 import { ICONS, icoFile } from "../icons.mjs";
@@ -20,23 +20,31 @@ if (!values.svg || !values.background) {
 }
 const { Resvg } = await import("@resvg/resvg-js");
 const mark = await readFile(values.svg, "utf8");
-const png = (/** @type {string} */ svg, /** @type {number} */ size) => new Resvg(svg, { fitTo: { mode: "width", value: size } }).render().asPng();
+const markDir = dirname(resolve(values.svg));
+// Draws an SVG at a width. A raster image the mark links by relative path (a PNG logo inside the SVG) is read from the
+// mark's folder, since resvg loads no files on its own.
+const png = async (/** @type {string} */ svg, /** @type {number} */ size) => {
+  const resvg = new Resvg(svg, { fitTo: { mode: "width", value: size } });
+  for (const href of resvg.imagesToResolve()) if (!href.startsWith("data:")) resvg.resolveImage(href, await readFile(resolve(markDir, href)));
+  return resvg.render().asPng();
+};
 // The mark scaled into a square of the background. A maskable icon's safe zone is the centered circle of 80% of the width
-// (W3C, "Icon masks"), and a square that fits in it is 80% / sqrt(2), about 57%.
-const onBackground = (/** @type {number} */ share) => {
+// (W3C, "Icon masks"), and a square that fits in it is 80% / sqrt(2), about 57%. The mark goes in already drawn as a PNG,
+// because resvg does not load the images inside a nested SVG.
+const onBackground = async (/** @type {number} */ share) => {
   const inset = ((1 - share) / 2) * 512;
-  const href = `data:image/svg+xml;base64,${Buffer.from(mark).toString("base64")}`;
+  const href = `data:image/png;base64,${Buffer.from(await png(mark, Math.round(512 * share))).toString("base64")}`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="${values.background}"/><image href="${href}" x="${inset}" y="${inset}" width="${512 * share}" height="${512 * share}"/></svg>`;
 };
-const maskable = values.maskable ? await readFile(values.maskable, "utf8") : onBackground(0.8 / Math.SQRT2);
+const maskable = values.maskable ? await readFile(values.maskable, "utf8") : await onBackground(0.8 / Math.SQRT2);
 
 const out = values.out;
 await mkdir(out, { recursive: true });
 const file = (/** @type {string} */ path) => join(out, path.slice(1));
-await writeFile(file(ICONS.ico), icoFile([16, 32, 48].map((size) => ({ size, png: png(mark, size) }))));
+await writeFile(file(ICONS.ico), icoFile(await Promise.all([16, 32, 48].map(async (size) => ({ size, png: await png(mark, size) })))));
 await copyFile(values.svg, file(ICONS.svg));
-await writeFile(file(ICONS.apple), png(onBackground(0.8), 180));
-await writeFile(file(ICONS.any192), png(mark, 192));
-await writeFile(file(ICONS.any512), png(mark, 512));
-await writeFile(file(ICONS.maskable), png(maskable, 512));
+await writeFile(file(ICONS.apple), await png(await onBackground(0.8), 180));
+await writeFile(file(ICONS.any192), await png(mark, 192));
+await writeFile(file(ICONS.any512), await png(mark, 512));
+await writeFile(file(ICONS.maskable), await png(maskable, 512));
 console.log(`prelum-icons: wrote ${Object.values(ICONS).filter((path) => path !== ICONS.manifest).join(", ")} to ${out}`);

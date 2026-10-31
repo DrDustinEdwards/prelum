@@ -7,6 +7,12 @@
 - CI: devkit 0.20.8. The family check is now the shared-code check (`shared.yml`, `.shared.json`, `devkit-shared`). A newer push to a
   pull request cancels its older runs, and the workflow audit and dependency scan run only when their files change.
 
+### Fixed
+
+- `prelum-icons` draws a mark that holds a raster image (a PNG logo inside the SVG) on the Apple touch and maskable icons.
+  Those two came out as plain background, because resvg loads no image inside a nested SVG; the mark now goes onto the
+  background already drawn as a PNG, and an image it links by relative path is read from the mark's folder.
+
 ## 0.23.0 (2026-10-31)
 
 Post charts in Capsomer's chart frame (charts, area 10).
