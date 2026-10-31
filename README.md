@@ -17,11 +17,11 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `xml` | `escapeXml`, `cdata`, `rfc822`, `isoDay`, `absolutizeUrls`, `jsonLdText`, `mathToTex` |
 | `slug` | `slugify(text, { max })` |
 | `feeds` | `rssDocument`, `rssItem`, `atomDocument`, `atomEntry`, `jsonFeedDocument`, `feedItem` (`itemPath` moves where a post lives) |
-| `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` (absolute URLs of the images the page shows: a rendered page's `mediaRefs` of form `markdown-image` and `figure-directive`, made URLs again) list them in the image sitemap |
+| `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` (absolute URLs of the images the page shows: a render's `images`, each `src` made absolute) list them in the image sitemap |
 | `llms` | `llmsDocument`, `llmsLink`; `llmsFullDocument`, `markdownPage`, `markdownPath`, `prefersMarkdown`, `markdownResponse` (llms-full.txt and each page's Markdown copy); `llmsResponse` (the whole /llms.txt response) |
 | `frontmatter` | `frontmatter(source)`: the `---` header of a Markdown file as `{ data, body }`; `splitSource`, `joinSource`, `readKey`, `readList`, `setBlock`, `setRawKey`: read one field and write one block, every other byte as it was (the one reader site-api and Carrel use) |
-| `head` | `defineHead(site)` (the per-site builder: `(page) => HeadTag[]`), `headTags(input)` (title, description, canonical, the Markdown copy's and the feeds' links, Open Graph, Twitter, `article:*`), `headHtml(tags)`, `metaText(html, limit)`, `readingMinutes(text)`, `absoluteUrl`, `articleDates`, `searchTitle(title, suffix)`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT` |
-| `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage`, `imageObject(image)` (an image's license metadata), `pageImage(image)` (an ImageObject, for `primaryImageOfPage`), `ARTICLE_IMAGE_MIN_PIXELS` |
+| `head` | `defineHead(site)` (the per-site builder: `(page) => HeadTag[]`), `headTags(input)` (title, description, canonical, the Markdown copy's and the feeds' links, Open Graph with `og:video`, Twitter, `article:*`), `headHtml(tags)`, `metaText(html, limit)`, `readingMinutes(text)`, `absoluteUrl`, `articleDates`, `searchTitle(title, suffix)`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT` |
+| `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage`, `imageObject(image)` (an image's license metadata), `pageImage(image)` (an ImageObject, for `primaryImageOfPage`), `articleImageSet(crops, rights)` (an Article's 16:9, 4:3 and 1:1 crops), `videoObject(video)`, `ARTICLE_IMAGE_MIN_PIXELS`, `ARTICLE_IMAGE_RATIOS` |
 | `robots` | `robotsDocument(input)`, `aiTxt(input)`, `robotsResponse(input)`, `aiTxtResponse(input)` (the whole responses), `plainTextResponse`, `isPreviewRequest`, `robotsNotes`, `PLAIN_TEXT_CACHE_CONTROL`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
 | `indexnow` | `submitIndexNow(input)`, `keyFileResponse(key, headers)` (the `/<key>.txt` file), `recentSitemapUrls(xml, { days })`; the `prelum-indexnow` bin |
 | `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-audit` bin |
@@ -35,8 +35,8 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `render/safe` | `assertSafe`, `scanHtml`, `inventory` |
 | `render/conformance` | `HOSTILE_INPUTS`, `runConformance` |
 | `render/math`, `render/url` | `htmlHasMath`, `KATEX_OPTIONS`; `isAllowedUrl` |
-| `render/link-icons` | `linkIconResponse` (the icon route), `lookupLinkIcon`, `linkIconType`, `linkIconSrc`, `LINK_ICON_PATH`, `LINK_ICON_MAX_BYTES`, `LINK_ICON_TIMEOUT_MS` |
-| `render/diagram` | `DIAGRAM_ASSET_DIR`, `DIAGRAM_THEMES`, `diagramAssetPath`: where a `:::diagram`'s drawings live |
+| `render/link-icons` | `linkIconResponse` (the icon route), `lookupLinkIcon`, `linkIconType`, `linkIconSrc`, `fitLinkIcon` (a fetched icon cut to `LINK_ICON_SIZE`, 32 px, for its 16 px display), `LINK_ICON_PATH`, `LINK_ICON_MAX_BYTES`, `LINK_ICON_TIMEOUT_MS` |
+| `render/diagram` | `DIAGRAM_ASSET_DIR`, `DIAGRAM_THEMES`, `diagramAssetPath`: where a `:::diagram`'s drawings live; `DIAGRAM_SIZES_FILE`, `diagramSize`: their sizes |
 | `render/diagram-draw` (Node, build time) | `drawDiagrams`, `pruneDiagrams`, `auditDiagramSvg`, `mermaidConfig`, `DIAGRAM_ROLES`, `DIAGRAM_ROLE_NAMES` |
 
 ## Search and AI crawlers
@@ -52,13 +52,20 @@ What they hold every site to:
   copy cannot claim to be the page.
 - A card image is required, so `twitter:card` is always `summary_large_image`. It is one object, `{ url, width, height, type,
   alt }`, written as `og:image` and its `type`, `width`, `height` and `alt`, and `twitter:image` and `twitter:image:alt` (cut
-  to X's 420 characters); `type` is read from the extension when not given. A bare URL is still read, but its card has no size
+  to X's 420 characters). `type` is the type the URL is served as: pass it for a resized size (`/media/a.jpg?w=1200` is
+  served as WebP or AVIF); only a URL with no query has its type read from its extension, and otherwise none is written. A bare URL is still read, but its card has no size
   or alt and the audit flags it. An absent date writes no tag, and the Open Graph dates and the Article schema's come from one
   `articleDates`.
 - An Article's `image` takes several crops (Google asks for 16:9, 4:3 and 1:1), each a URL or `{ url, width, height }`; one
-  whose size is given and under 50,000 pixels is refused. `imageObject` writes an image's license metadata (`contentUrl`,
+  whose size is given and under 50,000 pixels is refused. `articleImageSet({ "16x9": crop, "4x3": crop, "1x1": crop }, rights)`
+  orders them as Google does, gives each the picture's rights, and refuses a crop that is not its ratio. `imageObject` writes an image's license metadata (`contentUrl`,
   `creditText`, `creator`, `copyrightNotice`, `license`, `acquireLicensePage`) for Google Images, and returns null when no
-  rights field is known. A page that is not an article names its image with `primaryImageOfPage: pageImage(image)`.
+  rights field is known. A page that is not an article names its image with `primaryImageOfPage: pageImage(image)`. A render's
+  `images` carry each picture's size and rights from the site's resolver, so `images.map((i) => imageObject({ ...i, url:
+  absoluteUrl(origin, i.src) }))` (nulls dropped) is the page's ImageObjects.
+- A page's videos (a render's `videos`) go to `headTags({ videos })` as `og:video` with `secure_url`, type and size, and to
+  `videoObject({ name, thumbnailUrl, uploadDate, contentUrl | embedUrl, width, height })`, which refuses a video without the
+  fields Google requires.
 - `thing` drops empty fields, and `website` has no SearchAction without a real search URL: structured data claims nothing the
   page cannot back.
 - robots.txt repeats the disallow list in every named group (a crawler uses only its own group), and a preview gets
@@ -191,16 +198,19 @@ import { render } from "@drdustinedwards/site-helpers/render";
 import { editorialPack } from "@drdustinedwards/site-helpers/render/packs";
 import { createHighlight } from "@drdustinedwards/site-helpers/render/highlight";
 
-const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion, faq, postLinks, words, readingMinutes, excerpt, warnings } =
+const { html, toc, hasMath, mediaRefs, images, videos, diagrams, blockedUrls, renderVersion, faq, postLinks, words, readingMinutes, excerpt, warnings } =
   await render({
   file: "content/posts/example.md", // for error messages
   body, // markdown with any frontmatter already stripped
-  resolveImage, // async (src) => ({ width, height, placeholder? })
+  resolveImage, // async (src) => ({ width, height, placeholder?, credit?, license? }): sizes images, a video (its poster) and
+                // an embed's poster; credit and license (a URL, or words such as CC BY 4.0) are shown and returned in images
   options: {
     media: { keyOf, imageProps }, // the site's image rules; without them images are left as written. imageProps may return
-                                  // sources (AVIF, then WebP) to wrap an image in <picture>
+                                  // sources (AVIF, then WebP, each with an optional media query) to wrap an image in <picture>
+    priority, // one { taken: false } per page, passed to every render of that page, so the page has one fetchpriority=high
     packs: [editorialPack({
       assetPrefix: "example-", // chart, diagram, sidenote, pullquote, swatch
+      diagramSizes, // the sizes.json drawDiagrams writes beside the drawings; sizes each diagram
       chartData: async (src, { file }) => csvText, // reads :::chart{src="..."}; without it a src is refused
       strictCharts: false, // true refuses a chart with no title, text above grade 9 or too many series
     })],
@@ -225,8 +235,9 @@ refuses what it cannot render well, with the line and the fix:
 | `> [!NOTE]` (TIP, IMPORTANT, WARNING, CAUTION), optional title after it | `<div class="callout callout-note" role="note">` |
 | `:::figure{src alt credit dark width}` | Figure, caption, credit, a dark-theme twin; `width=wide` or `width=full` |
 | `:::gallery` with 2 to 9 images | `<figure class="gallery">` grid |
-| `:::video{src title captions poster}`, `::audio{src title transcript}` | Native players; captions or a transcript required |
-| `::embed[Title]{url}` (YouTube, Vimeo, Spotify, SoundCloud) | A link carrying the player URL; `render/enhance` loads the player on a click |
+| `:::video{src title captions poster}`, `::audio{src title transcript}` | Native players; captions (or `silent`) and a poster, or a transcript, required. The video takes its poster's size; audio preloads nothing |
+| `::embed[Title]{url poster}` (YouTube, Vimeo, Spotify, SoundCloud) | A lite embed: the site's own poster (optional) with a play button and the title, a link carrying the player URL; `render/enhance` loads the player on a click |
+| `![alt](src)`, `![""](src)` | An image; one with no alt is refused, and `![""](src)` marks a decorative one. The library's credit and license show under it |
 | `::button[Label]{href}`, `::bookmark[Title]{url description}` | A button link, a link card |
 | `:::details{summary}`, `:::faq` with Q: and A: lines | Native `<details>`, a `<dl class="faq">` returned as `faq` |
 | `::postlink[slug\|text]` | A link to the post's current address |
@@ -235,7 +246,18 @@ refuses what it cannot render well, with the line and the fix:
 | ```` ```js title="app.ts" {2} ```` | Highlighted code with a file name and marked lines |
 
 An h1 in the body moves every heading down a level, quotes and dashes are typeset (SmartyPants, `--` en, `---` em), and a
-skipped heading level or an image without alt text comes back in `warnings` for the editor to show. `words`, `readingMinutes`
+skipped heading level, a diagram not drawn yet or a video whose poster has no size comes back in `warnings` for the editor to show.
+
+**Images.** The first image of a render is eager with `fetchpriority=high` and every other is lazy; a page that renders several
+bodies passes one `priority` object to all of them, so only the page's first image takes it (`false`, or `{ taken: true }` when
+the page's LCP image is outside the body, gives the body none). An animation whose sources include its still under
+`(prefers-reduced-motion: reduce)` (site-runtime's ./image writes them for a GIF) moves for readers who allow motion and gets a
+**Pause animation** checkbox for everyone (WCAG 2.2.2): `<span class="motion">` holds the animation, its still
+(`picture.motion-still`, hidden by an inline style) and `label.motion-pause`. The site's stylesheet shows the still and hides the
+animation while the box is checked, and hides the control under reduced motion (the specimen's `site.css` has the rules; the still
+needs `display: block !important` to outrank its inline style). The library's credit and license appear as `span.figure-credit`
+in the image's figure caption unless the author wrote one, and a paragraph that holds only the image becomes
+`figure.image-figure` to carry it. `words`, `readingMinutes`
 (the `text` module's rule) and `excerpt` are counted from the rendered tree.
 
 **A site with no math** imports `render` from `render/nomath` instead: the same pipeline and options, with `$` as plain text (so
@@ -246,10 +268,10 @@ The output is a fragment: no `<html>`, no layout. A site gives it its own layout
 (`heading-anchor`, `table-scroll`, `image-link`, `post-details`, `figure-credit`, `figure-light`, `figure-dark`, `width-wide`, `width-full`,
 `callout`, `callout-<type>`, `callout-title`, `media`, `media-video`, `media-audio`, `media-transcript`, `embed`, `embed-<service>`,
 `embed-link`, `gallery`, `gallery-grid`, `button-row`, `button`, `bookmark` and its parts, `faq`, `faq-item`, `code-frame`,
-`code-title`, the link contract's `cap-link-meta`, `cap-link-icon` and `cap-sr-only`, and a pack's own); a change to one of them is a new
+`code-title`, `image-figure`, `motion`, `motion-still`, `motion-pause`, `embed-poster`, `embed-play`, `embed-label`, the link contract's `cap-link-meta`, `cap-link-icon` and `cap-sr-only`, and a pack's own); a change to one of them is a new
 `renderVersion`. A box that can scroll sideways is a named region a keyboard can focus: a table sits in
 `<div class="table-scroll" tabindex="0" role="region" aria-label="Table: Sample, Reads">`, and every `pre` carries `tabindex="0"`,
-`role="region"` and `aria-label="Code: <frame title or language>"`. An image links to its original (`image-link`) unless it is decorative: `![](x)` writes `alt=""` and no link,
+`role="region"` and `aria-label="Code: <frame title or language>"`. An image links to its original (`image-link`) unless it is decorative: `![""](x)` writes `alt=""` and no link,
 which would have no name.
 
 **Links say what they are** (the family's link contract, which Capsomer styles from the markup alone). Every link the author
@@ -276,7 +298,9 @@ site)</span>` inside it, and a family link its `data-site`. Prelum does not depe
 (`{ get(host) → { bytes, type } | null, put(host, bytes, type) }`, in R2, KV or files) and, on a miss, fetched once from the host
 itself, `/favicon.ico` and then its home page's `<link rel="icon">`, never an icon service: https and a public host name only, 64 KB
 and 3 s a request (`maxBytes`, `timeoutMs`), the type read from the bytes, and an SVG that holds a script, handler, link out or
-`url()` refused. A host with none is stored empty, so it is not asked again. The link then opens with
+`url()` refused. An icon is stored no bigger than its 16 px display needs (32 px, for a 2x screen): a larger PNG is shrunk and a
+favicon.ico keeps only its smallest size that covers it (`fitLinkIcon`, in plain web APIs). A host with none is stored empty, so it
+is not asked again; an icon stored before 0.28 is shrunk when its entry is deleted and fetched again. The link then opens with
 `<img class="cap-link-icon" src="/link-icons/<host>.<ext>" alt="" width="16" height="16">` (`path` moves it); without a store or an icon
 it has none and Capsomer draws its arrow. The route is one line, with a year's immutable cache and the site's set for a file it did
 not write, site-runtime's `UPLOAD_HEADERS` (nosniff and a sandboxing policy), which it passes:
@@ -341,7 +365,10 @@ A `:::diagram` holds Mermaid source and a required alt; the page shows a light a
 text out with a browser's font metrics, so the drawings are made ahead of time, in Node, by `render/diagram-draw`:
 `drawDiagrams` runs Mermaid's own renderer (`@mermaid-js/mermaid-cli`, in Chromium through `puppeteer`) for each drawing that
 is missing, with labels as SVG text (an `<img>` does not draw `<foreignObject>`) and an intrinsic size, and refuses any drawing
-that paints a color outside the site's palette (`auditDiagramSvg`). A site gives one hex color per role in
+that paints a color outside the site's palette (`auditDiagramSvg`). It writes each drawing's size to `sizes.json`
+(`DIAGRAM_SIZES_FILE`) beside them, which the site passes to `editorialPack({ diagramSizes })`: each diagram `<img>` then carries
+its width and height, `loading="lazy"`, `decoding="async"` and `role="img"` (VoiceOver announces an SVG `<img>` by its alt only
+with it). A diagram not drawn yet is written unsized, with a warning, until the body is rendered again. A site gives one hex color per role in
 `DIAGRAM_ROLE_NAMES` for each theme, and prunes the files `drawDiagrams` reports as stale by its own rules. Those three
 packages are optional peers, needed only where drawings are made.
 

@@ -14,10 +14,12 @@ import { visit } from "unist-util-visit";
 
 import { frontmatter } from "../frontmatter.mjs";
 import { render } from "../render.mjs";
+import { BLOCK_DIRECTIVES } from "../render-blocks.mjs";
 import { CORE_DIRECTIVES } from "../render-directives.mjs";
 import { FAMILY_SITES } from "capsomer/behavior/family-footer";
 import { linkIconSrc, linkIconType } from "../render-link-icons.mjs";
 import { createHighlight } from "../render-highlight.mjs";
+import { DIAGRAM_SIZES_FILE } from "../render-diagram.mjs";
 import { editorialPack } from "../render-packs.mjs";
 
 const ELEMENTS_DIR = new URL("./elements/", import.meta.url);
@@ -29,11 +31,14 @@ export const ORIGIN = "https://prelum.dustinedwards.info";
 /** The prefix of the diagram assets in specimen/diagrams. */
 export const ASSET_PREFIX = "prelum-";
 
-const editorial = editorialPack({ assetPrefix: ASSET_PREFIX });
+/** Each drawing's size, which drawDiagrams writes beside the drawings in specimen/diagrams. */
+const diagramSizes = JSON.parse(readFileSync(new URL(`./diagrams/${DIAGRAM_SIZES_FILE}`, import.meta.url), "utf8"));
+
+const editorial = editorialPack({ assetPrefix: ASSET_PREFIX, diagramSizes });
 
 /** The directive packs a source can need, by the name the index gives them. */
 export const PACKS = {
-  core: CORE_DIRECTIVES,
+  core: [...CORE_DIRECTIVES, ...BLOCK_DIRECTIVES],
   editorial: editorial.directives,
 };
 
@@ -45,8 +50,34 @@ const STATIC_DIR = new URL("./static/", import.meta.url);
  */
 export const ICON_DIR = new URL("./link-icons/", import.meta.url);
 
+/**
+ * The specimen's one animation, as site-runtime's ./image offers a GIF: its first frame (a file of its own here, `-still`) under
+ * reduced motion, then the animation. Every other image is written as it is.
+ *
+ * @param {string} src
+ */
+function imageProps(src) {
+  if (!src.endsWith(".gif")) return null;
+  const width = /-(\d+)x\d+\.gif$/.exec(src)?.[1];
+  const still = src.replace(/-(\d+x\d+)\.gif$/, "-still-$1.png");
+  return {
+    srcSet: `${src} ${width}w`,
+    sizes: `${width}px`,
+    sources: [
+      { type: "image/png", srcSet: `${still} ${width}w`, media: "(prefers-reduced-motion: reduce)" },
+      { type: "image/gif", srcSet: `${src} ${width}w` },
+    ],
+  };
+}
+
+/** The library's credit and license, as a site's resolver reads them from its media table. */
+const RIGHTS = /** @type {Record<string, { credit: string, license: string }>} */ ({
+  "/images/photo-640x360.svg": { credit: "Drawn for the Prelum specimen", license: "CC0 1.0" },
+});
+
 export const options = {
   packs: [editorial],
+  media: { imageProps },
   highlight: createHighlight(),
   links: {
     origin: ORIGIN,
@@ -81,7 +112,7 @@ export const options = {
 export async function resolveImage(src) {
   const size = /-(\d+)x(\d+)\.\w+$/.exec(src);
   if (!size) throw new Error(`specimen image ${src} does not carry its size in its name (<name>-<width>x<height>.<ext>)`);
-  return { width: Number(size[1]), height: Number(size[2]) };
+  return { width: Number(size[1]), height: Number(size[2]), ...RIGHTS[src] };
 }
 
 /**
@@ -160,9 +191,12 @@ export function loadElements() {
   });
 }
 
-/** @param {Element} element */
-export function renderElement(element) {
-  return render({ file: `specimen/elements/${element.file}`, body: element.source, resolveImage, options });
+/**
+ * @param {Element} element
+ * @param {{ taken: boolean }} [priority] the page's, when several elements share one page, so only its first image is high
+ */
+export function renderElement(element, priority) {
+  return render({ file: `specimen/elements/${element.file}`, body: element.source, resolveImage, options: { ...options, priority } });
 }
 
 /**

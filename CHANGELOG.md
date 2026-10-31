@@ -2,6 +2,56 @@
 
 ## Unreleased
 
+Images and media (area 6, round 2): diagrams sized, one high image per page, animations that move and can be paused, the library's
+credit on the page and in its ImageObjects, a refused missing alt, the served type on the share card, and video posters, lite
+embeds, `og:video` and VideoObject.
+
+### Changed
+
+- `RENDER_VERSION` is 13. A site re-renders its stored bodies; one that holds `![](x)` now stops with the line to fix.
+- A diagram `<img>` carries its drawing's `width` and `height`, `loading="lazy"`, `decoding="async"` and `role="img"`.
+  `drawDiagrams` writes each drawing's size to `sizes.json` (`DIAGRAM_SIZES_FILE`) beside the drawings and returns it as
+  `sizes`; the site passes it to `editorialPack({ diagramSizes })`. A diagram it does not list is written unsized, with a warning.
+- `options.priority`: one `{ taken: false }` passed to every render of a page gives the page one `fetchpriority=high`, its first
+  image; `false` or `{ taken: true }` gives a body none. Without it each render's first image takes it, as before.
+- A `<picture>` keeps each source's `media`, so a GIF from site-runtime's ./image moves for readers who allow motion and shows its
+  still under reduced motion (before, the still won for everyone). Such an animation also gets a **Pause animation** checkbox,
+  for everyone, without script (WCAG 2.2.2): `span.motion` holds the animation, its still (`picture.motion-still`, hidden by an
+  inline style) and `label.motion-pause`; the site's stylesheet shows the still while it is checked (the specimen's `site.css`
+  has the rules Capsomer's prose blocks need).
+- The resolver may return `credit` and `license`. They show under the picture as `span.figure-credit` (an author's `credit=`
+  wins; a paragraph holding only the picture becomes `figure.image-figure`), and render returns `images`: each picture's `src`,
+  `alt`, size, `creditText`, `copyrightNotice` (a license in words) and `license` (a license URL), ready for `imageObject` and the
+  image sitemap. Decorative pictures, dark twins and embed posters are left out.
+- An image with no alt text (`![](x)`, `![ ][ref]`) is refused, not warned about. `![""](x)` marks a decorative one.
+- `:::video` requires a `poster` and takes its size, so the player has `width` and `height`; a poster the site has no size for
+  is a warning. `::audio` preloads nothing (`preload="none"`).
+- `::embed` is a lite embed: an optional `poster` (the site's own picture, never the service's thumbnail) under a play button
+  (`span.embed-play`) with the title (`span.embed-label`), inside the same link. render returns `videos` (each file and embed with
+  its title, poster, captions, player URL and size).
+- `headTags`: `og:image:type` is the `type` passed, else the extension's only for a URL with no query (a resized size is served
+  as WebP or AVIF whatever its name says), else none. `videos` writes `og:video`, `og:video:secure_url`, `og:video:type`,
+  `og:video:width` and `og:video:height` for each.
+- The allowlist gains `img role`, `label class`, `picture class`, `picture style`, `source media`, `video height` and
+  `video width`.
+- A fetched link icon is kept at 32 px (its display is 16): a larger PNG is shrunk, and a favicon.ico keeps only the smallest
+  size that covers it (`fitLinkIcon`, `LINK_ICON_SIZE`). An icon already stored stays as it is until its entry is deleted.
+
+### Added
+
+- `schema`: `articleImageSet(crops, rights)` orders an Article's 16:9, 4:3 and 1:1 crops as Google asks, gives each the
+  picture's rights and refuses a crop that is not its ratio (`ARTICLE_IMAGE_RATIOS`); `videoObject(video)` writes a VideoObject
+  and refuses one without `name`, `thumbnailUrl`, `uploadDate` and a `contentUrl` or `embedUrl`.
+
+### Specimen
+
+- One `fetchpriority=high` on the page (it had three), the diagram sized from its drawing, and MDN's 48 px link icon kept at 32.
+- New elements: an image with a library credit, an animated image with its pause control, a decorative image, video, embed,
+  audio, gallery, inline marks, button and bookmark, and questions and answers, so every directive a site gets is shown and
+  Carrel's Insert menu lists them. The home page writes the ImageObject and VideoObject, `og:video`, and its images in the
+  sitemap. The clip and the tone play once site-runtime's `prelum` entry allows `media-src 'self'` (its page policy has
+  `default-src 'none'`).
+
 - CLAUDE.md: releases are tagged through Capsid after the version bump merges (Capsid's daily pass tags any it missed), not by Dustin by hand. No library change. Also dropped the RENDER_VERSION rule: test/render-golden.test.mjs already fails when a hash changes without a bump.
 - Specimen: deployed by devkit's shared deploy (worker-deploy.yml v0.20.18), a `deploy` job in ci.yml after the checks, in place of
   specimen.yml. It deploys with `DEPLOY_SHA`, waits for `/health` (site-runtime 0.60.0's `staticSite`) to report the commit,

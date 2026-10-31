@@ -14,7 +14,9 @@ What the demo shows.
 
 ::audio{src="/media/example-talk-0123456789abcdef.mp3" title="A talk" transcript="/writing/talk-transcript"}
 
-::embed[A keynote]{url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"}
+::embed[A keynote]{url="https://www.youtube.com/watch?v=dQw4w9WgXcQ" poster="/media/example-keynote-0123456789abcdef-1280x720.jpg"}
+
+::embed[A talk on Vimeo]{url="https://vimeo.com/123456789"}
 
 :::gallery{width=full}
 ![The first picture](/media/example-one-0123456789abcdef-640x480.png)

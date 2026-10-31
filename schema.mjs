@@ -1,4 +1,5 @@
 import { absoluteUrl, articleDates } from "./head.mjs";
+import { toDate } from "./xml.mjs";
 
 const CONTEXT = "https://schema.org";
 
@@ -112,6 +113,70 @@ export function imageObject(image) {
   return creditText || creator?.name || copyrightNotice || license ? pageImage(image) : null;
 }
 
+/** The crops Google asks an Article's image in, widest first (https://developers.google.com/search/docs/appearance/structured-data/article). */
+export const ARTICLE_IMAGE_RATIOS = /** @type {const} */ (["16x9", "4x3", "1x1"]);
+
+/**
+ * An Article's `image` set: one picture cut at each of Google's three ratios (site-runtime's ./image cuts them around the focal
+ * point), each with the picture's rights. A crop whose size is not its ratio is refused, so a wrong URL cannot pass as one.
+ *
+ * @param {Partial<Record<typeof ARTICLE_IMAGE_RATIOS[number], { url: string, width: number, height: number }>>} crops
+ * @param {Omit<ImageInput, "url" | "width" | "height">} [rights] caption, credit and license, the same on every crop
+ * @returns {ImageInput[]}
+ */
+export function articleImageSet(crops, rights = {}) {
+  return ARTICLE_IMAGE_RATIOS.flatMap((ratio) => {
+    const crop = crops[ratio];
+    if (!crop) return [];
+    const [w, h] = ratio.split("x").map(Number);
+    if (Math.abs(crop.width / crop.height - (w ?? 1) / (h ?? 1)) > 0.01) {
+      throw new Error(`article image ${crop.url} is ${crop.width}x${crop.height}, not ${ratio.replace("x", ":")}`);
+    }
+    return [{ ...rights, ...crop }];
+  });
+}
+
+/**
+ * @typedef {object} VideoInput
+ * @property {string} name the video's title
+ * @property {string} thumbnailUrl its poster, absolute
+ * @property {Date | number | string} uploadDate
+ * @property {string} [description]
+ * @property {string} [contentUrl] the file, absolute (a :::video)
+ * @property {string} [embedUrl] the player (an ::embed)
+ * @property {number} [width]
+ * @property {number} [height]
+ * @property {string} [duration] ISO 8601, e.g. `PT1M33S`
+ * @property {string} [transcript] the words, or a caption file's address
+ */
+
+/**
+ * A VideoObject, which Google needs to show a video in results (https://developers.google.com/search/docs/appearance/structured-data/video):
+ * `name`, `thumbnailUrl` and `uploadDate` are required, and one of `contentUrl` or `embedUrl` lets Google fetch it. One missing is
+ * refused rather than written as a node Google would drop.
+ *
+ * @param {VideoInput} video
+ * @returns {SchemaNode}
+ */
+export function videoObject({ name, thumbnailUrl, uploadDate, description, contentUrl, embedUrl, width, height, duration, transcript }) {
+  const date = toDate(uploadDate, null);
+  if (!name || !thumbnailUrl || Number.isNaN(date.getTime()) || !(contentUrl || embedUrl)) {
+    throw new Error(`videoObject "${name}": name, thumbnailUrl, uploadDate and a contentUrl or embedUrl are required`);
+  }
+  return thing("VideoObject", {
+    name,
+    description,
+    thumbnailUrl,
+    uploadDate: date.toISOString(),
+    contentUrl,
+    embedUrl,
+    width,
+    height,
+    duration,
+    transcript,
+  });
+}
+
 /**
  * @typedef {string | ImageInput | SchemaNode} ArticleImage a URL, an image to write as an ImageObject, or a node `pageImage` built
  */
@@ -121,8 +186,8 @@ export function imageObject(image) {
  * @property {string} url
  * @property {string} headline
  * @property {string | null} [description]
- * @property {ArticleImage | ArticleImage[]} [image] Google asks for several crops, 16:9, 4:3 and 1:1, each at least
- *   `ARTICLE_IMAGE_MIN_PIXELS`; one whose `width` and `height` are given and smaller is refused
+ * @property {ArticleImage | ArticleImage[]} [image] Google asks for several crops, 16:9, 4:3 and 1:1 (`articleImageSet` builds
+ *   them), each at least `ARTICLE_IMAGE_MIN_PIXELS`; one whose `width` and `height` are given and smaller is refused
  * @property {Date | number | string | null} [published]
  * @property {Date | number | string | null} [modified]
  * @property {string[]} [tags]

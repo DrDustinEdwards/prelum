@@ -128,13 +128,23 @@ export type HeadImage = {
     width?: number | undefined;
     height?: number | undefined;
     /**
-     * the media type, e.g. `image/png`; read from the file's extension when not given
+     * the media type the URL is served as, e.g. `image/webp`. Without it the type is read from the file's extension, but only
+     * for a URL with no query: a resized size is served as WebP or AVIF whatever its name says, so pass the type served
      */
     type?: string | undefined;
     /**
      * what the image shows, for a reader who cannot see it
      */
     alt?: string | undefined;
+};
+/** A video the page plays, as `og:video` (render's `videos` gives a body's). */
+export type HeadVideo = {
+    /** the file, or for an embed its player (`embedUrl`); absolute https, or a path on `origin` */
+    url: string;
+    /** `video/mp4`, or `text/html` for a player; read from a file's extension when not given */
+    type?: string | undefined;
+    width?: number | undefined;
+    height?: number | undefined;
 };
 export type ArticleFacts = {
     published?: string | number | Date | null | undefined;
@@ -181,6 +191,10 @@ export type HeadInput = {
      * `article:*` tags; pass the same facts to the schema's `article` so the two agree
      */
     article?: ArticleFacts | undefined;
+    /**
+     * the page's videos, each as `og:video` with its type and size; pass the same to the schema's `videoObject`
+     */
+    videos?: HeadVideo[] | undefined;
     /**
      * the page's Markdown copy (`markdownPath(path)` from `llms`), absolute or a path on `origin`, linked as
      * `<link rel="alternate" type="text/markdown">` so an agent can find it
