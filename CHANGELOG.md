@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.28.1 (2026-10-31)
+
+- A link's icon (`img.cap-link-icon`) is `loading="lazy"` and `decoding="async"`: most sit below the fold, and a 16 px
+  icon should never compete with the page's pictures. `RENDER_VERSION` is 15.
+- Specimen: site-runtime 0.67.0, so its pictures, link icons and share card answer CORP `cross-origin` (C11) and its
+  clip and tone play (`media-src 'self'`). No library change.
+- Specimen: no `fetchpriority=high` at all. The page opens with words, and its first picture (y≈4,700 at 1440) was
+  marked high below the fold (A6). No library change.
+
 ## 0.28.0 (2026-10-31)
 
 - `./accessibility`: `accessibilityStatement({ siteName, contact, date, conformance, limitations, measures })` returns the
