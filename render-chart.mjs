@@ -5,6 +5,8 @@
 import { areaChart, barChart, lineChart, scatterPlot } from "enarratio/plot";
 import { fromHtml } from "hast-util-from-html";
 
+import { h } from "./render-hast.mjs";
+
 export const CHART_TYPES = ["bar", "line", "dot", "area"];
 
 const DEFAULT_WIDTH = 700;
@@ -258,14 +260,15 @@ export function buildChartModel(attrs, csv) {
 }
 
 /**
- * The figure Enarratio drew, as hast. Parsed rather than allowDangerousHtml, which would open raw HTML
- * in every post. Enarratio's figcaption is the head (title and finding). The author's caption is the
- * caption under the chart, where Enarratio puts its own; the outer figure takes Enarratio's classes
- * and data attributes, so there is one figure.
+ * The figure Enarratio drew, as hast, in Capsomer 0.53's chart frame: the markup of its `frameHtml(figure)`,
+ * `div.cap-chart > div.cap-chart-figure > figure.enarratio`, written here so Capsomer is not a dependency.
+ * Parsed rather than allowDangerousHtml, which would open raw HTML in every post. Enarratio's figcaption
+ * is the head (title and finding). The author's caption is the caption under the chart, where Enarratio
+ * puts its own; the directive's figure takes Enarratio's classes and data attributes, so there is one figure.
  *
  * @param {ReturnType<typeof buildChartModel>} model
  * @param {any[]} captionChildren hast for an author-written caption, may be empty
- * @param {any} figure the directive's figure node, whose properties the chart's merge into
+ * @param {any} figure the directive's figure node, which becomes the frame
  */
 export function renderChartHast(model, captionChildren, figure) {
   const drawn = fromHtml(model.html, { fragment: true }).children.find(
@@ -274,7 +277,9 @@ export function renderChartHast(model, captionChildren, figure) {
   if (!drawn || drawn.type !== "element") throw new Error("Enarratio returned no <figure>");
 
   const classes = [...(figure.properties.className ?? []), ...(drawn.properties.className ?? [])];
-  figure.properties = { ...drawn.properties, className: classes };
+  const inner = h("figure", { ...drawn.properties, className: classes }, []);
+  figure.tagName = "div";
+  figure.properties = { className: ["cap-chart"] };
 
   const isCaption = (/** @type {any} */ n) =>
     n.type === "element" && n.tagName === "p" && (n.properties.className ?? []).includes("enarratio-caption");
@@ -294,6 +299,7 @@ export function renderChartHast(model, captionChildren, figure) {
     };
     children.splice(after === -1 ? children.length : after + 1, 0, caption);
   }
-  return children;
+  inner.children = children;
+  return [h("div", { className: ["cap-chart-figure"] }, [inner])];
 }
 

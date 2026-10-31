@@ -6,14 +6,54 @@
 
 - The specimen's home page writes its head with `headTags`, so it has a share card: `share-card.png` (1200x630) with
   `og:image:type`, `width`, `height` and `alt`, and the canonical, Open Graph and X tags that come with it.
+
+## 0.24.0 (2026-10-31)
+
+One frontmatter reader and writer for every site and package (writing and rendering, area 4).
+
+### Added
+
+- `splitSource`, `joinSource`, `readKey`, `readList`, `setBlock` and `setRawKey` in `frontmatter`: site-api 0.17.0's block reader and
+  writer, moved here. A write replaces only the block it names, and every other block, comment and unknown key comes back byte for
+  byte. site-api re-exports them, and Capsomer's and Carrel's own header readers are replaced by them.
+
+### Changed
+
+- `frontmatter(source)` is built on the same reader. Values in double quotes are read as JSON strings (`"a\"b"` is `a"b`), single
+  quotes take `''` as one quote, the fences may carry trailing spaces, and `body` starts after the blank lines that follow the
+  closing fence.
+- CI: devkit 0.20.8. The family check is now the shared-code check (`shared.yml`, `.shared.json`, `devkit-shared`). A newer push to a
+  pull request cancels its older runs, and the workflow audit and dependency scan run only when their files change.
+- Specimen: site-runtime 0.50.0. Its `headersFile` writes cross-origin CORP on css, js, mjs, svg and woff2, so the specimen's own
+  rule for it is gone (security headers, area 2).
+
+### Fixed
+
+- `prelum-icons` draws a mark that holds a raster image (a PNG logo inside the SVG) on the Apple touch and maskable icons.
+  Those two came out as plain background, because resvg loads no image inside a nested SVG; the mark now goes onto the
+  background already drawn as a PNG, and an image it links by relative path is read from the mark's folder.
+
+## 0.23.0 (2026-10-31)
+
+Post charts in Capsomer's chart frame (charts, area 10).
+
+### Changed
+
+- `RENDER_VERSION` is 9. `:::chart` output sits in Capsomer 0.53's chart frame: Enarratio's figure (still `figure.chart-figure.enarratio`,
+  with the author's caption in it) is wrapped in `div.cap-chart > div.cap-chart-figure`, the markup Capsomer's `frameHtml(figure)` writes,
+  so `prelum-chart-audit`'s frame check (F) passes for it. Prelum writes the markup itself and does not depend on Capsomer. A site styles
+  the frame with Capsomer's `components/chart-frame/chart-frame.css`, which the specimen now loads.
+
+### Specimen
+
 - Every specimen page now sends a preload Link header for its stylesheet, Schibsted Grotesk and Source Serif 4, so the zone
   answers with Early Hints (site-runtime `withPreloadHeader`, the same three files as Carrel's public site). The build
   refuses to finish when it did not write one of them. The 404 page is sent `private, no-store`. The published library
   does not change.
-
-### Changed
-
-- The ai-author check installs devkit v0.20.7, the release its workflow is pinned to.
+- The specimen serves the shared icon set (`prelum-icons` from its P mark on #4f2d7f, `iconLinks()` and `webManifest()`),
+  with `manifest-src 'self'` in its page policy; `favicon.svg` is gone.
+- The specimen's 404 page names its charset (`text/html; charset=utf-8`, site-runtime `applyHeaderSet`): it answers any
+  path, so no `_headers` rule could.
 
 ## 0.22.1 (2026-10-31)
 

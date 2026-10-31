@@ -22,6 +22,7 @@ import { llmsDocument } from "../llms.mjs";
 import { rssItem } from "../feeds.mjs";
 import { sitemapDocument } from "../sitemap.mjs";
 import { RENDER_VERSION, render } from "../render.mjs";
+import { iconLinks, webManifest } from "../icons.mjs";
 import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
 import { absolutizeUrls, escapeXml, mathToTex } from "../xml.mjs";
 import { HEADERS_FILE, PAGE_PRELOADS } from "./headers.mjs";
@@ -78,7 +79,7 @@ function writeStyles(outDir) {
   });
   const capsomer = dirname(packageFile("capsomer/tokens.css"));
   const css = [
-    "/* Built by specimen/build.mjs: Capsomer's fonts, tokens, the specimen's family, base, prose and manual styles, Enarratio's chart styles in Capsomer's theme, and specimen/site.css. */",
+    "/* Built by specimen/build.mjs: Capsomer's fonts, tokens, the specimen's family, base, prose, manual and chart frame styles, Enarratio's chart styles in Capsomer's theme, and specimen/site.css. */",
     inlineCss(packageFile("capsomer/fonts.css")).replaceAll("../fonts/", "fonts/"),
     ...faces,
     inlineCss(join(capsomer, "tokens.css")),
@@ -95,6 +96,8 @@ function writeStyles(outDir) {
     // The family footer every dustinedwards.info site ends with, and the color marks of its Network strip.
     inlineCss(join(capsomer, "..", "tokens", "family-marks.css")),
     inlineCss(join(capsomer, "..", "components", "family-footer", "family-footer.css")),
+    // The frame every :::chart sits in (Capsomer 0.53).
+    inlineCss(join(capsomer, "..", "components", "chart-frame", "chart-frame.css")),
     // Capsomer's tokens.css also maps the --enarratio-* properties onto its tokens (css/enarratio.css). The two agree, being
     // generated from the same tokens; Enarratio 0.1.0-alpha.8 has no color-free base stylesheet, so its full one is used.
     stylesheet(capsomerTheme),
@@ -177,7 +180,7 @@ const footerHtml = (version) =>
   familyFooterHtml({
     site: "prelum",
     center: `<div class="cap-family-footer-center">
-<div><p class="cap-family-footer-center-name">Prelum</p><p class="cap-family-footer-about">The family's publishing library: markdown to pages, feeds, sitemaps, llms.txt and search.</p></div>
+<div><p class="cap-family-footer-center-name">Prelum</p><p class="cap-family-footer-about">One publishing library for every site: markdown to pages, feeds, sitemaps, llms.txt and search.</p></div>
 <div class="cap-family-footer-columns">
 <ul class="cap-family-footer-links"><li><a href="/#contents-name">Every element</a></li><li><a href="/elements.json">elements.json</a></li></ul>
 <ul class="cap-family-footer-links"><li><a href="${REPO}">Source, MIT licensed</a></li><li><a href="${REPO}#readme">How to use it</a></li></ul>
@@ -198,12 +201,16 @@ const HEADER = letterheadHtml({
   current: "Home",
 });
 
-/** The share card (specimen/static/share-card.png), drawn once at the size every family card has. */
+const ICON_LINKS = iconLinks()
+  .map((link) => `<link ${Object.entries(link).map(([name, value]) => `${name}="${value}"`).join(" ")}>`)
+  .join("\n");
+
+/** The share card (specimen/static/share-card.png), drawn once at the size every card in the network has. */
 const SHARE_CARD = {
   url: "/share-card.png",
   width: 1200,
   height: 630,
-  alt: "Prelum, the family's publishing library: markdown, feeds, sitemaps, llms.txt and search.",
+  alt: "Prelum, one publishing library for every site: markdown, feeds, sitemaps, llms.txt and search.",
 };
 
 /**
@@ -221,7 +228,7 @@ function documentHtml({ title, description, body, version, path }) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 ${head}
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+${ICON_LINKS}
 <link rel="stylesheet" href="/site.css">
 <link rel="stylesheet" href="/katex/katex.min.css">
 <script src="/theme.js"></script>
@@ -361,6 +368,7 @@ export async function buildSpecimen(outDir) {
   mkdirSync(outDir, { recursive: true });
   copyTree(join(HERE, "static"), outDir);
   writeFileSync(join(outDir, "_headers"), HEADERS_FILE);
+  writeFileSync(join(outDir, "site.webmanifest"), JSON.stringify(webManifest({ name: "Prelum specimen", shortName: "Prelum", themeColor: "#4f2d7f", backgroundColor: "#4f2d7f" })));
   writeStyles(outDir);
   const missing = PAGE_PRELOADS.links.filter(({ href }) => !existsSync(join(outDir, href.slice(1))));
   if (missing.length) throw new Error(`preloads name files the build did not write: ${missing.map(({ href }) => href).join(", ")}`);
