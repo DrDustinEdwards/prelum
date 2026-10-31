@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Specimen: deployed by devkit's shared deploy (worker-deploy.yml v0.20.18), a `deploy` job in ci.yml after the checks, in place of
+  specimen.yml. It deploys with `DEPLOY_SHA`, waits for `/health` (site-runtime 0.60.0's `staticSite`) to report the commit,
+  checks the home page and rolls back on a refusal; IndexNow runs after it. No library change.
+
 ## 0.27.0 (2026-10-31)
 
 Prelum's chart redraw now lives in Enarratio, shared with Capsomer (charts, area 10).
