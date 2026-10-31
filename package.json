@@ -239,7 +239,7 @@
     }
   },
   "devDependencies": {
-    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.20.8",
+    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.20.9",
     "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.48.1",
     "@fontsource-variable/source-serif-4": "5.3.1",
     "@mermaid-js/mermaid-cli": "11.17.0",
