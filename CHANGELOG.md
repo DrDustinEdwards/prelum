@@ -36,7 +36,6 @@ embeds, `og:video` and VideoObject.
   `video width`.
 - A fetched link icon is kept at 32 px (its display is 16): a larger PNG is shrunk, and a favicon.ico keeps only the smallest
   size that covers it (`fitLinkIcon`, `LINK_ICON_SIZE`). An icon already stored stays as it is until its entry is deleted.
-- `render-version.d.mts` names the version it declares (it still said 10).
 
 ### Added
 
@@ -50,11 +49,29 @@ embeds, `og:video` and VideoObject.
 - New elements: an image with a library credit, an animated image with its pause control, a decorative image, video, embed,
   audio, gallery, inline marks, button and bookmark, and questions and answers, so every directive a site gets is shown and
   Carrel's Insert menu lists them. The home page writes the ImageObject and VideoObject, `og:video`, and its images in the
-  sitemap; the page policy allows `media-src` from the specimen itself.
+  sitemap. The clip and the tone play once site-runtime's `prelum` entry allows `media-src 'self'` (its page policy has
+  `default-src 'none'`).
 
 - Specimen: deployed by devkit's shared deploy (worker-deploy.yml v0.20.18), a `deploy` job in ci.yml after the checks, in place of
   specimen.yml. It deploys with `DEPLOY_SHA`, waits for `/health` (site-runtime 0.60.0's `staticSite`) to report the commit,
   checks the home page and rolls back on a refusal; IndexNow runs after it. No library change.
+
+### Changed
+
+- `linkIconResponse` takes the site's header set for a file it did not write, `{ headers: UPLOAD_HEADERS }` (site-runtime),
+  and requires it: security headers are site-runtime's, so Prelum no longer writes its own nosniff and sandbox policy.
+
+### Specimen
+
+- Headers come from the specimen's entry in site-runtime's registry: the Worker is `staticSite({ site: prelum })` and `_headers` is
+  written by `site-runtime-headers` (with the TDMRep header), so `specimen/headers.mjs` is gone. The page adds COEP with
+  report-to, Integrity-Policy and Trusted Types in Report-Only, and both script tags carry a sha384 `integrity` and
+  `crossorigin`.
+
+## 0.27.1 (2026-10-31)
+
+- `render-version.d.mts` declares `RENDER_VERSION: "12"`, as `render-version.mjs` exports; it still said "10", so a site that types its stored
+  version against Prelum's (`satisfies typeof RENDER_VERSION`) could not set the real one. The golden test now fails when the two differ.
 
 ## 0.27.0 (2026-10-31)
 

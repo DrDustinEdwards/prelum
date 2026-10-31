@@ -34,6 +34,9 @@ test("the corpus renders to the recorded bytes, and a change to them is a new re
         "UPDATE_GOLDEN=1 npm test and describe the change in CHANGELOG.md.",
     );
   }
+  // The hand-written twin's literal type is what sites check their stored version against; it was left at "10" through two bumps.
+  const declared = readFileSync(new URL("../render-version.d.mts", import.meta.url), "utf8").match(/RENDER_VERSION: "([^"]+)"/)?.[1];
+  assert.equal(declared, RENDER_VERSION, "render-version.d.mts declares another RENDER_VERSION than render-version.mjs exports");
   assert.equal(golden.renderVersion, RENDER_VERSION, "golden.json belongs to another renderVersion: run UPDATE_GOLDEN=1 npm test");
   assert.deepEqual(hashes, golden.hashes);
 });
