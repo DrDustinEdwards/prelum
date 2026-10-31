@@ -32,6 +32,8 @@ style from the markup.
 
 - The Links element shows every kind, with Capsomer's family list and MDN's icon, fetched once and committed in
   `specimen/link-icons/` (an empty file is a host with none, so builds and tests reach no other site).
+- The specimen's home page writes its head with `headTags`, so it has a share card: `share-card.png` (1200x630) with
+  `og:image:type`, `width`, `height` and `alt`, and the canonical, Open Graph and X tags that come with it.
 
 ## 0.24.0 (2026-10-31)
 
@@ -52,6 +54,14 @@ One frontmatter reader and writer for every site and package (writing and render
   pull request cancels its older runs, and the workflow audit and dependency scan run only when their files change.
 - Specimen: site-runtime 0.50.0. Its `headersFile` writes cross-origin CORP on css, js, mjs, svg and woff2, so the specimen's own
   rule for it is gone (security headers, area 2).
+- Specimen: KaTeX's faces use `font-display: swap` in place of its `block`, so math shows at once in the fallback face (speed,
+  area 7).
+
+### Fixed
+
+- `prelum-icons` draws a mark that holds a raster image (a PNG logo inside the SVG) on the Apple touch and maskable icons.
+  Those two came out as plain background, because resvg loads no image inside a nested SVG; the mark now goes onto the
+  background already drawn as a PNG, and an image it links by relative path is read from the mark's folder.
 
 ## 0.23.0 (2026-10-31)
 
