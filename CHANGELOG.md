@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- CI: devkit 0.20.8. The family check is now the shared-code check (`shared.yml`, `.shared.json`, `devkit-shared`). A newer push to a
+  pull request cancels its older runs, and the workflow audit and dependency scan run only when their files change.
+
 ## 0.23.0 (2026-10-31)
 
 Post charts in Capsomer's chart frame (charts, area 10).
