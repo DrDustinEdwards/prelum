@@ -6,6 +6,11 @@
   specimen.yml. It deploys with `DEPLOY_SHA`, waits for `/health` (site-runtime 0.60.0's `staticSite`) to report the commit,
   checks the home page and rolls back on a refusal; IndexNow runs after it. No library change.
 
+## 0.27.1 (2026-10-31)
+
+- `render-version.d.mts` declares `RENDER_VERSION: "12"`, as `render-version.mjs` exports; it still said "10", so a site that types its stored
+  version against Prelum's (`satisfies typeof RENDER_VERSION`) could not set the real one. The golden test now fails when the two differ.
+
 ## 0.27.0 (2026-10-31)
 
 Prelum's chart redraw now lives in Enarratio, shared with Capsomer (charts, area 10).
