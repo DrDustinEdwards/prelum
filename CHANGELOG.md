@@ -12,6 +12,11 @@
   link an icon (error), an Apple touch icon and a manifest (warnings), and the manifest must name the site and list 192, 512
   and maskable icons (warnings) that all load (error).
 
+### Changed
+
+- devkit v0.20.3. CI now runs devkit's workflow audit (actionlint and zizmor) and its dependency audit (OSV-Scanner), and
+  `.no-bloat.json` records the test and comment counts.
+
 ### Fixed
 
 - `defineHead`: a page that passes `fullTitle` no longer puts the site's suffix in its WebPage name and last breadcrumb
