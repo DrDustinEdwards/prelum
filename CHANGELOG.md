@@ -9,6 +9,13 @@
   so `prelum-chart-audit`'s frame check (F) passes for it. Prelum writes the markup itself and does not depend on Capsomer. A site styles
   the frame with Capsomer's `components/chart-frame/chart-frame.css`, which the specimen now loads.
 
+### Specimen
+
+- Every specimen page now sends a preload Link header for its stylesheet, Schibsted Grotesk and Source Serif 4, so the zone
+  answers with Early Hints (site-runtime `withPreloadHeader`, the same three files as Carrel's public site). The build
+  refuses to finish when it did not write one of them. The 404 page is sent `private, no-store`. The published library
+  does not change.
+
 ## 0.22.1 (2026-10-31)
 
 ### Fixed
