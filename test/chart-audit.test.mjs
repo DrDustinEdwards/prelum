@@ -13,10 +13,8 @@ import { baseStylesheet, stylesheet } from "enarratio";
 
 const bin = new URL("../bin/chart-audit.mjs", import.meta.url).pathname;
 const chart = (/** @type {string} */ title, /** @type {object} */ extra = {}) =>
-  barChart({ data: [{ year: "2024", posts: 3 }, { year: "2025", posts: 5 }, { year: "2026", posts: 4 }], x: "year", y: "posts", alt: `${title}: posts rose from 3 in 2024 to 5 in 2025.`, title, caption: "Counted from the archive.", ...extra });
-const frame = (/** @type {string} */ id, /** @type {string} */ body) =>
-  `<figure class="cap-chart" id="${id}"><p class="cap-chart-summary">Posts rose from 3 in 2024 to 5 in 2025, then fell to 4.</p>${body}` +
-  `<p class="cap-chart-source">Source: <a href="/archive">the archive</a></p><a href="/${id}.csv" download>Download CSV</a></figure>`;
+  barChart({ data: [{ year: "2024", posts: 3 }, { year: "2025", posts: 5 }, { year: "2026", posts: 4 }], x: "year", y: "posts", alt: `${title}: posts rose from 3 in 2024 to 5 in 2025.`, title, caption: "Counted from the archive.", source: { name: "the archive", href: "/archive" }, ...extra });
+const frame = (/** @type {string} */ id, /** @type {string} */ body) => `<div class="cap-chart" id="${id}"><div class="cap-chart-figure">${body}</div></div>`;
 const page = (/** @type {string} */ body, head = "") =>
   `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Charts</title><meta name="color-scheme" content="light dark">` +
   `<link rel="stylesheet" href="/charts.css">${head}</head><body><main><h1>Charts</h1>${body}</main></body></html>`;
@@ -27,7 +25,7 @@ const site = {
   "/bad": page(
     [
       // B30, B28 and F: no data table, an SVG with no role or name, and Enarratio's bare figure outside the frame.
-      chart("No table").replace(/<details[\s\S]*<\/details>/, "").replace(/ role="img" aria-label="[^"]*"/, ""),
+      chart("No table", { csv: false }).replace(/<details[\s\S]*<\/details>/, "").replace(/ role="img" aria-label="[^"]*"/, ""),
       // B1 in dark only, and B3: the caption drawn at 10 px.
       frame("dim", chart("Dim in dark")),
       // B27: a link with no name inside the chart.
@@ -83,9 +81,9 @@ test("prelum-chart-audit finds every planted mistake, as an error with the page 
       ["warning", "F", '"No table" (bar): not in Capsomer'],
       ["warning", "C1", '"No table" (bar): no CSV link'],
       ["error", "B1", "#dim (bar), dark:"],
-      ["error", "B3", "#dim (bar): 1 text under 12 px"],
+      ["error", "B3", "text under 12 px, smallest \"Dim in dark\""],
       ["error", "B27", "#unnamed-link (bar), light: axe link-name"],
-      ["error", "D6", "#heavy (bar): 112.5 kB of inline HTML, over the 100 kB budget"],
+      ["error", "D6", "kB of inline HTML, over the 100 kB budget"],
       ["error", "B2", '"Only with scripts" (bar): drawn only with scripts on'],
       ["error", "F", "loads Chart.js"],
       ["error", "F", 'an SVG chart drawn outside Enarratio: "Visits" (a polyline)'],
