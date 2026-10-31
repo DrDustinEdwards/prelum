@@ -4,7 +4,7 @@
 
 ### Changed
 
-- devkit v0.20.2. CI now runs devkit's workflow audit (actionlint and zizmor) and its dependency audit (OSV-Scanner), and
+- devkit v0.20.3. CI now runs devkit's workflow audit (actionlint and zizmor) and its dependency audit (OSV-Scanner), and
   `.no-bloat.json` records the test and comment counts.
 
 ## 0.20.0 (2026-10-31)
