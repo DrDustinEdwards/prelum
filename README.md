@@ -119,14 +119,15 @@ if (prefersMarkdown(request.headers.get("Accept")) || url.pathname.endsWith(".md
 
 Markdown in, a safe HTML fragment out (carrel/design-markdown-pipeline.md). It is dustinedwards-info's renderer, moved here so every
 site that publishes Carrel's writing renders it the same way. The `render` import is deliberately light: it holds the parser, the
-directives every site gets (`:::figure`, with a `dark` twin for a drawing that differs by theme, and `:::details`), math, the table of contents and the URL policy. What a site decides it injects:
+blocks every site gets (below), math, the table of contents and the URL policy. What a site decides it injects:
 
 ```js
 import { render } from "@drdustinedwards/site-helpers/render";
 import { editorialPack } from "@drdustinedwards/site-helpers/render/packs";
 import { createHighlight } from "@drdustinedwards/site-helpers/render/highlight";
 
-const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion } = await render({
+const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion, faq, postLinks, words, readingMinutes, excerpt, warnings } =
+  await render({
   file: "content/posts/example.md", // for error messages
   body, // markdown with any frontmatter already stripped
   resolveImage, // async (src) => ({ width, height, placeholder? })
@@ -138,22 +139,48 @@ const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion } = 
     maxBytes: 512 * 1024, // refused before parsing
     maxDepth: 100, // refused after parsing
     assertSafe: true, // scan the output and throw on anything outside the allowlist; off by default
+    postLink: async (slug) => ({ url, title }), // resolves ::postlink[slug]; null leaves it visible as code
+    smartPunctuation: true, // curly quotes, -- en dash, --- em dash; the default
   },
 });
 ```
+
+**What writers get**, measured against Ghost's cards, WordPress's core blocks, GitHub's alerts and Astro's defaults. Each block
+refuses what it cannot render well, with the line and the fix:
+
+| Write | Renders |
+| --- | --- |
+| CommonMark and GFM: tables, task lists, `~~strike~~`, autolinks, footnotes | Scrollable tables, labeled checkboxes, footnotes with back links |
+| `> [!NOTE]` (TIP, IMPORTANT, WARNING, CAUTION), optional title after it | `<div class="callout callout-note" role="note">` |
+| `:::figure{src alt credit dark width}` | Figure, caption, credit, a dark-theme twin; `width=wide` or `width=full` |
+| `:::gallery` with 2 to 9 images | `<figure class="gallery">` grid |
+| `:::video{src title captions poster}`, `::audio{src title transcript}` | Native players; captions or a transcript required |
+| `::embed[Title]{url}` (YouTube, Vimeo, Spotify, SoundCloud) | A link carrying the player URL; `render/enhance` loads the player on a click |
+| `::button[Label]{href}`, `::bookmark[Title]{url description}` | A button link, a link card |
+| `:::details{summary}`, `:::faq` with Q: and A: lines | Native `<details>`, a `<dl class="faq">` returned as `faq` |
+| `::postlink[slug\|text]` | A link to the post's current address |
+| `:kbd[]`, `:abbr[]{title}`, `:mark[]`, `:sub[]`, `:sup[]` | The inline elements raw HTML would need |
+| ```` ```js title="app.ts" {2} ```` | Highlighted code with a file name and marked lines |
+
+An h1 in the body moves every heading down a level, quotes and dashes are typeset (SmartyPants, `--` en, `---` em), and a
+skipped heading level or an image without alt text comes back in `warnings` for the editor to show. `words`, `readingMinutes`
+(the `text` module's rule) and `excerpt` are counted from the rendered tree.
 
 **A site with no math** imports `render` from `render/nomath` instead: the same pipeline and options, with `$` as plain text (so
 `$3,000 to $6,500` is prices, not an expression) and `hasMath` always false. KaTeX, remark-math and rehype-katex are imported only by
 `render`, so they never enter that site's bundle (about 1.6 MB raw) and need not be installed.
 
 The output is a fragment: no `<html>`, no layout. A site gives it its own layout and its own CSS for the classes the pipeline emits
-(`heading-anchor`, `table-scroll`, `image-link`, `post-details`, `figure-credit`, `figure-light` and `figure-dark`, and a pack's own); a change to one of them is a new
+(`heading-anchor`, `table-scroll`, `image-link`, `post-details`, `figure-credit`, `figure-light`, `figure-dark`, `width-wide`, `width-full`,
+`callout`, `callout-<type>`, `callout-title`, `media`, `media-video`, `media-audio`, `media-transcript`, `embed`, `embed-<service>`,
+`embed-link`, `gallery`, `gallery-grid`, `button-row`, `button`, `bookmark` and its parts, `faq`, `faq-item`, `code-frame`,
+`code-title`, and a pack's own); a change to one of them is a new
 `renderVersion`. An image links to its original (`image-link`) unless it is decorative: `![](x)` writes `alt=""` and no link,
 which would have no name.
 
 **Safe by construction, then checked.** Raw HTML in the source is dropped before it becomes markup, the URL policy runs last, and
 KaTeX runs with `trust` off. Those are three options one edit could flip, so `render/safe` scans the rendered output with a parser
-(parse5) against an allowlist, and `render/conformance` holds 44 hostile inputs every site runs against its own configured renderer:
+(parse5) against an allowlist, and `render/conformance` holds 54 hostile inputs every site runs against its own configured renderer:
 
 ```js
 import { runConformance } from "@drdustinedwards/site-helpers/render/conformance";

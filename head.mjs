@@ -368,14 +368,3 @@ export function metaText(html, limit = SERP_DESCRIPTION_LIMIT) {
     .trim();
   return truncateForSerp(text, limit);
 }
-
-/**
- * Minutes to read at 200 words a minute, rounded, never less than one. Words are runs of non-space, so Markdown syntax
- * counts, as the sites' published reading times were counted; pass HTML through `metaText(html, Infinity)` first.
- *
- * @param {string} text
- */
-export function readingMinutes(text) {
-  const words = text.trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.round(words / 200));
-}

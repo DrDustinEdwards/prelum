@@ -4,10 +4,8 @@
     "jscpd": "jscpd@5.4.0"
   },
   "baseline": {
-    "measured_at": "f73d03b",
-    "knip": {
-      "Duplicate exports": 1
-    },
+    "measured_at": "2707ef4",
+    "knip": {},
     "jscpd": {
       "clones": 0,
       "percentage": 0
