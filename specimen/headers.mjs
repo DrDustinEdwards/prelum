@@ -2,6 +2,7 @@
 // responses, and specimen/build.mjs writes HEADERS_FILE into dist/_headers for the static assets, which the Worker hands on untouched.
 import { buildContentSecurityPolicy, buildPolicy, reportingEndpoints } from "@dustinedwards/site-runtime/csp";
 import { buildSecurityHeaders, headersFile } from "@dustinedwards/site-runtime/headers";
+import { prelum } from "@dustinedwards/site-runtime/sites";
 
 export const REPORT_PATH = "/csp-report";
 
@@ -23,7 +24,7 @@ export const REPORTING_ENDPOINTS = reportingEndpoints("csp-endpoint", new URL(RE
 
 /** Every security header the specimen sends: site-runtime's standard set with the page policy and its report endpoint. */
 export const SITE_HEADERS = Object.freeze({
-  ...buildSecurityHeaders({ site: "prelum" }),
+  ...buildSecurityHeaders({ site: prelum }),
   "Content-Security-Policy": PAGE_CSP,
   "Reporting-Endpoints": REPORTING_ENDPOINTS,
 });
