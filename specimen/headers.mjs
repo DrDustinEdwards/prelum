@@ -47,17 +47,14 @@ const DIAGRAM_CSP = buildPolicy([
 const CSP = "Content-Security-Policy";
 
 /**
- * dist/_headers, from site-runtime's headersFile: the set on every path, charset=utf-8 on the static text files, the page policy as its own `/*` rule (headersFile keeps
+ * dist/_headers, from site-runtime's headersFile: the set on every path, charset=utf-8 and cross-origin CORP on the static subresources, the page policy as its own `/*` rule (headersFile keeps
  * policies out of the set's block), and the diagrams' policy in place of it. headersFile detaches only the set's own headers, so
  * the `! Content-Security-Policy` that keeps the page policy off a diagram is written in here.
  */
 const { [CSP]: page, ...set } = SITE_HEADERS;
-/** Stylesheets, scripts and fonts may be loaded by another origin (site-runtime corpFor). */
-const SUBRESOURCES = Object.fromEntries(["css", "js", "mjs", "woff2"].map((ext) => [`/*.${ext}`, { "Cross-Origin-Resource-Policy": "cross-origin" }]));
 export const HEADERS_FILE = headersFile(set, {
   charset: true,
   paths: {
-    ...SUBRESOURCES,
     "/*": { [CSP]: page, "Cache-Control": "public, max-age=300, must-revalidate" },
     "/elements.json": { "Access-Control-Allow-Origin": "*" },
     "/diagrams/*": { [CSP]: DIAGRAM_CSP },
