@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.28.0 (2026-10-31)
+
+- `./accessibility`: `accessibilityStatement({ siteName, contact, date, conformance, limitations, measures })` returns the
+  statement every public site serves at `/accessibility` (devkit-a11y S6) as Markdown, in the W3C WAI generator's sections: the
+  commitment, the standard (WCAG 2.2 AA) and conformance status, measures, known limitations, how to report a problem, and the
+  date. A site passes its name, contact route and review date, and the open findings from its latest devkit-a11y report; the
+  hand-check gaps are added until `conformance` is "full". Also `ACCESSIBILITY_PATH`, `ACCESSIBILITY_STANDARD`,
+  `HAND_CHECK_LIMITATIONS`. No change to `render` or RENDER_VERSION.
 
 - CLAUDE.md: releases are tagged through Capsid after the version bump merges (Capsid's daily pass tags any it missed), not by Dustin by hand. No library change. Also dropped the RENDER_VERSION rule: test/render-golden.test.mjs already fails when a hash changes without a bump.
 - Specimen: deployed by devkit's shared deploy (worker-deploy.yml v0.20.18), a `deploy` job in ci.yml after the checks, in place of
