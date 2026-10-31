@@ -199,16 +199,18 @@ export function linkIconSrc(path, host, type) {
 
 /**
  * The route: the stored icon for `/link-icons/<host>.<ext>`, a year's immutable cache (an icon is fetched once, so its URL never
- * holds other bytes), nosniff, and a policy that lets nothing in the file run or load. A 404 for a host with no icon, or an extension
- * that is not the stored type's; null when the path is not under `path`, so a site writes
- * `return (await linkIconResponse(url.pathname, store)) ?? next()`.
+ * holds other bytes), and `headers`, the site's set for a file it did not write: site-runtime's UPLOAD_HEADERS (nosniff and a
+ * policy that lets nothing in the file run or load). Security headers are site-runtime's, so the site passes them; there is no
+ * default. A 404 for a host with no icon, or an extension that is not the stored type's; null when the path is not under `path`,
+ * so a site writes `return (await linkIconResponse(url.pathname, store, { headers: UPLOAD_HEADERS })) ?? next()`.
  *
  * @param {string} pathname
  * @param {Pick<LinkIconStore, "get">} store
- * @param {{ path?: string }} [options]
+ * @param {{ headers: Readonly<Record<string, string>>, path?: string }} options
  * @returns {Promise<Response | null>}
  */
-export async function linkIconResponse(pathname, store, { path = LINK_ICON_PATH } = {}) {
+export async function linkIconResponse(pathname, store, { headers, path = LINK_ICON_PATH }) {
+  if (!headers) throw new TypeError("linkIconResponse needs headers: site-runtime's UPLOAD_HEADERS");
   const prefix = `${path.replace(/\/$/, "")}/`;
   if (!pathname.startsWith(prefix)) return null;
   const match = /^([a-z0-9.-]+)\.([a-z]+)$/.exec(pathname.slice(prefix.length));
@@ -220,8 +222,7 @@ export async function linkIconResponse(pathname, store, { path = LINK_ICON_PATH 
     headers: {
       "Content-Type": stored.type,
       "Cache-Control": "public, max-age=31536000, immutable",
-      "X-Content-Type-Options": "nosniff",
-      "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+      ...headers,
     },
   });
 }

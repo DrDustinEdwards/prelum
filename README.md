@@ -278,11 +278,13 @@ itself, `/favicon.ico` and then its home page's `<link rel="icon">`, never an ic
 and 3 s a request (`maxBytes`, `timeoutMs`), the type read from the bytes, and an SVG that holds a script, handler, link out or
 `url()` refused. A host with none is stored empty, so it is not asked again. The link then opens with
 `<img class="cap-link-icon" src="/link-icons/<host>.<ext>" alt="" width="16" height="16">` (`path` moves it); without a store or an icon
-it has none and Capsomer draws its arrow. The route is one line, with a year's immutable cache, nosniff and a sandboxing policy:
+it has none and Capsomer draws its arrow. The route is one line, with a year's immutable cache and the site's set for a file it did
+not write, site-runtime's `UPLOAD_HEADERS` (nosniff and a sandboxing policy), which it passes:
 
 ```js
+import { UPLOAD_HEADERS } from "@dustinedwards/site-runtime/headers";
 import { linkIconResponse } from "@drdustinedwards/site-helpers/render/link-icons";
-const icon = await linkIconResponse(url.pathname, store); // null when the path is not under /link-icons/
+const icon = await linkIconResponse(url.pathname, store, { headers: UPLOAD_HEADERS }); // null when the path is not under /link-icons/
 if (icon) return icon;
 ```
 
@@ -322,9 +324,10 @@ Prelum's version from `package.json`.
 empty templates with the cursor in `alt`, in `carrel/app/lib/site-markdown.ts`.) An element is one
 file, `<order>-<id>.md`, with a `name` and `summary` header.
 
-- `npm run specimen` builds the site into `specimen/dist`; `npm run deploy:specimen` builds and deploys it (a merge to `main`
-  deploys it too, through ci.yml's `deploy` job: devkit's shared deploy, which waits for `/health` to report the commit
-  and rolls back when the home page does not answer).
+- `npm run specimen` builds the site into `specimen/dist`, its `_headers` written from the site registry by site-runtime's
+  `site-runtime-headers` (the Worker, `specimen/worker.mjs`, is site-runtime's `staticSite` on the same entry); `npm run deploy:specimen`
+  builds and deploys it (a merge to `main` deploys it too, through ci.yml's `deploy` job: devkit's shared deploy, which waits for
+  `/health` to report the commit and rolls back when the home page does not answer).
 - `test/specimen.test.mjs` holds each element to its stored output in `specimen/expected/`, checks the elements cover every
   directive, chart type and highlighted language Prelum has, and builds the site to check the index, the footer and that no page
   has a generator tag or an inline script. `UPDATE_SPECIMEN=1 npm test` rewrites `specimen/expected/`; a changed file there is a change

@@ -133,7 +133,7 @@
     "lint": "oxlint *.mjs bin test specimen --deny-warnings",
     "typecheck": "tsc -p .",
     "test": "node --test \"test/*.test.mjs\"",
-    "specimen": "node specimen/build.mjs",
+    "specimen": "node specimen/build.mjs && site-runtime-headers --site prelum --out specimen/dist/_headers --header \"tdm-reservation: 1\"",
     "specimen:diagrams": "node specimen/diagrams.mjs",
     "deploy:specimen": "npm run specimen && npx --yes wrangler@4.143.0 deploy",
     "bloat": "devkit-no-bloat --warn-only"
