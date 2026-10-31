@@ -66,7 +66,7 @@ test("render is deterministic: the same input is the same bytes, run after run",
 test("render needs no site: the core renders without media, packs or highlighting", async () => {
   const { html, mediaRefs } = await core(fixture("prose"));
   assert.match(html, /<h2 id="second-heading">/);
-  assert.match(html, /<div class="table-scroll" tabindex="0"><table>/);
+  assert.match(html, /<div class="table-scroll" tabindex="0" role="region" aria-label="Table: [^"]+"><table>/);
   assert.match(html, /<img src="\/media\/dustin-edwards-sample-0123456789abcdef-640x480.png"/);
   assert.doesNotMatch(html, /srcset=/);
   assert.deepEqual(mediaRefs, []);
@@ -237,10 +237,10 @@ test("every way a page can cite media is collected, figure directives included",
 
 test("code is plain without a highlighter, and highlighted, labeled and line-marked with one", async () => {
   const plain = await core("```js\nlet a\n```");
-  assert.equal(plain.html, '<pre><code class="language-js">let a\n</code></pre>');
+  assert.equal(plain.html, '<pre tabindex="0" role="region" aria-label="Code: JavaScript"><code class="language-js">let a\n</code></pre>');
 
   const { html } = await core(fixture("code"), { highlight });
-  assert.match(html, /<pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast" style="[^"]*" tabindex="0" data-lang="js">/);
+  assert.match(html, /<pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast" style="[^"]*" data-lang="js" tabindex="0" role="region" aria-label="Code: JavaScript">/);
   assert.match(html, /data-lang="bash"/);
   assert.match(html, /<span class="line highlighted">/);
   assert.match(html, /data-lang="text"/);
@@ -364,7 +364,7 @@ test("the blocks every site gets: callouts, media, embeds, galleries, links, FAQ
   assert.match(html, /<figcaption>Two pictures side by side\.<\/figcaption>/);
   assert.match(html, /<p class="button-row"><a href="\/join" class="button">Join the list<\/a><\/p>/);
   assert.match(html, /<span class="bookmark-host">ghost\.org<\/span>/);
-  assert.match(html, /<figure class="code-frame"><figcaption class="code-title">example\.js<\/figcaption><pre/);
+  assert.match(html, /<figure class="code-frame"><figcaption class="code-title">example\.js<\/figcaption><pre[^>]* aria-label="Code: example\.js">/);
   assert.deepEqual(result.faq, [
     { question: "What is this?", answer: "A fixture." },
     { question: "Does an answer run on?", answer: "It runs on over the next line." },

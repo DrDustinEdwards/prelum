@@ -187,20 +187,111 @@ function remarkCollectMedia(sink, keyOf) {
 }
 
 /**
- * A wrapper, not display: block on the table, which can strip the table role from a screen reader. tabindex so keyboard users can
- * scroll it; no role=region, because an unnamed region is noise.
+ * A box that can scroll sideways is a named region keyboard users can focus (Adrian Roselli's pattern): tabindex so they can scroll it,
+ * role=region because ARIA prohibits aria-label on a generic div or pre, and a name so the region is not noise. Capsomer's sweep fails
+ * a sideways-scrolling box without all three.
+ *
+ * @param {import("hast").Element} node
+ * @param {string} name
  */
+function scrollRegion(node, name) {
+  node.properties = { ...node.properties, tabIndex: 0, role: "region", ariaLabel: name };
+}
+
+/** The first four header names, so a wide table's name stays short. Read when the table is wrapped, before KaTeX writes a formula twice. */
+const TABLE_NAME_HEADERS = 4;
+
+/** @param {import("hast").Element} table */
+function tableName(table) {
+  /** @type {import("hast").Element | undefined} */
+  let row;
+  visit(table, "element", (node) => {
+    if (node.tagName !== "tr") return;
+    row = node;
+    return false;
+  });
+  const headers = (row?.children ?? [])
+    .filter((cell) => cell.type === "element" && cell.tagName === "th")
+    .map((cell) => hastToString(cell).replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  if (headers.length === 0) return "Table";
+  const more = headers.length > TABLE_NAME_HEADERS ? ", …" : "";
+  return `Table: ${headers.slice(0, TABLE_NAME_HEADERS).join(", ")}${more}`;
+}
+
+/** A wrapper, not display: block on the table, which can strip the table role from a screen reader. */
 function rehypeTableScroll() {
   return (/** @type {import("hast").Root} */ tree) => {
     visit(tree, "element", (node, index, parent) => {
       if (node.tagName !== "table" || !parent || index === undefined) return;
       if (parent.type === "element" && parent.properties?.className?.includes?.("table-scroll")) return;
-      parent.children[index] = {
-        type: "element",
-        tagName: "div",
-        properties: { className: ["table-scroll"], tabIndex: 0 },
-        children: [node],
-      };
+      const wrapper = { type: "element", tagName: "div", properties: { className: ["table-scroll"] }, children: [node] };
+      scrollRegion(/** @type {import("hast").Element} */ (wrapper), tableName(node));
+      parent.children[index] = /** @type {import("hast").Element} */ (wrapper);
+    });
+  };
+}
+
+/** Readable names for the fence languages render-highlight.mjs ships and their usual aliases; any other is named as written. */
+const LANGUAGE_NAMES = /** @type {Record<string, string>} */ ({
+  bash: "Bash",
+  sh: "Shell",
+  shell: "Shell",
+  css: "CSS",
+  html: "HTML",
+  javascript: "JavaScript",
+  js: "JavaScript",
+  json: "JSON",
+  markdown: "Markdown",
+  md: "Markdown",
+  python: "Python",
+  py: "Python",
+  sql: "SQL",
+  tsx: "TSX",
+  typescript: "TypeScript",
+  ts: "TypeScript",
+});
+
+/** @param {import("hast").Element} pre */
+function codeLanguageName(pre) {
+  // render-highlight.mjs writes data-lang ("text" when there is none), as a raw key; without it the language is the code's class.
+  const code = pre.children.find((child) => child.type === "element" && child.tagName === "code");
+  const classes = code?.type === "element" ? [code.properties?.className ?? []].flat() : [];
+  const fromClass = String(classes.find((name) => String(name).startsWith("language-")) ?? "").slice("language-".length);
+  const lang = String(pre.properties?.["data-lang"] ?? pre.properties?.dataLang ?? fromClass).trim();
+  if (!lang || lang === "text") return "Code";
+  return `Code: ${LANGUAGE_NAMES[lang.toLowerCase()] ?? lang}`;
+}
+
+/** @param {import("hast").Element} pre @param {string} name */
+function codeRegion(pre, name) {
+  // shiki writes its own tabindex under the raw key, which would print a second one beside tabIndex.
+  delete pre.properties.tabindex;
+  scrollRegion(pre, name);
+}
+
+/**
+ * After the highlighter, so its output is named too. shiki swaps each pre for a root holding the new one, so a framed block's pre is
+ * found under its figure, not as the figure's child.
+ */
+function rehypeCodeRegions() {
+  return (/** @type {import("hast").Root} */ tree) => {
+    /** @type {Set<import("hast").Element>} */
+    const framed = new Set();
+    visit(tree, "element", (figure) => {
+      if (figure.tagName !== "figure" || !figure.properties?.className?.includes?.("code-frame")) return;
+      const caption = figure.children.find(
+        (child) => child.type === "element" && child.tagName === "figcaption" && child.properties?.className?.includes?.("code-title"),
+      );
+      const title = caption ? hastToString(caption).trim() : "";
+      visit(figure, "element", (pre) => {
+        if (pre.tagName !== "pre") return;
+        framed.add(pre);
+        codeRegion(pre, title ? `Code: ${title}` : codeLanguageName(pre));
+      });
+    });
+    visit(tree, "element", (pre) => {
+      if (pre.tagName === "pre" && !framed.has(pre)) codeRegion(pre, codeLanguageName(pre));
     });
   };
 }
@@ -569,6 +660,8 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
     const [plugin, ...args] = await options.highlight.plugin();
     processor.use(plugin, ...args);
   }
+
+  processor.use(rehypeCodeRegions);
 
   // LAST (option 2 in the header), so it sees every href and src any plugin emits.
   processor.use(rehypeUrlProtocols, file, blockedUrls).use(rehypeStringify);

@@ -26,6 +26,10 @@ style from the markup.
 
 - `RENDER_VERSION` is 10: links carry the contract above, and the allowlist gains `a data-link`, `a data-site`, `a hreflang`,
   `a rel` and `span lang`.
+- A box that scrolls sideways is a named region a keyboard can focus: `div.table-scroll` gains `role="region"` and
+  `aria-label="Table: <first four headers>"` (or `Table`), and every `pre`, highlighted or not, gains `tabindex="0"`,
+  `role="region"` and `aria-label` from its frame title (`Code: app.ts`), else its language (`Code: TypeScript`), else `Code`. The
+  allowlist gains `pre role` and `pre aria-label`.
 - The URL policy allows `tel:`, for phone links. A dialer runs nothing.
 
 ### Specimen

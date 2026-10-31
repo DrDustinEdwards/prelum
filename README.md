@@ -205,7 +205,9 @@ The output is a fragment: no `<html>`, no layout. A site gives it its own layout
 `callout`, `callout-<type>`, `callout-title`, `media`, `media-video`, `media-audio`, `media-transcript`, `embed`, `embed-<service>`,
 `embed-link`, `gallery`, `gallery-grid`, `button-row`, `button`, `bookmark` and its parts, `faq`, `faq-item`, `code-frame`,
 `code-title`, the link contract's `cap-link-meta`, `cap-link-icon` and `cap-sr-only`, and a pack's own); a change to one of them is a new
-`renderVersion`. An image links to its original (`image-link`) unless it is decorative: `![](x)` writes `alt=""` and no link,
+`renderVersion`. A box that can scroll sideways is a named region a keyboard can focus: a table sits in
+`<div class="table-scroll" tabindex="0" role="region" aria-label="Table: Sample, Reads">`, and every `pre` carries `tabindex="0"`,
+`role="region"` and `aria-label="Code: <frame title or language>"`. An image links to its original (`image-link`) unless it is decorative: `![](x)` writes `alt=""` and no link,
 which would have no name.
 
 **Links say what they are** (the family's link contract, which Capsomer styles from the markup alone). Every link the author
