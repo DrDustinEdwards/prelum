@@ -17,11 +17,11 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `xml` | `escapeXml`, `cdata`, `rfc822`, `isoDay`, `absolutizeUrls`, `jsonLdText`, `mathToTex` |
 | `slug` | `slugify(text, { max })` |
 | `feeds` | `rssDocument`, `rssItem`, `atomDocument`, `atomEntry`, `jsonFeedDocument`, `feedItem` (`itemPath` moves where a post lives) |
-| `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` list it in the image sitemap |
+| `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` (absolute URLs of the images the page shows: a rendered page's `mediaRefs` of form `markdown-image` and `figure-directive`, made URLs again) list them in the image sitemap |
 | `llms` | `llmsDocument`, `llmsLink`; `llmsFullDocument`, `markdownPage`, `markdownPath`, `prefersMarkdown`, `markdownResponse` (llms-full.txt and each page's Markdown copy); `llmsResponse` (the whole /llms.txt response) |
 | `frontmatter` | `frontmatter(source)`: the `---` header of a Markdown file as `{ data, body }` |
 | `head` | `defineHead(site)` (the per-site builder: `(page) => HeadTag[]`), `headTags(input)` (title, description, canonical, the Markdown copy's and the feeds' links, Open Graph, Twitter, `article:*`), `headHtml(tags)`, `metaText(html, limit)`, `readingMinutes(text)`, `absoluteUrl`, `articleDates`, `searchTitle(title, suffix)`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT` |
-| `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage` |
+| `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage`, `imageObject(image)` (an image's license metadata), `pageImage(image)` (an ImageObject, for `primaryImageOfPage`), `ARTICLE_IMAGE_MIN_PIXELS` |
 | `robots` | `robotsDocument(input)`, `aiTxt(input)`, `robotsResponse(input)`, `aiTxtResponse(input)` (the whole responses), `plainTextResponse`, `isPreviewRequest`, `robotsNotes`, `PLAIN_TEXT_CACHE_CONTROL`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
 | `indexnow` | `submitIndexNow(input)`, `keyFileResponse(key, headers)` (the `/<key>.txt` file), `recentSitemapUrls(xml, { days })`; the `prelum-indexnow` bin |
 | `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-audit` bin |
@@ -46,8 +46,15 @@ What they hold every site to:
 
 - The canonical, `og:url` and every absolute URL come from the site's production origin, never the request's, so a workers.dev
   copy cannot claim to be the page.
-- A card image is required, so `twitter:card` is always `summary_large_image`. An absent date writes no tag, and the Open Graph
-  dates and the Article schema's come from one `articleDates`.
+- A card image is required, so `twitter:card` is always `summary_large_image`. It is one object, `{ url, width, height, type,
+  alt }`, written as `og:image` and its `type`, `width`, `height` and `alt`, and `twitter:image` and `twitter:image:alt` (cut
+  to X's 420 characters); `type` is read from the extension when not given. A bare URL is still read, but its card has no size
+  or alt and the audit flags it. An absent date writes no tag, and the Open Graph dates and the Article schema's come from one
+  `articleDates`.
+- An Article's `image` takes several crops (Google asks for 16:9, 4:3 and 1:1), each a URL or `{ url, width, height }`; one
+  whose size is given and under 50,000 pixels is refused. `imageObject` writes an image's license metadata (`contentUrl`,
+  `creditText`, `creator`, `copyrightNotice`, `license`, `acquireLicensePage`) for Google Images, and returns null when no
+  rights field is known. A page that is not an article names its image with `primaryImageOfPage: pageImage(image)`.
 - `thing` drops empty fields, and `website` has no SearchAction without a real search URL: structured data claims nothing the
   page cannot back.
 - robots.txt repeats the disallow list in every named group (a crawler uses only its own group), and a preview gets
@@ -65,8 +72,9 @@ What they hold every site to:
 `audit` runs the checks a site audit leads with over pages a crawl already fetched (`crawlSite`, Cloudflare Browser Run's
 `/crawl`, or a site's own test): missing, long or duplicate titles and descriptions; a missing canonical, one off the production
 origin, or one that points away from a page the sitemap lists; a sitemap URL that redirects, is broken or is noindex (by meta tag
-or `X-Robots-Tag`); redirect chains; links to broken pages or to redirects; JSON-LD that does not parse; images with no `alt`;
-and pages with no `og:title` or card image. `auditPages` is pure and returns `{ findings, pages, summary }`, `summary` counting
+or `X-Robots-Tag`); redirect chains; links to broken pages or to redirects; JSON-LD that does not parse; images with no `alt`
+(`alt=""` is a decorative image, and right) or a file name for one; and pages with no `og:title` or card image, or a card without
+an https URL, type, size or alt. `auditPages` is pure and returns `{ findings, pages, summary }`, `summary` counting
 findings by check.
 
 `crawlSite` is the crawl, with its `fetch` passed in so a scheduled job (Capsid's, against each live site) runs it as it is and
@@ -140,7 +148,8 @@ const { html, toc, hasMath, mediaRefs, diagrams, blockedUrls, renderVersion } = 
 
 The output is a fragment: no `<html>`, no layout. A site gives it its own layout and its own CSS for the classes the pipeline emits
 (`heading-anchor`, `table-scroll`, `image-link`, `post-details`, `figure-credit`, `figure-light` and `figure-dark`, and a pack's own); a change to one of them is a new
-`renderVersion`.
+`renderVersion`. An image links to its original (`image-link`) unless it is decorative: `![](x)` writes `alt=""` and no link,
+which would have no name.
 
 **Safe by construction, then checked.** Raw HTML in the source is dropped before it becomes markup, the URL policy runs last, and
 KaTeX runs with `trust` off. Those are three options one edit could flip, so `render/safe` scans the rendered output with a parser

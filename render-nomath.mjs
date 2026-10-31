@@ -43,7 +43,7 @@ export { ContentError, isAllowedUrl };
  * Bumped whenever the output changes for the same input. A site stores it beside its rendered HTML and re-renders on a mismatch; Carrel's
  * health check reads it from meta.capabilities.render. test/render-golden.test.mjs fails when the output moves and this does not.
  */
-export const RENDER_VERSION = "6";
+export const RENDER_VERSION = "7";
 
 /** A source over this is refused before it is parsed: a 200,000-character bracket run took 2.8 s, which a Worker cannot be sent. */
 export const DEFAULT_MAX_BYTES = 512 * 1024;
@@ -287,11 +287,13 @@ function rehypeImageSources(file, resolveImage, pending, imageProps) {
         : [];
 
       // Links to the unsized original, which srcset never serves. A figure's light and dark pair is excluded, as diagrams are: an
-      // anchor around the display: none half would be a focusable link with no name. An author's own link wins.
+      // anchor around the display: none half would be a focusable link with no name. So is a decorative image (`![](x)`, alt ""):
+      // its link would have no name either. An author's own link wins.
       const themed = Array.isArray(classes) && (classes.includes("figure-light") || classes.includes("figure-dark"));
       const wrappable =
         !themed &&
         src.length > 0 &&
+        node.properties?.alt !== "" &&
         parent &&
         typeof index === "number" &&
         parent.children[index] === node &&

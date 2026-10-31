@@ -12,10 +12,27 @@
   sections `site.sections` names (`{ "/blog": "Blog" }`) to the page. A page passes its own `breadcrumbs`, or `false` for none.
 - `robotsDocument` writes `Content-Signal: search=yes, ai-input=yes, ai-train=no` (`CONTENT_SIGNAL`) in every group;
   `contentSignal` replaces it.
+- The share image is one object, `{ url, width, height, type, alt }`. `headTags` now writes `og:image:type`, read from the
+  file's extension (`.jpg`, `.png`, `.webp`, `.avif`, `.gif`, `.svg`) when `type` is not given, and cuts
+  `twitter:image:alt` at a word to X's 420 characters. A bare URL is still read; the docs and types steer to the object.
+- `imageObject(image)` in `schema`: an image's license metadata for Google Images (`contentUrl`, `creditText`,
+  `creator: { name, type }`, `copyrightNotice`, `license`, `acquireLicensePage`), or null when none of `creator`,
+  `creditText`, `copyrightNotice` and `license` is known, since Google requires one. `pageImage(image)` is the same
+  ImageObject without that condition, for `primaryImageOfPage` on a page that is not an article.
+- `article`'s `image` takes `{ url, width, height }` objects beside URLs, so a site passes its 16:9, 4:3 and 1:1 crops with
+  their sizes; one whose size is given and under `ARTICLE_IMAGE_MIN_PIXELS` (50,000) is refused with the article and image
+  named. A URL is written as before.
+- The audit's `card-incomplete` warning: a page whose `og:image` is not absolute https, or has no `og:image:type`, `width`,
+  `height` or `alt` (a card from a bare URL). `image-alt-filename` warns on an image whose alt is a file name, its own or
+  any ending in an image extension. `alt=""` stays right: it is a decorative image.
 
 ### Changed
 
 - `headTags` sends `robots: max-image-preview:large` on every indexable page, so Google can show the whole share image.
+- `RENDER_VERSION` is 7. A decorative image (`![](x)`, `alt=""`) is no longer wrapped in its `image-link`: a link whose only
+  content has an empty alt has no name.
+- `sitemapDocument`'s `images` docs say what a page passes: the images it shows, a rendered page's `mediaRefs` of form
+  `markdown-image` and `figure-directive` made absolute URLs again.
 
 ## 0.18.0 (2026-10-30)
 
