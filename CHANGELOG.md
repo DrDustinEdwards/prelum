@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-Embeds: the services Dustin uses (2026-10-31), see the first items under Changed.
+## 0.28.0
 
-Images and media (area 6, round 2): diagrams sized, one high image per page, animations that move and can be paused, the library's
+Embeds limited to the services Dustin uses, with Vimeo removed (see the first items under Changed). Images and media (area 6, round 2): diagrams sized, one high image per page, animations that move and can be paused, the library's
 credit on the page and in its ImageObjects, a refused missing alt, the served type on the share card, and video posters, lite
 embeds, `og:video` and VideoObject.
 
@@ -19,7 +19,7 @@ embeds, `og:video` and VideoObject.
 - New `./render/embeds`: `EMBED_PROVIDERS` (each with its `kind`, player `origin` and `path`), `EMBED_FRAME_SOURCES` for a site's
   CSP `frame-src` (site-runtime's `frame` sources; without it the players are blocked) and `embedPlayerUrl`, the check
   `render/enhance` runs on a click. `render-blocks` still exports `EMBED_PROVIDERS`.
-- `RENDER_VERSION` was 13 in this cycle. A site re-renders its stored bodies; one that holds `![](x)` now stops with the line to fix.
+- A site re-renders its stored bodies; one that holds `![](x)` now stops with the line to fix.
 - A diagram `<img>` carries its drawing's `width` and `height`, `loading="lazy"`, `decoding="async"` and `role="img"`.
   `drawDiagrams` writes each drawing's size to `sizes.json` (`DIAGRAM_SIZES_FILE`) beside the drawings and returns it as
   `sizes`; the site passes it to `editorialPack({ diagramSizes })`. A diagram it does not list is written unsized, with a warning.
