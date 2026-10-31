@@ -25,6 +25,7 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `robots` | `robotsDocument(input)`, `aiTxt(input)`, `robotsResponse(input)`, `aiTxtResponse(input)` (the whole responses), `plainTextResponse`, `isPreviewRequest`, `robotsNotes`, `PLAIN_TEXT_CACHE_CONTROL`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
 | `indexnow` | `submitIndexNow(input)`, `keyFileResponse(key, headers)` (the `/<key>.txt` file), `recentSitemapUrls(xml, { days })`; the `prelum-indexnow` bin |
 | `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-audit` bin |
+| `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-chart-audit` bin |
 | `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` (D1's FTS5); `staticSearchIndex(pages)` at build and `staticSearch(index, query)` in the browser, `searchWords`, for a site with no database |
 | `render`, `render/nomath` | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl` |
 | `render/packs` | `editorialPack`, the `RenderPack` shape a site's own directives take |
@@ -90,6 +91,20 @@ const origin = "https://example.com";
 const { pages, sitemap } = await crawlSite({ origin, fetch });
 const { findings, summary } = auditPages(pages, { origin, sitemap });
 ```
+
+`prelum-chart-audit --origin https://example.com [--from <preview origin>] [--chart-kb 100] [--strict-frame]` is the live
+check for charts (area 10 of the completeness scoreboard). It crawls with `crawlSite`, then opens every page (and the
+same-origin iframes they show) in headless Chromium: with scripts off, and with scripts on in the light and dark schemes. For
+every Enarratio chart, or the Capsomer frame (`figure.cap-chart`) it sits in, it reports each miss as a GitHub annotation titled
+with its checklist item and the page as proof: no SVG, title, finding sentence, caption or data table with scripts off (B2, B18,
+B30); an SVG without `role="img"` and a name, or a table without scoped `th` and a caption (B28); text under 4.5:1 or a mark or
+legend swatch under 3:1 as painted, custom properties resolved, in either scheme (B1); text under 12 px (B3); an axe-core
+violation inside the chart in either scheme (B27); a chart over `--chart-kb` of inline HTML (D6); a page that loads Recharts,
+Chart.js, ApexCharts, ECharts, Highcharts, Plotly, Nivo or visx, or draws an SVG chart by hand (F). The CSV link (C1), the
+source line (C2) and the frame (F) are warnings until Enarratio 0.4.0 and the frame reach the sites; `--strict-frame` makes
+them errors. It exits 0 with no errors, 1 with any, 2 when it could not run. `playwright-core` and `axe-core` are optional
+peers; without them it installs the pinned versions into a cache directory once. It drives Playwright's Chromium, else the
+system Chrome, else `CHART_AUDIT_CHROME`.
 
 ## For agents: llms-full.txt and a Markdown copy of each page
 
