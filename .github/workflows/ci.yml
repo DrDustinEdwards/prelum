@@ -37,3 +37,47 @@ jobs:
         run: npm test
       - name: devkit's no-bloat report against .no-bloat.json (a warning, never a failure)
         run: npm run bloat
+
+  # The specimen at https://prelum.dustinedwards.info, through devkit's shared deploy (worker-deploy.yml), as on the D1
+  # sites: once the checks pass it builds the specimen, deploys with DEPLOY_SHA set to this commit, waits for /health
+  # (site-runtime's staticSite) to report it, checks the home page answers, and rolls the deploy back if it does not.
+  deploy:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    uses: DrDustinEdwards/devkit/.github/workflows/worker-deploy.yml@fbf3824ab08f76af5befd7471677778e8b132c9b # v0.20.18
+    with:
+      worker-name: prelum
+      health-url: https://prelum.dustinedwards.info/health
+      verify-command: >-
+        code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 https://prelum.dustinedwards.info/ || true);
+        echo "home page answered $code";
+        if [ "$code" = 200 ]; then exit 0; elif [ "$code" = 000 ]; then exit 3; else exit 1; fi
+      install: PUPPETEER_SKIP_DOWNLOAD=true npm ci
+      pre-deploy: npm run specimen
+      sha-var: DEPLOY_SHA
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  # Prelum's own prelum-indexnow with the built sitemap and the key in specimen/build.mjs, once the live gate passes. A
+  # refused ping is a warning, never a failed deploy.
+  indexnow:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Tell IndexNow
+        run: |
+          key=$(sed -n 's/^const INDEXNOW_KEY = "\(.*\)";$/\1/p' specimen/build.mjs)
+          curl -sf https://prelum.dustinedwards.info/sitemap.xml -o "$RUNNER_TEMP/sitemap.xml"
+          node bin/indexnow.mjs --origin https://prelum.dustinedwards.info --key "$key" --sitemap "$RUNNER_TEMP/sitemap.xml"

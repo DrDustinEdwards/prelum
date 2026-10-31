@@ -323,7 +323,8 @@ empty templates with the cursor in `alt`, in `carrel/app/lib/site-markdown.ts`.)
 file, `<order>-<id>.md`, with a `name` and `summary` header.
 
 - `npm run specimen` builds the site into `specimen/dist`; `npm run deploy:specimen` builds and deploys it (a merge to `main`
-  deploys it too, through `.github/workflows/specimen.yml`, once the Cloudflare secrets are set).
+  deploys it too, through ci.yml's `deploy` job: devkit's shared deploy, which waits for `/health` to report the commit
+  and rolls back when the home page does not answer).
 - `test/specimen.test.mjs` holds each element to its stored output in `specimen/expected/`, checks the elements cover every
   directive, chart type and highlighted language Prelum has, and builds the site to check the index, the footer and that no page
   has a generator tag or an inline script. `UPDATE_SPECIMEN=1 npm test` rewrites `specimen/expected/`; a changed file there is a change

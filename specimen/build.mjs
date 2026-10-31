@@ -33,7 +33,7 @@ const ROOT = join(HERE, "..");
 const require = createRequire(import.meta.url);
 const REPO = "https://github.com/DrDustinEdwards/prelum";
 
-/** The IndexNow key, served as /<key>.txt; .github/workflows/specimen.yml reads it here to ping IndexNow. Public by design. */
+/** The IndexNow key, served as /<key>.txt; .github/workflows/ci.yml's indexnow job reads it here to ping IndexNow. Public by design. */
 const INDEXNOW_KEY = "32790edc1bac129b5f5c0b174219150c";
 
 /** When security.txt lapses (RFC 9116 asks for under a year); renew it before then. */
