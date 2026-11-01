@@ -155,7 +155,7 @@
     "bloat": "devkit-no-bloat --warn-only"
   },
   "peerDependencies": {
-    "@mermaid-js/mermaid-cli": "11.17.0",
+    "@mermaid-js/mermaid-cli": "12.0.0",
     "@resvg/resvg-js": "^2.6.2",
     "@shikijs/rehype": "4.5.0",
     "@shikijs/transformers": "4.5.0",
@@ -278,7 +278,7 @@
     "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.20.22",
     "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.68.1",
     "@fontsource-variable/source-serif-4": "5.3.1",
-    "@mermaid-js/mermaid-cli": "11.17.0",
+    "@mermaid-js/mermaid-cli": "12.0.0",
     "@observablehq/plot": "0.6.17",
     "@resvg/resvg-js": "2.6.2",
     "@shikijs/rehype": "4.5.0",
