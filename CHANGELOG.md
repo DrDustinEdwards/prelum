@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- CI: a release starts Renovate in every repository that pins Prelum (devkit 0.20.23 bump-consumers.yml, from
+  release.yml and on a tag push). Needs the `RENOVATE_TRIGGER_TOKEN` repository secret.
+- `.shared.json` names the two local helpers the shared-code check took for copies: `esc` in `./accessibility` (the helpers
+  take no dependency on site-runtime) and `hex` in `prelum-chart-audit` (it runs inside the audited page).
+
 ## 0.31.1 (2026-11-01)
 
 - The optional `enarratio` peer accepts 0.6 as well as 0.5 (`^0.5.0 || ^0.6.0`), so a site on Enarratio 0.6.0 installs
