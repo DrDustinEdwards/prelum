@@ -10,6 +10,9 @@
 - `prelum-chart-audit`: a shape inside an `aria-hidden` group and painted in the color behind it is the ground, as one
   that is itself `aria-hidden` already was (B1). This is the gap a choropleth draws between regions, which B6 lets a
   separator be; Enarratio 0.7.0's region edges were read as marks at 1.00 to 1.03:1.
+- `prelum-chart-audit` D6 weighs the drawing a reader is shown, its inline SVG, as checklist D6 says, not the whole
+  frame: the data table (the chart's text equivalent) and the narrow drawing a redraw spec holds for a phone no longer
+  count. A 321-address dot map was 256 kB of frame for an 88 kB drawing.
 
 ## 0.32.0 (2026-11-01)
 
