@@ -1,10 +1,17 @@
 # Changelog
 
-## 0.31.1 (2026-11-01)
+## 0.31.2 (2026-11-01)
 
 - `markdownCopies` takes any Worker fetch handler: `FetchHandler`'s `ctx` is `any`, since the wrapper passes the Worker's
   ExecutionContext through untouched. A handler typed `(request, env: Env, ctx: ExecutionContext)` (one that reads
   `ctx.exports`, as bsw's gateway does) failed to typecheck against the narrower `{ waitUntil }`. Types only.
+
+## 0.31.1 (2026-11-01)
+
+- The optional `enarratio` peer accepts 0.6 as well as 0.5 (`^0.5.0 || ^0.6.0`), so a site on Enarratio 0.6.0 installs
+  Prelum without an override. Prelum is tested against 0.6.0.
+- Specimen: its scripts inline Enarratio 0.6's lazily loaded sound module, so each stays one file under the page's
+  script hashes.
 
 ## 0.31.0 (2026-11-01)
 
