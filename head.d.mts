@@ -98,6 +98,11 @@ export function searchTitle(title: string, suffix: string): string;
 export const SERP_TITLE_LIMIT: 60;
 export const SERP_DESCRIPTION_LIMIT: 155;
 /**
+ * The shortest trail that gets a BreadcrumbList: home, a section, the page. A top-level page (home and itself) shows no
+ * trail on any site, so it carries no BreadcrumbList either.
+ */
+export const BREADCRUMB_MIN_ITEMS: 3;
+/**
  * The descriptor shapes React Router's `meta` export takes, so a route returns `headTags(...)` as it is.
  */
 export type HeadTag = {

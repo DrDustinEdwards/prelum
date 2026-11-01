@@ -92,6 +92,17 @@ export function markdownResponse(markdown: string, options?: MarkdownResponseOpt
  * @returns {Response}
  */
 export function llmsResponse(input: LlmsContent & import("./robots.mjs").PlainTextOptions): Response;
+/**
+ * Wraps a static site's Worker so it serves the Markdown copies `writeMarkdownCopies` (`./markdown-files`) wrote at build
+ * time, with no HTML parser in the Worker: `/path.md` gets `Content-Type: text/markdown; charset=utf-8` and a
+ * `Link: rel="canonical"` to its page; a page asked for with `Accept: text/markdown` preferred answers its `.md` file, with
+ * `Vary: Accept`, or its HTML when it has none; and every HTML page gains `Vary: Accept` and a
+ * `Link: rel="alternate"; type="text/markdown"` naming its copy. A rendered site uses `markdownCopies` instead.
+ */
+export function serveMarkdownCopies<F extends (request: Request, ...rest: any[]) => Promise<Response> | Response>(fetch: F, options: {
+    origin: string;
+    skip?: (path: string) => boolean;
+}): F;
 export type MarkdownResponseOptions = {
     /**
      * the HTML page's absolute URL, sent as `Link: <url>; rel="canonical"`

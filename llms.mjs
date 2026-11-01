@@ -183,6 +183,57 @@ export function markdownResponse(markdown, options = {}) {
 }
 
 /**
+ * Wraps a static site's Worker so it serves the Markdown copies `writeMarkdownCopies` (`./markdown-files`) wrote at build
+ * time, with no HTML parser in the Worker: `/path.md` gets `Content-Type: text/markdown; charset=utf-8` and a
+ * `Link: rel="canonical"` to its page; a page asked for with `Accept: text/markdown` preferred answers its `.md` file, with
+ * `Vary: Accept`, or its HTML when it has none; and every HTML page gains `Vary: Accept` and a
+ * `Link: rel="alternate"; type="text/markdown"` naming its copy. llms-full.txt is a file like any other. A rendered site,
+ * whose pages are not files, uses `markdownCopies` from `./markdown-copy` instead.
+ *
+ * @template {(request: Request, ...rest: any[]) => Promise<Response> | Response} F
+ * @param {F} fetch
+ * @param {{ origin: string, skip?: (path: string) => boolean }} options
+ * @returns {F}
+ */
+export function serveMarkdownCopies(fetch, { origin, skip = () => false }) {
+  const base = origin.replace(/\/$/, "");
+  /** @param {Request} request @param {any[]} rest */
+  const wrapped = async (request, ...rest) => {
+    const response = await fetch(request, ...rest);
+    if (request.method !== "GET" && request.method !== "HEAD") return response;
+    const url = new URL(request.url);
+    const path = url.pathname;
+    if (path.endsWith(".md")) {
+      if (response.status !== 200) return response;
+      const out = new Response(response.body, response);
+      out.headers.set("Content-Type", "text/markdown; charset=utf-8");
+      out.headers.set("Link", `<${base}${path === "/index.md" ? "/" : path.slice(0, -3)}>; rel="canonical"`);
+      return out;
+    }
+    if (response.status !== 200 || !(response.headers.get("Content-Type") ?? "").startsWith("text/html") || skip(path)) return response;
+    if (prefersMarkdown(request)) {
+      const headers = new Headers(request.headers);
+      headers.set("Accept", "text/markdown");
+      const copy = await fetch(new Request(new URL(markdownPath(path), url), { method: request.method, headers }), ...rest);
+      if (copy.status === 200) {
+        response.body?.cancel();
+        const out = new Response(copy.body, copy);
+        out.headers.set("Content-Type", "text/markdown; charset=utf-8");
+        out.headers.set("Vary", "Accept");
+        out.headers.set("Link", `<${base}${path}>; rel="canonical"`);
+        return out;
+      }
+      copy.body?.cancel();
+    }
+    const out = new Response(response.body, response);
+    out.headers.append("Vary", "Accept");
+    out.headers.append("Link", `<${base}${markdownPath(path)}>; rel="alternate"; type="text/markdown"`);
+    return out;
+  };
+  return /** @type {F} */ (/** @type {unknown} */ (wrapped));
+}
+
+/**
  * @typedef {{ title: string, summary: string, intro?: string[], sections: LlmsSection[] } | { body: string }} LlmsContent
  * the document's parts for `llmsDocument`, or a file the site already has (one written by hand, say) as `body`
  */
