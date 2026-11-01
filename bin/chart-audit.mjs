@@ -20,7 +20,8 @@
 //   D6   the chart's inline HTML is over --chart-kb
 //   F    the page loads another chart library, or draws an SVG chart outside Enarratio; the chart is not in the frame
 //   C1   no CSV link; C2 no source line
-//   C12  at 320 px wide (scripts on), the drawing overflows its frame sideways, or chart text is drawn under 12 px
+//   C12  at 320 px wide (scripts on, the page scrolled through), the drawing overflows its frame sideways (a table chart, a data
+//        table, may scroll: WCAG 1.4.10's two-dimensional exception), or chart text is drawn under 12 px
 //
 // An inline primitive (Enarratio's `inline: true`: a bare sparkline, heat strip, progress ring, uptime strip or timeline in a stat
 // tile or a table row, outside any figure) needs no frame, title, caption, CSV or table. It passes when it is role="img" with a
@@ -276,7 +277,8 @@ async function auditPage(url) {
   }
   for (const unit of narrow.units) {
     const name = `${unit.label} (${unit.kind}), ${NARROW} px`;
-    if (unit.overflow) add("error", "C12", `${name}: the drawing is ${unit.overflow.content} px wide in a ${unit.overflow.box} px frame, so it scrolls sideways`);
+    // A table chart is a data table, which WCAG 1.4.10 lets scroll sideways in its frame (two-dimensional layout).
+    if (unit.overflow && !/^table\b/.test(unit.kind)) add("error", "C12", `${name}: the drawing is ${unit.overflow.content} px wide in a ${unit.overflow.box} px frame, so it scrolls sideways`);
     const small = unit.measured?.smallText;
     if (small) add("error", "C12", `${name}: ${small.count} text under 12 px, smallest "${small.sample}" at ${small.px.toFixed(1)} px`);
   }
@@ -313,6 +315,9 @@ async function visit(context, url, measured, narrow = false) {
     if ((await response.body()).length === 0) throw new Error("answered 200 with an empty body four times in 12 seconds");
     if (measured) {
       await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => undefined);
+      // At 320 px, scroll the page as a reader would, so a chart a site draws again (or swaps for its narrow drawing)
+      // as it nears the viewport is measured as the reader sees it.
+      if (narrow) await page.evaluate(scrollThrough);
       await page.evaluate(settle);
       if (!narrow) await page.evaluate(axeSource);
     }
@@ -332,6 +337,16 @@ async function scriptLibraries(urls) {
     for (const [name, , signature] of LIBRARIES) if (signature.test(code)) names.add(name);
   }
   return names;
+}
+
+/** In the page: scroll to the end a screen at a time, then back to the top. */
+async function scrollThrough() {
+  for (let y = 0; y < document.documentElement.scrollHeight; y += innerHeight) {
+    scrollTo(0, y);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  scrollTo(0, 0);
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 }
 
 /** In the page: fonts loaded and every finite animation finished, so colors are read as they rest. */
