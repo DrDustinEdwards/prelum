@@ -67,10 +67,6 @@ main {
 }
 .element-name a {
   color: inherit;
-  text-decoration: none;
-}
-.element-name a:hover {
-  text-decoration: underline;
 }
 .element-meta {
   margin: 4px 0 16px;
@@ -255,6 +251,11 @@ main {
   block-size: auto;
   border-radius: 6px;
 }
+/* The native audio player is 300 px wide by default, wider than a 320 px screen's column (WCAG 1.4.10). */
+.prose audio {
+  display: block;
+  inline-size: 100%;
+}
 /* The lite embed: the site's poster under a play button, the service's name and the title along the foot; a click loads the
    player in its place (render/enhance), and without script the link opens the service. */
 .prose .embed-link {
@@ -381,10 +382,7 @@ main {
   min-inline-size: 24px;
   min-block-size: 24px;
   margin-inline-start: 0.25em;
-  color: var(--muted);
-  /* Underlined, so it is told from the heading text by more than a color --muted cannot make 3:1 against it in the dark theme. */
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  /* The link color and weight (capsomer/base.css), never an underline: told from the heading text by more than color. */
 }
 .prose .footnotes {
   margin-block-start: 1.5em;
@@ -456,10 +454,12 @@ main {
     border-color: CanvasText;
   }
 }
+/* Half an em above and below: with WCAG 1.4.12's spacing, KaTeX's struts no longer hold the glyphs, and a quarter em
+   clipped a displayed formula's bottom edge. */
 .prose .katex-display {
   overflow-x: auto;
   overflow-y: hidden;
-  padding-block: 0.25em;
+  padding-block: 0.5em;
 }
 .diagram-title {
   margin: 0 0 0.5em;

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.31.4 (2026-11-01)
+
+- Specimen: Capsomer v0.60.0 with its link system (`link.css`): links are semibold in the link color with no underline,
+  and each kind carries its mark (away, file, jump, mail, phone, language, address, next). The heading anchors and the
+  element titles lose their own underlines. The specimen serves its accessibility statement at `/accessibility`
+  (`accessibilityStatement`, `capsomer: true`, `links: "marked"`), linked from the footer (`statement`) and listed in
+  the sitemap. No library change.
+- Specimen: the audio player fits a 320 px column, and displayed math keeps half an em above and below so WCAG 1.4.12's
+  text spacing no longer clips it. The live check's two findings, so the statement lists none of its own.
+
 ## 0.31.3 (2026-11-01)
 
 - `markdownCopies` takes any Worker fetch handler: `FetchHandler`'s `ctx` is `any`, since the wrapper passes the Worker's
