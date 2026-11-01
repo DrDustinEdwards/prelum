@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.30.1 (2026-11-01)
+
+- `accessibilityStatement`: the Capsomer sentence calls it "an open-source design system", not "the design system the
+  sites of this network share", because a site outside the dustinedwards.info network (julieedwards.info) is built from
+  it too. No other change.
+
 ## 0.30.0 (2026-11-01)
 
 - **Breaking:** `accessibilityStatement` requires two facts about the site, `capsomer` (are its pages built from Capsomer)
