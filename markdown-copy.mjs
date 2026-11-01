@@ -197,7 +197,9 @@ export function llmsHeaderOf(text, origin) {
 export const sitemapLocs = (xml) => [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((match) => match[1] ?? "");
 
 /**
- * @typedef {(request: Request, env?: any, ctx?: { waitUntil(promise: Promise<unknown>): void }) => Promise<Response> | Response} FetchHandler
+ * @typedef {(request: Request, env?: any, ctx?: any) => Promise<Response> | Response} FetchHandler
+ * A Worker's fetch handler; `env` and `ctx` (its ExecutionContext) are passed through untouched, so a handler that reads
+ * `ctx.exports` or `ctx.passThroughOnException` keeps its own types.
  */
 
 /**
