@@ -1,7 +1,8 @@
 // The accessibility statement every public site serves at /accessibility (devkit-a11y item S6), written once. The sections
 // follow the W3C WAI statement generator: the commitment, the standard and how far the site meets it, the measures taken,
-// the known limitations, how to report a problem, and the date. The site passes its name, contact route and date, and the
-// open findings from the latest devkit-a11y report. It returns the page as Markdown (for a site that renders with its own
+// the known limitations, how to report a problem, and the date. The site passes its name, contact route and date, the
+// open findings from the latest devkit-a11y report, and two facts about how it is built (whether its pages come from
+// Capsomer, and how its links stand apart from text), so each sentence about the build is true of that site. It returns the page as Markdown (for a site that renders with its own
 // pipeline) and as HTML (for a site with no Markdown pipeline); the site puts either in its own layout.
 
 /** Where the statement lives. */
@@ -17,6 +18,20 @@ export const HAND_CHECK_LIMITATIONS = [
 ];
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+/**
+ * How links in running text stand apart from the words around them, one sentence per site setup. Each passes WCAG 2.2
+ * SC 1.4.1 (Use of Color): F73 fails a link told apart by color alone and names an underline or bold as a cue that passes.
+ */
+const LINK_CUES = {
+  marked:
+    "Links never rely on color alone: each carries the link color and a heavier weight, and says when it leaves the site, opens a file, or sends mail.",
+  underline: "Links never rely on color alone: each link in running text is underlined as well as colored.",
+  bold: "Links never rely on color alone: each link in running text is set in a heavier weight than the words around it as well as colored.",
+};
+
+const CAPSOMER_MEASURE =
+  "We build every page from Capsomer, the design system the sites of this network share. Its components are checked in a browser for keyboard use, focus, contrast, zoom and reflow, and for forced colors and right-to-left text.";
 
 /** `2026-10-31` as "October 31, 2026", with no locale in the way. */
 function longDate(day) {
@@ -35,8 +50,11 @@ function esc(text) {
  * @param {import("./accessibility.d.mts").AccessibilityInput} input
  * @returns {import("./accessibility.d.mts").AccessibilityStatement}
  */
-export function accessibilityStatement({ siteName, contact, date, conformance = "partial", limitations = [], measures = [] }) {
+export function accessibilityStatement({ siteName, contact, date, capsomer, links, conformance = "partial", limitations = [], measures = [] }) {
   if (!siteName || !contact?.href || !contact.label) throw new Error("accessibilityStatement: siteName and contact { href, label } are required");
+  if (typeof capsomer !== "boolean") throw new Error("accessibilityStatement: capsomer must say whether the site's pages are built from Capsomer");
+  if (!Object.hasOwn(LINK_CUES, links)) throw new Error(`accessibilityStatement: links must be one of ${Object.keys(LINK_CUES).join(", ")}, got ${links}`);
+  if (links === "marked" && !capsomer) throw new Error('accessibilityStatement: links "marked" is Capsomer\'s link system, so it needs capsomer: true');
   const standard = ACCESSIBILITY_STANDARD;
   const status =
     conformance === "full"
@@ -44,9 +62,9 @@ export function accessibilityStatement({ siteName, contact, date, conformance = 
       : `${siteName} partially conforms to ${standard}. Partially conforms means some parts of the content do not yet fully meet the standard; the limitations below say which.`;
   const open = [...limitations, ...(conformance === "full" ? [] : HAND_CHECK_LIMITATIONS)];
   const measuresTaken = [
-    "We build every page from Capsomer, the design system the sites of this network share. Its components are checked in a browser for keyboard use, focus, contrast, zoom and reflow, and for forced colors and right-to-left text.",
+    ...(capsomer ? [CAPSOMER_MEASURE] : []),
     "A live accessibility check loads this site's public pages in a real browser and reports what it finds, which is where the known limitations below come from.",
-    "Links never rely on color alone: each carries the link color and a heavier weight, and says when it leaves the site, opens a file, or sends mail.",
+    LINK_CUES[links],
     ...measures,
   ];
   const intro = `We want everyone to be able to use ${siteName}, including people who use a screen reader, a keyboard or voice control, or who need larger text or stronger contrast. We aim to meet ${standard}.`;

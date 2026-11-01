@@ -17,6 +17,14 @@ export type AccessibilityInput = {
     contact: { href: string; label: string };
     /** The day the statement was last checked, YYYY-MM-DD. */
     date: string;
+    /** Whether the site's pages are built from Capsomer's components; only then does the statement say so. */
+    capsomer: boolean;
+    /**
+     * How links in running text stand apart from the words around them, as the live site draws them: "marked" is
+     * Capsomer's link system (color, heavier weight, and marks for leaving the site, files and mail; needs `capsomer`),
+     * "underline" an underline with the color, "bold" a heavier weight with the color.
+     */
+    links: "marked" | "underline" | "bold";
     /** "partial" (default) until the hand checks pass, then "full". */
     conformance?: "partial" | "full";
     /** Open findings from the latest devkit-a11y report, one plain sentence each. */
