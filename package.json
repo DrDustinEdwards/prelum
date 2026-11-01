@@ -1,6 +1,6 @@
 {
   "name": "@drdustinedwards/site-helpers",
-  "version": "0.30.2",
+  "version": "0.31.1",
   "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt and llms-full.txt, Markdown copy, frontmatter, head tag, JSON-LD, robots.txt, IndexNow, site audit and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, and the markdown pipeline they all render with, once.",
   "type": "module",
   "license": "MIT",
@@ -37,6 +37,14 @@
     "./llms": {
       "types": "./llms.d.mts",
       "default": "./llms.mjs"
+    },
+    "./markdown-copy": {
+      "types": "./markdown-copy.d.mts",
+      "default": "./markdown-copy.mjs"
+    },
+    "./markdown-files": {
+      "types": "./markdown-files.d.mts",
+      "default": "./markdown-files.mjs"
     },
     "./frontmatter": {
       "types": "./frontmatter.d.mts",
@@ -141,7 +149,7 @@
     "lint": "oxlint *.mjs bin test specimen --deny-warnings",
     "typecheck": "tsc -p .",
     "test": "node --test \"test/*.test.mjs\"",
-    "specimen": "node specimen/build.mjs && site-runtime-headers --site prelum --out specimen/dist/_headers --header \"tdm-reservation: 1\"",
+    "specimen": "node specimen/build.mjs && node bin/markdown.mjs --dir specimen/dist --origin https://prelum.dustinedwards.info && site-runtime-headers --site prelum --out specimen/dist/_headers --header \"tdm-reservation: 1\"",
     "specimen:diagrams": "node specimen/diagrams.mjs",
     "deploy:specimen": "npm run specimen && npx --yes wrangler@4.143.0 deploy",
     "bloat": "devkit-no-bloat --warn-only"
@@ -154,9 +162,12 @@
     "axe-core": "4.14.0",
     "enarratio": "^0.5.0 || ^0.6.0",
     "hast-util-from-html": "2.0.3",
+    "hast-util-to-mdast": "10.1.2",
     "hast-util-to-string": "3.0.1",
     "katex": "0.16.47",
     "linkedom": "0.18.14",
+    "mdast-util-gfm": "3.1.0",
+    "mdast-util-to-markdown": "2.2.0",
     "parse5": "8.0.1",
     "playwright-core": "1.63.0",
     "puppeteer": "25.16.0",
@@ -196,6 +207,9 @@
     "hast-util-from-html": {
       "optional": true
     },
+    "hast-util-to-mdast": {
+      "optional": true
+    },
     "hast-util-to-string": {
       "optional": true
     },
@@ -203,6 +217,12 @@
       "optional": true
     },
     "linkedom": {
+      "optional": true
+    },
+    "mdast-util-gfm": {
+      "optional": true
+    },
+    "mdast-util-to-markdown": {
       "optional": true
     },
     "parse5": {
@@ -270,9 +290,12 @@
     "capsomer": "github:DrDustinEdwards/capsomer#v0.55.0",
     "enarratio": "0.6.0",
     "hast-util-from-html": "2.0.3",
+    "hast-util-to-mdast": "10.1.2",
     "hast-util-to-string": "3.0.1",
     "katex": "0.16.47",
     "linkedom": "0.18.14",
+    "mdast-util-gfm": "3.1.0",
+    "mdast-util-to-markdown": "2.2.0",
     "oxlint": "1.89.0",
     "parse5": "8.0.1",
     "playwright-core": "1.63.0",
@@ -298,7 +321,8 @@
     "prelum-audit": "./bin/audit.mjs",
     "prelum-icons": "./bin/icons.mjs",
     "prelum-content": "./bin/content.mjs",
-    "prelum-chart-audit": "./bin/chart-audit.mjs"
+    "prelum-chart-audit": "./bin/chart-audit.mjs",
+    "prelum-markdown": "./bin/markdown.mjs"
   },
   "overrides": {
     "capsomer": {

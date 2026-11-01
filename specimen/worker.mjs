@@ -6,11 +6,13 @@
 // Hints). A path with no file gets the 404 page, private and never stored, and so does a page asked for with a cookie.
 // wrangler.jsonc runs it first for every path but the fonts, KaTeX, images and diagrams, which the asset server answers
 // with the `_headers` rules `npm run specimen` writes from the same entry (site-runtime-headers). site-runtime is a
-// devDependency: the published library never imports this file.
+// devDependency: the published library never imports this file. Prelum's serveMarkdownCopies wraps it, so the page's
+// Markdown copy answers.
 
 import { preloads } from "@dustinedwards/site-runtime/preload";
 import { prelum } from "@dustinedwards/site-runtime/sites";
 import { staticSite } from "@dustinedwards/site-runtime/static-site";
+import { serveMarkdownCopies } from "../llms.mjs";
 import { TDM_RESERVATION_HEADERS } from "../robots.mjs";
 
 /**
@@ -23,4 +25,8 @@ export const PAGE_PRELOADS = preloads([
   { href: "/fonts/source-serif-4-latin-wght-normal.woff2", as: "font", type: "font/woff2" },
 ]);
 
-export default staticSite({ site: prelum, headers: TDM_RESERVATION_HEADERS, preload: PAGE_PRELOADS.header });
+const site = staticSite({ site: prelum, headers: TDM_RESERVATION_HEADERS, preload: PAGE_PRELOADS.header });
+
+// The page's Markdown copy (/index.md, or Accept: text/markdown), which `npm run specimen` writes with prelum-markdown
+// beside llms-full.txt.
+export default { fetch: serveMarkdownCopies(site.fetch, { origin: prelum.origin }) };

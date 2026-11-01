@@ -253,6 +253,9 @@ test("defineHead joins each indexable page to the site with a WebPage and the tr
   ]);
   const home = JSON.stringify(ld({ path: "/", pageType: "CollectionPage" }));
   assert.ok(home.includes('"@type":"CollectionPage"') && !home.includes("BreadcrumbList"));
+  // A top-level page's trail (home and itself) is shown nowhere, so it is not marked up either.
+  const about = JSON.stringify(ld({ path: "/about", title: "About" }));
+  assert.ok(about.includes('"@type":"WebPage"') && !about.includes("BreadcrumbList") && !about.includes("#breadcrumb"));
   assert.deepEqual(ld({ noindex: true }), []);
   const full = defineHead({ origin: ORIGIN, siteName: "Sample", image: "/card.png", suffix: " · Sample", sections: { "/blog": "Blog" } });
   const named = JSON.stringify(full({ title: "A post · Sample", fullTitle: true, description: "D", path: "/blog/a-post" }));
