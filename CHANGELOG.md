@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.30.2 (2026-11-01)
+
+- Specimen: Capsomer v0.60.0 with its link system (`link.css`): links are semibold in the link color with no underline,
+  and each kind carries its mark (away, file, jump, mail, phone, language, address, next). The heading anchors and the
+  element titles lose their own underlines. The specimen serves its accessibility statement at `/accessibility`
+  (`accessibilityStatement`, `capsomer: true`, `links: "marked"`), linked from the footer (`statement`) and listed in
+  the sitemap. No library change.
+
 ## Unreleased
 
 - CI: the footer strip, the trailer check and the shared-code check run in one job (devkit 0.20.23 checks.yml), in place of three workflows.

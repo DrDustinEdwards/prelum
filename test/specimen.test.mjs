@@ -88,7 +88,7 @@ test("the built site carries the index generated from the sources, names Prelum'
     assert.ok(index.elements.some((/** @type {{ pack: string }} */ e) => e.pack === "editorial"), "no element needs the editorial pack");
 
     const pages = files.filter((f) => f.endsWith(".html"));
-    assert.deepEqual(pages.sort(), ["404.html", "index.html"]);
+    assert.deepEqual(pages.sort(), ["404.html", "accessibility.html", "index.html"]);
     for (const page of pages) {
       const html = readFileSync(join(out, page), "utf8");
       assert.doesNotMatch(html, /<meta[^>]+name="generator"/i, `${page} carries a generator tag`);

@@ -27,6 +27,7 @@ import { RENDER_VERSION, render } from "../render.mjs";
 import { iconLinks, webManifest } from "../icons.mjs";
 import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
 import { absolutizeUrls, escapeXml, mathToTex } from "../xml.mjs";
+import { ACCESSIBILITY_PATH, accessibilityStatement } from "../accessibility.mjs";
 import { PAGE_PRELOADS } from "./worker.mjs";
 import { ASSET_PREFIX, DIAGRAM_CONFIG_FILE, FAMILY, ICON_DIR, ORIGIN, diagramConfig, elementIndex, loadElements, options, renderElement, resolveImage, splitHeader } from "./specimen.mjs";
 
@@ -40,6 +41,11 @@ const INDEXNOW_KEY = "32790edc1bac129b5f5c0b174219150c";
 
 /** When security.txt lapses (RFC 9116 asks for under a year); renew it before then. */
 const SECURITY_TXT_EXPIRES = "2027-10-26T00:00:00Z";
+
+/** What devkit-a11y's live run of 2026-11-01 still finds on the specimen, one sentence each, for the statement. */
+const STATEMENT_LIMITATIONS = [
+  "With the extra letter, word and line spacing WCAG 1.4.12 asks a page to allow, displayed math is clipped at its bottom edge.",
+];
 
 /** @param {string} specifier a package file, resolved from this repository's node_modules */
 const packageFile = (specifier) => require.resolve(specifier);
@@ -86,6 +92,8 @@ function writeStyles(outDir) {
     ...faces,
     inlineCss(join(capsomer, "tokens.css")),
     inlineCss(join(capsomer, "base.css")),
+    // The link system's kinds (away, file, jump, footnote and the rest), after base.css as link.md asks.
+    inlineCss(join(capsomer, "..", "components", "link", "link.css")),
     inlineCss(join(capsomer, "prose.css")),
     // The NASA manual theme every dustinedwards.info public page shares, in the specimen's own family.
     `@layer cap.tokens {\n${inlineCss(join(capsomer, "..", "tokens", `family-${FAMILY}.css`))}\n}`,
@@ -183,6 +191,7 @@ function copyTree(from, to) {
 const footerHtml = (version) =>
   familyFooterHtml({
     site: "prelum",
+    statement: ACCESSIBILITY_PATH,
     center: `<div class="cap-family-footer-center">
 <div><p class="cap-family-footer-center-name">Prelum</p><p class="cap-family-footer-about">One publishing library for every site: markdown to pages, feeds, sitemaps, llms.txt and search.</p></div>
 <div class="cap-family-footer-columns">
@@ -463,6 +472,28 @@ ${await outputsSection(version, elements.length + 1, priority)}
     }),
   );
 
+  // The accessibility statement (devkit-a11y S6): Prelum's own, with this site's facts and the open findings of
+  // devkit-a11y's 2026-11-01 run.
+  const statement = accessibilityStatement({
+    siteName: "The Prelum specimen",
+    contact: { href: "https://dustinedwards.info/contact", label: "the contact page on dustinedwards.info" },
+    date: "2026-11-01",
+    capsomer: true,
+    links: "marked",
+    limitations: STATEMENT_LIMITATIONS,
+  });
+  writeFileSync(
+    join(outDir, "accessibility.html"),
+    documentHtml({
+      title: statement.title,
+      description: statement.description,
+      path: ACCESSIBILITY_PATH,
+      body: `<main id="main" tabindex="-1">\n<header class="page-head">\n<h1>${escapeXml(statement.title)}</h1>\n</header>\n<div class="prose statement">\n${statement.html}\n</div>\n</main>`,
+      version,
+      scripts,
+    }),
+  );
+
   writeFileSync(join(outDir, "elements.json"), `${JSON.stringify(elementIndex(elements, version), null, 2)}\n`);
 
   // security.txt (site-runtime), the IndexNow key file, and a sitemap of the one page, which the deploy hands to
@@ -473,7 +504,7 @@ ${await outputsSection(version, elements.length + 1, priority)}
     securityTxt({ origin: ORIGIN, contact: "security@dustinedwards.info", expires: SECURITY_TXT_EXPIRES }),
   );
   writeFileSync(join(outDir, `${INDEXNOW_KEY}.txt`), INDEXNOW_KEY);
-  writeFileSync(join(outDir, "sitemap.xml"), sitemapDocument([{ loc: `${ORIGIN}/`, images: images.map((i) => absoluteUrl(ORIGIN, i.src)) }]));
+  writeFileSync(join(outDir, "sitemap.xml"), sitemapDocument([{ loc: `${ORIGIN}/`, images: images.map((i) => absoluteUrl(ORIGIN, i.src)) }, { loc: `${ORIGIN}${ACCESSIBILITY_PATH}` }]));
 
   /** @type {string[]} */
   const files = [];
