@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.29.0 (2026-11-01)
+
+- `./markdown-copy`: `markdownCopies(fetch, { origin, llmsFull, skip })` wraps a Worker's fetch handler so every page has a
+  Markdown copy at `/path.md` and for `Accept: text/markdown`, made from the page's `<main>` by `htmlToMarkdown(html, { base })`,
+  and builds `/llms-full.txt` from llms.txt and the sitemap where the site serves none (area 1, gap 5). A site's own copies and
+  llms-full.txt are kept. Every HTML page gains `Vary: Accept` and a `Link: rel="alternate"; type="text/markdown"` header. New
+  optional peers: `hast-util-to-mdast`, `mdast-util-to-markdown`, `mdast-util-gfm`. No change to `render` or RENDER_VERSION.
+- Specimen (area 1, gap 3): its head comes from `defineHead`, so the page carries its WebPage beside a WebSite and
+  SoftwareSourceCode graph; it serves robots.txt (the network's bot policy, Content-Signal and the Sitemap line), ai.txt and
+  llms.txt; its Worker is wrapped in `markdownCopies`, so `/index.md`, `Accept: text/markdown` and llms-full.txt answer; and
+  its sitemap gives the page a lastmod, the date of the release it shows. No library change.
+
 ## 0.28.1 (2026-10-31)
 
 - A link's icon (`img.cap-link-icon`) is `loading="lazy"` and `decoding="async"`: most sit below the fold, and a 16 px

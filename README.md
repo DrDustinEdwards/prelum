@@ -19,6 +19,7 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `feeds` | `rssDocument`, `rssItem`, `atomDocument`, `atomEntry`, `jsonFeedDocument`, `feedItem` (`itemPath` moves where a post lives) |
 | `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` (absolute URLs of the images the page shows: a render's `images`, each `src` made absolute) list them in the image sitemap |
 | `llms` | `llmsDocument`, `llmsLink`; `llmsFullDocument`, `markdownPage`, `markdownPath`, `prefersMarkdown`, `markdownResponse` (llms-full.txt and each page's Markdown copy); `llmsResponse` (the whole /llms.txt response) |
+| `markdown-copy` | `markdownCopies(fetch, { origin, llmsFull, skip })` (every page's Markdown copy and llms-full.txt, around a Worker's fetch handler), `htmlToMarkdown(html, { base })` |
 | `frontmatter` | `frontmatter(source)`: the `---` header of a Markdown file as `{ data, body }`; `splitSource`, `joinSource`, `readKey`, `readList`, `setBlock`, `setRawKey`: read one field and write one block, every other byte as it was (the one reader site-api and Carrel use) |
 | `head` | `defineHead(site)` (the per-site builder: `(page) => HeadTag[]`), `headTags(input)` (title, description, canonical, the Markdown copy's and the feeds' links, Open Graph with `og:video`, Twitter, `article:*`), `headHtml(tags)`, `metaText(html, limit)`, `readingMinutes(text)`, `absoluteUrl`, `articleDates`, `searchTitle(title, suffix)`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT` |
 | `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage`, `imageObject(image)` (an image's license metadata), `pageImage(image)` (an ImageObject, for `primaryImageOfPage`), `articleImageSet(crops, rights)` (an Article's 16:9, 4:3 and 1:1 crops), `videoObject(video)`, `ARTICLE_IMAGE_MIN_PIXELS`, `ARTICLE_IMAGE_RATIOS` |
@@ -195,6 +196,25 @@ if (prefersMarkdown(request.headers.get("Accept")) || url.pathname.endsWith(".md
 `markdownResponse` sets `Content-Type: text/markdown; charset=utf-8`, `Vary: Accept` and, with `canonical`, a
 `Link: rel="canonical"` header, so search engines index the HTML page and not the copy. The page's HTML response needs
 `Vary: Accept` too once its URL answers both ways.
+
+### Every page, on every site: `markdownCopies`
+
+A site wraps its Worker's fetch handler once, and every page it serves has its copy, whether or not the site stores Markdown:
+
+```js
+import { markdownCopies } from "@drdustinedwards/site-helpers/markdown-copy";
+
+export default { ...handler, fetch: markdownCopies(handler.fetch, { origin: SITE_ORIGIN }) };
+```
+
+`/path.md` and a request preferring `text/markdown` get the page's `<main>` as Markdown (`htmlToMarkdown`: the main heading
+becomes the title, scripts, controls, navigation, drawings and hidden parts are dropped, a chart's description and data table
+stay, links become absolute), written by `markdownPage` with the canonical link. Every HTML page gains `Vary: Accept` and a
+`Link: rel="alternate"; type="text/markdown"` header naming its copy. Where the site answers `/llms-full.txt` with a 404, the
+wrapper builds it from llms.txt's header and the sitemap's pages (at most `llmsFull`, 200 by default; noindex pages left out)
+and keeps it in the Cache API for an hour. A site's own `.md` route, its own negotiation and its own llms-full.txt win: the
+wrapper fills in only what the site answers 404 (or HTML) for. `skip(path)` leaves pages out. It needs the optional peers
+`hast-util-from-html`, `hast-util-to-mdast`, `mdast-util-to-markdown` and `mdast-util-gfm` (about 80 KB gzipped).
 
 ## The markdown pipeline
 
