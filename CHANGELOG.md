@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.30.0 (2026-11-01)
+
+- **Breaking:** `accessibilityStatement` requires two facts about the site, `capsomer` (are its pages built from Capsomer)
+  and `links` (how its links in running text stand apart: `"marked"`, Capsomer's link system; `"underline"`; or
+  `"bold"`, a heavier weight), and throws without them. The statement said every site was built from Capsomer and that
+  its links were heavier weight and marked, which was false on julieedwards.info (underlined, normal weight) and bsw
+  (no Capsomer). Now the Capsomer sentence appears only with `capsomer: true`, and the links sentence says what the
+  site draws. Each value passes WCAG 2.2 SC 1.4.1 (F73 names an underline or bold as a non-color cue). `"marked"` needs
+  `capsomer: true`. No change to `render` or RENDER_VERSION.
+
 ## 0.29.1 (2026-11-01)
 
 - `prelum-chart-audit` (B1): a shape that is `aria-hidden="true"` and painted in the color behind it is the ground, not a mark,
