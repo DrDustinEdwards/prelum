@@ -20,9 +20,11 @@ export type MarkdownCopy = {
 export function htmlToMarkdown(html: string, options?: {
     base?: string;
 }): MarkdownCopy;
-export type FetchHandler = (request: Request, env?: any, ctx?: {
-    waitUntil(promise: Promise<unknown>): void;
-}) => Promise<Response> | Response;
+/**
+ * A Worker's fetch handler; `env` and `ctx` (its ExecutionContext) are passed through untouched, so a handler that reads
+ * `ctx.exports` or `ctx.passThroughOnException` keeps its own types.
+ */
+export type FetchHandler = (request: Request, env?: any, ctx?: any) => Promise<Response> | Response;
 export type MarkdownCopiesOptions = {
     /** the site's production origin, for the canonical links and the llms-full.txt addresses */
     origin: string;

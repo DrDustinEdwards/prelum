@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.31.1 (2026-11-01)
+
+- `markdownCopies` takes any Worker fetch handler: `FetchHandler`'s `ctx` is `any`, since the wrapper passes the Worker's
+  ExecutionContext through untouched. A handler typed `(request, env: Env, ctx: ExecutionContext)` (one that reads
+  `ctx.exports`, as bsw's gateway does) failed to typecheck against the narrower `{ waitUntil }`. Types only.
+
 ## 0.31.0 (2026-11-01)
 
 - `defineHead` writes a BreadcrumbList only for a trail of three or more (home, a section, the page;
