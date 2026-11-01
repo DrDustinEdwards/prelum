@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.31.5 (2026-11-01)
+
+- Accepts Enarratio 0.7.0 as its peer (`^0.5.0 || ^0.6.0 || ^0.7.0`), and draws the specimen and tests with it. 0.7.0's
+  legend carries `data-enarratio-legend`, so the default `assertSafe` allowlist adds `ul data-enarratio-legend`;
+  `RENDER_VERSION` is 17, since a chart's legend now writes that attribute.
+- `prelum-chart-audit`: a shape inside an `aria-hidden` group and painted in the color behind it is the ground, as one
+  that is itself `aria-hidden` already was (B1). This is the gap a choropleth draws between regions, which B6 lets a
+  separator be; Enarratio 0.7.0's region edges were read as marks at 1.00 to 1.03:1.
 - CI: devkit v0.21.0 in every workflow call and in `package.json`.
 - CI: OpenSSF Scorecard (devkit 0.20.24 scorecard.yml, weekly and on push to main), and each release's `npm pack` tarball is attested and attached to the release (devkit release.yml; the caller grants `id-token` and `attestations`).
 

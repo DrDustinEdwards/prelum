@@ -612,9 +612,10 @@ async function readCharts({ measured, narrow, libraries, tags }) {
           .map(([color, alpha]) => contrast(el, color, alpha, ground));
         if (readings.length === 0) continue;
         const reading = readings.reduce((a, b) => (b.ratio > a.ratio ? b : a));
-        // A shape hidden from assistive technology and painted in the color behind it draws nothing to see: a donut's
-        // hole, or a halo under a label. It is the ground, not a mark.
-        if (el.getAttribute("aria-hidden") === "true" && reading.ratio < 1.1) continue;
+        // A shape hidden from assistive technology (itself or in a hidden group) and painted in the color behind it
+        // draws nothing to see: a donut's hole, a halo under a label, or the gap a map draws between regions (B6
+        // lets a separator be the ground). It is the ground, not a mark.
+        if (el.closest("[aria-hidden='true']") && reading.ratio < 1.1) continue;
         if (reading.ratio < 3) lowMark.push(reading);
       }
       const lowest = (/** @type {Array<{ fg: string, bg: string, ratio: number, el: Element }>} */ list, /** @type {boolean} */ quote) => {
