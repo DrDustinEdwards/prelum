@@ -17,6 +17,7 @@ import { rolldown } from "rolldown";
 import { barChart } from "enarratio/lite";
 import { defaultTheme } from "enarratio/themes";
 import { baseStylesheet, sparkline, stylesheet, uptimeStrip } from "enarratio";
+import { heatmap, pieChart } from "enarratio/plot";
 
 import { render } from "../render.mjs";
 import { editorialPack } from "../render-packs.mjs";
@@ -50,6 +51,9 @@ const site = {
       frame("enhanced", chart("Talks per year", { width: 300 }).replace(/ role="img"/, ' role="group" aria-roledescription="chart"')),
       // Inline primitives: one named with its values, in a stat tile; one hidden beside the numbers, in a table row.
       `<dl><div class="cap-chart" data-variant="tile"><dt class="cap-chart-title">Posts</dt><dd>12 ${sparkline({ values: [3, 5, 4], alt: "Posts per year, 2024 to 2026: most in 2025, with 5.", inline: true })}</dd></div></dl>`,
+      // B1's ground, not marks: a donut's hole in the background color, and the edge round a pale ramp step's swatch.
+      frame("donut", pieChart({ data: [{ answer: "Yes", n: 60 }, { answer: "No", n: 40 }], label: "answer", value: "n", donut: true, centerLabel: "100", width: 300, alt: "Yes 60, no 40.", title: "Answers", source: { name: "the survey" } })),
+      frame("cohorts", heatmap({ data: [1, 2, 3].flatMap((m) => ["A", "B"].map((c) => ({ month: `M${m}`, cohort: c, kept: m * 20 + (c === "A" ? 5 : 0) }))), x: "month", y: "cohort", value: "kept", width: 300, alt: "Cohort A kept more each month.", title: "Kept", source: { name: "the log" } })),
       `<table><caption>Uptime</caption><tr><th scope="row">API</th><td>99.9% ${uptimeStrip({ slots: ["up", "up", "down"], label: "API, last 3 hours", inline: true }).replace("<svg ", '<svg aria-hidden="true" ')}</td></tr></table>`,
     ].join(""),
     '<script type="module" src="/charts.js"></script>',

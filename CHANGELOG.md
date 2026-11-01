@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.28.2 (2026-11-01)
+
+- `prelum-chart-audit` (B1): a shape that is `aria-hidden="true"` and painted in the color behind it is the ground, not a mark,
+  so a donut's hole (Enarratio paints it in the background) no longer reads as a mark at 1:1. An HTML legend swatch is read by
+  its edge as well as its fill, as an SVG mark is by its outline, so a pale ramp step's swatch with Enarratio's 3:1 edge passes.
+  Both were false findings on every heatmap and donut on the gallery. No change to `render` or RENDER_VERSION.
+
 ## 0.28.1 (2026-10-31)
 
 - A link's icon (`img.cap-link-icon`) is `loading="lazy"` and `decoding="async"`: most sit below the fold, and a 16 px

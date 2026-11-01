@@ -587,12 +587,19 @@ async function readCharts({ measured, narrow, libraries, tags }) {
               ...(el.tagName.toLowerCase() !== "line" ? [[solid(style.fill), base * Number(style.fillOpacity)]] : []),
               ...(Number.parseFloat(style.strokeWidth) >= 0.5 ? [[solid(style.stroke), base * Number(style.strokeOpacity)]] : []),
             ]
-          : [[style.backgroundColor, base]];
+          : [
+              [style.backgroundColor, base],
+              // An HTML swatch's edge counts as its outline (Enarratio's 1px edge on a pale ramp step's legend swatch).
+              ...(Number.parseFloat(style.borderTopWidth) >= 0.5 ? [[style.borderTopColor, base]] : []),
+            ];
         const readings = /** @type {Array<[string, number]>} */ (paints)
           .filter(([color, alpha]) => isColor(color) && alpha >= 0.5 && hex(paint([[color, 1]])) !== grid)
           .map(([color, alpha]) => contrast(el, color, alpha, ground));
         if (readings.length === 0) continue;
         const reading = readings.reduce((a, b) => (b.ratio > a.ratio ? b : a));
+        // A shape hidden from assistive technology and painted in the color behind it draws nothing to see: a donut's
+        // hole, or a halo under a label. It is the ground, not a mark.
+        if (el.getAttribute("aria-hidden") === "true" && reading.ratio < 1.1) continue;
         if (reading.ratio < 3) lowMark.push(reading);
       }
       const lowest = (/** @type {Array<{ fg: string, bg: string, ratio: number, el: Element }>} */ list, /** @type {boolean} */ quote) => {
