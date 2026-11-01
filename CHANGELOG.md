@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- CI: the footer strip, the trailer check and the shared-code check run in one job (devkit 0.20.23 checks.yml), in place of three workflows.
+
 ## 0.30.0 (2026-11-01)
 
 - **Breaking:** `accessibilityStatement` requires two facts about the site, `capsomer` (are its pages built from Capsomer)
