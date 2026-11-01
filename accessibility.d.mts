@@ -24,4 +24,11 @@ export type AccessibilityInput = {
     /** Measures the site takes beyond the network's. */
     measures?: string[];
 };
-export type AccessibilityStatement = { title: string; description: string; body: string };
+export type AccessibilityStatement = {
+    title: string;
+    description: string;
+    /** Markdown, to render with the site's own pipeline. */
+    body: string;
+    /** The same sections as HTML (escaped, headings from h2), for a site with no Markdown pipeline. */
+    html: string;
+};

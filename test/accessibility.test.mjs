@@ -19,3 +19,11 @@ test("a full statement with no findings says none are known; a bad date is refus
   assert.match(accessibilityStatement({ ...input, conformance: "full" }).body, /no limitations/);
   assert.throws(() => accessibilityStatement({ ...input, date: "Oct 31" }), /YYYY-MM-DD/);
 });
+
+test("the HTML copy has the same sections and escapes what the site passes", () => {
+  const { html } = accessibilityStatement({ ...input, siteName: "A & B", limitations: ["x < y"], contact: { href: "/c?a=1&b=2", label: "the <contact> page" } });
+  assert.match(html, /<h2>Known limitations<\/h2><ul><li>x &lt; y<\/li>/);
+  assert.match(html, /<a href="\/c\?a=1&amp;b=2">the &lt;contact&gt; page<\/a>/);
+  assert.match(html, /A &amp; B partially conforms/);
+  assert.ok(!html.includes("<contact>"));
+});
