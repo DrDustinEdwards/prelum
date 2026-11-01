@@ -18,22 +18,20 @@
 const token = (value) => (value && /^[A-Za-z0-9]{1,24}$/.test(value) ? value : null);
 
 /**
- * Amazon Music's own embed code, with only the parameters its player reads.
+ * Amazon Music's own embed code, with only the parameters its player reads. amazon.com only: the other country sites are not in
+ * site-runtime's frame list, so a player from one could not load.
  *
- * @param {string} tld
  * @param {string} asin
  * @param {string} url
  */
-function amazonPlayer(tld, asin, url) {
+function amazonPlayer(asin, url) {
   const query = new URL(url).searchParams;
   const kept = ["id", "marketplaceId", "musicTerritory"].flatMap((key) => {
     const value = token(query.get(key) ?? undefined);
     return value ? [`${key}=${value}`] : [];
   });
-  return `https://music.amazon.${tld}/embed/${asin}/${kept.length ? `?${kept.join("&")}` : ""}`;
+  return `https://music.amazon.com/embed/${asin}/${kept.length ? `?${kept.join("&")}` : ""}`;
 }
-
-const AMAZON_TLDS = ["com", "ca", "com.mx", "com.br", "co.uk", "de", "fr", "es", "it", "in", "co.jp", "com.au"];
 
 /**
  * Each service: the URL an author pastes and the player it becomes. YouTube is its no-cookie host and X's player is told not to
@@ -87,19 +85,16 @@ export const EMBED_PROVIDERS = [
     origin: "https://embed.podcasts.apple.com",
     path: "/",
   },
-  ...AMAZON_TLDS.map(
-    (tld) =>
-      /** @type {EmbedProvider} */ ({
-        name: "amazon-music",
-        label: "Listen on Amazon Music",
-        kind: "audio",
-        // The src of Amazon Music's Share > Embed code; Amazon's player takes an ASIN, which its page URLs do not always carry.
-        pattern: new RegExp(`^https://music\\.amazon\\.${tld.replace(".", "\\.")}/embed/([A-Z0-9]{10})/?(?:\\?[^#]*)?$`),
-        player: (m, url) => amazonPlayer(tld, m[1], url),
-        origin: `https://music.amazon.${tld}`,
-        path: "/embed/",
-      }),
-  ),
+  {
+    name: "amazon-music",
+    label: "Listen on Amazon Music",
+    kind: "audio",
+    // The src of Amazon Music's Share > Embed code; Amazon's player takes an ASIN, which its page URLs do not always carry.
+    pattern: /^https:\/\/music\.amazon\.com\/embed\/([A-Z0-9]{10})\/?(?:\?[^#]*)?$/,
+    player: (m, url) => amazonPlayer(m[1], url),
+    origin: "https://music.amazon.com",
+    path: "/embed/",
+  },
   {
     name: "google-maps",
     label: "View on Google Maps",
