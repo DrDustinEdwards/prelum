@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.30.0 (2026-11-01)
+## 0.31.0 (2026-11-01)
 
 - `defineHead` writes a BreadcrumbList only for a trail of three or more (home, a section, the page;
   `BREADCRUMB_MIN_ITEMS`). A top-level page shows no trail on any site, and markup must describe what a visitor sees, so its
@@ -19,6 +19,23 @@
   llms.txt; `npm run specimen` writes its Markdown copy and llms-full.txt with `prelum-markdown` and its Worker serves them
   with `serveMarkdownCopies`; and
   its sitemap gives the page a lastmod, the date of the release it shows. No library change.
+- CI: the footer strip, the trailer check and the shared-code check run in one job (devkit 0.20.23 checks.yml), in place of three workflows.
+
+## 0.30.1 (2026-11-01)
+
+- `accessibilityStatement`: the Capsomer sentence calls it "an open-source design system", not "the design system the
+  sites of this network share", because a site outside the dustinedwards.info network (julieedwards.info) is built from
+  it too. No other change.
+
+## 0.30.0 (2026-11-01)
+
+- **Breaking:** `accessibilityStatement` requires two facts about the site, `capsomer` (are its pages built from Capsomer)
+  and `links` (how its links in running text stand apart: `"marked"`, Capsomer's link system; `"underline"`; or
+  `"bold"`, a heavier weight), and throws without them. The statement said every site was built from Capsomer and that
+  its links were heavier weight and marked, which was false on julieedwards.info (underlined, normal weight) and bsw
+  (no Capsomer). Now the Capsomer sentence appears only with `capsomer: true`, and the links sentence says what the
+  site draws. Each value passes WCAG 2.2 SC 1.4.1 (F73 names an underline or bold as a non-color cue). `"marked"` needs
+  `capsomer: true`. No change to `render` or RENDER_VERSION.
 
 ## 0.29.1 (2026-11-01)
 

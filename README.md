@@ -167,12 +167,15 @@ system Chrome, else `CHART_AUDIT_CHROME`.
 
 ## Accessibility statement
 
-`accessibilityStatement({ siteName, contact: { href, label }, date, conformance, limitations, measures })` (`./accessibility`) is
+`accessibilityStatement({ siteName, contact: { href, label }, date, capsomer, links, conformance, limitations, measures })` (`./accessibility`) is
 the page every public site serves at `ACCESSIBILITY_PATH` (`/accessibility`; devkit-a11y fails S6 without it). It returns
 `{ title, description, body, html }`, the body Markdown (and `html` the same sections as escaped HTML, headings from h2, for a site with no Markdown pipeline) in the W3C WAI generator's sections (the commitment, WCAG 2.2 AA and the
 conformance status, measures, known limitations, how to report a problem, the date). The site puts `html` (or `body` rendered with `render`) in its
 own layout and links the page from the footer. `limitations` are the open findings of the site's latest devkit-a11y report, one
 sentence each; until `conformance` is `"full"` the statement also names the hand checks still owed (NVDA and VoiceOver, signed-in pages).
+`capsomer` and `links` are facts about the live site, so each sentence about the build is true of it: `capsomer: true` only
+when its pages are built from Capsomer, and `links` as its paragraph links are drawn (`"marked"`, Capsomer's link system with
+`capsomer/link.css`; `"underline"`; `"bold"`, a heavier weight than the text). Both are required.
 
 ## For agents: llms-full.txt and a Markdown copy of each page
 
