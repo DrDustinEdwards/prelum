@@ -4,6 +4,13 @@
 
 - CI: the footer strip, the trailer check and the shared-code check run in one job (devkit 0.20.23 checks.yml), in place of three workflows.
 
+## 0.30.2 (2026-11-01)
+
+- The optional `enarratio` peer accepts 0.6 as well as 0.5 (`^0.5.0 || ^0.6.0`), so a site on Enarratio 0.6.0 installs
+  Prelum without an override. Prelum is tested against 0.6.0.
+- Specimen: its scripts inline Enarratio 0.6's lazily loaded sound module, so each stays one file under the page's
+  script hashes.
+
 ## 0.30.1 (2026-11-01)
 
 - `accessibilityStatement`: the Capsomer sentence calls it "an open-source design system", not "the design system the

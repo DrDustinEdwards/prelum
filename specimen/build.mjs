@@ -153,14 +153,15 @@ function copyDiagrams(outDir, diagrams) {
 }
 
 /**
- * Bundles a script of specimen/browser for the browser, Capsomer's behavior inlined.
+ * Bundles a script of specimen/browser for the browser, Capsomer's behavior inlined. Lazy imports (Enarratio's sound,
+ * loaded on Play) are inlined too, so each script stays one file under the page's script hashes.
  *
  * @param {string} file
  * @param {"esm" | "iife"} format
  */
 async function bundle(file, format) {
   const built = await rolldown({ input: join(HERE, "browser", file), platform: "browser", logLevel: "silent" });
-  const { output } = await built.generate({ format, minify: true });
+  const { output } = await built.generate({ format, minify: true, inlineDynamicImports: true });
   await built.close();
   const [chunk] = output;
   if (output.length !== 1 || chunk?.type !== "chunk") throw new Error(`${file}: expected one chunk`);
