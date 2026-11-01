@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.29.0 (2026-11-01)
+## 0.30.0 (2026-11-01)
 
 - `./markdown-copy`: `markdownCopies(fetch, { origin, llmsFull, skip })` wraps a Worker's fetch handler so every page has a
   Markdown copy at `/path.md` and for `Accept: text/markdown`, made from the page's `<main>` by `htmlToMarkdown(html, { base })`,
@@ -15,6 +15,25 @@
   llms.txt; `npm run specimen` writes its Markdown copy and llms-full.txt with `prelum-markdown` and its Worker serves them
   with `serveMarkdownCopies`; and
   its sitemap gives the page a lastmod, the date of the release it shows. No library change.
+
+## 0.29.1 (2026-11-01)
+
+- `prelum-chart-audit` (B1): a shape that is `aria-hidden="true"` and painted in the color behind it is the ground, not a mark,
+  so a donut's hole (Enarratio paints it in the background) no longer reads as a mark at 1:1. An HTML legend swatch is read by
+  its edge as well as its fill, as an SVG mark is by its outline, so a pale ramp step's swatch with Enarratio's 3:1 edge passes.
+  Both were false findings on every heatmap and donut on the gallery. The 320 px pass scrolls through the page a screen
+  at a time before it measures, as a reader does, so a chart a site draws again or swaps for its narrow drawing as it nears
+  the viewport (the gallery's, which enhances lazily) is measured as the reader sees it. A table chart may scroll sideways
+  in its frame at 320 px, as WCAG 1.4.10 allows a data table. No change to `render` or
+  RENDER_VERSION.
+
+## 0.29.0 (2026-11-01)
+
+- `accessibilityStatement` also returns `html`, the same sections as escaped HTML, so a site with no Markdown pipeline (bsw,
+  julieedwards.info) serves `/accessibility` without installing the renderer's peers. `body` is unchanged.
+- Specimen: site-runtime 0.68.1, which splits the long `Permissions-Policy` line of `_headers` into several lines.
+  Cloudflare caps each `_headers` line at 2,000 characters and joins a repeated header with commas, so the header is
+  the same and the specimen deploys again (0.28.1's deploy failed on line 5). No library change.
 
 ## 0.28.1 (2026-10-31)
 
