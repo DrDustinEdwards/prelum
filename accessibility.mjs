@@ -31,7 +31,7 @@ const LINK_CUES = {
 };
 
 const CAPSOMER_MEASURE =
-  "We build every page from Capsomer, the design system the sites of this network share. Its components are checked in a browser for keyboard use, focus, contrast, zoom and reflow, and for forced colors and right-to-left text.";
+  "We build every page from Capsomer, an open-source design system. Its components are checked in a browser for keyboard use, focus, contrast, zoom and reflow, and for forced colors and right-to-left text.";
 
 /** `2026-10-31` as "October 31, 2026", with no locale in the way. */
 function longDate(day) {
