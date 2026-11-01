@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Specimen: site-runtime 0.68.1, which splits the long `Permissions-Policy` line of `_headers` into several lines.
+  Cloudflare caps each `_headers` line at 2,000 characters and joins a repeated header with commas, so the header is
+  the same and the specimen deploys again (0.28.1's deploy failed on line 5). No library change.
+
 ## 0.28.1 (2026-10-31)
 
 - A link's icon (`img.cap-link-icon`) is `loading="lazy"` and `decoding="async"`: most sit below the fold, and a 16 px
