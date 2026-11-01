@@ -44,6 +44,7 @@ const SECURITY_TXT_EXPIRES = "2027-10-26T00:00:00Z";
 
 /** What devkit-a11y's live run of 2026-11-01 still finds on the specimen, one sentence each, for the statement. */
 const STATEMENT_LIMITATIONS = [
+  "At 320 pixels wide, the specimen page scrolls sideways by a few pixels: the hidden words of a link in the footnotes reach past the screen's edge.",
   "With the extra letter, word and line spacing WCAG 1.4.12 asks a page to allow, displayed math is clipped at its bottom edge.",
 ];
 
