@@ -57,6 +57,10 @@ export const ICON_DIR = new URL("./link-icons/", import.meta.url);
  * @param {string} src
  */
 function imageProps(src) {
+  // The poster is a still PNG in two widths, so a phone downloads the small one.
+  if (src === "/images/poster-640x360.png") {
+    return { srcSet: "/images/poster-320x180.png 320w, /images/poster-640x360.png 640w", sizes: "(min-width: 44rem) 640px, 100vw" };
+  }
   if (!src.endsWith(".gif")) return null;
   const width = /-(\d+)x\d+\.gif$/.exec(src)?.[1];
   const still = src.replace(/-(\d+x\d+)\.gif$/, "-still-$1.png");
