@@ -2,6 +2,10 @@
 
 ## 0.30.0 (2026-11-01)
 
+- `defineHead` writes a BreadcrumbList only for a trail of three or more (home, a section, the page;
+  `BREADCRUMB_MIN_ITEMS`). A top-level page shows no trail on any site, and markup must describe what a visitor sees, so its
+  two-item list is gone; its WebPage stays. Breadcrumbs belong to pages inside a section (Nielsen Norman, GOV.UK), and
+  Google asks for no markup of content a visitor cannot see.
 - `./markdown-copy`: `markdownCopies(fetch, { origin, llmsFull, skip })` wraps a Worker's fetch handler so every page has a
   Markdown copy at `/path.md` and for `Accept: text/markdown`, made from the page's `<main>` by `htmlToMarkdown(html, { base })`,
   and builds `/llms-full.txt` from llms.txt and the sitemap where the site serves none (area 1, gap 5). A site's own copies and

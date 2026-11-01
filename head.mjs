@@ -6,6 +6,13 @@ import { escapeXml, jsonLdText, toDate } from "./xml.mjs";
  */
 export const SERP_TITLE_LIMIT = 60;
 export const SERP_DESCRIPTION_LIMIT = 155;
+/**
+ * The shortest trail that gets a BreadcrumbList: home, a section, the page. A top-level page (home and itself) shows no
+ * trail on any site, since breadcrumbs belong to pages inside a section (https://www.nngroup.com/articles/breadcrumbs/,
+ * https://design-system.service.gov.uk/components/breadcrumbs/), and markup must describe what a visitor sees
+ * (https://developers.google.com/search/docs/appearance/structured-data/sd-policies), so it carries none either.
+ */
+export const BREADCRUMB_MIN_ITEMS = 3;
 
 /**
  * @typedef {{ title: string }
@@ -353,9 +360,9 @@ export function defineHead(site) {
       name,
       description: page.description,
       isPartOf: { "@id": `${site.origin}/#website` },
-      ...(trail.length > 1 ? { breadcrumb: { "@id": `${url}#breadcrumb` } } : {}),
+      ...(trail.length >= BREADCRUMB_MIN_ITEMS ? { breadcrumb: { "@id": `${url}#breadcrumb` } } : {}),
     }];
-    if (trail.length > 1) {
+    if (trail.length >= BREADCRUMB_MIN_ITEMS) {
       nodes.push({
         "@type": "BreadcrumbList",
         "@id": `${url}#breadcrumb`,
