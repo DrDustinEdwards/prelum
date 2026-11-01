@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.32.1 (2026-11-01)
+
+- Accepts Enarratio 0.7.0 as its peer (`^0.5.0 || ^0.6.0 || ^0.7.0`), and draws the specimen and tests with it. 0.7.0's
+  legend carries `data-enarratio-legend`, so the default `assertSafe` allowlist adds `ul data-enarratio-legend`;
+  `RENDER_VERSION` is 17, since a chart's legend now writes that attribute.
+- `prelum-chart-audit`: a shape inside an `aria-hidden` group and painted in the color behind it is the ground, as one
+  that is itself `aria-hidden` already was (B1). This is the gap a choropleth draws between regions, which B6 lets a
+  separator be; Enarratio 0.7.0's region edges were read as marks at 1.00 to 1.03:1.
+- `prelum-chart-audit` D6 weighs the drawing a reader is shown, its inline SVG, as checklist D6 says, not the whole
+  frame: the data table (the chart's text equivalent) and the narrow drawing a redraw spec holds for a phone no longer
+  count. A 321-address dot map was 256 kB of frame for an 88 kB drawing.
+
 ## 0.32.0 (2026-11-01)
 
 - `render/enhance` exports `enhanceEmbeds({ root })`, the click-to-play embeds alone, for a site with its own post chrome (germomics has its own lightbox). `enhance()` calls it, so a site that calls `enhance()` changes nothing.

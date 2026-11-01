@@ -143,7 +143,7 @@ every Enarratio chart, or the Capsomer frame (`.cap-chart`, Capsomer 0.53) it si
 with its checklist item and the page as proof: no SVG, title, finding sentence, caption or data table with scripts off (B2, B18,
 B30); an SVG without `role="img"` and a name, or a table without scoped `th` and a caption (B28); text under 4.5:1 or a mark or
 legend swatch under 3:1 as painted, custom properties resolved, in either scheme (B1); text under 12 px (B3); an axe-core
-violation inside the chart in either scheme (B27); a chart over `--chart-kb` of inline HTML (D6); a page that loads Recharts,
+violation inside the chart in either scheme (B27); a chart whose drawing is over `--chart-kb` of inline SVG (D6; the data table and a waiting phone drawing are not counted); a page that loads Recharts,
 Chart.js, ApexCharts, ECharts, Highcharts, Plotly, Nivo or visx, or draws an SVG chart by hand (F); at 320 px wide, a drawing
 that overflows its frame sideways or chart text under 12 px (C12). A missing CSV link (C1), source line (C2) or frame (F) is an
 error; `--no-strict-frame` makes them warnings (`--strict-frame` is still accepted and changes nothing).

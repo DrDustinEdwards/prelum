@@ -66,8 +66,8 @@ const site = {
       frame("dim", chart("Dim in dark")),
       // B27: a link with no name inside the chart.
       frame("unnamed-link", chart("Unnamed link").replace("</figcaption>", '<a href="/more"></a></figcaption>')),
-      // D6: over the 100 kB budget.
-      frame("heavy", chart("Heavy").replace("<figure ", `<figure data-padding="${"x".repeat(110_000)}" `)),
+      // D6: a drawing over the 100 kB budget.
+      frame("heavy", chart("Heavy").replace("</svg>", `<desc>${"x".repeat(110_000)}</desc></svg>`)),
       // F: an SVG chart drawn by hand.
       '<svg width="200" height="40" role="img" aria-label="Visits"><polyline fill="none" stroke="#333" points="0,40 50,20 100,30 150,5 200,12"/></svg>',
       '<div id="later"></div><script>document.getElementById("later").innerHTML = LATER;</script>',
@@ -128,7 +128,7 @@ test("prelum-chart-audit finds every planted mistake, as an error with the page 
       ["error", "B1", "#dim (bar), dark:"],
       ["error", "B3", "text under 12 px, smallest \"Dim in dark\""],
       ["error", "B27", "#unnamed-link (bar), light: axe link-name"],
-      ["error", "D6", "kB of inline HTML, over the 100 kB budget"],
+      ["error", "D6", "kB of inline SVG, over the 100 kB budget"],
       ["error", "B2", '"Only with scripts" (bar): drawn only with scripts on'],
       ["error", "F", "loads Chart.js"],
       ["error", "F", 'an SVG chart drawn outside Enarratio: "Visits" (a polyline)'],

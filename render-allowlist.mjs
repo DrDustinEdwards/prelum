@@ -248,6 +248,7 @@ export const DEFAULT_ALLOWLIST = {
     "track src",
     "track srclang",
     "ul class",
+    "ul data-enarratio-legend",
     "video aria-label",
     "video controls",
     "video height",

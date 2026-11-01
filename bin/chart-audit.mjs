@@ -17,7 +17,8 @@
 //   B1   chart text under 4.5:1, or a mark or legend swatch under 3:1, against what is painted behind it (light and dark)
 //   B3   chart text drawn under 12 px at the default zoom
 //   B27  axe-core (WCAG 2.2 A and AA) reports a violation inside the chart (light and dark)
-//   D6   the chart's inline HTML is over --chart-kb
+//   D6   the chart's drawing (its inline SVG, as shown) is over --chart-kb; the data table and a phone drawing waiting in
+//        the frame's redraw spec are not counted, since the table is the chart's text equivalent and only one drawing shows
 //   F    the page loads another chart library, or draws an SVG chart outside Enarratio; the chart is not in the frame
 //   C1   no CSV link; C2 no source line
 //   C12  at 320 px wide (scripts on, the page scrolled through), the drawing overflows its frame sideways (a table chart, a data
@@ -255,7 +256,7 @@ async function auditPage(url) {
       if (!svg.roleOk) add("error", "B28", `${name}: the SVG has role="${svg.role}", not role="img" (or role="group" with aria-roledescription="chart" when enhanced)`);
       if (!svg.name) add("error", "B28", `${name}: the SVG has no accessible name`);
     }
-    if (unit.bytes > budget) add("error", "D6", `${name}: ${(unit.bytes / 1024).toFixed(1)} kB of inline HTML, over the ${values["chart-kb"]} kB budget`);
+    if (unit.bytes > budget) add("error", "D6", `${name}: ${(unit.bytes / 1024).toFixed(1)} kB of inline SVG, over the ${values["chart-kb"]} kB budget`);
     if (!unit.csv) add(frameSeverity, "C1", `${name}: no CSV link`);
     if (!unit.source) add(frameSeverity, "C2", `${name}: no source line`);
     if (!unit.frame) add(frameSeverity, "F", `${name}: not in Capsomer's chart frame (.cap-chart)`);
@@ -552,7 +553,9 @@ async function readCharts({ measured, narrow, libraries, tags }) {
         caption: Boolean(text(table.querySelector("caption"))),
       },
       svgs: names,
-      bytes: new Blob([unit.outerHTML]).size,
+      // D6 weighs the drawing a reader is shown (checklist D6: "inline SVG under a set size per chart"), not the data
+      // table, which is the accessible equivalent, nor the narrow drawing the redraw spec holds for a phone.
+      bytes: Array.from(unit.querySelectorAll(".enarratio-frame svg, svg[role='img']")).filter((svg, i, all) => !all.some((other) => other !== svg && other.contains(svg))).reduce((sum, svg) => sum + new Blob([svg.outerHTML]).size, 0) || new Blob([unit.outerHTML]).size,
       csv: Boolean(unit.querySelector("a[href$='.csv' i], a[href*='.csv?' i], a[href^='data:text/csv' i], a[download][href*='csv' i], a.enarratio-csv, .enarratio-csv a")),
       source: Boolean(unit.querySelector(".enarratio-source, .cap-chart-source, [data-chart-source]")) || sourceText,
       frame: unit.matches(".cap-chart"),
@@ -612,9 +615,10 @@ async function readCharts({ measured, narrow, libraries, tags }) {
           .map(([color, alpha]) => contrast(el, color, alpha, ground));
         if (readings.length === 0) continue;
         const reading = readings.reduce((a, b) => (b.ratio > a.ratio ? b : a));
-        // A shape hidden from assistive technology and painted in the color behind it draws nothing to see: a donut's
-        // hole, or a halo under a label. It is the ground, not a mark.
-        if (el.getAttribute("aria-hidden") === "true" && reading.ratio < 1.1) continue;
+        // A shape hidden from assistive technology (itself or in a hidden group) and painted in the color behind it
+        // draws nothing to see: a donut's hole, a halo under a label, or the gap a map draws between regions (B6
+        // lets a separator be the ground). It is the ground, not a mark.
+        if (el.closest("[aria-hidden='true']") && reading.ratio < 1.1) continue;
         if (reading.ratio < 3) lowMark.push(reading);
       }
       const lowest = (/** @type {Array<{ fg: string, bg: string, ratio: number, el: Element }>} */ list, /** @type {boolean} */ quote) => {
