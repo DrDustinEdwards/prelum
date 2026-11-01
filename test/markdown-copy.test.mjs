@@ -63,3 +63,40 @@ test("llms-full.txt is built from llms.txt and the sitemap, without noindex page
   assert.match(full, /# About\n/);
   assert.doesNotMatch(full, /Private|Hush/);
 });
+
+test("a static site's copies are written at build and served as files, with no parser in the Worker", async () => {
+  const { mkdtemp, readFile, writeFile, mkdir } = await import("node:fs/promises");
+  const { join } = await import("node:path");
+  const { tmpdir } = await import("node:os");
+  const dir = await mkdtemp(join(tmpdir(), "prelum-md-"));
+  await mkdir(join(dir, "guide"));
+  await writeFile(join(dir, "index.html"), page("Home", "<p>Welcome.</p>"));
+  await writeFile(join(dir, "guide", "index.html"), page("Guide", "<p>Steps.</p>"));
+  await writeFile(join(dir, "private.html"), page("Private", "<p>Hush.</p>", '<meta name="robots" content="noindex">'));
+  await writeFile(join(dir, "404.html"), page("Missing", "<p>None.</p>"));
+  await writeFile(join(dir, "llms.txt"), "# Sample\n\n> A sample site.\n");
+  await writeFile(join(dir, "sitemap.xml"), `<urlset><url><loc>${ORIGIN}/guide</loc></url><url><loc>${ORIGIN}/</loc></url></urlset>`);
+  const { writeMarkdownCopies } = await import("../markdown-files.mjs");
+  assert.deepEqual(await writeMarkdownCopies({ dir, origin: ORIGIN }), ["/guide", "/"]);
+  assert.match(await readFile(join(dir, "guide.md"), "utf8"), /^# Guide\n[\s\S]*Steps\.\n$/);
+  assert.ok((await readFile(join(dir, "llms-full.txt"), "utf8")).indexOf("# Guide") < (await readFile(join(dir, "llms-full.txt"), "utf8")).indexOf("# Home"));
+
+  const { serveMarkdownCopies } = await import("../llms.mjs");
+  const files = serveMarkdownCopies(async (/** @type {Request} */ request) => {
+    const { pathname } = new URL(request.url);
+    const name = pathname === "/" ? "index.html" : pathname.endsWith(".md") ? pathname.slice(1) : `${pathname.slice(1)}/index.html`;
+    try {
+      return new Response(await readFile(join(dir, name)), { headers: { "Content-Type": name.endsWith(".html") ? "text/html" : "application/octet-stream" } });
+    } catch {
+      return new Response("nf", { status: 404 });
+    }
+  }, { origin: ORIGIN });
+  const md = await files(new Request(`${ORIGIN}/guide.md`));
+  assert.equal(md.headers.get("Content-Type"), "text/markdown; charset=utf-8");
+  assert.equal(md.headers.get("Link"), `<${ORIGIN}/guide>; rel="canonical"`);
+  const negotiated = await files(new Request(`${ORIGIN}/guide`, { headers: { Accept: "text/markdown" } }));
+  assert.equal(negotiated.headers.get("Vary"), "Accept");
+  assert.match(await negotiated.text(), /^# Guide/);
+  const browser = await files(new Request(`${ORIGIN}/`, { headers: { Accept: "text/html" } }));
+  assert.match(browser.headers.get("Link") ?? "", /index\.md>; rel="alternate"/);
+});

@@ -18,8 +18,9 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `slug` | `slugify(text, { max })` |
 | `feeds` | `rssDocument`, `rssItem`, `atomDocument`, `atomEntry`, `jsonFeedDocument`, `feedItem` (`itemPath` moves where a post lives) |
 | `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` (absolute URLs of the images the page shows: a render's `images`, each `src` made absolute) list them in the image sitemap |
-| `llms` | `llmsDocument`, `llmsLink`; `llmsFullDocument`, `markdownPage`, `markdownPath`, `prefersMarkdown`, `markdownResponse` (llms-full.txt and each page's Markdown copy); `llmsResponse` (the whole /llms.txt response) |
+| `llms` | `llmsDocument`, `llmsLink`; `llmsFullDocument`, `markdownPage`, `markdownPath`, `prefersMarkdown`, `markdownResponse` (llms-full.txt and each page's Markdown copy), `serveMarkdownCopies` (a static site's Worker serving the copies `prelum-markdown` wrote); `llmsResponse` (the whole /llms.txt response) |
 | `markdown-copy` | `markdownCopies(fetch, { origin, llmsFull, skip })` (every page's Markdown copy and llms-full.txt, around a Worker's fetch handler), `htmlToMarkdown(html, { base })` |
+| `markdown-files` (Node, build time) | `writeMarkdownCopies({ dir, origin, skip })`: a static site's copies and llms-full.txt, written beside its pages; the `prelum-markdown` bin |
 | `frontmatter` | `frontmatter(source)`: the `---` header of a Markdown file as `{ data, body }`; `splitSource`, `joinSource`, `readKey`, `readList`, `setBlock`, `setRawKey`: read one field and write one block, every other byte as it was (the one reader site-api and Carrel use) |
 | `head` | `defineHead(site)` (the per-site builder: `(page) => HeadTag[]`), `headTags(input)` (title, description, canonical, the Markdown copy's and the feeds' links, Open Graph with `og:video`, Twitter, `article:*`), `headHtml(tags)`, `metaText(html, limit)`, `readingMinutes(text)`, `absoluteUrl`, `articleDates`, `searchTitle(title, suffix)`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT` |
 | `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage`, `imageObject(image)` (an image's license metadata), `pageImage(image)` (an ImageObject, for `primaryImageOfPage`), `articleImageSet(crops, rights)` (an Article's 16:9, 4:3 and 1:1 crops), `videoObject(video)`, `ARTICLE_IMAGE_MIN_PIXELS`, `ARTICLE_IMAGE_RATIOS` |
@@ -215,6 +216,12 @@ wrapper builds it from llms.txt's header and the sitemap's pages (at most `llmsF
 and keeps it in the Cache API for an hour. A site's own `.md` route, its own negotiation and its own llms-full.txt win: the
 wrapper fills in only what the site answers 404 (or HTML) for. `skip(path)` leaves pages out. It needs the optional peers
 `hast-util-from-html`, `hast-util-to-mdast`, `mdast-util-to-markdown` and `mdast-util-gfm` (about 80 KB gzipped).
+
+A static site does the same at build time, so its Worker carries no HTML parser: `prelum-markdown --dir dist --origin
+https://example.com` (or `writeMarkdownCopies` from `./markdown-files`) writes each page's copy beside it (`about.html` and
+`about/index.html` give `about.md`, `index.html` gives `index.md`) and llms-full.txt in the sitemap's order, and the Worker
+wraps its handler in `serveMarkdownCopies(fetch, { origin })` from `./llms`, which answers `/path.md` and `Accept:
+text/markdown` from those files with the same headers.
 
 ## The markdown pipeline
 

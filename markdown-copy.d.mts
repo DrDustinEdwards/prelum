@@ -51,3 +51,11 @@ export type MarkdownCopiesOptions = {
  * redirect is followed within the site, up to twice. Only GET and HEAD are touched.
  */
 export function markdownCopies<F extends FetchHandler>(fetch: F, options: MarkdownCopiesOptions): F;
+/** The title, summary and intro of an llms.txt (its `#` line, `>` lines and the paragraphs before the first `##`). */
+export function llmsHeaderOf(text: string, origin: string): {
+    title: string;
+    summary: string;
+    intro: string[];
+};
+/** The `<loc>` addresses of a sitemap or sitemap index, in order. */
+export function sitemapLocs(xml: string): string[];

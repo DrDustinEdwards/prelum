@@ -496,7 +496,7 @@ ${await outputsSection(version, elements.length + 1, priority)}
   const released = /^## [\d.]+ \((\d{4}-\d{2}-\d{2})\)/m.exec(readFileSync(join(ROOT, "CHANGELOG.md"), "utf8"))?.[1];
   writeFileSync(join(outDir, "sitemap.xml"), sitemapDocument([{ loc: `${ORIGIN}/`, lastmod: released, images: images.map((i) => absoluteUrl(ORIGIN, i.src)) }]));
   // robots.txt and ai.txt (the network's bot policy, Content-Signal and the sitemap) and llms.txt; llms-full.txt and the
-  // page's Markdown copy are the Worker's (markdownCopies), made from the page itself.
+  // page's Markdown copy are written from the built page by prelum-markdown (`npm run specimen`).
   writeFileSync(join(outDir, "robots.txt"), robotsDocument({ origin: ORIGIN, notes: [`AI usage policy: ${ORIGIN}/ai.txt`, `LLM guide: ${ORIGIN}/llms.txt`] }));
   writeFileSync(join(outDir, "ai.txt"), aiTxt({ origin: ORIGIN, name: "Prelum", contact: "contact@dustinedwards.info" }));
   writeFileSync(

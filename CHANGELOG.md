@@ -7,9 +7,13 @@
   and builds `/llms-full.txt` from llms.txt and the sitemap where the site serves none (area 1, gap 5). A site's own copies and
   llms-full.txt are kept. Every HTML page gains `Vary: Accept` and a `Link: rel="alternate"; type="text/markdown"` header. New
   optional peers: `hast-util-to-mdast`, `mdast-util-to-markdown`, `mdast-util-gfm`. No change to `render` or RENDER_VERSION.
+- A static site writes its copies at build time instead, so its Worker carries no HTML parser: `writeMarkdownCopies({ dir,
+  origin })` in `./markdown-files` (Node) and the `prelum-markdown` bin write each page's `.md` and llms-full.txt beside the
+  built pages, and `serveMarkdownCopies(fetch, { origin })` in `./llms` serves them for `/path.md` and `Accept: text/markdown`.
 - Specimen (area 1, gap 3): its head comes from `defineHead`, so the page carries its WebPage beside a WebSite and
   SoftwareSourceCode graph; it serves robots.txt (the network's bot policy, Content-Signal and the Sitemap line), ai.txt and
-  llms.txt; its Worker is wrapped in `markdownCopies`, so `/index.md`, `Accept: text/markdown` and llms-full.txt answer; and
+  llms.txt; `npm run specimen` writes its Markdown copy and llms-full.txt with `prelum-markdown` and its Worker serves them
+  with `serveMarkdownCopies`; and
   its sitemap gives the page a lastmod, the date of the release it shows. No library change.
 
 ## 0.28.1 (2026-10-31)

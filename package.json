@@ -42,6 +42,10 @@
       "types": "./markdown-copy.d.mts",
       "default": "./markdown-copy.mjs"
     },
+    "./markdown-files": {
+      "types": "./markdown-files.d.mts",
+      "default": "./markdown-files.mjs"
+    },
     "./frontmatter": {
       "types": "./frontmatter.d.mts",
       "default": "./frontmatter.mjs"
@@ -145,7 +149,7 @@
     "lint": "oxlint *.mjs bin test specimen --deny-warnings",
     "typecheck": "tsc -p .",
     "test": "node --test \"test/*.test.mjs\"",
-    "specimen": "node specimen/build.mjs && site-runtime-headers --site prelum --out specimen/dist/_headers --header \"tdm-reservation: 1\"",
+    "specimen": "node specimen/build.mjs && node bin/markdown.mjs --dir specimen/dist --origin https://prelum.dustinedwards.info && site-runtime-headers --site prelum --out specimen/dist/_headers --header \"tdm-reservation: 1\"",
     "specimen:diagrams": "node specimen/diagrams.mjs",
     "deploy:specimen": "npm run specimen && npx --yes wrangler@4.143.0 deploy",
     "bloat": "devkit-no-bloat --warn-only"
@@ -317,7 +321,8 @@
     "prelum-audit": "./bin/audit.mjs",
     "prelum-icons": "./bin/icons.mjs",
     "prelum-content": "./bin/content.mjs",
-    "prelum-chart-audit": "./bin/chart-audit.mjs"
+    "prelum-chart-audit": "./bin/chart-audit.mjs",
+    "prelum-markdown": "./bin/markdown.mjs"
   },
   "overrides": {
     "capsomer": {

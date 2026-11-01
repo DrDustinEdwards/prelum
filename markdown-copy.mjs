@@ -169,6 +169,34 @@ export function htmlToMarkdown(html, { base } = {}) {
 }
 
 /**
+ * The title, summary and intro of an llms.txt, for the llms-full.txt that repeats them: the `#` line, the `>` lines, and the
+ * paragraphs before the first `##` section. A missing file gives the origin's host as the title.
+ *
+ * @param {string} text
+ * @param {string} origin
+ */
+export function llmsHeaderOf(text, origin) {
+  const lines = text.split("\n");
+  const title = lines.find((line) => line.startsWith("# "))?.slice(2).trim() ?? new URL(origin).hostname;
+  const summary = lines
+    .filter((line) => line.startsWith("> "))
+    .map((line) => line.slice(2).trim())
+    .join(" ");
+  const firstSection = lines.findIndex((line) => line.startsWith("## "));
+  const lastQuote = lines.findLastIndex((line) => line.startsWith("> "));
+  const intro = lines
+    .slice(lastQuote + 1, firstSection < 0 ? lines.length : firstSection)
+    .join("\n")
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+  return { title, summary, intro };
+}
+
+/** The `<loc>` addresses of a sitemap or sitemap index, in order. @param {string} xml */
+export const sitemapLocs = (xml) => [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((match) => match[1] ?? "");
+
+/**
  * @typedef {(request: Request, env?: any, ctx?: { waitUntil(promise: Promise<unknown>): void }) => Promise<Response> | Response} FetchHandler
  */
 
@@ -269,27 +297,14 @@ export function markdownCopies(fetch, options) {
     if (kept) return kept;
 
     const guide = await fetch(htmlRequest(request, "/llms.txt"), env, ctx);
-    const lines = guide.ok ? (await guide.text()).split("\n") : [];
-    const title = lines.find((line) => line.startsWith("# "))?.slice(2).trim() ?? new URL(origin).hostname;
-    const summary = lines
-      .filter((line) => line.startsWith("> "))
-      .map((line) => line.slice(2).trim())
-      .join(" ");
-    const firstSection = lines.findIndex((line) => line.startsWith("## "));
-    const lastQuote = lines.findLastIndex((line) => line.startsWith("> "));
-    const intro = lines
-      .slice(lastQuote + 1, firstSection < 0 ? lines.length : firstSection)
-      .join("\n")
-      .split(/\n{2,}/)
-      .map((block) => block.trim())
-      .filter(Boolean);
+    const { title, summary, intro } = llmsHeaderOf(guide.ok ? await guide.text() : "", origin);
 
     /** @param {string} path @returns {Promise<string[]>} */
     const locs = async (path) => {
       const response = await fetch(htmlRequest(request, path), env, ctx);
       if (!response.ok) return [];
       const xml = await response.text();
-      const found = [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((match) => match[1] ?? "");
+      const found = sitemapLocs(xml);
       return /<sitemapindex\b/.test(xml) ? (await Promise.all(found.map((loc) => locs(new URL(loc).pathname)))).flat() : found;
     };
     const paths = [...new Set((await locs("/sitemap.xml")).map((loc) => new URL(loc, origin).pathname))]
