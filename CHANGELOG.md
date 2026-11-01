@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- CI: the footer strip, the trailer check and the shared-code check run in one job (devkit 0.20.23 checks.yml), in place of three workflows.
+
 ## 0.30.1 (2026-11-01)
 
 - `accessibilityStatement`: the Capsomer sentence calls it "an open-source design system", not "the design system the
