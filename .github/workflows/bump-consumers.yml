@@ -1,0 +1,31 @@
+name: bump-consumers
+
+# A release of Prelum reaches every repository that depends on it at once. A v* tag starts a Renovate run in each
+# consumer, and the shared preset (DrDustinEdwards/devkit default.json) opens the bump with no cooldown and no schedule.
+# The logic, and how consumers are found from their manifests, is in devkit's bump-consumers.yml; this file only calls
+# it. release.yml calls it too, since the tag it makes with the workflow's own token starts no workflow.
+#
+# Run it by hand (Actions > bump-consumers > Run workflow) to list the consumers without changing anything (dry_run,
+# the default), or to start the runs again.
+#
+# Needs the RENOVATE_TRIGGER_TOKEN repository secret: see the header of the called workflow.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: List the consumers and change nothing.
+        type: boolean
+        default: true
+
+permissions: {}
+
+jobs:
+  bump:
+    uses: DrDustinEdwards/devkit/.github/workflows/bump-consumers.yml@8390c62de180aa316f12d141a0cc42d00a714f74 # v0.20.23
+    with:
+      dry_run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+    secrets:
+      token: ${{ secrets.RENOVATE_TRIGGER_TOKEN }}
