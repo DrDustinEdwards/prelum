@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- CI: devkit v0.21.0 in every workflow call and in `package.json`.
 - CI: OpenSSF Scorecard (devkit 0.20.24 scorecard.yml, weekly and on push to main), and each release's `npm pack` tarball is attested and attached to the release (devkit release.yml; the caller grants `id-token` and `attestations`).
 
 ## 0.31.4 (2026-11-01)
