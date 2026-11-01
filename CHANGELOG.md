@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- CI: OpenSSF Scorecard (devkit 0.20.24 scorecard.yml, weekly and on push to main), and each release's `npm pack` tarball is attested and attached to the release (devkit release.yml; the caller grants `id-token` and `attestations`).
+
 ## 0.31.3 (2026-11-01)
 
 - `markdownCopies` takes any Worker fetch handler: `FetchHandler`'s `ctx` is `any`, since the wrapper passes the Worker's
