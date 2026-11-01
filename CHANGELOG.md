@@ -1,15 +1,58 @@
 # Changelog
 
-## 0.30.2 (2026-11-01)
+## 0.31.4 (2026-11-01)
 
 - Specimen: Capsomer v0.60.0 with its link system (`link.css`): links are semibold in the link color with no underline,
   and each kind carries its mark (away, file, jump, mail, phone, language, address, next). The heading anchors and the
   element titles lose their own underlines. The specimen serves its accessibility statement at `/accessibility`
   (`accessibilityStatement`, `capsomer: true`, `links: "marked"`), linked from the footer (`statement`) and listed in
   the sitemap. No library change.
+- Specimen: the audio player fits a 320 px column, and displayed math keeps half an em above and below so WCAG 1.4.12's
+  text spacing no longer clips it. The live check's two findings, so the statement lists none of its own.
 
-## Unreleased
+## 0.31.3 (2026-11-01)
 
+- `markdownCopies` takes any Worker fetch handler: `FetchHandler`'s `ctx` is `any`, since the wrapper passes the Worker's
+  ExecutionContext through untouched. A handler typed `(request, env: Env, ctx: ExecutionContext)` (one that reads
+  `ctx.exports`, as bsw's gateway does) failed to typecheck against the narrower `{ waitUntil }`. Types only.
+- CI: a release starts Renovate in every repository that pins Prelum (devkit 0.20.23 bump-consumers.yml, from
+  release.yml and on a tag push). Needs the `RENOVATE_TRIGGER_TOKEN` repository secret.
+- `.shared.json` names the two local helpers the shared-code check took for copies: `esc` in `./accessibility` (the helpers
+  take no dependency on site-runtime) and `hex` in `prelum-chart-audit` (it runs inside the audited page).
+- The 0.31.2 tag was cut from #196 before these merged, so they ship here.
+
+## 0.31.2 (2026-11-01)
+
+- An animated image's still (the picture shown under reduced motion) now carries the image's `sizes`; it had a `w` srcset with no
+  `sizes`, so a browser took the widest file for any slot. `RENDER_VERSION` is 16.
+- The specimen's poster is served in two widths (320 and 640) with `sizes`, so a phone downloads the small one.
+
+## 0.31.1 (2026-11-01)
+
+- The optional `enarratio` peer accepts 0.6 as well as 0.5 (`^0.5.0 || ^0.6.0`), so a site on Enarratio 0.6.0 installs
+  Prelum without an override. Prelum is tested against 0.6.0.
+- Specimen: its scripts inline Enarratio 0.6's lazily loaded sound module, so each stays one file under the page's
+  script hashes.
+
+## 0.31.0 (2026-11-01)
+
+- `defineHead` writes a BreadcrumbList only for a trail of three or more (home, a section, the page;
+  `BREADCRUMB_MIN_ITEMS`). A top-level page shows no trail on any site, and markup must describe what a visitor sees, so its
+  two-item list is gone; its WebPage stays. Breadcrumbs belong to pages inside a section (Nielsen Norman, GOV.UK), and
+  Google asks for no markup of content a visitor cannot see.
+- `./markdown-copy`: `markdownCopies(fetch, { origin, llmsFull, skip })` wraps a Worker's fetch handler so every page has a
+  Markdown copy at `/path.md` and for `Accept: text/markdown`, made from the page's `<main>` by `htmlToMarkdown(html, { base })`,
+  and builds `/llms-full.txt` from llms.txt and the sitemap where the site serves none (area 1, gap 5). A site's own copies and
+  llms-full.txt are kept. Every HTML page gains `Vary: Accept` and a `Link: rel="alternate"; type="text/markdown"` header. New
+  optional peers: `hast-util-to-mdast`, `mdast-util-to-markdown`, `mdast-util-gfm`. No change to `render` or RENDER_VERSION.
+- A static site writes its copies at build time instead, so its Worker carries no HTML parser: `writeMarkdownCopies({ dir,
+  origin })` in `./markdown-files` (Node) and the `prelum-markdown` bin write each page's `.md` and llms-full.txt beside the
+  built pages, and `serveMarkdownCopies(fetch, { origin })` in `./llms` serves them for `/path.md` and `Accept: text/markdown`.
+- Specimen (area 1, gap 3): its head comes from `defineHead`, so the page carries its WebPage beside a WebSite and
+  SoftwareSourceCode graph; it serves robots.txt (the network's bot policy, Content-Signal and the Sitemap line), ai.txt and
+  llms.txt; `npm run specimen` writes its Markdown copy and llms-full.txt with `prelum-markdown` and its Worker serves them
+  with `serveMarkdownCopies`; and
+  its sitemap gives the page a lastmod, the date of the release it shows. No library change.
 - CI: the footer strip, the trailer check and the shared-code check run in one job (devkit 0.20.23 checks.yml), in place of three workflows.
 
 ## 0.30.1 (2026-11-01)

@@ -1,0 +1,6 @@
+{
+  "copies": {
+    "accessibility.mjs": "esc stays local: Prelum's helpers have no dependencies (README), and site-runtime is only a dev dependency here, so importing ./html escapeHtml into a published module would make every site that builds an accessibility statement install site-runtime through Prelum",
+    "bin/chart-audit.mjs": "hex runs inside the audited page (readCharts is handed to page.evaluate, which sends the function's source, not its imports), and it writes #rrggbb from an RGB array, not toHex's bytes"
+  }
+}

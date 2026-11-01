@@ -251,6 +251,11 @@ main {
   block-size: auto;
   border-radius: 6px;
 }
+/* The native audio player is 300 px wide by default, wider than a 320 px screen's column (WCAG 1.4.10). */
+.prose audio {
+  display: block;
+  inline-size: 100%;
+}
 /* The lite embed: the site's poster under a play button, the service's name and the title along the foot; a click loads the
    player in its place (render/enhance), and without script the link opens the service. */
 .prose .embed-link {
@@ -449,10 +454,12 @@ main {
     border-color: CanvasText;
   }
 }
+/* Half an em above and below: with WCAG 1.4.12's spacing, KaTeX's struts no longer hold the glyphs, and a quarter em
+   clipped a displayed formula's bottom edge. */
 .prose .katex-display {
   overflow-x: auto;
   overflow-y: hidden;
-  padding-block: 0.25em;
+  padding-block: 0.5em;
 }
 .diagram-title {
   margin: 0 0 0.5em;

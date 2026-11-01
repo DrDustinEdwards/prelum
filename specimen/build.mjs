@@ -18,9 +18,10 @@ import { capsomerTheme } from "capsomer/enarratio-theme";
 import { stylesheet } from "enarratio";
 import { rolldown } from "rolldown";
 
-import { absoluteUrl, headHtml, headTags } from "../head.mjs";
-import { graph, imageObject, jsonLd, videoObject } from "../schema.mjs";
+import { absoluteUrl, defineHead, headHtml } from "../head.mjs";
+import { graph, imageObject, jsonLd, thing, videoObject, website } from "../schema.mjs";
 import { llmsDocument } from "../llms.mjs";
+import { aiTxt, robotsDocument } from "../robots.mjs";
 import { rssItem } from "../feeds.mjs";
 import { sitemapDocument } from "../sitemap.mjs";
 import { RENDER_VERSION, render } from "../render.mjs";
@@ -42,11 +43,11 @@ const INDEXNOW_KEY = "32790edc1bac129b5f5c0b174219150c";
 /** When security.txt lapses (RFC 9116 asks for under a year); renew it before then. */
 const SECURITY_TXT_EXPIRES = "2027-10-26T00:00:00Z";
 
-/** What devkit-a11y's live run of 2026-11-01 still finds on the specimen, one sentence each, for the statement. */
-const STATEMENT_LIMITATIONS = [
-  "At 320 pixels wide, the specimen page scrolls sideways by a few pixels: the hidden words of a link in the footnotes reach past the screen's edge.",
-  "With the extra letter, word and line spacing WCAG 1.4.12 asks a page to allow, displayed math is clipped at its bottom edge.",
-];
+/** What devkit-a11y's live run still finds on the specimen, one sentence each, for the statement. Its run of 2026-11-01
+    found two, both fixed in 0.31.4: the audio player wider than a 320 px column, and displayed math clipped under WCAG
+    1.4.12's spacing (specimen/site.css). */
+/** @type {string[]} */
+const STATEMENT_LIMITATIONS = [];
 
 /** @param {string} specifier a package file, resolved from this repository's node_modules */
 const packageFile = (specifier) => require.resolve(specifier);
@@ -162,14 +163,15 @@ function copyDiagrams(outDir, diagrams) {
 }
 
 /**
- * Bundles a script of specimen/browser for the browser, Capsomer's behavior inlined.
+ * Bundles a script of specimen/browser for the browser, Capsomer's behavior inlined. Lazy imports (Enarratio's sound,
+ * loaded on Play) are inlined too, so each script stays one file under the page's script hashes.
  *
  * @param {string} file
  * @param {"esm" | "iife"} format
  */
 async function bundle(file, format) {
   const built = await rolldown({ input: join(HERE, "browser", file), platform: "browser", logLevel: "silent" });
-  const { output } = await built.generate({ format, minify: true });
+  const { output } = await built.generate({ format, minify: true, inlineDynamicImports: true });
   await built.close();
   const [chunk] = output;
   if (output.length !== 1 || chunk?.type !== "chunk") throw new Error(`${file}: expected one chunk`);
@@ -227,6 +229,27 @@ const SHARE_CARD = {
   alt: "Prelum, one publishing library for every site: markdown, feeds, sitemaps, llms.txt and search.",
 };
 
+/** The page's head: Prelum's own defineHead, so the specimen carries the WebPage graph every site's pages do. */
+const head = defineHead({ origin: ORIGIN, siteName: "Prelum", image: SHARE_CARD, locale: "en_US" });
+
+/** What the specimen is about, on its page beside the WebPage: the site, and the library it shows. */
+const SITE_DESCRIPTION = "Prelum, the publishing library for Dustin Edwards's sites: markdown to pages, feeds, sitemaps, llms.txt and search.";
+const AUTHOR = { "@type": "Person", "@id": "https://dustinedwards.info/#person", name: "Dustin Edwards", url: "https://dustinedwards.info" };
+const SITE_GRAPH = [
+  website({ origin: ORIGIN, name: "Prelum", description: SITE_DESCRIPTION, publisher: AUTHOR }),
+  thing("SoftwareSourceCode", {
+    "@id": `${ORIGIN}/#code`,
+    name: "Prelum (@drdustinedwards/site-helpers)",
+    description: "One publishing library for every site: the markdown pipeline, feeds, sitemaps, llms.txt and search.",
+    url: `${ORIGIN}/`,
+    codeRepository: REPO,
+    license: "https://opensource.org/licenses/MIT",
+    programmingLanguage: "JavaScript",
+    runtimePlatform: ["Node.js", "Cloudflare Workers"],
+    author: AUTHOR,
+  }),
+];
+
 /** The `integrity` of the page's two scripts, from their built bytes. @typedef {{ theme: string, specimen: string }} Scripts */
 
 /**
@@ -237,18 +260,15 @@ const SHARE_CARD = {
  *   media?: { videos: import("../head.mjs").HeadVideo[], schema: import("../schema.mjs").SchemaNode[] } }} page
  */
 function documentHtml({ title, description, body, version, path, scripts, media }) {
-  const head = path
-    ? headHtml([
-        ...headTags({ origin: ORIGIN, path, title, description, siteName: "Prelum", image: SHARE_CARD, videos: media?.videos }),
-        ...(media?.schema.length ? [jsonLd(graph(media.schema))] : []),
-      ])
+  const tags = path
+    ? headHtml([...head({ path, title, fullTitle: true, description, videos: media?.videos }), jsonLd(graph([...SITE_GRAPH, ...(media?.schema ?? [])]))])
     : `<title>${escapeXml(title)}</title>\n<meta name="description" content="${escapeXml(description)}">`;
   return `<!doctype html>
 <html lang="en" data-family="${FAMILY}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-${head}
+${tags}
 ${ICON_LINKS}
 <link rel="stylesheet" href="/site.css">
 <link rel="stylesheet" href="/katex/katex.min.css">
@@ -505,7 +525,39 @@ ${await outputsSection(version, elements.length + 1, priority)}
     securityTxt({ origin: ORIGIN, contact: "security@dustinedwards.info", expires: SECURITY_TXT_EXPIRES }),
   );
   writeFileSync(join(outDir, `${INDEXNOW_KEY}.txt`), INDEXNOW_KEY);
-  writeFileSync(join(outDir, "sitemap.xml"), sitemapDocument([{ loc: `${ORIGIN}/`, images: images.map((i) => absoluteUrl(ORIGIN, i.src)) }, { loc: `${ORIGIN}${ACCESSIBILITY_PATH}` }]));
+  // The page changes with each release, so its lastmod is the date of the release it shows (the CHANGELOG's top entry).
+  const released = /^## [\d.]+ \((\d{4}-\d{2}-\d{2})\)/m.exec(readFileSync(join(ROOT, "CHANGELOG.md"), "utf8"))?.[1];
+  writeFileSync(join(outDir, "sitemap.xml"), sitemapDocument([{ loc: `${ORIGIN}/`, lastmod: released, images: images.map((i) => absoluteUrl(ORIGIN, i.src)) }, { loc: `${ORIGIN}${ACCESSIBILITY_PATH}` }]));
+  // robots.txt and ai.txt (the network's bot policy, Content-Signal and the sitemap) and llms.txt; llms-full.txt and the
+  // page's Markdown copy are written from the built page by prelum-markdown (`npm run specimen`).
+  writeFileSync(join(outDir, "robots.txt"), robotsDocument({ origin: ORIGIN, notes: [`AI usage policy: ${ORIGIN}/ai.txt`, `LLM guide: ${ORIGIN}/llms.txt`] }));
+  writeFileSync(join(outDir, "ai.txt"), aiTxt({ origin: ORIGIN, name: "Prelum", contact: "contact@dustinedwards.info" }));
+  writeFileSync(
+    join(outDir, "llms.txt"),
+    llmsDocument({
+      title: "Prelum",
+      summary: SITE_DESCRIPTION,
+      intro: [
+        [
+          `- Specimen: ${ORIGIN}/ (every element Prelum renders from markdown, its source beside its output)`,
+          `- Element index: ${ORIGIN}/elements.json`,
+          `- Install: \`npm install github:DrDustinEdwards/prelum#v${version}\``,
+          `- Code: ${REPO}`,
+          "- Author: Dustin Edwards, https://dustinedwards.info",
+        ].join("\n"),
+      ],
+      sections: [
+        {
+          heading: "Documentation",
+          links: [
+            { title: "README", url: `${REPO}#readme`, description: "every module, what it exports and how a site uses it" },
+            { title: "Changelog", url: `${REPO}/blob/main/CHANGELOG.md`, description: "every release" },
+            { title: "Specimen", url: `${ORIGIN}/`, description: "the rendered elements, in both themes" },
+          ],
+        },
+      ],
+    }),
+  );
 
   /** @type {string[]} */
   const files = [];
