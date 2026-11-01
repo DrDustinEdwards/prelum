@@ -473,12 +473,13 @@ function showCredit(shown, parents, text) {
  * @param {import("hast").Element} animated
  * @param {import("hast").Element} img
  * @param {Array<{ type: string, srcSet: string, media?: string }>} stills
+ * @param {string | undefined} sizes the image's own, written onto it only after this runs
  */
-function motionControl(animated, img, stills) {
+function motionControl(animated, img, stills, sizes) {
   const webp = stills.find((s) => s.type === "image/webp") ?? stills[stills.length - 1];
   const src = srcsetUrls(webp?.srcSet ?? "")[0];
   if (!webp || !src) return animated;
-  const { alt, width, height, sizes } = /** @type {Record<string, unknown>} */ (img.properties);
+  const { alt, width, height } = /** @type {Record<string, unknown>} */ (img.properties);
   const still = el(
     "picture",
     { className: ["motion-still"], style: "display:none" },
@@ -611,7 +612,7 @@ function rehypeImageSources(file, resolveImage, pending, imageProps, priority, s
             )
           : node;
       const linked = wrappable ? el("a", { className: ["image-link"], href: props?.href ?? src }, [picture]) : picture;
-      const shown = stills.length > 0 && !themed && !inLink ? motionControl(linked, node, stills) : linked;
+      const shown = stills.length > 0 && !themed && !inLink ? motionControl(linked, node, stills, responsive.sizes) : linked;
       if (shown !== node && parent && typeof index === "number" && parent.children[index] === node) {
         parent.children[index] = shown;
         parents.set(shown, parent);

@@ -7,6 +7,12 @@
 - `.shared.json` names the two local helpers the shared-code check took for copies: `esc` in `./accessibility` (the helpers
   take no dependency on site-runtime) and `hex` in `prelum-chart-audit` (it runs inside the audited page).
 
+## 0.31.2 (2026-11-01)
+
+- An animated image's still (the picture shown under reduced motion) now carries the image's `sizes`; it had a `w` srcset with no
+  `sizes`, so a browser took the widest file for any slot. `RENDER_VERSION` is 16.
+- The specimen's poster is served in two widths (320 and 640) with `sizes`, so a phone downloads the small one.
+
 ## 0.31.1 (2026-11-01)
 
 - The optional `enarratio` peer accepts 0.6 as well as 0.5 (`^0.5.0 || ^0.6.0`), so a site on Enarratio 0.6.0 installs
