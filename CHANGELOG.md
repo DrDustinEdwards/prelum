@@ -11,6 +11,9 @@
   that is itself `aria-hidden` already was (B1). This is the gap a choropleth draws between regions, which B6 lets a
   separator be; Enarratio 0.7.0's region edges were read as marks at 1.00 to 1.03:1.
 - CI: devkit v0.21.0 in every workflow call and in `package.json`.
+- Specimen: Capsomer v0.62.0, so its 404 page no longer scrolls sideways at 320 px (a written-out address now wraps).
+- Specimen: the sample relative link and next link point at `/accessibility` instead of `/writing/other` and `/writing/next`,
+  which do not exist on the specimen, so the home page links no missing page. No library change.
 - CI: OpenSSF Scorecard (devkit 0.20.24 scorecard.yml, weekly and on push to main), and each release's `npm pack` tarball is attested and attached to the release (devkit release.yml; the caller grants `id-token` and `attestations`).
 
 ## 0.31.4 (2026-11-01)
