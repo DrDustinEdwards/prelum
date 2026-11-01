@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- CI: OpenSSF Scorecard (devkit 0.20.24 scorecard.yml, weekly and on push to main), and each release's `npm pack` tarball is attested and attached to the release (devkit release.yml; the caller grants `id-token` and `attestations`).
+
 ## 0.31.4 (2026-11-01)
 
 - Specimen: Capsomer v0.60.0 with its link system (`link.css`): links are semibold in the link color with no underline,
