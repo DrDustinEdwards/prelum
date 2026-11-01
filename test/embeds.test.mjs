@@ -18,7 +18,6 @@ test("each service's URL becomes its player, built only from the checked parts, 
     ["https://podcasts.apple.com/us/podcast/an-example-show/id1200000001?i=1000600000001", "https://embed.podcasts.apple.com/us/podcast/an-example-show/id1200000001?i=1000600000001"],
     // Amazon's own embed src: its three parameters kept, anything else dropped.
     ["https://music.amazon.com/embed/B07WWHZ4J2/?id=8LXAMTYKXJ&marketplaceId=ATVPDKIKX0DER&musicTerritory=US&x=%22%3E", "https://music.amazon.com/embed/B07WWHZ4J2/?id=8LXAMTYKXJ&marketplaceId=ATVPDKIKX0DER&musicTerritory=US"],
-    ["https://music.amazon.co.uk/embed/B07WWHZ4J2/", "https://music.amazon.co.uk/embed/B07WWHZ4J2/"],
     ["https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3000!2d-97.7!3d30.2", "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3000!2d-97.7!3d30.2"],
     ["https://x.com/example/status/1850000000000000001?s=20", "https://platform.twitter.com/embed/Tweet.html?id=1850000000000000001&dnt=true"],
     ["https://twitter.com/example/status/1850000000000000001", "https://platform.twitter.com/embed/Tweet.html?id=1850000000000000001&dnt=true"],
@@ -34,6 +33,8 @@ test("each service's URL becomes its player, built only from the checked parts, 
     "https://www.google.com/maps/place/Austin",
     "https://www.google.com/maps/embed?pb=!1m2\"onload=x",
     "https://music.amazon.com/albums/B07WWHZ4J2",
+    // Only amazon.com is on site-runtime's frame list.
+    "https://music.amazon.co.uk/embed/B07WWHZ4J2/",
     "https://x.com.example.com/example/status/1850000000000000001",
     "https://vimeo.com/123456789",
   ]) {

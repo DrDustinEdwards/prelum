@@ -62,6 +62,40 @@ function textFragment(selected) {
   return encodePart(text);
 }
 
+let embedsStarted = false;
+
+/**
+ * Click-to-play embeds. The page loads no third party until the reader asks: the link is the scriptless path and opens the
+ * service. A click in a new tab or window stays a link. `enhance` calls this; a site with its own post chrome calls it alone.
+ * A second call does nothing.
+ *
+ * @param {{ root?: string }} [options] `root` is the rendered markup (default ".prose").
+ * @returns {void}
+ */
+export function enhanceEmbeds({ root = ".prose" } = {}) {
+  if (embedsStarted) return;
+  embedsStarted = true;
+  document.addEventListener("click", (event) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const link = event.target instanceof Element ? event.target.closest(`${root} a.embed-link[data-embed-src]`) : null;
+    if (!(link instanceof HTMLAnchorElement)) return;
+    const src = embedPlayerUrl(link.dataset.embedSrc ?? "");
+    if (!src) return;
+    event.preventDefault();
+
+    const frame = document.createElement("iframe");
+    frame.src = src;
+    frame.title = link.dataset.embedTitle ?? link.textContent ?? "";
+    frame.allow = "autoplay; encrypted-media; fullscreen; picture-in-picture";
+    frame.allowFullscreen = true;
+    frame.loading = "lazy";
+    frame.referrerPolicy = "strict-origin-when-cross-origin";
+    link.replaceWith(frame);
+    // Focus follows the activation, so a keyboard reader lands in the player rather than at the top of the page.
+    frame.focus();
+  });
+}
+
 /**
  * Decorates the rendered post. A second call does nothing.
  *
@@ -544,35 +578,11 @@ export function enhance(options = {}) {
     });
   }
 
-  // The page loads no third party until the reader asks: the link is the scriptless path and opens the service. A click in a new tab
-  // or window stays a link.
-  function embeds() {
-    document.addEventListener("click", (event) => {
-      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const link = event.target instanceof Element ? event.target.closest(`${root} a.embed-link[data-embed-src]`) : null;
-      if (!(link instanceof HTMLAnchorElement)) return;
-      const src = embedPlayerUrl(link.dataset.embedSrc ?? "");
-      if (!src) return;
-      event.preventDefault();
-
-      const frame = document.createElement("iframe");
-      frame.src = src;
-      frame.title = link.dataset.embedTitle ?? link.textContent ?? "";
-      frame.allow = "autoplay; encrypted-media; fullscreen; picture-in-picture";
-      frame.allowFullscreen = true;
-      frame.loading = "lazy";
-      frame.referrerPolicy = "strict-origin-when-cross-origin";
-      link.replaceWith(frame);
-      // Focus follows the activation, so a keyboard reader lands in the player rather than at the top of the page.
-      frame.focus();
-    });
-  }
-
   readingProgress();
   scrollSpy();
   codeBlocks();
   headingLinks();
-  embeds();
+  enhanceEmbeds({ root });
   onIdle(() => {
     footnotePreviews();
     lightbox();

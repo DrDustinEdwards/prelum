@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.32.0 (2026-11-01)
+
+- `render/enhance` exports `enhanceEmbeds({ root })`, the click-to-play embeds alone, for a site with its own post chrome (germomics has its own lightbox). `enhance()` calls it, so a site that calls `enhance()` changes nothing.
+- Breaking: Amazon Music embeds come from amazon.com only (`music.amazon.com/embed/`). The other eleven country sites are not on site-runtime's frame list (0.70.0), so a player from one could never load; a post that pasted one is refused at render.
 - CI: devkit v0.21.0 in every workflow call and in `package.json`.
 - CI: OpenSSF Scorecard (devkit 0.20.24 scorecard.yml, weekly and on push to main), and each release's `npm pack` tarball is attested and attached to the release (devkit release.yml; the caller grants `id-token` and `attestations`).
 
