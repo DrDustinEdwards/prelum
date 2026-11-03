@@ -645,7 +645,7 @@ async function readCharts({ measured, narrow, libraries, tags }) {
       svgs: names,
       // D6 weighs the drawing a reader is shown (checklist D6: "inline SVG under a set size per chart"), not the data
       // table, which is the accessible equivalent, nor the narrow drawing the redraw spec holds for a phone.
-      bytes: Array.from(unit.querySelectorAll(".enarratio-frame svg, svg[role='img']")).filter((svg, i, all) => !all.some((other) => other !== svg && other.contains(svg))).reduce((sum, svg) => sum + new Blob([svg.outerHTML]).size, 0) || new Blob([unit.outerHTML]).size,
+      bytes: Array.from(unit.querySelectorAll(".enarratio-frame svg, svg[role='img']")).filter((svg, _i, all) => !all.some((other) => other !== svg && other.contains(svg))).reduce((sum, svg) => sum + new Blob([svg.outerHTML]).size, 0) || new Blob([unit.outerHTML]).size,
       csv: Boolean(unit.querySelector("a[href$='.csv' i], a[href*='.csv?' i], a[href^='data:text/csv' i], a[download][href*='csv' i], a.enarratio-csv, .enarratio-csv a")),
       source: Boolean(unit.querySelector(".enarratio-source, .cap-chart-source, [data-chart-source]")) || sourceText,
       frame: unit.matches(".cap-chart"),

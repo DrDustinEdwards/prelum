@@ -243,9 +243,7 @@ export const DIAGRAM_CONFIG_FILE = "config.json";
  */
 export function diagramColors(theme) {
   const tokensCss = pathToFileURL(createRequire(import.meta.url).resolve("capsomer/tokens.css"));
-  // Capsomer 0.21.0 renamed tokens/colour.css to color.css; the old name serves the Capsomer pinned before it. codespell:ignore colour
-  const file = [new URL("../tokens/color.css", tokensCss), new URL("../tokens/colour.css", tokensCss)].find((url) => existsSync(url)); // codespell:ignore colour
-  const css = readFileSync(/** @type {URL} */ (file), "utf8");
+  const css = readFileSync(new URL("../tokens/color.css", tokensCss), "utf8");
   const start = theme === "light" ? css.indexOf(":root {") : css.indexOf(':root[data-theme="dark"] {');
   if (start < 0) throw new Error(`Capsomer's color.css has no ${theme} block`);
   const family = readFileSync(new URL(`../tokens/family-${FAMILY}.css`, tokensCss), "utf8");

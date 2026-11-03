@@ -11,9 +11,6 @@ import { isAllowedUrl } from "./render-url.mjs";
 
 export { EMBED_PROVIDERS };
 
-/** GitHub's five alert types, the syntax GitHub, Obsidian and Docusaurus read. */
-export const CALLOUTS = /** @type {const} */ (["note", "tip", "important", "warning", "caution"]);
-
 const CALLOUT_LINE = /^\[!(note|tip|important|warning|caution)\][ \t]*([^\n]*)(?:\n|$)/i;
 
 /** `![""](x)`, straight or curly quotes: the author's word that the image is decorative. */
@@ -292,7 +289,7 @@ export function remarkLinkBlocks(file) {
  * @param {string} content
  * @returns {Array<{ question: string, answer: string }>}
  */
-export function faqPairs(content) {
+function faqPairs(content) {
   /** @type {Array<{ question: string, answer: string }>} */
   const pairs = [];
   /** @type {string | null} */
