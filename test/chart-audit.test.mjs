@@ -47,6 +47,8 @@ const site = {
   "/good": page(
     [
       post.html,
+      // A password field on a public page (Capsomer's field demo) is not a sign-in wall.
+      '<label>Password <input type="password"></label>',
       // B28: an enhanced chart's SVG is a group described as a chart (WAI-ARIA APG), drawn narrow enough for 320 px.
       frame("enhanced", chart("Talks per year", { width: 300 }).replace(/ role="img"/, ' role="group" aria-roledescription="chart"')),
       // Inline primitives: one named with its values, in a stat tile; one hidden beside the numbers, in a table row.

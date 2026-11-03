@@ -33,7 +33,7 @@
 // a query included (/x?tab=a, for a chart behind a tab); each
 // --start URL is opened first in every browser context, so a demo route that sets a session cookie opens the pages behind it. A page the browser could not open is titled G:
 // an error when it answers 200 with an empty body (broken for every reader) or lands on a sign-in page (Cloudflare Access, a
-// login path or a password form: its charts were never read), a warning otherwise. Exits 0 with no errors, 1 with any, and 2 when it could not run: the site or its sitemap does not
+// login path, or a password form it was sent on to: its charts were never read), a warning otherwise. Exits 0 with no errors, 1 with any, and 2 when it could not run: the site or its sitemap does not
 // answer, no page opened, or no browser started.
 //
 // Needs playwright-core and axe-core (optional peers); when they are not installed it installs the pinned versions into a
@@ -344,7 +344,8 @@ async function visit(context, url, measured, narrow = false) {
 
 /**
  * Where a page sent the reader to sign in, or null when it did not: it landed on Cloudflare Access, was sent on to a sign-in or
- * log-in path, or shows a form that asks for a password.
+ * log-in path, or was sent on to a page with a form that asks for a password. A password field on the page asked for is not a wall:
+ * Capsomer's field demo (/components/field/states) shows one, and it answered 200 in place (2026-11-03).
  * @param {import("playwright-core").Page} page @param {string} asked
  */
 async function signInWall(page, asked) {
@@ -352,8 +353,8 @@ async function signInWall(page, asked) {
   const wall =
     /(?:^|\.)cloudflareaccess\.com$/i.test(landed.hostname) ||
     /\/cdn-cgi\/access\//i.test(landed.pathname) ||
-    (landed.href !== asked && /\/(?:sign-?in|log-?in|auth)(?:\/|$)/i.test(landed.pathname)) ||
-    (await page.locator('input[type="password"]').count()) > 0;
+    (landed.href !== asked &&
+      (/\/(?:sign-?in|log-?in|auth)(?:\/|$)/i.test(landed.pathname) || (await page.locator('input[type="password"]').count()) > 0));
   return wall ? landed.origin + landed.pathname : null;
 }
 
