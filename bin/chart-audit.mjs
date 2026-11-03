@@ -31,7 +31,8 @@
 // C1, C2 and the frame are errors; --no-strict-frame makes them warnings (--strict-frame, the old opt-in, is still accepted).
 // --pages adds pages to the crawl (a file of URLs or paths, one per line, or a comma list), for charts no link reaches; each
 // --start URL is opened first in every browser context, so a demo route that sets a session cookie opens the pages behind it. A page the browser could not open is titled G:
-// an error when it answers 200 with an empty body (broken for every reader), a warning otherwise. Exits 0 with no errors, 1 with any, and 2 when it could not run: the site or its sitemap does not
+// an error when it answers 200 with an empty body (broken for every reader) or lands on a sign-in page (Cloudflare Access, a
+// login path or a password form: its charts were never read), a warning otherwise. Exits 0 with no errors, 1 with any, and 2 when it could not run: the site or its sitemap does not
 // answer, no page opened, or no browser started.
 //
 // Needs playwright-core and axe-core (optional peers); when they are not installed it installs the pinned versions into a
@@ -188,7 +189,9 @@ await Promise.all(
       } catch (error) {
         const message = String(error instanceof Error ? error.message : error).split("\n")[0];
         // An empty page is broken for every reader, so it fails; a timeout or a refused load may be this run's alone.
-        findings.push({ severity: message.startsWith("answered 200 with an empty body") ? "error" : "warning", item: "G", url, detail: `the browser could not open it: ${message}` });
+        // A sign-in wall hides every chart on the page from the check, so it fails too: a false "no charts" is a false pass.
+        const broken = message.startsWith("answered 200 with an empty body") || message.startsWith("redirected to sign-in");
+        findings.push({ severity: broken ? "error" : "warning", item: "G", url, detail: `the browser could not open it: ${message}` });
       } finally {
         busy--;
       }
@@ -314,6 +317,10 @@ async function visit(context, url, measured, narrow = false) {
     }
     if (!response || response.status() >= 400) throw new Error(`answered ${response?.status() ?? "nothing"}`);
     if ((await response.body()).length === 0) throw new Error("answered 200 with an empty body four times in 12 seconds");
+    // A page behind a sign-in wall (Cloudflare Access, a site's own login) shows the sign-in page in its place: no chart on it
+    // was read, so it must not pass as a page with none.
+    const signIn = await signInWall(page, served(url));
+    if (signIn) throw new Error(`redirected to sign-in at ${signIn}, so its charts were never read`);
     if (measured) {
       await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => undefined);
       // At 320 px, scroll the page as a reader would, so a chart a site draws again (or swaps for its narrow drawing)
@@ -328,6 +335,21 @@ async function visit(context, url, measured, narrow = false) {
   } finally {
     await page.close();
   }
+}
+
+/**
+ * Where a page sent the reader to sign in, or null when it did not: it landed on Cloudflare Access, was sent on to a sign-in or
+ * log-in path, or shows a form that asks for a password.
+ * @param {import("playwright-core").Page} page @param {string} asked
+ */
+async function signInWall(page, asked) {
+  const landed = new URL(page.url());
+  const wall =
+    /(?:^|\.)cloudflareaccess\.com$/i.test(landed.hostname) ||
+    /\/cdn-cgi\/access\//i.test(landed.pathname) ||
+    (landed.href !== asked && /\/(?:sign-?in|log-?in|auth)(?:\/|$)/i.test(landed.pathname)) ||
+    (await page.locator('input[type="password"]').count()) > 0;
+  return wall ? landed.origin + landed.pathname : null;
 }
 
 /** The chart libraries whose code is in the scripts a page loaded. @param {string[]} urls */
