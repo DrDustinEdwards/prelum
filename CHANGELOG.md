@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.32.4 (2026-11-03)
+
+- `prelum-chart-audit --pages` keeps a named page's query, so `/x?tab=a` and `/x?tab=b` are each read (a chart behind a
+  tab). Pages the crawl finds by link are still keyed by their path alone.
+
 ## 0.32.3 (2026-11-03)
 
 - `prelum-chart-audit` fails a page that lands on a sign-in wall (Cloudflare Access, a sign-in or log-in path, or a

@@ -29,7 +29,8 @@
 // name that states its values or finding, or when it is aria-hidden beside visible text that gives the numbers; else B18.
 //
 // C1, C2 and the frame are errors; --no-strict-frame makes them warnings (--strict-frame, the old opt-in, is still accepted).
-// --pages adds pages to the crawl (a file of URLs or paths, one per line, or a comma list), for charts no link reaches; each
+// --pages adds pages to the crawl (a file of URLs or paths, one per line, or a comma list), for charts no link reaches,
+// a query included (/x?tab=a, for a chart behind a tab); each
 // --start URL is opened first in every browser context, so a demo route that sets a session cookie opens the pages behind it. A page the browser could not open is titled G:
 // an error when it answers 200 with an empty body (broken for every reader) or lands on a sign-in page (Cloudflare Access, a
 // login path or a password form: its charts were never read), a warning otherwise. Exits 0 with no errors, 1 with any, and 2 when it could not run: the site or its sitemap does not
@@ -117,15 +118,17 @@ if (sitemap.length === 0 && extra.length === 0) {
 /** @type {string[]} */
 const queue = [];
 const paths = new Set();
-const enqueue = (/** @type {string} */ url) => {
+// A named page keeps its query in the key, so /x?tab=a and /x?tab=b are both read (charts behind a tab); a crawled link
+// is keyed by its path alone, so filters and sorts never multiply the crawl.
+const enqueue = (/** @type {string} */ url, named = false) => {
   const parsed = new URL(url);
-  const path = parsed.pathname.replace(/(\/index)?(\.html)?\/?$/, "");
+  const path = parsed.pathname.replace(/(\/index)?(\.html)?\/?$/, "") + (named ? parsed.search : "");
   if (parsed.origin !== origin || paths.has(path) || paths.size >= Number(values["max-pages"])) return;
   paths.add(path);
   queue.push(parsed.href);
 };
 // The named pages first, so --max-pages never drops them.
-for (const url of extra) enqueue(url);
+for (const url of extra) enqueue(url, true);
 for (const page of pages) {
   if (page.status === 200 && (page.html !== undefined || /html/i.test(String(/** @type {Record<string, string>} */ (page.headers ?? {})["content-type"] ?? "")))) enqueue(page.url);
   else if (page.status >= 300 && page.status < 400 && page.location) enqueue(new URL(page.location, page.url).href);
