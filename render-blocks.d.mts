@@ -1,5 +1,3 @@
-/** GitHub's five alert types, the syntax GitHub, Obsidian and Docusaurus read. */
-export const CALLOUTS: readonly ["note", "tip", "important", "warning", "caution"];
 /** `> [!NOTE]` and the other four, with an optional title after the marker: a role=note div. */
 export function remarkCallouts(): (tree: import("mdast").Root) => void;
 /** `:kbd`, `:abbr{title}`, `:mark`, `:sub` and `:sup`. */
@@ -14,8 +12,6 @@ export function remarkEmbeds(file: string): (tree: import("mdast").Root) => void
 export function remarkGallery(file: string): (tree: import("mdast").Root) => void;
 /** `::button[Label]{href}` and `::bookmark[Title]{url description}`. */
 export function remarkLinkBlocks(file: string): (tree: import("mdast").Root) => void;
-/** The Q: and A: lines of a :::faq block. */
-export function faqPairs(content: string): Array<{ question: string; answer: string }>;
 /** :::faq, shown as a definition list and returned as `faq`. */
 export function remarkFaq(
     file: string,

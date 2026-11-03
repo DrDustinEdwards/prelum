@@ -35,5 +35,3 @@ export function buildChartModel(attrs: Record<string, string>, csv: string, { st
  */
 export function renderChartHast(model: ReturnType<typeof buildChartModel>, captionChildren: any[], figure: any): import("hast").ElementContent[];
 export const CHART_TYPES: string[];
-/** The issues `strict` refuses (E4): a reader would struggle with each, and the author can fix each in the directive. */
-export const STRICT_CHART_ISSUES: string[];

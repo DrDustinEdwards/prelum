@@ -15,7 +15,7 @@ const DEFAULT_HEIGHT = 360;
 const NARROW_WIDTH = 240;
 
 /** The issues `strict` refuses (E4): a reader would struggle with each, and the author can fix each in the directive. */
-export const STRICT_CHART_ISSUES = ["title-missing", "too-many-series"];
+const STRICT_CHART_ISSUES = ["title-missing", "too-many-series"];
 
 /**
  * @param {string} text
