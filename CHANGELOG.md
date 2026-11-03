@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Draws the specimen and tests with Enarratio 0.7.3 (the devDependency, from 0.7.0; the peer range is unchanged). With 0.7.3
+  a chart no longer moves the page when the enhancement layer loads. Its figure writes the controls `enhance()` adds (Show
+  table, Play as sound, Pick a range, the downloads) into the markup, inert and marked `data-enarratio-pending`, and
+  `render/chart-enhance` swaps in the working ones. So the default `assertSafe` allowlist adds `button` (`class`, `type`)
+  and `div` and `span` with `inert` and `data-enarratio-pending`. Without that, a site on Enarratio 0.7.3 with `assertSafe`
+  on would have every chart refused. `RENDER_VERSION` is 18, since a chart now writes those controls.
+- A site on Enarratio 0.7.3 that renders `:::chart` but never calls `enhanceCharts()` shows those controls inert while
+  scripts run (`@media (scripting: none)` hides them). The specimen calls it on every page.
+
 ## 0.32.6 (2026-11-03)
 
 - `prelum-chart-audit` counts a password form as a sign-in wall only on a page the reader was sent on to. A public page that
