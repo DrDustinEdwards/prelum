@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.32.2 (2026-11-03)
+
+- `strictCharts` no longer refuses a chart for its text's reading grade: only a missing title or too many series. Text
+  should be whatever reads best, and a grade formula cannot judge that (Enarratio 0.7.1 drops the check too).
+
 ## 0.32.1 (2026-11-01)
 
 - Accepts Enarratio 0.7.0 as its peer (`^0.5.0 || ^0.6.0 || ^0.7.0`), and draws the specimen and tests with it. 0.7.0's

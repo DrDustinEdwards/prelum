@@ -47,8 +47,7 @@ export function remarkChartSource(file: string, chartData: ((src: string, contex
  * @param {string} options.assetPrefix the prefix of the site's diagram assets, for example "example-"
  * @param {(src: string, context: { file: string }) => string | Promise<string>} [options.chartData] reads the CSV a
  *   `:::chart{src="..."}` cites (a URL or a media path), at render time; without it a `src` is refused
- * @param {boolean} [options.strictCharts] refuse a chart with no title, author text above reading grade 9 or too many
- *   series, where the default renders it with a warning (E4)
+ * @param {boolean} [options.strictCharts] refuse a chart with no title or too many series, where the default renders it with a warning (E4)
  * @returns {RenderPack}
  */
 export function editorialPack({ assetPrefix, chartData, strictCharts, diagramSizes }: {
