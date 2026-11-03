@@ -145,7 +145,9 @@ B30); an SVG without `role="img"` and a name, or a table without scoped `th` and
 legend swatch under 3:1 as painted, custom properties resolved, in either scheme (B1); text under 12 px (B3); an axe-core
 violation inside the chart in either scheme (B27); a chart whose drawing is over `--chart-kb` of inline SVG (D6; the data table and a waiting phone drawing are not counted); a page that loads Recharts,
 Chart.js, ApexCharts, ECharts, Highcharts, Plotly, Nivo or visx, or draws an SVG chart by hand (F); at 320 px wide, a drawing
-that overflows its frame sideways or chart text under 12 px (C12). A missing CSV link (C1), source line (C2) or frame (F) is an
+that overflows its frame sideways or chart text under 12 px (C12); at 1280 and 320 px, layout shifts (the Layout Instability
+API, no recent input) that move a chart's contents by 0.01 or more in all (D5), with each chart held in view as the page loads,
+since a shift counts only while what it moves is on screen. A missing CSV link (C1), source line (C2) or frame (F) is an
 error; `--no-strict-frame` makes them warnings (`--strict-frame` is still accepted and changes nothing).
 
 The SVG's role (B28) follows the WAI-ARIA APG: `role="img"` for a static chart, or `role="group"` with
