@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.32.6 (2026-11-03)
+
+- `prelum-chart-audit` counts a password field as a sign-in wall only on a page the reader was redirected to. A page that
+  shows one as a specimen (Capsomer's field states) read as a G error.
+
 ## 0.32.5 (2026-11-03)
 
 - `prelum-chart-audit --pages` keeps a named page's query, so `/x?tab=a` and `/x?tab=b` are each read (a chart behind a

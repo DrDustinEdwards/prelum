@@ -343,8 +343,8 @@ async function visit(context, url, measured, narrow = false) {
 }
 
 /**
- * Where a page sent the reader to sign in, or null when it did not: it landed on Cloudflare Access, was sent on to a sign-in or
- * log-in path, or shows a form that asks for a password.
+ * Where a page sent the reader to sign in, or null when it did not: it landed on Cloudflare Access, or was sent on to a
+ * sign-in or log-in path or to a page with a password field. A password field on the page asked for (a form specimen) is no wall.
  * @param {import("playwright-core").Page} page @param {string} asked
  */
 async function signInWall(page, asked) {
@@ -352,8 +352,9 @@ async function signInWall(page, asked) {
   const wall =
     /(?:^|\.)cloudflareaccess\.com$/i.test(landed.hostname) ||
     /\/cdn-cgi\/access\//i.test(landed.pathname) ||
-    (landed.href !== asked && /\/(?:sign-?in|log-?in|auth)(?:\/|$)/i.test(landed.pathname)) ||
-    (await page.locator('input[type="password"]').count()) > 0;
+    (landed.href !== asked &&
+      (/\/(?:sign-?in|log-?in|auth)(?:\/|$)/i.test(landed.pathname) ||
+        (await page.locator('input[type="password"]').count()) > 0));
   return wall ? landed.origin + landed.pathname : null;
 }
 
