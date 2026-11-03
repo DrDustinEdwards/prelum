@@ -118,7 +118,7 @@ does not load.
 
 `:::chart{type x y alt title ...}` holds its data as a fenced CSV block, or cites it with `src="..."` (a URL or a media path):
 the site's `chartData(src, { file })` loader, passed to `editorialPack`, reads it at render time. Prelum fetches nothing itself,
-so a `src` on a site without the loader is refused. A chart with no title, author text above reading grade 9 or too many series
+so a `src` on a site without the loader is refused. A chart with no title or too many series
 renders with a warning; `editorialPack({ strictCharts: true })` refuses it instead, so an editor can block a publish on it.
 
 The chart is drawn on the server at 700 px, so it reads with scripts off. On a narrower screen Enarratio's frame would keep it
@@ -251,7 +251,7 @@ const { html, toc, hasMath, mediaRefs, images, videos, diagrams, blockedUrls, re
       assetPrefix: "example-", // chart, diagram, sidenote, pullquote, swatch
       diagramSizes, // the sizes.json drawDiagrams writes beside the drawings; sizes each diagram
       chartData: async (src, { file }) => csvText, // reads :::chart{src="..."}; without it a src is refused
-      strictCharts: false, // true refuses a chart with no title, text above grade 9 or too many series
+      strictCharts: false, // true refuses a chart with no title or too many series
     })],
     highlight: createHighlight({ wasm }), // without it a code block is plain <pre><code>
     maxBytes: 512 * 1024, // refused before parsing

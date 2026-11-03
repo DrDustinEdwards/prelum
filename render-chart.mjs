@@ -15,7 +15,7 @@ const DEFAULT_HEIGHT = 360;
 const NARROW_WIDTH = 240;
 
 /** The issues `strict` refuses (E4): a reader would struggle with each, and the author can fix each in the directive. */
-export const STRICT_CHART_ISSUES = ["title-missing", "reading-level", "too-many-series"];
+export const STRICT_CHART_ISSUES = ["title-missing", "too-many-series"];
 
 /**
  * @param {string} text
@@ -174,7 +174,7 @@ function drawChart(model) {
     xLabel: x,
     yLabel: multi ? null : yColumns[0],
   };
-  // A reader-facing problem (no title, text above grade 9, too many series) is a render warning
+  // A reader-facing problem (no title, too many series) is a render warning
   // the editor shows, not a refused post, unless the site renders strictly.
   const onIssue = (/** @type {{ code: string, message: string }} */ issue) => issues.push({ code: issue.code, message: issue.message });
   const series = multi ? { series: "series", seriesDomain: labels } : {};
