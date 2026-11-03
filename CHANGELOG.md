@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.32.7 (2026-11-03)
+
+- `prelum-chart-audit` reports D5, a chart that does not reserve its size: at 1280 and 320 px, layout shifts with no recent
+  input that move a chart's contents by 0.01 or more in all. A shift counts only while what it moves is on screen, and charts
+  grow as the page loads (hydration, then the enhancement layer), mostly below the fold, so the first chart is held at the top
+  of the screen as the page loads, each chart is then scrolled to and given a moment, and a chart that changed size out of
+  sight is held in view in a load of its own (up to three more loads, only on a page with such a chart). Foxing's
+  /demos/stats, Foxhound's dashboard and Prelum's specimen (Enarratio before 0.7.3) were passed with no D5.
+
 ## 0.32.6 (2026-11-03)
 
 - `prelum-chart-audit` counts a password form as a sign-in wall only on a page the reader was sent on to. A public page that
