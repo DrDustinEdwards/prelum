@@ -153,3 +153,34 @@ test("prelum-chart-audit finds every planted mistake, as an error with the page 
     server.close();
   }
 });
+
+test("prelum-chart-audit fails a run whose every page is behind sign-in, and does not call it a run that could not start", async () => {
+  // Desk's /demos/progress, 2026-11-03: its one page went to Access, nothing "opened", and the run exited 2 without the G error.
+  const server = createServer((request, response) => {
+    const path = new URL(request.url ?? "/", "http://localhost").pathname;
+    if (path === "/private") {
+      response.writeHead(302, { location: "/cdn-cgi/access/login/desk.example.com" });
+      response.end();
+      return;
+    }
+    response.writeHead(path.startsWith("/cdn-cgi/access/login") ? 200 : 404, { "content-type": "text/html" });
+    response.end(page('<form><label>Code <input type="password"></label></form>'));
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve(undefined)));
+  const address = server.address();
+  const origin = `http://127.0.0.1:${typeof address === "object" && address ? address.port : 0}`;
+  try {
+    /** @type {{ code: number | null, output: string }} */
+    const { code, output } = await new Promise((resolve) => {
+      let output = "";
+      const child = spawn(process.execPath, [bin, "--origin", origin, "--pages", "/private"], { stdio: ["ignore", "pipe", "pipe"] });
+      child.stdout.on("data", (chunk) => (output += chunk));
+      child.stderr.on("data", (chunk) => (output += chunk));
+      child.on("close", (code) => resolve({ code, output }));
+    });
+    assert.equal(code, 1, output);
+    assert.ok(output.includes(`::error title=G::${origin}/private `) && output.includes("redirected to sign-in"), output);
+  } finally {
+    server.close();
+  }
+});
