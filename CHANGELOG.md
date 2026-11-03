@@ -6,6 +6,9 @@
 
 - `prelum-chart-audit` counts a password form as a sign-in wall only on a page the reader was sent on to. A public page that
   shows a password field in place, such as Capsomer's field demo, was failed with a false G error.
+- `prelum-chart-audit` opens a closed fold (a `details` element) that holds a chart before reading it, as a reader would. A
+  chart frame folded away (the Portal's trends) redraws at its width only once opened, so it was read at its first width and
+  failed C12, with its finding sentence called hidden.
 
 ## 0.32.5 (2026-11-03)
 

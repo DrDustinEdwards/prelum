@@ -326,8 +326,10 @@ async function visit(context, url, measured, narrow = false) {
     // was read, so it must not pass as a page with none.
     const signIn = await signInWall(page, served(url));
     if (signIn) throw new Error(`redirected to sign-in at ${signIn}, so its charts were never read`);
+    if (measured) await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => undefined);
+    // A chart in a closed fold is read as the reader sees it once they open the fold: a frame redraws at its width only then.
+    if (await page.evaluate(openFolds)) await page.waitForTimeout(500);
     if (measured) {
-      await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => undefined);
       // At 320 px, scroll the page as a reader would, so a chart a site draws again (or swaps for its narrow drawing)
       // as it nears the viewport is measured as the reader sees it.
       if (narrow) await page.evaluate(scrollThrough);
@@ -376,6 +378,20 @@ async function scrollThrough() {
   }
   scrollTo(0, 0);
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+}
+
+/**
+ * In the page: open each closed fold (a details element) that holds a chart, leaving Enarratio's own "Show data" folds as they
+ * are; how many it opened. Capsid's Portal keeps its overview's trends folded (2026-11-03).
+ */
+function openFolds() {
+  let opened = 0;
+  for (const fold of Array.from(document.querySelectorAll("details:not([open]):not(.enarratio-data)"))) {
+    if (!fold.querySelector(".enarratio[data-enarratio], .cap-chart")) continue;
+    /** @type {HTMLDetailsElement} */ (fold).open = true;
+    opened++;
+  }
+  return opened;
 }
 
 /** In the page: fonts loaded and every finite animation finished, so colors are read as they rest. */
