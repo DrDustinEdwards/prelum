@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.32.4 (2026-11-03)
+
+- `prelum-chart-audit` fails a run whose every page lands on a sign-in wall with the G error (exit 1). It exited 2,
+  "could not run", without printing the error, so a site with only signed-in chart pages (Desk) was never failed.
+
 ## 0.32.3 (2026-11-03)
 
 - `prelum-chart-audit` fails a page that lands on a sign-in wall (Cloudflare Access, a sign-in or log-in path, or a
