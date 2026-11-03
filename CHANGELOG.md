@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The specimen and tests use Capsomer 0.66.0 (the devDependency, from 0.65.0). Its fallback fonts have a bold face per weight range, so bold text in a fallback is as wide as the real face and headings no longer rewrap when the font arrives. No package changes.
 - Draws the specimen and tests with Enarratio 0.7.3 (the devDependency, from 0.7.0; the peer range is unchanged). With 0.7.3
   a chart no longer moves the page when the enhancement layer loads. Its figure writes the controls `enhance()` adds (Show
   table, Play as sound, Pick a range, the downloads) into the markup, inert and marked `data-enarratio-pending`, and
