@@ -20,6 +20,11 @@
 //   D6   the chart's drawing (its inline SVG, as shown) is over --chart-kb; the data table and a phone drawing waiting in
 //        the frame's redraw spec are not counted, since the table is the chart's text equivalent and only one drawing shows
 //   F    the page loads another chart library, or draws an SVG chart outside Enarratio; the chart is not in the frame
+//   D5   with scripts on, at 1280 and at 320 px, the page shifts (layout-shift entries with no recent input) and a moved element
+//        is inside a chart, by 0.01 or more in all (a chart that grows or shrinks as it is enhanced or redrawn moves what follows
+//        it). A shift counts only while what it moves is on screen, so the first chart is held at the top of the screen as the
+//        page loads, each chart is then scrolled to, and a chart that changed size out of sight as the page loaded is held in
+//        view in a load of its own (up to 3 more loads); a fold the check opens itself is not counted
 //   C1   no CSV link; C2 no source line
 //   C12  at 320 px wide (scripts on, the page scrolled through), the drawing overflows its frame sideways (a table chart, a data
 //        table, may scroll: WCAG 1.4.10's two-dimensional exception), or chart text is drawn under 12 px
@@ -90,6 +95,8 @@ const served = (/** @type {string} */ url) => (from && url.startsWith(origin) ? 
 const fetcher = (input, init) => fetch(served(typeof input === "string" ? input : input instanceof URL ? input.href : input.url), init);
 const budget = Number(values["chart-kb"]) * 1024;
 const frameSeverity = values["no-strict-frame"] ? "warning" : "error";
+// D5: chart layout shift at or over this is an error. The checklist asks for 0; under 0.01 is sub-pixel rounding.
+const D5_LIMIT = 0.01;
 // The narrow pass: a phone in portrait, the width WCAG 1.4.10 (reflow) names.
 const NARROW = 320;
 const at = (/** @type {string} */ ref) => new URL(ref, `${origin}/`).href;
@@ -291,6 +298,12 @@ async function auditPage(url) {
     const small = unit.measured?.smallText;
     if (small) add("error", "C12", `${name}: ${small.count} text under 12 px, smallest "${small.sample}" at ${small.px.toFixed(1)} px`);
   }
+  for (const [width, pass] of /** @type {const} */ ([[1280, light], [NARROW, narrow]])) {
+    const score = total(pass.shifts);
+    if (score < D5_LIMIT) continue;
+    const worst = [...pass.shifts].sort((a, b) => b.value - a.value)[0];
+    add("error", "D5", `at ${width} px, charts shift the page by ${score.toFixed(3)} (layout shift); largest ${worst.value.toFixed(3)}, ${worst.moved}`);
+  }
   for (const library of libraries) add("error", "F", `loads ${library}; every chart is drawn by Enarratio`);
   for (const library of light.libraryCharts) add("error", "B2", `a ${library} chart is drawn in the browser, so with scripts off there is no chart, text or table`);
   for (const svg of new Set([...off.drawn, ...light.drawn])) add("error", "F", `an SVG chart drawn outside Enarratio: ${svg}`);
@@ -305,7 +318,10 @@ async function auditPage(url) {
  * @param {boolean} [narrow] the 320 px pass: overflow and text size, no axe
  */
 async function visit(context, url, measured, narrow = false) {
+  // D5 is read at 1280 (the light pass) and at 320.
+  const pinned = measured && (narrow || context === contexts.light);
   const page = await context.newPage();
+  if (pinned) await page.addInitScript(pinChart, 0);
   /** @type {string[]} */
   const scriptUrls = [];
   page.on("response", (response) => {
@@ -328,17 +344,47 @@ async function visit(context, url, measured, narrow = false) {
     if (signIn) throw new Error(`redirected to sign-in at ${signIn}, so its charts were never read`);
     if (measured) await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => undefined);
     // A chart in a closed fold is read as the reader sees it once they open the fold: a frame redraws at its width only then.
-    if (await page.evaluate(openFolds)) await page.waitForTimeout(500);
+    let foldsAt = -1;
+    if (await page.evaluate(openFolds)) {
+      foldsAt = await page.evaluate(() => performance.now() - 50);
+      await page.waitForTimeout(500);
+    }
+    // D5: the first chart was held in view as the page loaded; from here the check scrolls the page itself.
+    const loading = pinned ? await page.evaluate(stopPin) : null;
     if (measured) {
-      // At 320 px, scroll the page as a reader would, so a chart a site draws again (or swaps for its narrow drawing)
-      // as it nears the viewport is measured as the reader sees it.
-      if (narrow) await page.evaluate(scrollThrough);
+      // Scroll the page as a reader would, so a chart a site draws again (or swaps for its narrow drawing)
+      // as it nears the viewport is measured as the reader sees it; at 1280 too, on a page with a chart, for D5.
+      if (pinned && (narrow || (await page.evaluate(hasChart)))) {
+        // Each chart is brought into view and given a moment first, as a reader reaching it: a shift only counts while the
+        // moved element is on screen, so one a lazy chart makes after a fast scroll has passed it would go unseen (D5).
+        await page.evaluate(visitCharts);
+        await page.evaluate(scrollThrough);
+      }
       await page.evaluate(settle);
       if (!narrow) await page.evaluate(axeSource);
     }
     const result = await page.evaluate(readCharts, { measured, narrow, libraries: LIBRARIES.map(([name, container, , global]) => /** @type {const} */ ([name, container, global])), tags: AXE_TAGS });
+    /** @type {Array<{ t: number, value: number, moved: string }>} */
+    let shifts = [];
+    if (pinned && result.units.length > 0) {
+      // A site may enhance its charts late (Foxhound's dashboard, about 5 s after load): the shifts are read once two seconds
+      // pass with none.
+      await page.evaluate(quietShifts, 0);
+      shifts = await page.evaluate(readShifts, foldsAt);
+      // A chart that changed its size out of sight as the page loaded moved nothing the Layout Instability API could count, so
+      // the page is loaded again with that chart held in view, as a reader who scrolled to it would see it (at most 3 more loads).
+      const opened = (/** @type {number} */ t) => foldsAt >= 0 && t >= foldsAt && t < foldsAt + 1000;
+      /** @type {Map<number, number>} */
+      const unseen = new Map();
+      for (const r of loading?.resized ?? []) if (r.index > 0 && !opened(r.t)) unseen.set(r.index, Math.max(unseen.get(r.index) ?? 0, r.t));
+      for (const [index, last] of [...unseen].slice(0, 3)) {
+        if (total(shifts) >= D5_LIMIT) break;
+        const again = await reloadPinned(context, url, index, last);
+        if (total(again) > total(shifts)) shifts = again;
+      }
+    }
     for (const url of scriptUrls) if (!scripts.has(url)) scripts.set(url, page.request.get(url).then((r) => r.text()).catch(() => ""));
-    return { ...result, scripts: scriptUrls };
+    return { ...result, shifts, scripts: scriptUrls };
   } finally {
     await page.close();
   }
@@ -784,5 +830,142 @@ async function launch(chromium) {
 async function newContext(browser, colorScheme, javaScriptEnabled, width = 1280) {
   // Headless Chrome's own user agent says HeadlessChrome, which some bot rules refuse; this one names the audit instead.
   const userAgent = `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${browser.version().split(".")[0]}.0.0.0 Safari/537.36 prelum-chart-audit`;
-  return browser.newContext({ colorScheme, javaScriptEnabled, reducedMotion: "reduce", bypassCSP: true, viewport: { width, height: 900 }, userAgent });
+  const context = await browser.newContext({ colorScheme, javaScriptEnabled, reducedMotion: "reduce", bypassCSP: true, viewport: { width, height: 900 }, userAgent });
+  if (javaScriptEnabled) await context.addInitScript(watchShifts);
+  return context;
+}
+
+/**
+ * In the page, before its scripts: keeps each layout shift with no recent input (the Layout Instability API, which CLS sums)
+ * that moved an element inside a chart, for D5.
+ */
+function watchShifts() {
+  /** @type {Array<{ t: number, value: number, moved: string }>} */
+  const shifts = [];
+  Object.defineProperty(window, "__chartAuditShifts", { value: shifts });
+  try {
+    new PerformanceObserver((list) => {
+      for (const entry of /** @type {any[]} */ (list.getEntries())) {
+        if (entry.hadRecentInput) continue;
+        for (const source of entry.sources ?? []) {
+          const el = source.node?.nodeType === 1 ? source.node : source.node?.parentElement;
+          const chart = el?.closest?.(".cap-chart, figure.enarratio, .enarratio[data-enarratio]");
+          if (!chart) continue;
+          const tag = `${el.localName}${el.classList.length ? `.${[...el.classList].join(".")}` : ""}`;
+          const dy = Math.round(source.currentRect.y - source.previousRect.y);
+          const dh = Math.round(source.currentRect.height - source.previousRect.height);
+          shifts.push({ t: entry.startTime, value: entry.value, moved: `${tag} ${dy >= 0 ? "+" : ""}${dy} px${dh ? `, height ${dh >= 0 ? "+" : ""}${dh}` : ""}` });
+          break;
+        }
+      }
+    }).observe({ type: "layout-shift", buffered: true });
+  } catch {
+    // A browser without the API reports nothing.
+  }
+}
+
+/** In the page: whether it holds a chart, so a page with none is not scrolled at 1280. */
+function hasChart() {
+  return document.querySelector(".cap-chart, .enarratio[data-enarratio]") !== null;
+}
+
+/** In the page: scroll each chart to the middle of the screen in turn and wait 400 ms there. */
+async function visitCharts() {
+  for (const chart of Array.from(document.querySelectorAll(".cap-chart, figure.enarratio"))) {
+    if (chart.parentElement?.closest(".cap-chart, figure.enarratio")) continue;
+    chart.scrollIntoView({ block: "center" });
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+}
+
+/**
+ * In the page, before its scripts (D5): from the first frame, keep the index-th chart's top at the top of the screen, as a
+ * reader who scrolled to it sees it while it is enhanced, and note each chart whose height changed while it was out of sight,
+ * since its shift moved nothing on screen and so went uncounted. Runs until stopPin. @param {number} index
+ */
+function pinChart(index) {
+  const ROOT = ".cap-chart, figure.enarratio";
+  /** @type {Array<{ index: number, t: number }>} */
+  const resized = [];
+  /** @type {number[]} */
+  const heights = [];
+  const state = { stop: false, resized };
+  Object.defineProperty(window, "__chartAuditPin", { value: state });
+  const frame = () => {
+    if (state.stop) return;
+    const charts = Array.from(document.querySelectorAll(ROOT)).filter((chart) => !chart.parentElement?.closest(ROOT));
+    charts.forEach((chart, i) => {
+      const box = chart.getBoundingClientRect();
+      if (box.width === 0) return;
+      const inSight = box.height <= innerHeight ? box.top >= 0 && box.bottom <= innerHeight : box.top < innerHeight && box.bottom > 0;
+      if (heights[i] !== undefined && Math.abs(box.height - heights[i]) >= 1 && !inSight) resized.push({ index: i, t: performance.now() });
+      heights[i] = box.height;
+    });
+    const top = charts[index]?.getBoundingClientRect().top;
+    if (top !== undefined && Math.abs(top) >= 1) scrollBy(0, top);
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+
+/** In the page: stop pinChart; the charts that changed size out of sight. */
+function stopPin() {
+  const state = /** @type {{ stop: boolean, resized: Array<{ index: number, t: number }> } | undefined} */ (/** @type {any} */ (window).__chartAuditPin);
+  if (!state) return { resized: [] };
+  state.stop = true;
+  return { resized: state.resized };
+}
+
+/** The D5 score of a pass's chart shifts. @param {Array<{ value: number }>} shifts */
+function total(shifts) {
+  return shifts.reduce((sum, s) => sum + s.value, 0);
+}
+
+/**
+ * Loads a page again with its index-th chart held in view (D5), until a second past the time it last changed size in the first
+ * load and then two quiet seconds; its chart shifts.
+ * @param {BrowserContext} context @param {string} url @param {number} index @param {number} last
+ */
+async function reloadPinned(context, url, index, last) {
+  const page = await context.newPage();
+  try {
+    await page.addInitScript(pinChart, index);
+    await page.goto(served(url), { waitUntil: "load", timeout: 30_000 });
+    await page.evaluate(quietShifts, Math.min(last + 1000, 10_000));
+    await page.evaluate(stopPin);
+    return await page.evaluate(readShifts, -1);
+  } catch {
+    return [];
+  } finally {
+    await page.close();
+  }
+}
+
+/** In the page: wait until it is `until` ms since navigation and then two seconds pass with no layout shift, or ten in all. @param {number} until */
+function quietShifts(until) {
+  return new Promise((resolve) => {
+    let timer = setTimeout(done, Math.max(0, until - performance.now()) + 2000);
+    const stop = setTimeout(done, 10_000);
+    const observer = new PerformanceObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(done, Math.max(0, until - performance.now()) + 2000);
+    });
+    function done() {
+      clearTimeout(timer);
+      clearTimeout(stop);
+      observer.disconnect();
+      resolve(undefined);
+    }
+    try {
+      observer.observe({ type: "layout-shift" });
+    } catch {
+      done();
+    }
+  });
+}
+
+/** In the page: the chart shifts watchShifts kept, less those in the second after a fold the check opened. @param {number} opened */
+function readShifts(opened) {
+  const shifts = /** @type {Array<{ t: number, value: number, moved: string }>} */ (/** @type {any} */ (window).__chartAuditShifts ?? []);
+  return shifts.filter((s) => !(opened >= 0 && s.t >= opened && s.t < opened + 1000));
 }
