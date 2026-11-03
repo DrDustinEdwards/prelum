@@ -46,7 +46,10 @@ const site = {
   "/": page("<p>No charts here.</p>"),
   "/good": page(
     [
-      post.html,
+      // In a closed fold (the Portal's trends), redrawn at 320 px only once the reader opens it.
+      `<details><summary>Trends</summary>${post.html}</details>`,
+      // A password field on a public page (Capsomer's field demo) is not a sign-in wall.
+      '<label>Password <input type="password"></label>',
       // B28: an enhanced chart's SVG is a group described as a chart (WAI-ARIA APG), drawn narrow enough for 320 px.
       frame("enhanced", chart("Talks per year", { width: 300 }).replace(/ role="img"/, ' role="group" aria-roledescription="chart"')),
       // Inline primitives: one named with its values, in a stat tile; one hidden beside the numbers, in a table row.

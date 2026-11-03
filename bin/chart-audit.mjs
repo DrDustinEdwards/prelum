@@ -33,7 +33,7 @@
 // a query included (/x?tab=a, for a chart behind a tab); each
 // --start URL is opened first in every browser context, so a demo route that sets a session cookie opens the pages behind it. A page the browser could not open is titled G:
 // an error when it answers 200 with an empty body (broken for every reader) or lands on a sign-in page (Cloudflare Access, a
-// login path or a password form: its charts were never read), a warning otherwise. Exits 0 with no errors, 1 with any, and 2 when it could not run: the site or its sitemap does not
+// login path, or a password form it was sent on to: its charts were never read), a warning otherwise. Exits 0 with no errors, 1 with any, and 2 when it could not run: the site or its sitemap does not
 // answer, no page opened, or no browser started.
 //
 // Needs playwright-core and axe-core (optional peers); when they are not installed it installs the pinned versions into a
@@ -326,8 +326,10 @@ async function visit(context, url, measured, narrow = false) {
     // was read, so it must not pass as a page with none.
     const signIn = await signInWall(page, served(url));
     if (signIn) throw new Error(`redirected to sign-in at ${signIn}, so its charts were never read`);
+    if (measured) await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => undefined);
+    // A chart in a closed fold is read as the reader sees it once they open the fold: a frame redraws at its width only then.
+    if (await page.evaluate(openFolds)) await page.waitForTimeout(500);
     if (measured) {
-      await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => undefined);
       // At 320 px, scroll the page as a reader would, so a chart a site draws again (or swaps for its narrow drawing)
       // as it nears the viewport is measured as the reader sees it.
       if (narrow) await page.evaluate(scrollThrough);
@@ -344,7 +346,8 @@ async function visit(context, url, measured, narrow = false) {
 
 /**
  * Where a page sent the reader to sign in, or null when it did not: it landed on Cloudflare Access, was sent on to a sign-in or
- * log-in path, or shows a form that asks for a password.
+ * log-in path, or was sent on to a page with a form that asks for a password. A password field on the page asked for is not a wall:
+ * Capsomer's field demo (/components/field/states) shows one, and it answered 200 in place (2026-11-03).
  * @param {import("playwright-core").Page} page @param {string} asked
  */
 async function signInWall(page, asked) {
@@ -352,8 +355,8 @@ async function signInWall(page, asked) {
   const wall =
     /(?:^|\.)cloudflareaccess\.com$/i.test(landed.hostname) ||
     /\/cdn-cgi\/access\//i.test(landed.pathname) ||
-    (landed.href !== asked && /\/(?:sign-?in|log-?in|auth)(?:\/|$)/i.test(landed.pathname)) ||
-    (await page.locator('input[type="password"]').count()) > 0;
+    (landed.href !== asked &&
+      (/\/(?:sign-?in|log-?in|auth)(?:\/|$)/i.test(landed.pathname) || (await page.locator('input[type="password"]').count()) > 0));
   return wall ? landed.origin + landed.pathname : null;
 }
 
@@ -375,6 +378,20 @@ async function scrollThrough() {
   }
   scrollTo(0, 0);
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+}
+
+/**
+ * In the page: open each closed fold (a details element) that holds a chart, leaving Enarratio's own "Show data" folds as they
+ * are; how many it opened. Capsid's Portal keeps its overview's trends folded (2026-11-03).
+ */
+function openFolds() {
+  let opened = 0;
+  for (const fold of Array.from(document.querySelectorAll("details:not([open]):not(.enarratio-data)"))) {
+    if (!fold.querySelector(".enarratio[data-enarratio], .cap-chart")) continue;
+    /** @type {HTMLDetailsElement} */ (fold).open = true;
+    opened++;
+  }
+  return opened;
 }
 
 /** In the page: fonts loaded and every finite animation finished, so colors are read as they rest. */
