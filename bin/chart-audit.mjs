@@ -194,6 +194,8 @@ await Promise.all(
         // An empty page is broken for every reader, so it fails; a timeout or a refused load may be this run's alone.
         // A sign-in wall hides every chart on the page from the check, so it fails too: a false "no charts" is a false pass.
         const broken = message.startsWith("answered 200 with an empty body") || message.startsWith("redirected to sign-in");
+        // Such a page did open, so a run whose every page is behind sign-in fails with the G error, not "could not run".
+        if (broken) opened++;
         findings.push({ severity: broken ? "error" : "warning", item: "G", url, detail: `the browser could not open it: ${message}` });
       } finally {
         busy--;
