@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 0.32.5 (2026-11-03)
+## 0.32.6 (2026-11-03)
 
 - `prelum-chart-audit` counts a password form as a sign-in wall only on a page the reader was sent on to. A public page that
   shows a password field in place, such as Capsomer's field demo, was failed with a false G error.
