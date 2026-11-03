@@ -1,6 +1,6 @@
 // prelum-chart-audit against a local site with one clean page and one page of planted mistakes, in a real browser: a check
 // that misses a chart without its table, an unnamed SVG, text that fails only in dark, another chart library, a chart
-// drawn only by script or one that scrolls at 320 px calls a site clean that is not; one that flags the clean page fails every
+// drawn only by script, one that scrolls at 320 px or a page behind a sign-in wall calls a site clean that is not; one that flags the clean page fails every
 // site that does it right. The clean page is a :::chart Prelum rendered, with render/chart-enhance redrawing it at 320 px, a
 // textured series, an enhanced chart's role and inline primitives, so the check's exceptions and the redraw are proven together.
 
@@ -94,6 +94,17 @@ test("prelum-chart-audit finds every planted mistake, as an error with the page 
       response.end(`<urlset>${["/", "/good", "/bad"].map((p) => `<url><loc>${origin}${p}</loc></url>`).join("")}</urlset>`);
       return;
     }
+    // A page behind Cloudflare Access: a 302 to its sign-in page, which has no chart (Desk's /demos/progress, 2026-11-03).
+    if (path === "/private") {
+      response.writeHead(302, { location: "/cdn-cgi/access/login/desk.example.com?redirect_url=%2Fprivate" });
+      response.end();
+      return;
+    }
+    if (path.startsWith("/cdn-cgi/access/login")) {
+      response.writeHead(200, { "content-type": "text/html" });
+      response.end(page('<form><label>Email <input type="email"></label><label>Code <input type="password"></label></form>'));
+      return;
+    }
     const demo = /(?:^|;\s*)demo=1/.test(request.headers.cookie ?? "");
     const body = path === "/demo/charts" && !demo ? page("<p>Start a demo first.</p>") : /** @type {Record<string, string>} */ (site)[path];
     const type = path.endsWith(".css") ? "text/css" : path.endsWith(".js") ? "text/javascript" : "text/html";
@@ -107,7 +118,7 @@ test("prelum-chart-audit finds every planted mistake, as an error with the page 
     /** @type {{ code: number | null, output: string }} */
     const { code, output } = await new Promise((resolve) => {
       let output = "";
-      const child = spawn(process.execPath, [bin, "--origin", origin, "--pages", "/demo/charts", "--start", "/demo/start"], { stdio: ["ignore", "pipe", "pipe"] });
+      const child = spawn(process.execPath, [bin, "--origin", origin, "--pages", "/demo/charts,/private", "--start", "/demo/start"], { stdio: ["ignore", "pipe", "pipe"] });
       child.stdout.on("data", (chunk) => (output += chunk));
       child.stderr.on("data", (chunk) => (output += chunk));
       child.on("close", (code) => resolve({ code, output }));
@@ -136,6 +147,7 @@ test("prelum-chart-audit finds every planted mistake, as an error with the page 
       assert.ok(bad.some((line) => line.startsWith(`::${severity} title=${item}::`) && line.includes(detail)), `${severity} ${item} ${detail}\n${output}`);
     }
     assert.ok(!bad.some((line) => line.includes("#dim (bar), light: ") && line.includes("title=B1")), `#dim passes in light\n${output}`);
+    assert.ok(on("/private").some((line) => line.startsWith("::error title=G::") && line.includes("redirected to sign-in")), output);
     assert.ok(on("/demo/charts").some((line) => line.startsWith("::error title=B30::") && line.includes('"Demo only"')), output);
   } finally {
     server.close();

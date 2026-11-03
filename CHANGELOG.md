@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.32.3 (2026-11-03)
+
+- `prelum-chart-audit` fails a page that lands on a sign-in wall (Cloudflare Access, a sign-in or log-in path, or a
+  password form) with a G error. Such a page read as "0 charts, no findings" and passed, though none of its charts was read.
+
 ## 0.32.2 (2026-11-03)
 
 - `strictCharts` no longer refuses a chart for its text's reading grade: only a missing title or too many series. Text
