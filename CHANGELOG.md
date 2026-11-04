@@ -4,6 +4,8 @@
 
 - The specimen is on Capsomer 0.73.0, the network's type: Inter for the interface (preloaded), Overpass for the footer
   links and Medium headings. The library is unchanged.
+- The specimen is on Capsomer 0.74.4 (titles Light, headings Medium, breadcrumb links Bold), and its contents label
+  is Medium like the other headings, where it was 600. The library is unchanged.
 - `allowScripts` approves Puppeteer's install script (it downloads the Chromium `drawDiagrams` launches), for npm 12,
   which runs none by default.
 - Breaking: `drawDiagrams` no longer takes `colours`, the old name of `colors`; pass `colors`. <!-- codespell:ignore -->
