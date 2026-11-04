@@ -49,7 +49,7 @@ main {
 }
 .contents h2 {
   margin: 0 0 8px;
-  font: 600 0.75rem / 1.5 var(--mono);
+  font: var(--weight-heading) 0.75rem / 1.5 var(--mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
