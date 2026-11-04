@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `allowScripts` approves Puppeteer's install script (it downloads the Chromium `drawDiagrams` launches), for npm 12,
+  which runs none by default.
 - Breaking: `drawDiagrams` no longer takes `colours`, the old name of `colors`; pass `colors`. <!-- codespell:ignore -->
 - Breaking: `prelum-chart-audit` no longer takes `--strict-frame`, which has changed nothing since the frame became an
   error by default; drop the flag (the audit now stops on it as an unknown option). `--no-strict-frame` stays.

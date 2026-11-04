@@ -328,5 +328,8 @@
     "capsomer": {
       "enarratio": "$enarratio"
     }
+  },
+  "allowScripts": {
+    "puppeteer": true
   }
 }
