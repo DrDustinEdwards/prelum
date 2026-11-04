@@ -17,11 +17,11 @@ import { TDM_RESERVATION_HEADERS } from "../robots.mjs";
 
 /**
  * What every page blocks on or paints first, sent as a preload Link (and so as Early Hints): the one stylesheet, the
- * headings' Schibsted Grotesk and the prose's Source Serif 4. specimen/build.mjs refuses a build that lacks one of them.
+ * headings' Inter and the prose's Source Serif 4. specimen/build.mjs refuses a build that lacks one of them.
  */
 export const PAGE_PRELOADS = preloads([
   { href: "/site.css", as: "style" },
-  { href: "/fonts/schibsted-grotesk-latin-wght-normal.woff2", as: "font", type: "font/woff2" },
+  { href: "/fonts/inter-latin-opsz-normal.woff2", as: "font", type: "font/woff2" },
   { href: "/fonts/source-serif-4-latin-wght-normal.woff2", as: "font", type: "font/woff2" },
 ]);
 
