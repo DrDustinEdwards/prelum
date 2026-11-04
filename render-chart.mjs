@@ -319,9 +319,14 @@ export function renderChartHast(model, captionChildren, figure) {
     n.type === "element" && n.tagName === "p" && (n.properties.className ?? []).includes("enarratio-caption");
   const children = drawn.children.filter((/** @type {any} */ n) => !isCaption(n));
   if (captionChildren.length > 0) {
-    // Under the drawing, before the summary, notes, source and data, as Enarratio places a caption.
-    const after = children.findIndex(
-      (/** @type {any} */ n) => n.type === "element" && (n.properties.className ?? []).some((/** @type {string} */ name) => name === "enarratio-frame"),
+    // Where Enarratio places a caption: after the drawing, its control row and the summary, before the notes, source and
+    // data. Not between the drawing and the control row: enhance() puts the row back right after the drawing whenever the
+    // redraw swaps it, which moved the caption down on a phone (D5).
+    const before = new Set(["enarratio-frame", "enarratio-controls", "enarratio-summary"]);
+    const after = children.reduce(
+      (/** @type {number} */ last, /** @type {any} */ n, /** @type {number} */ i) =>
+        n.type === "element" && (n.properties.className ?? []).some((/** @type {string} */ name) => before.has(name)) ? i : last,
+      -1,
     );
     // A div, not Enarratio's p: the author's caption is markdown and may hold paragraphs.
     /** @type {import("hast").Element} */

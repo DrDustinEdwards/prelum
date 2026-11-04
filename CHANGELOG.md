@@ -1,7 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.32.8 (2026-11-04)
 
+- A `:::chart` caption written in the post goes where Enarratio puts its own: after the drawing, its control row and the
+  summary. Prelum put it between the drawing and the control row, and `enhance()` puts the row back right after the drawing
+  each time the redraw swaps it, so on a phone the row jumped above the caption as the page loaded (D5, 0.016 to 0.035 on
+  dustinedwards.info's posts with charts). Part of `RENDER_VERSION` 18.
 - Removes dead code: the unused `CALLOUTS` list, the module-only exports `faqPairs` and `STRICT_CHART_ISSUES` (neither module is a package export), and the specimen's fallback to the token file name Capsomer used before 0.21. No package changes.
 - The specimen and tests use Capsomer 0.66.0 (the devDependency, from 0.65.0). Its fallback fonts have a bold face per weight range, so bold text in a fallback is as wide as the real face and headings no longer rewrap when the font arrives. No package changes.
 - Draws the specimen and tests with Enarratio 0.7.3 (the devDependency, from 0.7.0; the peer range is unchanged). With 0.7.3
