@@ -22,9 +22,7 @@ export function drawDiagrams(options: {
     diagrams: Array<{ key: string; source: string; label?: string }>;
     dir: string;
     assetPrefix: string;
-    colors?: Record<"light" | "dark", Record<string, string>>;
-    /** The old name of `colors`, still taken. @deprecated */
-    colours?: Record<"light" | "dark", Record<string, string>>; // codespell:ignore colours
+    colors: Record<"light" | "dark", Record<string, string>>;
     force?: boolean;
     log?: (line: string) => void;
 }): Promise<{ written: string[]; current: number; stale: string[]; sizes: Record<string, { width: number; height: number }> }>;

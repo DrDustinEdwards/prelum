@@ -146,17 +146,14 @@ function sizeRoot(svg, label) {
  *   diagrams: Array<{ key: string, source: string, label?: string }>,
  *   dir: string,
  *   assetPrefix: string,
- *   colors?: Record<"light" | "dark", Record<string, string>>,
- *   colours?: Record<"light" | "dark", Record<string, string>>, // codespell:ignore colours
+ *   colors: Record<"light" | "dark", Record<string, string>>,
  *   force?: boolean,
  *   log?: (line: string) => void,
  * }} options
  * @returns {Promise<{ written: string[], current: number, stale: string[], sizes: Record<string, { width: number, height: number }> }>}
  *   `sizes` is also written to DIAGRAM_SIZES_FILE in `dir`, for the site to pass to editorialPack's `diagramSizes`
  */
-export async function drawDiagrams({ diagrams, dir, assetPrefix, colors: given, colours, force = false, log = console.log }) { // codespell:ignore colours
-  // `colours`, the British spelling, is the option's old name, still taken so no site breaks. codespell:ignore colours
-  const colors = /** @type {Record<"light" | "dark", Record<string, string>>} */ (given ?? colours); // codespell:ignore colours
+export async function drawDiagrams({ diagrams, dir, assetPrefix, colors, force = false, log = console.log }) {
   const themes = /** @type {Array<"light" | "dark">} */ (DIAGRAM_THEMES);
   const configs = { light: mermaidConfig("light", colors.light), dark: mermaidConfig("dark", colors.dark) };
   const fileName = (/** @type {string} */ key, /** @type {string} */ theme) => basename(diagramAssetPath(key, theme, assetPrefix));

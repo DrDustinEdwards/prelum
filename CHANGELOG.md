@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Breaking: `drawDiagrams` no longer takes `colours`, the old name of `colors`; pass `colors`. <!-- codespell:ignore -->
+- Breaking: `prelum-chart-audit` no longer takes `--strict-frame`, which has changed nothing since the frame became an
+  error by default; drop the flag (the audit now stops on it as an unknown option). `--no-strict-frame` stays.
+
 ## 0.32.8 (2026-11-04)
 
 - A `:::chart` caption written in the post goes where Enarratio puts its own: after the drawing, its control row and the
