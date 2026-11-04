@@ -148,7 +148,7 @@ Chart.js, ApexCharts, ECharts, Highcharts, Plotly, Nivo or visx, or draws an SVG
 that overflows its frame sideways or chart text under 12 px (C12); at 1280 and 320 px, layout shifts (the Layout Instability
 API, no recent input) that move a chart's contents by 0.01 or more in all (D5), with each chart held in view as the page loads,
 since a shift counts only while what it moves is on screen. A missing CSV link (C1), source line (C2) or frame (F) is an
-error; `--no-strict-frame` makes them warnings (`--strict-frame` is still accepted and changes nothing).
+error; `--no-strict-frame` makes them warnings.
 
 The SVG's role (B28) follows the WAI-ARIA APG: `role="img"` for a static chart, or `role="group"` with
 `aria-roledescription="chart"` for an enhanced one the reader can enter. Before measuring contrast, a `url(#id)` fill or stroke

@@ -33,7 +33,7 @@
 // tile or a table row, outside any figure) needs no frame, title, caption, CSV or table. It passes when it is role="img" with a
 // name that states its values or finding, or when it is aria-hidden beside visible text that gives the numbers; else B18.
 //
-// C1, C2 and the frame are errors; --no-strict-frame makes them warnings (--strict-frame, the old opt-in, is still accepted).
+// C1, C2 and the frame are errors; --no-strict-frame makes them warnings.
 // --pages adds pages to the crawl (a file of URLs or paths, one per line, or a comma list), for charts no link reaches,
 // a query included (/x?tab=a, for a chart behind a tab); each
 // --start URL is opened first in every browser context, so a demo route that sets a session cookie opens the pages behind it. A page the browser could not open is titled G:
@@ -78,7 +78,6 @@ const { values } = parseArgs({
     from: { type: "string" },
     "max-pages": { type: "string", default: "1500" },
     "chart-kb": { type: "string", default: "100" },
-    "strict-frame": { type: "boolean", default: false },
     "no-strict-frame": { type: "boolean", default: false },
     pages: { type: "string" },
     start: { type: "string", multiple: true, default: [] },
