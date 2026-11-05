@@ -57,7 +57,7 @@ export type AuditFinding = {
     /**
      * error: search engines get it wrong; warning: worse results
      */
-    severity: "error" | "warning";
+    severity: "error" | "warning" | "unmeasured";
     detail: string;
 };
 export type AuditReport = {

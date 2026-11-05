@@ -40,9 +40,11 @@ for (const finding of await auditIcons({ origin, fetch: fetcher })) {
   report.summary[finding.check] = (report.summary[finding.check] ?? 0) + 1;
 }
 for (const finding of report.findings) {
-  console.log(`::${finding.severity} title=${finding.check}::${finding.url} ${finding.detail}`);
+  // What could not be measured is a notice in devkit-live's form, never a pass or a failure; exit 3 when nothing failed.
+  console.log(finding.severity === "unmeasured" ? `::notice title=${finding.check}::${finding.url} could not measure: ${finding.detail}` : `::${finding.severity} title=${finding.check}::${finding.url} ${finding.detail}`);
 }
 const errors = report.findings.filter((finding) => finding.severity === "error").length;
 const counts = Object.entries(report.summary).map(([check, n]) => `${check} ${n}`).join(", ") || "no findings";
+const unmeasured = report.findings.filter((finding) => finding.severity === "unmeasured").length;
 console.log(`prelum-audit: ${report.pages} pages on ${origin}; ${counts}.`);
-process.exit(errors > 0 ? 1 : 0);
+process.exit(errors > 0 ? 1 : unmeasured > 0 ? 3 : 0);

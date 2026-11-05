@@ -82,7 +82,7 @@ export function headHtml(tags: HeadTag[]): string;
  * @param {string} text
  * @param {number} limit
  */
-export function truncateForSerp(text: string, limit: number): string;
+export function truncateForSerp(text: string, limit: number | SerpMeasure): string;
 /**
  * The `<title>` a search result shows: the title with the site's suffix where both fit, else the suffix dropped and the
  * title cut at a word. Only the `<title>` is shortened; pass the whole title as `socialTitle` and keep it in the heading.
@@ -91,12 +91,19 @@ export function truncateForSerp(text: string, limit: number): string;
  * @param {string} suffix e.g. " | Example Co"
  */
 export function searchTitle(title: string, suffix: string): string;
+/** A width Google's result draws text in: `px` wide at Arial `font` px. */
+export interface SerpMeasure {
+  readonly px: number;
+  readonly font: number;
+}
 /**
- * Google truncates by pixel width (about 600px title, 920px description), so these approximate it; a 160-character counter
- * would show text the result clips.
+ * Google cuts a result's title and snippet by the width they draw at, not by a count of characters: the desktop title is
+ * 20 px Arial in about 600 px, the snippet 14 px Arial in about 920 px.
  */
-export const SERP_TITLE_LIMIT: 60;
-export const SERP_DESCRIPTION_LIMIT: 155;
+export const SERP_TITLE: SerpMeasure;
+export const SERP_DESCRIPTION: SerpMeasure;
+/** The width `text` draws at in Arial at `font` px, as Google's result shows it. */
+export function serpWidth(text: string, font: number): number;
 /**
  * The shortest trail that gets a BreadcrumbList: home, a section, the page. A top-level page (home and itself) shows no
  * trail on any site, so it carries no BreadcrumbList either.
@@ -281,13 +288,14 @@ export type PageHead = Omit<HeadInput, "origin" | "siteName" | "image" | "locale
  * The per-site head builder every site wrote around `headTags`: the site's facts once, then a function a route's `meta`
  * calls with the page's. The `<title>` is `searchTitle(title, suffix)` (the suffix dropped and the title cut where both do
  * not fit) and the share card keeps the whole title as `socialTitle`; the description is cut at a word to
- * `SERP_DESCRIPTION_LIMIT`, and the share card keeps it whole. An indexable page also gets its WebPage and BreadcrumbList
+ * `SERP_DESCRIPTION`'s width, and the share card keeps it whole. An indexable page also gets its WebPage and BreadcrumbList
  * as one JSON-LD graph, joined to the site's `website` node by its `@id`, so no page goes without them.
  */
 export function defineHead(site: SiteHead): (page: PageHead) => HeadTag[];
 /**
  * A meta tag's text from HTML (an excerpt, an abstract title): scripts, styles and tags dropped, entities decoded, white
- * space collapsed, then cut at a word to `limit` (by default `SERP_DESCRIPTION_LIMIT`; `Infinity` keeps it whole). An
+ * space collapsed, then cut at a word to `limit` (by default `SERP_DESCRIPTION`'s width; a number is characters, and
+ * `Infinity` keeps it whole). An
  * entity it does not know is kept as written. The result is text, so it is escaped where it is written, as every tag is.
  */
-export function metaText(html: string, limit?: number): string;
+export function metaText(html: string, limit?: number | SerpMeasure): string;
