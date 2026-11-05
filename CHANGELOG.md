@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- `prelum-chart-audit`'s check F no longer counts a diagram's ports, a dot on the end of one of its wires, as a chart's
+  marks. Capsomer's system map draws one on each end of every tie, and dustinedwards.info's 20 /systems pages failed F as
+  "an SVG chart drawn outside Enarratio".
 - The specimen is on Capsomer 0.73.0, the network's type: Inter for the interface (preloaded), Overpass for the footer
   links and Medium headings. The library is unchanged.
 - The specimen is on Capsomer 0.74.4 (titles Light, headings Medium, breadcrumb links Bold), and its contents label
