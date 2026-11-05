@@ -49,6 +49,8 @@ const site = {
       // In a closed fold (the Portal's trends), redrawn at 320 px only once the reader opens it.
       `<details><summary>Trends</summary>${post.html}</details>`,
       // A password field on a public page (Capsomer's field demo) is not a sign-in wall.
+      // F: a diagram's wires, a port on each end (Capsomer's system map overlay), is not a chart.
+      `<svg width="300" height="120" aria-hidden="true">${[10, 30, 50, 70, 90].map((y, i) => `<path d="M 10 ${y} C 100 ${y} 200 ${110 - y} ${290 - i * 20} ${110 - y}" fill="none" stroke="currentColor"/><circle cx="10" cy="${y}" r="2.5"/><circle cx="${290 - i * 20}" cy="${110 - y}" r="2.5"/>`).join("")}</svg>`,
       '<label>Password <input type="password"></label>',
       // B28: an enhanced chart's SVG is a group described as a chart (WAI-ARIA APG), drawn narrow enough for 320 px.
       frame("enhanced", chart("Talks per year", { width: 300 }).replace(/ role="img"/, ' role="group" aria-roledescription="chart"')),

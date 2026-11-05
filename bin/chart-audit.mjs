@@ -752,7 +752,8 @@ async function readCharts({ measured, narrow, libraries, tags }) {
   // An SVG drawn from data outside Enarratio: a polyline, or five or more marks of one kind that vary as data does (bars
   // of different lengths, a strip of slots, five dots of one size at different places, five lines of different lengths on
   // one baseline). An illustration's circles of every size and its leader lines (a plate of plaques), a diagram's boxes
-  // that hold their labels and its polygon nodes, and a decorative badge hidden with its lettering do not count.
+  // that hold their labels and its polygon nodes, a diagram's ports (a dot on the end of one of its wires: Capsomer's
+  // system map, 2026-11-05), and a decorative badge hidden with its lettering do not count.
   /** @type {string[]} */
   const drawn = [];
   const distinct = (/** @type {number[]} */ list) => new Set(list.map((n) => Math.round(n * 2))).size;
@@ -764,7 +765,15 @@ async function readCharts({ measured, narrow, libraries, tags }) {
     const boxes = (/** @type {string} */ tag) => Array.from(svg.querySelectorAll(tag)).map((el) => el.getBoundingClientRect());
     const labels = boxes("text").map((t) => [t.x + t.width / 2, t.y + t.height / 2]);
     const rects = boxes("rect").filter((r) => !labels.some(([x, y]) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom));
-    const dots = boxes("circle, ellipse");
+    /** Where each wire starts and ends, on screen. */
+    const ends = Array.from(svg.querySelectorAll("path")).flatMap((path) => {
+      const matrix = path.getScreenCTM();
+      const length = path.getTotalLength();
+      if (!matrix || !(length > 0)) return [];
+      return [0, length].map((at) => path.getPointAtLength(at).matrixTransform(matrix));
+    });
+    const port = (/** @type {DOMRect} */ d) => ends.some((end) => Math.hypot(end.x - (d.x + d.width / 2), end.y - (d.y + d.height / 2)) < 1);
+    const dots = boxes("circle, ellipse").filter((d) => !port(d));
     const lines = boxes("line");
     const polyline = Array.from(svg.querySelectorAll("polyline")).some((el) => /** @type {SVGPolylineElement} */ (el).points.length >= 4);
     const why = polyline
