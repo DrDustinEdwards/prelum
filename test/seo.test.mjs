@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { auditPages, crawlSite } from "../audit.mjs";
-import { defineHead, headHtml, headTags, metaText, SERP_TITLE_LIMIT, searchTitle, truncateForSerp } from "../head.mjs";
+import { defineHead, headHtml, headTags, metaText, SERP_TITLE, searchTitle, serpWidth, truncateForSerp } from "../head.mjs";
 import { auditIcons, icoFile, iconLinks, webManifest } from "../icons.mjs";
 import { llmsResponse } from "../llms.mjs";
 import { aiTxt, DENIED_BOTS, robotsDocument, robotsResponse } from "../robots.mjs";
@@ -188,22 +188,22 @@ test("the crawl follows a sitemap index and each redirect hop, checks unlisted l
     `link-broken ${ORIGIN}/`,
     `link-redirect ${ORIGIN}/`,
     `redirect-chain ${ORIGIN}/old`,
-    `sitemap-broken ${ORIGIN}/down`,
     `sitemap-redirect ${ORIGIN}/old`,
   ]);
   assert.equal((await crawlSite({ origin: ORIGIN, fetch: fake, maxPages: 2 })).pages.length, 2);
 });
 
-test("a cut title fits the limit with its ellipsis and drops the site suffix, and the audit counts an entity as the one character it stands for", () => {
+test("a title is measured as Google draws it, in pixels: a cut fits with its ellipsis, and the audit counts an entity as the one character it stands for", () => {
   const long = "Alex Rivera, Director of Research, Operations, and Communications at Example Co";
-  const cut = truncateForSerp(long, SERP_TITLE_LIMIT);
-  assert.ok(cut.length <= SERP_TITLE_LIMIT, cut);
+  const cut = truncateForSerp(long, SERP_TITLE);
+  assert.ok(serpWidth(cut, SERP_TITLE.font) <= SERP_TITLE.px, cut);
   assert.equal(cut, "Alex Rivera, Director of Research, Operations, and...");
   assert.equal(searchTitle("Short", " | Sample"), "Short | Sample");
   assert.equal(searchTitle(long, " | Sample"), cut);
-  const title = `Jordan&#x27;s ${"x".repeat(SERP_TITLE_LIMIT - 9)}`;
-  const { findings } = auditPages([{ url: `${ORIGIN}/`, status: 200, html: `${page("/", title, "one")}<body></body></html>` }], { origin: ORIGIN });
-  assert.equal(findings.filter((finding) => finding.check === "title-long").length, 0);
+  const longOf = (/** @type {string} */ title) => auditPages([{ url: `${ORIGIN}/`, status: 200, html: `${page("/", title, "one")}<body></body></html>` }], { origin: ORIGIN }).findings.filter((f) => f.check === "title-long").length;
+  // 65 characters of ordinary text fit the 600 px a result shows; 50 wide capitals do not, whatever their count.
+  assert.equal(longOf("Jordan&#x27;s field notes from the lab bench, with a list of all tools"), 0);
+  assert.equal(longOf("W".repeat(50)), 1);
 });
 
 test("a request on any other origin is a preview: robots.txt disallows everything and nothing is cached or indexed", async () => {

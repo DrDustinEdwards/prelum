@@ -34,7 +34,10 @@ if (read.length === 0) {
   process.exit(2);
 }
 const findings = auditContent(read);
+// A sitemap page that did not answer or answered a server error was not read: not measured, never passed by leaving it out.
+const unread = pages.filter((page) => page.status === 0 || page.status >= 500);
 for (const f of findings) console.log(`::${f.severity} title=${f.check}::${f.url} ${f.detail}`);
+for (const page of unread) console.log(`::notice title=page::${page.url} could not measure: answered ${page.status || page.error || "nothing"}, so its writing was not checked`);
 const errors = findings.filter((f) => f.severity === "error").length;
-console.log(`prelum-content: ${read.length} pages, ${errors} errors, ${findings.length - errors} warnings`);
-process.exit(errors > 0 ? 1 : 0);
+console.log(`prelum-content: ${read.length} pages, ${errors} errors, ${findings.length - errors} warnings, ${unread.length} not read`);
+process.exit(errors > 0 ? 1 : unread.length > 0 ? 3 : 0);

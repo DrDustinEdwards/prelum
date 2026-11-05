@@ -1,4 +1,4 @@
-import { SERP_DESCRIPTION_LIMIT, SERP_TITLE_LIMIT } from "./head.mjs";
+import { SERP_DESCRIPTION, SERP_TITLE, serpWidth } from "./head.mjs";
 
 /** How many redirects `crawlSite` follows from one URL, so a chain is seen hop by hop and a loop ends. */
 const MAX_HOPS = 5;
@@ -19,7 +19,8 @@ const MAX_HOPS = 5;
  * @typedef {object} AuditFinding
  * @property {string} url
  * @property {string} check
- * @property {"error" | "warning"} severity error: search engines get it wrong; warning: worse results
+ * @property {"error" | "warning" | "unmeasured"} severity error: search engines get it wrong; warning: worse results;
+ *   unmeasured: the page could not be read, so nothing about it was measured (never a pass or a failure)
  * @property {string} detail
  */
 
@@ -43,7 +44,7 @@ const MAX_HOPS = 5;
 export function auditPages(pages, { origin, sitemap }) {
   /** @type {AuditFinding[]} */
   const findings = [];
-  const add = (/** @type {string} */ url, /** @type {string} */ check, /** @type {"error" | "warning"} */ severity, /** @type {string} */ detail) =>
+  const add = (/** @type {string} */ url, /** @type {string} */ check, /** @type {"error" | "warning" | "unmeasured"} */ severity, /** @type {string} */ detail) =>
     findings.push({ url, check, severity, detail });
   const byUrl = new Map(pages.map((page) => [normalize(page.url), page]));
   const listed = new Set((sitemap ?? []).map(normalize));
@@ -68,7 +69,10 @@ export function auditPages(pages, { origin, sitemap }) {
       if (inSitemap(page)) add(url, "sitemap-redirect", "error", "the sitemap lists a URL that redirects");
       continue;
     }
-    if (page.status === 0) add(url, "fetch-failed", "error", page.error ?? "no answer");
+    if (page.status === 0) {
+      add(url, "fetch-failed", "unmeasured", `no answer (${page.error ?? "nothing came back"}), so the page was not audited`);
+      continue;
+    }
     if (page.status !== 200) {
       if (inSitemap(page)) add(url, "sitemap-broken", "error", `the sitemap lists a URL that answers ${page.status}`);
       continue;
@@ -80,15 +84,17 @@ export function auditPages(pages, { origin, sitemap }) {
     const title = textOf(head, "title");
     if (!title) add(url, "title-missing", "error", "no <title>");
     else {
-      if (title.length > SERP_TITLE_LIMIT) add(url, "title-long", "warning", `${title.length} characters; results clip at about ${SERP_TITLE_LIMIT}`);
+      const width = Math.round(serpWidth(title, SERP_TITLE.font));
+      if (width > SERP_TITLE.px) add(url, "title-long", "warning", `${width} px wide in Google's ${SERP_TITLE.font} px Arial (${[...title].length} characters); a desktop result clips the title past ${SERP_TITLE.px} px`);
       push(titles, title, url);
     }
 
     const description = meta(head, "name", "description");
     if (!description) add(url, "description-missing", "error", "no meta description");
     else {
-      if (description.length > SERP_DESCRIPTION_LIMIT) {
-        add(url, "description-long", "warning", `${description.length} characters; results clip at about ${SERP_DESCRIPTION_LIMIT}`);
+      const width = Math.round(serpWidth(description, SERP_DESCRIPTION.font));
+      if (width > SERP_DESCRIPTION.px) {
+        add(url, "description-long", "warning", `${width} px wide in Google's ${SERP_DESCRIPTION.font} px Arial (${[...description].length} characters); a desktop result clips the snippet past ${SERP_DESCRIPTION.px} px`);
       }
       push(descriptions, description, url);
     }

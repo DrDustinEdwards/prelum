@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.33.0 (2026-11-05)
+
+- Titles and descriptions are measured as Google draws them, in pixels, not characters. Google cuts a result's title and
+  snippet to fit the device width (https://developers.google.com/search/docs/appearance/title-link), and "about 60
+  characters" warned on titles of 61 to 62 narrow characters that fit, while passing 50 wide ones that do not. New
+  `serpWidth(text, font)` (Arial's advance widths) and the measures `SERP_TITLE` (600 px at 20 px) and `SERP_DESCRIPTION`
+  (920 px at 14 px); `prelum-audit`'s `title-long` and `description-long` warn past them and say the width, and
+  `searchTitle`, `defineHead`, `metaText` and `truncateForSerp` cut to them (`truncateForSerp` still takes a number of
+  characters for X's image alt). **Removed:** `SERP_TITLE_LIMIT` and `SERP_DESCRIPTION_LIMIT`; use `SERP_TITLE` and
+  `SERP_DESCRIPTION`.
+- No false passes or failures (devkit-live's contract, devkit 0.21.3): what a check could not measure is
+  `::notice title=<item>::<url> could not measure: <reason>`, and the exit is 3 when nothing failed. `prelum-audit`'s
+  `fetch-failed` (a page that got no answer) is not measured, never an error, and no longer adds a false `sitemap-broken`
+  "answers 0"; `prelum-content` names each sitemap page it could not read instead of leaving it out silently; a page
+  `prelum-chart-audit`'s browser could not open (a timeout, a refused load) is not measured, never a warning that passes.
+
 ## 0.32.9 (2026-11-05)
 
 - `prelum-chart-audit`'s check F no longer counts a diagram's ports, a dot on the end of one of its wires, as a chart's

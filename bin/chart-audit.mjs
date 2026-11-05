@@ -56,7 +56,7 @@ import { crawlSite } from "../audit.mjs";
 
 /** @typedef {import("playwright-core").Browser} Browser */
 /** @typedef {import("playwright-core").BrowserContext} BrowserContext */
-/** @typedef {{ severity: "error" | "warning", item: string, url: string, detail: string }} Finding */
+/** @typedef {{ severity: "error" | "warning" | "unmeasured", item: string, url: string, detail: string }} Finding */
 
 const LIBRARIES = /** @type {const} */ ([
   // name, DOM container, a string only that library's code carries, and the page global it sets
@@ -197,12 +197,13 @@ await Promise.all(
         findings.push(...found.findings);
       } catch (error) {
         const message = String(error instanceof Error ? error.message : error).split("\n")[0];
-        // An empty page is broken for every reader, so it fails; a timeout or a refused load may be this run's alone.
+        // An empty page is broken for every reader, so it fails; a timeout or a refused load may be this run's alone, so
+        // its charts are not measured: never a warning that passes.
         // A sign-in wall hides every chart on the page from the check, so it fails too: a false "no charts" is a false pass.
         const broken = message.startsWith("answered 200 with an empty body") || message.startsWith("redirected to sign-in");
         // Such a page did open, so a run whose every page is behind sign-in fails with the G error, not "could not run".
         if (broken) opened++;
-        findings.push({ severity: broken ? "error" : "warning", item: "G", url, detail: `the browser could not open it: ${message}` });
+        findings.push({ severity: broken ? "error" : "unmeasured", item: "G", url, detail: `the browser could not open it: ${message}` });
       } finally {
         busy--;
       }
@@ -221,13 +222,16 @@ const unique = findings.filter((f) => {
   return !seen.has(key) && seen.add(key);
 });
 unique.sort((a, b) => a.url.localeCompare(b.url) || a.item.localeCompare(b.item, "en", { numeric: true }));
-for (const f of unique) console.log(`::${f.severity} title=${f.item}::${f.url} ${f.detail.replace(/\r?\n/g, " ")}`);
+for (const f of unique) {
+  const detail = f.detail.replace(/\r?\n/g, " ");
+  console.log(f.severity === "unmeasured" ? `::notice title=${f.item}::${f.url} could not measure: ${detail}` : `::${f.severity} title=${f.item}::${f.url} ${detail}`);
+}
 /** @type {Record<string, number>} */
 const summary = {};
 for (const f of unique) summary[f.item] = (summary[f.item] ?? 0) + 1;
 const counts = Object.entries(summary).map(([item, n]) => `${item} ${n}`).join(", ") || "no findings";
 console.log(`prelum-chart-audit: ${opened} pages on ${origin}, ${charts} charts on ${withCharts} of them; ${counts}.`);
-process.exit(unique.some((f) => f.severity === "error") ? 1 : 0);
+process.exit(unique.some((f) => f.severity === "error") ? 1 : unique.some((f) => f.severity === "unmeasured") ? 3 : 0);
 
 /**
  * One page: with scripts on in light first, and only when that finds a chart, a chart library or a drawn SVG, again with
