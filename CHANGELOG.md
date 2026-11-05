@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.32.9 (2026-11-05)
 
 - `prelum-chart-audit`'s check F no longer counts a diagram's ports, a dot on the end of one of its wires, as a chart's
   marks. Capsomer's system map draws one on each end of every tie, and dustinedwards.info's 20 /systems pages failed F as
