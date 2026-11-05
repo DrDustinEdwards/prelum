@@ -6,6 +6,8 @@
   links and Medium headings. The library is unchanged.
 - The specimen is on Capsomer 0.74.4 (titles Light, headings Medium, breadcrumb links Bold), and its contents label
   is Medium like the other headings, where it was 600. The library is unchanged.
+- The specimen is on Capsomer 0.75.0, its lighter Inter (the text cut, 46 KB) and Overpass (plain English characters,
+  15 KB) files; it preloads Inter by its new name. The library is unchanged.
 - `allowScripts` approves Puppeteer's install script (it downloads the Chromium `drawDiagrams` launches), for npm 12,
   which runs none by default.
 - Breaking: `drawDiagrams` no longer takes `colours`, the old name of `colors`; pass `colors`. <!-- codespell:ignore -->
