@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Formatting is the network's shared Oxfmt config (`oxfmt.config.ts` spreads devkit's `./oxfmt`; `npm run format`, and
+  `npm run format:check` in CI). The whole tree was reformatted in one formatting-only commit, listed in
+  `.git-blame-ignore-revs`; the golden render fixtures, the specimen's inputs and its expected output are ignored, so they
+  stay byte for byte. No behavior change. devkit is v0.24.0.
 - Lint is the network's shared Oxlint config (`oxlint.config.ts` extends devkit's `base`, `node` for the modules, bin, tests
   and specimen), type-aware through `oxlint-tsgolint`, run as `npm run lint`. What its first run found is fixed in place,
   behavior unchanged: a dropped `body.cancel()` promise is `void`ed; two click handlers that were `async` are a named

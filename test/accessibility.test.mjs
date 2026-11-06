@@ -59,13 +59,14 @@ test("the build sentences follow the site's setup, and a missing or impossible s
     accessibilityStatement(input).body,
     /We build every page from Capsomer[\s\S]*says when it leaves the site/,
   );
-  // @ts-expect-error a site that does not say how it is built is refused
+  // a site that does not say how it is built is refused
   assert.throws(
+    // @ts-expect-error
     () => accessibilityStatement({ ...input, capsomer: undefined }),
     /capsomer must say/,
   );
-  // @ts-expect-error
   assert.throws(
+    // @ts-expect-error
     () => accessibilityStatement({ ...input, links: undefined }),
     /links must be one of/,
   );
