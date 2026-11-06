@@ -25,7 +25,7 @@ export const DIAGRAM_SIZES_FILE: "sizes.json";
 export function renderDiagramHast(
     assetPrefix: string,
     sizes?: Record<string, { width: number; height: number }>,
-): (model: ReturnType<typeof buildDiagramModel>, captionChildren: any[]) => any[];
+): (model: ReturnType<typeof buildDiagramModel>, captionChildren: import("hast").ElementContent[]) => import("hast").ElementContent[];
 /** A drawing's size from the site's sizes file, or null when it is not drawn yet. */
 export function diagramSize(
     sizes: Record<string, { width: number; height: number }>,

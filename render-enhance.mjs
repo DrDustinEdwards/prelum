@@ -214,7 +214,7 @@ export function enhance(options = {}) {
     button.className = "code-copy";
     button.textContent = "Copy";
     button.setAttribute("aria-label", "Copy code to clipboard");
-    button.addEventListener("click", async () => {
+    const copyCode = async () => {
       const code = pre.querySelector("code")?.textContent ?? "";
       try {
         await copyText(code);
@@ -229,7 +229,8 @@ export function enhance(options = {}) {
         button.textContent = "Copy";
         button.removeAttribute("data-copied");
       }, 2000);
-    });
+    };
+    button.addEventListener("click", () => void copyCode());
     pre.appendChild(button);
 
     // Last, so the padding never arrives before the thing it makes room for.
@@ -484,8 +485,7 @@ export function enhance(options = {}) {
     const trigger = document.querySelector("[data-copy-markdown]");
     if (!(trigger instanceof HTMLElement) || !navigator.clipboard) return;
 
-    trigger.addEventListener("click", async (event) => {
-      event.preventDefault();
+    const copyToClipboard = async () => {
       const original = trigger.textContent;
       const href = trigger.getAttribute("href") ?? "";
       try {
@@ -504,6 +504,10 @@ export function enhance(options = {}) {
         trigger.textContent = original;
         trigger.removeAttribute("data-copied");
       }, 2000);
+    };
+    trigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      void copyToClipboard();
     });
   }
 

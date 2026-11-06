@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Lint is the network's shared Oxlint config (`oxlint.config.ts` extends devkit's `base`, `node` for the modules, bin, tests
+  and specimen), type-aware through `oxlint-tsgolint`, run as `npm run lint`. What its first run found is fixed in place,
+  behavior unchanged: a dropped `body.cancel()` promise is `void`ed; two click handlers that were `async` are a named
+  async function called through `void`; `[...string]` counts are `Array.from`; and the declarations no longer say `any`
+  (`unknown`, hast types, a `Wasm` type for `createHighlight`'s `wasm`; `rehypeModelMarker` takes its model as a type
+  parameter). Types only: a caller that passed `any` still compiles.
 - The type check now checks the modules themselves. `tsconfig.json` listed both `*.mjs` and `*.d.mts`, and when a module
   and its twin both match, tsc keeps only the declaration, so no implementation was checked. It now lists the modules
   (lib es2023 with DOM iteration), and the 29 errors that surfaced are fixed: missing parameter types, and two places in

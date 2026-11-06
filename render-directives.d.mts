@@ -16,7 +16,7 @@ export function remarkNumericTextDirectives(source: string): (/** @type {import(
  * @param {any} node the directive
  * @param {string} why completes the sentence that names the heading
  */
-export function refuseHeading(file: string, node: any, why: string): void;
+export function refuseHeading(file: string, node: unknown, why: string): void;
 /**
  * A heading inside is refused: it would put a hidden section in the table of contents. Native
  * <details>, so the text is in the HTML without script.
@@ -52,18 +52,18 @@ export function remarkModelDirective(kind: {
     className: string;
     what: string;
     lang?: string;
-    build: (attributes: any, source: string) => any;
-}): (file: string, sink: any[]) => (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
+    build: (attributes: Record<string, string>, source: string) => unknown;
+}): (file: string, sink: unknown[]) => (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
 /**
  * The rehype half: renders each marked figure from its model and drops the marker.
  *
  * @param {string} marker
  * @param {(model: any, caption: any[], node: any) => any[]} render
  */
-export function rehypeModelMarker(marker: string, render: (model: any, caption: any[], node: any) => any[]): (models: any[]) => (/** @type {import("hast").Root} */ tree: import("hast").Root) => void;
+export function rehypeModelMarker<Model>(marker: string, render: (model: Model, caption: import("hast").ElementContent[], node: import("hast").Element) => import("hast").ElementContent[]): (models: Model[]) => (/** @type {import("hast").Root} */ tree: import("hast").Root) => void;
 /** The directives the core handles itself. A pack adds its own names to the list the guard checks. */
 export const CORE_DIRECTIVES: string[];
 /**
  * The width class a figure, gallery, video or embed asks for: Ghost's regular, wide and full. The site's stylesheet sets the widths.
  */
-export function widthClass(file: string, node: any, name: string): string[];
+export function widthClass(file: string, node: unknown, name: string): string[];

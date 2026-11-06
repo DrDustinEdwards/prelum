@@ -59,9 +59,11 @@ const githubDark = withCommentColor(githubDarkHighContrast, COMMENT_DARK);
 // Exported so a site's contrast check verifies the themes actually used, not ones it imported by name.
 export const SHIKI_THEMES = { light: githubLight, dark: githubDark };
 
+/** @typedef {Parameters<typeof createOnigurumaEngine>[0]} Wasm what the Oniguruma engine loads: a wasm module or an instantiator over one */
+
 /**
  * @param {object} [input]
- * @param {() => Promise<any> | any} [input.wasm] Injected: a Worker refuses WebAssembly.instantiate() on bytes, so it passes an
+ * @param {() => Wasm | Promise<Wasm>} [input.wasm] Injected: a Worker refuses WebAssembly.instantiate() on bytes, so it passes an
  *   instantiator over a statically imported module. The engine is the same, so the HTML is byte-identical. Default is shiki's own.
  * @param {Record<string, any>} [input.languages] name to grammar; default is the ten in GRAMMARS
  * @returns {import("./render.mjs").HighlightOptions}

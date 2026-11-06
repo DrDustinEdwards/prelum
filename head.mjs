@@ -302,11 +302,11 @@ export function headHtml(tags) {
  * @param {number | { px: number, font: number }} limit
  */
 export function truncateForSerp(text, limit) {
-  const size = typeof limit === "number" ? (/** @type {string} */ t) => [...t].length : (/** @type {string} */ t) => serpWidth(t, limit.font);
+  const size = typeof limit === "number" ? (/** @type {string} */ t) => Array.from(t).length : (/** @type {string} */ t) => serpWidth(t, limit.font);
   const max = typeof limit === "number" ? limit : limit.px;
   if (size(text) <= max) return text;
   // The "..." counts toward the limit, and punctuation left before it goes, so the cut never reads ",...".
-  const chars = [...text];
+  const chars = Array.from(text);
   let end = chars.length;
   while (end > 0 && size(`${chars.slice(0, end).join("")}...`) > max) end--;
   const cut = chars.slice(0, end).join("");

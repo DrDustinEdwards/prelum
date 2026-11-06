@@ -24,7 +24,7 @@ export function htmlToMarkdown(html: string, options?: {
  * A Worker's fetch handler; `env` and `ctx` (its ExecutionContext) are passed through untouched, so a handler that reads
  * `ctx.exports` or `ctx.passThroughOnException` keeps its own types.
  */
-export type FetchHandler = (request: Request, env?: any, ctx?: any) => Promise<Response> | Response;
+export type FetchHandler = (request: Request, env?: unknown, ctx?: unknown) => Promise<Response> | Response;
 export type MarkdownCopiesOptions = {
     /** the site's production origin, for the canonical links and the llms-full.txt addresses */
     origin: string;

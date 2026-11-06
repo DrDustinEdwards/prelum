@@ -85,7 +85,7 @@ export function auditPages(pages, { origin, sitemap }) {
     if (!title) add(url, "title-missing", "error", "no <title>");
     else {
       const width = Math.round(serpWidth(title, SERP_TITLE.font));
-      if (width > SERP_TITLE.px) add(url, "title-long", "warning", `${width} px wide in Google's ${SERP_TITLE.font} px Arial (${[...title].length} characters); a desktop result clips the title past ${SERP_TITLE.px} px`);
+      if (width > SERP_TITLE.px) add(url, "title-long", "warning", `${width} px wide in Google's ${SERP_TITLE.font} px Arial (${Array.from(title).length} characters); a desktop result clips the title past ${SERP_TITLE.px} px`);
       push(titles, title, url);
     }
 
@@ -94,7 +94,7 @@ export function auditPages(pages, { origin, sitemap }) {
     else {
       const width = Math.round(serpWidth(description, SERP_DESCRIPTION.font));
       if (width > SERP_DESCRIPTION.px) {
-        add(url, "description-long", "warning", `${width} px wide in Google's ${SERP_DESCRIPTION.font} px Arial (${[...description].length} characters); a desktop result clips the snippet past ${SERP_DESCRIPTION.px} px`);
+        add(url, "description-long", "warning", `${width} px wide in Google's ${SERP_DESCRIPTION.font} px Arial (${Array.from(description).length} characters); a desktop result clips the snippet past ${SERP_DESCRIPTION.px} px`);
       }
       push(descriptions, description, url);
     }

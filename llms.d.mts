@@ -99,7 +99,7 @@ export function llmsResponse(input: LlmsContent & import("./robots.mjs").PlainTe
  * `Vary: Accept`, or its HTML when it has none; and every HTML page gains `Vary: Accept` and a
  * `Link: rel="alternate"; type="text/markdown"` naming its copy. A rendered site uses `markdownCopies` instead.
  */
-export function serveMarkdownCopies<F extends (request: Request, ...rest: any[]) => Promise<Response> | Response>(fetch: F, options: {
+export function serveMarkdownCopies<F extends (request: Request, ...rest: never[]) => Promise<Response> | Response>(fetch: F, options: {
     origin: string;
     skip?: (path: string) => boolean;
 }): F;

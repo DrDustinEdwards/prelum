@@ -145,7 +145,7 @@ export type RenderOptions = {
 };
 /** What render returns; a pack may add fields beside these. */
 export type RenderResult = {
-    html: any;
+    html: string;
     toc: {
         depth: number;
         id: string;
@@ -203,14 +203,14 @@ export type MathPlugins = {
     /**
      * remark-math
      */
-    parse: any;
+    parse: unknown;
     validate: (file: string, sink: {
         value: boolean;
     }) => (tree: import("mdast").Root) => void;
     /**
      * rehype-katex
      */
-    html: any;
+    html: unknown;
     /**
      * KATEX_OPTIONS
      */

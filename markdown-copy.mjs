@@ -268,7 +268,7 @@ export function markdownCopies(fetch, options) {
       if (!location) return response;
       const next = new URL(location, new URL(current, request.url));
       if (next.origin !== new URL(request.url).origin) return response;
-      response.body?.cancel();
+      void response.body?.cancel();
       current = next.pathname;
     }
     return fetch(htmlRequest(request, current), env, ctx);
@@ -322,7 +322,7 @@ export function markdownCopies(fetch, options) {
         const path = paths[at] ?? "/";
         const response = await page(request, path, env, ctx);
         if (!isHtml(response)) {
-          response.body?.cancel();
+          void response.body?.cancel();
           continue;
         }
         const facts = htmlToMarkdown(await response.text(), { base: `${origin}${path}` });
@@ -349,7 +349,7 @@ export function markdownCopies(fetch, options) {
     if (path === "/llms-full.txt" && maxPages > 0) {
       const own = await fetch(request, env, ctx);
       if (own.status !== 404) return own;
-      own.body?.cancel();
+      void own.body?.cancel();
       return llmsFull(request, env, ctx);
     }
 
@@ -360,7 +360,7 @@ export function markdownCopies(fetch, options) {
       if (skip(pagePath)) return own;
       const made = await copy(request, await page(request, pagePath, env, ctx), pagePath, false);
       if (!made) return own;
-      own.body?.cancel();
+      void own.body?.cancel();
       return made;
     }
 
@@ -368,7 +368,7 @@ export function markdownCopies(fetch, options) {
     if (!isHtml(response) || skip(path)) return response;
     if (prefersMarkdown(request)) {
       // A HEAD has no body to read, so the copy is made from the page's GET.
-      if (request.method === "HEAD") response.body?.cancel();
+      if (request.method === "HEAD") void response.body?.cancel();
       const html = request.method === "HEAD" ? await fetch(htmlRequest(request, path), env, ctx) : response;
       const made = await copy(request, html, path, true);
       if (made) return made;
