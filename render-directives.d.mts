@@ -1,14 +1,18 @@
 /**
  * @param {string} file
  */
-export function remarkFigure(file: string): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
+export function remarkFigure(
+  file: string,
+): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
 /**
  * remark-directive parses prose such as 4.5:1 and localhost:8080 as directives, and every real directive name is a word. Sliced from
  * the source so a label or attributes come back as written.
  *
  * @param {string} source the markdown these positions refer to
  */
-export function remarkNumericTextDirectives(source: string): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
+export function remarkNumericTextDirectives(
+  source: string,
+): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
 /**
  * Refuses a heading directly inside a container directive, naming the directive and the line.
  *
@@ -23,7 +27,9 @@ export function refuseHeading(file: string, node: unknown, why: string): void;
  *
  * @param {string} file
  */
-export function remarkDetails(file: string): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
+export function remarkDetails(
+  file: string,
+): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
 /**
  * An unhandled directive becomes a silent empty <div>, so a typo such as :::figrue loses the figure. Runs after
  * remarkNumericTextDirectives, so prose like 12:30 is already text.
@@ -31,7 +37,10 @@ export function remarkDetails(file: string): (/** @type {import("mdast").Root} *
  * @param {string} file
  * @param {readonly string[]} known every directive name the renderer and its packs handle
  */
-export function remarkUnknownDirectives(file: string, known: readonly string[]): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
+export function remarkUnknownDirectives(
+  file: string,
+  known: readonly string[],
+): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
 /**
  * Split across remark and rehype: validation must fail the build in remark, but the caption only
  * becomes hast after remark-rehype. The remark half of a model directive: a container holding
@@ -47,20 +56,30 @@ export function remarkUnknownDirectives(file: string, known: readonly string[]):
  * }} kind `what` names the fence's content in the refusal; `lang` is the fence language required, if any
  */
 export function remarkModelDirective(kind: {
-    name: string;
-    marker: string;
-    className: string;
-    what: string;
-    lang?: string;
-    build: (attributes: Record<string, string>, source: string) => unknown;
-}): (file: string, sink: unknown[]) => (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
+  name: string;
+  marker: string;
+  className: string;
+  what: string;
+  lang?: string;
+  build: (attributes: Record<string, string>, source: string) => unknown;
+}): (
+  file: string,
+  sink: unknown[],
+) => (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
 /**
  * The rehype half: renders each marked figure from its model and drops the marker.
  *
  * @param {string} marker
  * @param {(model: any, caption: any[], node: any) => any[]} render
  */
-export function rehypeModelMarker<Model>(marker: string, render: (model: Model, caption: import("hast").ElementContent[], node: import("hast").Element) => import("hast").ElementContent[]): (models: Model[]) => (/** @type {import("hast").Root} */ tree: import("hast").Root) => void;
+export function rehypeModelMarker<Model>(
+  marker: string,
+  render: (
+    model: Model,
+    caption: import("hast").ElementContent[],
+    node: import("hast").Element,
+  ) => import("hast").ElementContent[],
+): (models: Model[]) => (/** @type {import("hast").Root} */ tree: import("hast").Root) => void;
 /** The directives the core handles itself. A pack adds its own names to the list the guard checks. */
 export const CORE_DIRECTIVES: string[];
 /**

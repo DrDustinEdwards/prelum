@@ -56,7 +56,13 @@ export function fuse(lists, k = RRF_K) {
         existing.ranks.push(rank);
         existing.contributions.push(contribution);
       } else {
-        scores.set(item.uid, { item, score: contribution, sources: [listIndex], ranks: [rank], contributions: [contribution] });
+        scores.set(item.uid, {
+          item,
+          score: contribution,
+          sources: [listIndex],
+          ranks: [rank],
+          contributions: [contribution],
+        });
       }
     });
   });
@@ -74,7 +80,10 @@ export function fuse(lists, k = RRF_K) {
  * @returns {{ v: 1, pages: Array<{ u: string, t: string, s: string, h: Array<[string, string]>, x: string }> }}
  */
 export function staticSearchIndex(pages, { maxText = 4000 } = {}) {
-  const squash = (/** @type {string | undefined} */ s) => String(s ?? "").replace(/\s+/g, " ").trim();
+  const squash = (/** @type {string | undefined} */ s) =>
+    String(s ?? "")
+      .replace(/\s+/g, " ")
+      .trim();
   return {
     v: 1,
     pages: pages.map((p) => ({
@@ -88,11 +97,7 @@ export function staticSearchIndex(pages, { maxText = 4000 } = {}) {
 }
 
 /** @param {string} s */
-const fold = (s) =>
-  s
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
+const fold = (s) => s.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 /**
  * The query's words, folded. Anything that is not a letter or digit separates words.
@@ -101,7 +106,9 @@ const fold = (s) =>
  * @returns {string[]}
  */
 export function searchWords(query) {
-  return fold(String(query)).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  return fold(String(query))
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean);
 }
 
 // How much a match in each field counts. The title outranks a heading, a heading the summary, the summary the text.
@@ -123,16 +130,35 @@ export function staticSearch(index, query, { limit = 50, snippet = 160 } = {}) {
   const words = searchWords(query);
   if (words.length === 0) return [];
   const escape = (/** @type {string} */ w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const patterns = words.map((w, i) => new RegExp(`(?:^|[^\\p{L}\\p{N}])${escape(w)}${i === words.length - 1 ? "" : "(?![\\p{L}\\p{N}])"}`, "u"));
+  const patterns = words.map(
+    (w, i) =>
+      new RegExp(
+        `(?:^|[^\\p{L}\\p{N}])${escape(w)}${i === words.length - 1 ? "" : "(?![\\p{L}\\p{N}])"}`,
+        "u",
+      ),
+  );
   const whole = words.join(" ");
   /** @type {Array<{ url: string, title: string, summary: string, heading: string | null, snippet: string, score: number }>} */
   const results = [];
   for (const page of index.pages) {
-    const fields = { t: fold(page.t), h: page.h.map(([, text]) => fold(text)), s: fold(page.s), x: fold(page.x) };
+    const fields = {
+      t: fold(page.t),
+      h: page.h.map(([, text]) => fold(text)),
+      s: fold(page.s),
+      x: fold(page.x),
+    };
     let score = 0;
     let every = true;
     for (const re of patterns) {
-      const best = re.test(fields.t) ? WEIGHT.t : fields.h.some((h) => re.test(h)) ? WEIGHT.h : re.test(fields.s) ? WEIGHT.s : re.test(fields.x) ? WEIGHT.x : 0;
+      const best = re.test(fields.t)
+        ? WEIGHT.t
+        : fields.h.some((h) => re.test(h))
+          ? WEIGHT.h
+          : re.test(fields.s)
+            ? WEIGHT.s
+            : re.test(fields.x)
+              ? WEIGHT.x
+              : 0;
       if (best === 0) {
         every = false;
         break;
@@ -157,9 +183,18 @@ export function staticSearch(index, query, { limit = 50, snippet = 160 } = {}) {
     let text = page.x.slice(start, start + snippet);
     if (start > 0) text = `…${text.replace(/^\S*\s/, "")}`;
     if (start + snippet < page.x.length) text = `${text.replace(/\s\S*$/, "")}…`;
-    results.push({ url: heading ? `${page.u}#${heading}` : page.u, title: page.t, summary: page.s, heading: heading ? (page.h.find(([id]) => id === heading)?.[1] ?? null) : null, snippet: first < 0 && page.s ? page.s : text, score });
+    results.push({
+      url: heading ? `${page.u}#${heading}` : page.u,
+      title: page.t,
+      summary: page.s,
+      heading: heading ? (page.h.find(([id]) => id === heading)?.[1] ?? null) : null,
+      snippet: first < 0 && page.s ? page.s : text,
+      score,
+    });
   }
-  return results.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title)).slice(0, limit);
+  return results
+    .sort((a, b) => b.score - a.score || a.title.localeCompare(b.title))
+    .slice(0, limit);
 }
 
 /**

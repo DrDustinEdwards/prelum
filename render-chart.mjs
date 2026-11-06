@@ -93,7 +93,10 @@ function parseChartCsv(text) {
  */
 function resolveSeries(attrs, columns) {
   if (!attrs.y) throw new Error(":::chart requires a y attribute naming a data column");
-  const yColumns = attrs.y.split(",").map((s) => s.trim()).filter(Boolean);
+  const yColumns = attrs.y
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
   if (yColumns.length === 0) throw new Error(":::chart y attribute is empty");
   for (const column of yColumns) {
     if (!columns.includes(column)) {
@@ -107,9 +110,7 @@ function resolveSeries(attrs, columns) {
   if (attrs.labels) {
     labels = attrs.labels.split(",").map((s) => s.trim());
     if (labels.length !== yColumns.length) {
-      throw new Error(
-        `:::chart has ${yColumns.length} series but ${labels.length} labels`,
-      );
+      throw new Error(`:::chart has ${yColumns.length} series but ${labels.length} labels`);
     }
   }
   if (yColumns.length > 1) {
@@ -137,7 +138,8 @@ function figureWords(attrs) {
   const text = (/** @type {string} */ name) => (attrs[name] ?? "").trim();
   const source = text("source");
   const href = text("source-href");
-  if (href && !source) throw new Error(":::chart source-href needs a source naming where the data come from");
+  if (href && !source)
+    throw new Error(":::chart source-href needs a source naming where the data come from");
   return {
     ...(text("subtitle") ? { subtitle: text("subtitle") } : {}),
     ...(text("notes") ? { notes: text("notes") } : {}),
@@ -176,7 +178,8 @@ function drawChart(model) {
   };
   // A reader-facing problem (no title, too many series) is a render warning
   // the editor shows, not a refused post, unless the site renders strictly.
-  const onIssue = (/** @type {{ code: string, message: string }} */ issue) => issues.push({ code: issue.code, message: issue.message });
+  const onIssue = (/** @type {{ code: string, message: string }} */ issue) =>
+    issues.push({ code: issue.code, message: issue.message });
   const series = multi ? { series: "series", seriesDomain: labels } : {};
   // A one-series chart has no series field, so the label is the value axis' name.
   const data = multi ? points : points.map(({ x: px, value }) => ({ x: px, value }));
@@ -193,7 +196,12 @@ function drawChart(model) {
     throw new Error(`:::chart type "dot" needs a numeric x column, but "${x}" is not numeric`);
   }
   if (type === "dot") {
-    const narrow = scatterPlot({ ...options, width: NARROW_WIDTH, height: Math.round((DEFAULT_HEIGHT * 5) / 6), onIssue: () => {} });
+    const narrow = scatterPlot({
+      ...options,
+      width: NARROW_WIDTH,
+      height: Math.round((DEFAULT_HEIGHT * 5) / 6),
+      onIssue: () => {},
+    });
     return { html: scatterPlot({ ...options, onIssue }), redraw: { narrow: frameOf(narrow) } };
   }
   const xType = xIsNumeric ? "linear" : "time";
@@ -227,9 +235,7 @@ export function buildChartModel(attrs, csv, { strict = false } = {}) {
   const type = attrs.type;
   if (!type) throw new Error(":::chart requires a type attribute");
   if (!CHART_TYPES.includes(type)) {
-    throw new Error(
-      `:::chart type "${type}" is not one of ${CHART_TYPES.join(", ")}`,
-    );
+    throw new Error(`:::chart type "${type}" is not one of ${CHART_TYPES.join(", ")}`);
   }
 
   // Required even with the data table: the table is the long description, not the accessible name.
@@ -283,10 +289,23 @@ export function buildChartModel(attrs, csv, { strict = false } = {}) {
   /** @type {Array<{ code: string, message: string }>} */
   const found = [];
   const words = figureWords(attrs);
-  const { html, redraw } = drawChart({ type, alt, title, x, yColumns, labels, points, xIsNumeric, words, issues: found });
+  const { html, redraw } = drawChart({
+    type,
+    alt,
+    title,
+    x,
+    yColumns,
+    labels,
+    points,
+    xIsNumeric,
+    words,
+    issues: found,
+  });
   const refused = strict ? found.filter((issue) => STRICT_CHART_ISSUES.includes(issue.code)) : [];
   if (refused.length > 0) {
-    throw new Error(`:::chart "${title || type}": ${refused.map((issue) => issue.message).join("; ")}`);
+    throw new Error(
+      `:::chart "${title || type}": ${refused.map((issue) => issue.message).join("; ")}`,
+    );
   }
   const issues = found.map((issue) => issue.message);
   return { type, alt, title, columns, rows, html, issues, redraw };
@@ -316,7 +335,9 @@ export function renderChartHast(model, captionChildren, figure) {
   figure.properties = { className: ["cap-chart"], dataPrelumChart: JSON.stringify(model.redraw) };
 
   const isCaption = (/** @type {any} */ n) =>
-    n.type === "element" && n.tagName === "p" && (n.properties.className ?? []).includes("enarratio-caption");
+    n.type === "element" &&
+    n.tagName === "p" &&
+    (n.properties.className ?? []).includes("enarratio-caption");
   const children = drawn.children.filter((/** @type {any} */ n) => !isCaption(n));
   if (captionChildren.length > 0) {
     // Where Enarratio places a caption: after the drawing, its control row and the summary, before the notes, source and
@@ -325,7 +346,10 @@ export function renderChartHast(model, captionChildren, figure) {
     const before = new Set(["enarratio-frame", "enarratio-controls", "enarratio-summary"]);
     const after = children.reduce(
       (/** @type {number} */ last, /** @type {any} */ n, /** @type {number} */ i) =>
-        n.type === "element" && (n.properties.className ?? []).some((/** @type {string} */ name) => before.has(name)) ? i : last,
+        n.type === "element" &&
+        (n.properties.className ?? []).some((/** @type {string} */ name) => before.has(name))
+          ? i
+          : last,
       -1,
     );
     // A div, not Enarratio's p: the author's caption is markdown and may hold paragraphs.
@@ -341,4 +365,3 @@ export function renderChartHast(model, captionChildren, figure) {
   inner.children = children;
   return [h("div", { className: ["cap-chart-figure"] }, [inner])];
 }
-

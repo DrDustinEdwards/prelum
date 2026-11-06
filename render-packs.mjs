@@ -5,12 +5,14 @@
 import { visit } from "unist-util-visit";
 
 import { buildChartModel, renderChartHast } from "./render-chart.mjs";
-import { DIAGRAM_THEMES, buildDiagramModel, diagramAssetPath, diagramSize, renderDiagramHast } from "./render-diagram.mjs";
 import {
-  refuseHeading,
-  rehypeModelMarker,
-  remarkModelDirective,
-} from "./render-directives.mjs";
+  DIAGRAM_THEMES,
+  buildDiagramModel,
+  diagramAssetPath,
+  diagramSize,
+  renderDiagramHast,
+} from "./render-diagram.mjs";
+import { refuseHeading, rehypeModelMarker, remarkModelDirective } from "./render-directives.mjs";
 import { ContentError } from "./render-error.mjs";
 
 // Hex only: a named color, rgb() or color-mix() makes the render depend on the UA or the cascade.
@@ -250,27 +252,48 @@ export function remarkChartSource(file, chartData) {
     /** @type {any[]} */
     const cited = [];
     visit(tree, (node) => {
-      if (node.type === "containerDirective" && node.name === "chart" && typeof node.attributes?.src === "string") cited.push(node);
+      if (
+        node.type === "containerDirective" &&
+        node.name === "chart" &&
+        typeof node.attributes?.src === "string"
+      )
+        cited.push(node);
     });
     for (const node of cited) {
       const src = node.attributes.src.trim();
       const name = `:::chart "${node.attributes.title ?? node.attributes.type ?? src}"`;
       if (!src) throw new ContentError(file, `${name} has an empty src`);
       if ((node.children ?? []).some((/** @type {any} */ child) => child.type === "code")) {
-        throw new ContentError(file, `${name} cites src="${src}" and holds a CSV block; give the data one way`);
+        throw new ContentError(
+          file,
+          `${name} cites src="${src}" and holds a CSV block; give the data one way`,
+        );
       }
       if (!chartData) {
-        throw new ContentError(file, `${name} cites src="${src}", but this site passes no chartData loader to editorialPack, so there is nothing to read it with`);
+        throw new ContentError(
+          file,
+          `${name} cites src="${src}", but this site passes no chartData loader to editorialPack, so there is nothing to read it with`,
+        );
       }
       /** @type {unknown} */
       let csv;
       try {
         csv = await chartData(src, { file });
       } catch (error) {
-        throw new ContentError(file, `${name}: src="${src}" did not load: ${error instanceof Error ? error.message : String(error)}`);
+        throw new ContentError(
+          file,
+          `${name}: src="${src}" did not load: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
-      if (typeof csv !== "string") throw new ContentError(file, `${name}: the chartData loader returned no text for src="${src}"`);
-      node.children = [...(node.children ?? []), { type: "code", lang: "csv", value: csv.replace(/\r\n?/g, "\n").replace(/\n$/, "") }];
+      if (typeof csv !== "string")
+        throw new ContentError(
+          file,
+          `${name}: the chartData loader returned no text for src="${src}"`,
+        );
+      node.children = [
+        ...(node.children ?? []),
+        { type: "code", lang: "csv", value: csv.replace(/\r\n?/g, "\n").replace(/\n$/, "") },
+      ];
     }
   };
 }
@@ -315,9 +338,13 @@ export function editorialPack({ assetPrefix, chartData, strictCharts = false, di
     marker: "data-chart",
     className: "chart-figure",
     what: "data",
-    build: (/** @type {Record<string, string>} */ attrs, /** @type {string} */ csv) => buildChartModel(attrs, csv, { strict: strictCharts }),
+    build: (/** @type {Record<string, string>} */ attrs, /** @type {string} */ csv) =>
+      buildChartModel(attrs, csv, { strict: strictCharts }),
   });
-  const rehypeDiagram = rehypeModelMarker("data-diagram", renderDiagramHast(assetPrefix, diagramSizes));
+  const rehypeDiagram = rehypeModelMarker(
+    "data-diagram",
+    renderDiagramHast(assetPrefix, diagramSizes),
+  );
   return {
     name: "editorial",
     directives: ["chart", "diagram", "pullquote", "sidenote", "swatch"],
@@ -341,13 +368,24 @@ export function editorialPack({ assetPrefix, chartData, strictCharts = false, di
         ],
         result: () => {
           for (const chart of charts) {
-            for (const message of chart.issues) warn({ line: null, message: `:::chart "${chart.title || chart.type}": ${message}` });
+            for (const message of chart.issues)
+              warn({ line: null, message: `:::chart "${chart.title || chart.type}": ${message}` });
           }
           for (const diagram of diagrams) {
-            if (DIAGRAM_THEMES.every((theme) => diagramSize(diagramSizes, diagramAssetPath(diagram.key, theme, assetPrefix)))) continue;
-            warn({ line: null, message: `:::diagram "${diagram.title || diagram.key}" is not drawn yet, so its images are unsized until it is and the body is rendered again` });
+            if (
+              DIAGRAM_THEMES.every((theme) =>
+                diagramSize(diagramSizes, diagramAssetPath(diagram.key, theme, assetPrefix)),
+              )
+            )
+              continue;
+            warn({
+              line: null,
+              message: `:::diagram "${diagram.title || diagram.key}" is not drawn yet, so its images are unsized until it is and the body is rendered again`,
+            });
           }
-          return { diagrams: diagrams.map((/** @type {any} */ d) => ({ key: d.key, source: d.source })) };
+          return {
+            diagrams: diagrams.map((/** @type {any} */ d) => ({ key: d.key, source: d.source })),
+          };
         },
       };
     },

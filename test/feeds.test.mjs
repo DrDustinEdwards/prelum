@@ -6,7 +6,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { atomDocument, atomEntry, feedItem, jsonFeedDocument, rssDocument, rssItem } from "../index.mjs";
+import {
+  atomDocument,
+  atomEntry,
+  feedItem,
+  jsonFeedDocument,
+  rssDocument,
+  rssItem,
+} from "../index.mjs";
 
 const ORIGIN = "https://x.test";
 const NASTY = `Tom & "Jerry" <b>'s</b>`;
@@ -20,7 +27,11 @@ const NASTY_ESCAPED = "Tom &amp; &quot;Jerry&quot; &lt;b&gt;&apos;s&lt;/b&gt;";
  */
 function assertWellFormed(xml) {
   const body = xml.replace(/^<\?xml [^?]*\?>/, "").replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, "");
-  assert.doesNotMatch(body, /&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/, "a bare & in text or an attribute");
+  assert.doesNotMatch(
+    body,
+    /&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/,
+    "a bare & in text or an attribute",
+  );
   /** @type {string[]} */
   const open = [];
   const tag = /<(\/?)([A-Za-z][\w:.-]*)((?:\s+[\w:.-]+="[^"<]*")*)\s*(\/?)>/y;
@@ -47,8 +58,11 @@ const one = (/** @type {string} */ xml, /** @type {string} */ name) => {
   assert.equal(found.length, 1, `expected one <${name}>, found ${found.length}`);
   return found[0];
 };
-const attr = (/** @type {string} */ xml, /** @type {RegExp} */ tagPattern, /** @type {string} */ name) =>
-  [...xml.matchAll(tagPattern)].map((m) => m[0].match(new RegExp(`\\b${name}="([^"]*)"`))?.[1]);
+const attr = (
+  /** @type {string} */ xml,
+  /** @type {RegExp} */ tagPattern,
+  /** @type {string} */ name,
+) => [...xml.matchAll(tagPattern)].map((m) => m[0].match(new RegExp(`\\b${name}="([^"]*)"`))?.[1]);
 
 const post = (/** @type {Record<string, unknown>} */ over = {}) => ({
   slug: "first",
@@ -98,7 +112,10 @@ test("feeds: a stored guid is kept over the link, so a renamed post is not annou
   assert.equal(one(item, "guid"), "site-post-7");
   assert.match(item, /<guid isPermaLink="false">/);
   assert.equal(one(item, "link"), `${ORIGIN}/writing/renamed`);
-  const entry = one(atomDocument(atomFeed([post({ slug: "renamed", guid: "urn:site:7" })])), "entry");
+  const entry = one(
+    atomDocument(atomFeed([post({ slug: "renamed", guid: "urn:site:7" })])),
+    "entry",
+  );
   assert.equal(one(entry, "id"), "urn:site:7");
 });
 
@@ -123,7 +140,9 @@ test("feeds: an RSS channel names itself and its own URL", () => {
 });
 
 test("feeds: an Atom entry has the elements a validator requires", () => {
-  const xml = atomDocument(atomFeed([post({ tags: ["a", "b"], updatedAt: "2026-07-01T00:00:00Z" })]));
+  const xml = atomDocument(
+    atomFeed([post({ tags: ["a", "b"], updatedAt: "2026-07-01T00:00:00Z" })]),
+  );
   assertWellFormed(xml);
   const entry = one(xml, "entry");
   assert.equal(one(entry, "title"), "First");
@@ -153,10 +172,12 @@ test("feeds: an Atom feed names itself, its author and its own URL", () => {
 test("feeds: a post with no body, summary, date or tags omits those elements rather than sending them empty", () => {
   const bare = post({ html: null, description: null, publishAt: null });
   const item = rssItem(bare, ORIGIN);
-  for (const name of ["description", "content:encoded", "pubDate", "category"]) assert.doesNotMatch(item, new RegExp(`<${name}`));
+  for (const name of ["description", "content:encoded", "pubDate", "category"])
+    assert.doesNotMatch(item, new RegExp(`<${name}`));
   assert.equal(one(item, "title"), "First");
   const entry = atomEntry(bare, ORIGIN);
-  for (const name of ["published", "summary", "content", "category"]) assert.doesNotMatch(entry, new RegExp(`<${name}[ >]`));
+  for (const name of ["published", "summary", "content", "category"])
+    assert.doesNotMatch(entry, new RegExp(`<${name}[ >]`));
   // An Atom entry with no `updated` is invalid, so an undated one gets the epoch.
   assert.equal(one(entry, "updated"), "1970-01-01T00:00:00.000Z");
 });
@@ -169,7 +190,11 @@ test("feeds: the Atom feed's updated is its newest post's latest date, and the e
   const xml = atomDocument(
     atomFeed([
       post({ slug: "old", publishAt: "2026-01-01T00:00:00Z" }),
-      post({ slug: "edited", publishAt: "2026-02-01T00:00:00Z", updatedAt: "2026-09-01T00:00:00Z" }),
+      post({
+        slug: "edited",
+        publishAt: "2026-02-01T00:00:00Z",
+        updatedAt: "2026-09-01T00:00:00Z",
+      }),
       post({ slug: "new", publishAt: "2026-08-01T00:00:00Z" }),
       post({ slug: "draft", publishAt: undefined, updatedAt: undefined }),
     ]),
@@ -184,13 +209,25 @@ test("feeds: the Atom feed's updated is its newest post's latest date, and the e
 
 test("feeds: Date objects are dated the same as ISO strings", () => {
   const when = new Date("2026-06-21T09:30:00Z");
-  assert.equal(one(rssItem(post({ publishAt: when }), ORIGIN), "pubDate"), "Sun, 21 Jun 2026 09:30:00 GMT");
-  assert.equal(one(atomEntry(post({ publishAt: when }), ORIGIN), "published"), "2026-06-21T09:30:00.000Z");
+  assert.equal(
+    one(rssItem(post({ publishAt: when }), ORIGIN), "pubDate"),
+    "Sun, 21 Jun 2026 09:30:00 GMT",
+  );
+  assert.equal(
+    one(atomEntry(post({ publishAt: when }), ORIGIN), "published"),
+    "2026-06-21T09:30:00.000Z",
+  );
 });
 
 test("feeds: &, <, > and quotes in every text field stay text in RSS and Atom", () => {
   const nasty = post({ slug: "a&b", title: NASTY, description: NASTY, tags: [NASTY] });
-  const rss = rssDocument({ ...rssFeed([nasty]), title: NASTY, description: NASTY, link: `${ORIGIN}/?a=1&b=2`, selfUrl: `${ORIGIN}/f?x="y"` });
+  const rss = rssDocument({
+    ...rssFeed([nasty]),
+    title: NASTY,
+    description: NASTY,
+    link: `${ORIGIN}/?a=1&b=2`,
+    selfUrl: `${ORIGIN}/f?x="y"`,
+  });
   assertWellFormed(rss);
   const item = one(rss, "item");
   assert.equal(one(item, "title"), NASTY_ESCAPED);
@@ -202,7 +239,12 @@ test("feeds: &, <, > and quotes in every text field stay text in RSS and Atom", 
   assert.equal(all(rss, "link")[0], `${ORIGIN}/?a=1&amp;b=2`);
   assert.deepEqual(attr(rss, /<atom:link [^>]*\/>/g, "href"), [`${ORIGIN}/f?x=&quot;y&quot;`]);
 
-  const atom = atomDocument({ ...atomFeed([nasty]), title: NASTY, subtitle: NASTY, authorName: NASTY });
+  const atom = atomDocument({
+    ...atomFeed([nasty]),
+    title: NASTY,
+    subtitle: NASTY,
+    authorName: NASTY,
+  });
   assertWellFormed(atom);
   const entry = one(atom, "entry");
   assert.equal(one(entry, "title"), NASTY_ESCAPED);
@@ -235,14 +277,22 @@ test("feeds: root-relative links and KaTeX in a body are made readable on someon
 
 test("feeds: a long post and many posts come through whole and in order", () => {
   const long = "word & ".repeat(5000);
-  const posts = Array.from({ length: 50 }, (_, n) => post({ slug: `p${n}`, title: `${n} ${long}`, html: `<p>${long}</p>` }));
+  const posts = Array.from({ length: 50 }, (_, n) =>
+    post({ slug: `p${n}`, title: `${n} ${long}`, html: `<p>${long}</p>` }),
+  );
   const rss = rssDocument(rssFeed(posts));
   const atom = atomDocument(atomFeed(posts));
   assertWellFormed(rss);
   assertWellFormed(atom);
   const titles = posts.map((p) => p.title.replace(/&/g, "&amp;"));
-  assert.deepEqual(all(rss, "item").map((i) => one(i, "title")), titles);
-  assert.deepEqual(all(atom, "entry").map((e) => one(e, "title")), titles);
+  assert.deepEqual(
+    all(rss, "item").map((i) => one(i, "title")),
+    titles,
+  );
+  assert.deepEqual(
+    all(atom, "entry").map((e) => one(e, "title")),
+    titles,
+  );
   assert.equal(one(all(rss, "item")[49], "content:encoded"), `<![CDATA[<p>${long}</p>]]>`);
 });
 
@@ -305,7 +355,10 @@ test("feeds: a JSON Feed is version 1.1 with the fields a reader requires, and s
       image: `${ORIGIN}/img/c.png`,
     })),
   });
-  assert.equal(feedItem(jsonPost({ coverImage: "https://cdn.x.test/c.png" }), ORIGIN).image, "https://cdn.x.test/c.png");
+  assert.equal(
+    feedItem(jsonPost({ coverImage: "https://cdn.x.test/c.png" }), ORIGIN).image,
+    "https://cdn.x.test/c.png",
+  );
 });
 
 test("feeds: a JSON Feed item drops an empty optional field instead of sending it empty", () => {
@@ -316,7 +369,9 @@ test("feeds: a JSON Feed item drops an empty optional field instead of sending i
     description: "About",
     authorName: "Author",
     origin: ORIGIN,
-    posts: [jsonPost({ description: null, publishAt: null, updatedAt: null, coverImage: null, tags: [] })],
+    posts: [
+      jsonPost({ description: null, publishAt: null, updatedAt: null, coverImage: null, tags: [] }),
+    ],
   });
   assert.deepEqual(JSON.parse(JSON.stringify(doc.items[0])), {
     id: `${ORIGIN}/writing/first`,
@@ -336,7 +391,11 @@ test("rss: lastBuildDate, the channel image and an item's author are written whe
   assertWellFormed(xml);
   assert.equal(one(xml, "lastBuildDate"), "Sat, 01 Aug 2026 12:00:00 GMT");
   assert.deepEqual(
-    { url: one(one(xml, "image"), "url"), title: one(one(xml, "image"), "title"), link: one(one(xml, "image"), "link") },
+    {
+      url: one(one(xml, "image"), "url"),
+      title: one(one(xml, "image"), "title"),
+      link: one(one(xml, "image"), "link"),
+    },
     image,
   );
   assert.equal(one(xml, "author"), `support@x.test (${NASTY_ESCAPED})`);

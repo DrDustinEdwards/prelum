@@ -346,8 +346,6 @@ Prelum's chart redraw now lives in Enarratio, shared with Capsomer (charts, area
 The Prelum side of the family's link contract (Dustin, 2026-10-31): every link a body renders says what kind it is, for Capsomer to
 style from the markup.
 
-
-
 ### Changed
 
 - `RENDER_VERSION` is 11: links carry the contract above, and the allowlist gains `a data-link`, `a data-site`, `a hreflang`,
@@ -607,6 +605,7 @@ Charts move to Enarratio 0.4 (the charts checklist, area 10).
 - The conformance corpus gains 10 hostile inputs for the new blocks (54 in all).
 
 ### Changed
+
 - `headTags` sends `robots: max-image-preview:large` on every indexable page, so Google can show the whole share image.
 - `RENDER_VERSION` is 7. A decorative image (`![](x)`, `alt=""`) is no longer wrapped in its `image-link`: a link whose only
   content has an empty alt has no name.

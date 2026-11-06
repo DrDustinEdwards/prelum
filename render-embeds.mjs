@@ -44,7 +44,8 @@ export const EMBED_PROVIDERS = [
     name: "youtube",
     label: "Watch on YouTube",
     kind: "video",
-    pattern: /^https:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?:[?&#].*)?$/,
+    pattern:
+      /^https:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?:[?&#].*)?$/,
     player: (m) => `https://www.youtube-nocookie.com/embed/${m[1]}?autoplay=1`,
     origin: "https://www.youtube-nocookie.com",
     path: "/embed/",
@@ -53,7 +54,8 @@ export const EMBED_PROVIDERS = [
     name: "tiktok",
     label: "Watch on TikTok",
     kind: "video",
-    pattern: /^https:\/\/(?:www\.)?tiktok\.com\/@[A-Za-z0-9_.]{1,24}\/video\/(\d{10,25})(?:[/?#].*)?$/,
+    pattern:
+      /^https:\/\/(?:www\.)?tiktok\.com\/@[A-Za-z0-9_.]{1,24}\/video\/(\d{10,25})(?:[/?#].*)?$/,
     player: (m) => `https://www.tiktok.com/player/v1/${m[1]}?autoplay=1`,
     origin: "https://www.tiktok.com",
     path: "/player/v1/",
@@ -62,7 +64,8 @@ export const EMBED_PROVIDERS = [
     name: "spotify",
     label: "Listen on Spotify",
     kind: "audio",
-    pattern: /^https:\/\/open\.spotify\.com\/(track|album|playlist|episode|show)\/([A-Za-z0-9]{22})(?:[?#].*)?$/,
+    pattern:
+      /^https:\/\/open\.spotify\.com\/(track|album|playlist|episode|show)\/([A-Za-z0-9]{22})(?:[?#].*)?$/,
     player: (m) => `https://open.spotify.com/embed/${m[1]}/${m[2]}`,
     origin: "https://open.spotify.com",
     path: "/embed/",
@@ -80,8 +83,10 @@ export const EMBED_PROVIDERS = [
     name: "apple-podcasts",
     label: "Listen on Apple Podcasts",
     kind: "audio",
-    pattern: /^https:\/\/podcasts\.apple\.com\/([a-z]{2})\/podcast\/([A-Za-z0-9%-]{1,200})\/id(\d{5,15})(?:\?i=(\d{5,20}))?$/,
-    player: (m) => `https://embed.podcasts.apple.com/${m[1]}/podcast/${m[2]}/id${m[3]}${m[4] ? `?i=${m[4]}` : ""}`,
+    pattern:
+      /^https:\/\/podcasts\.apple\.com\/([a-z]{2})\/podcast\/([A-Za-z0-9%-]{1,200})\/id(\d{5,15})(?:\?i=(\d{5,20}))?$/,
+    player: (m) =>
+      `https://embed.podcasts.apple.com/${m[1]}/podcast/${m[2]}/id${m[3]}${m[4] ? `?i=${m[4]}` : ""}`,
     origin: "https://embed.podcasts.apple.com",
     path: "/",
   },
@@ -109,7 +114,8 @@ export const EMBED_PROVIDERS = [
     name: "x",
     label: "View on X",
     kind: "post",
-    pattern: /^https:\/\/(?:www\.)?(?:x|twitter)\.com\/[A-Za-z0-9_]{1,15}\/status\/(\d{5,25})(?:[/?#].*)?$/,
+    pattern:
+      /^https:\/\/(?:www\.)?(?:x|twitter)\.com\/[A-Za-z0-9_]{1,15}\/status\/(\d{5,25})(?:[/?#].*)?$/,
     player: (m) => `https://platform.twitter.com/embed/Tweet.html?id=${m[1]}&dnt=true`,
     origin: "https://platform.twitter.com",
     path: "/embed/",
@@ -136,7 +142,8 @@ export const EMBED_PROVIDERS = [
 ];
 
 /** A Bluesky post URL by handle, which the renderer refuses with how to get the DID form. */
-export const BLUESKY_HANDLE = /^https:\/\/bsky\.app\/profile\/(?!did:)[^/]+\/post\/[a-z2-7]{13}\/?$/;
+export const BLUESKY_HANDLE =
+  /^https:\/\/bsky\.app\/profile\/(?!did:)[^/]+\/post\/[a-z2-7]{13}\/?$/;
 
 /**
  * The player URL when it is on a known player's origin and path, otherwise null. render/enhance checks the URL again because it reads
@@ -148,7 +155,9 @@ export const BLUESKY_HANDLE = /^https:\/\/bsky\.app\/profile\/(?!did:)[^/]+\/pos
 export function embedPlayerUrl(src) {
   try {
     const url = new URL(src);
-    return EMBED_PROVIDERS.some((p) => url.origin === p.origin && url.pathname.startsWith(p.path)) ? url.href : null;
+    return EMBED_PROVIDERS.some((p) => url.origin === p.origin && url.pathname.startsWith(p.path))
+      ? url.href
+      : null;
   } catch {
     return null;
   }

@@ -19,7 +19,8 @@ export const media = {
   imageProps(src) {
     if (!src.startsWith("/media/")) return null;
     const key = src.slice("/media/".length);
-    const srcSet = (/** @type {string} */ f) => [640, 1024, 1408].map((w) => `/media/${key}?w=${w}${f} ${w}w`).join(", ");
+    const srcSet = (/** @type {string} */ f) =>
+      [640, 1024, 1408].map((w) => `/media/${key}?w=${w}${f} ${w}w`).join(", ");
     // A GIF as site-runtime's ./image offers it: its first frame under reduced motion, then the animated WebP.
     const still = "(prefers-reduced-motion: reduce)";
     return {
@@ -49,12 +50,20 @@ export async function resolveImage(src) {
   // The library's credit and license, which only some files carry.
   const rights = src.includes("-credited-") ? { credit: "Sample Lab", license: "CC BY 4.0" } : {};
   return src.startsWith("/media/")
-    ? { width, height, placeholder: "data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==", ...rights }
+    ? {
+        width,
+        height,
+        placeholder: "data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==",
+        ...rights,
+      }
     : { width, height };
 }
 
 /** What drawDiagrams writes to sizes.json for the corpus's one diagram. */
-export const diagramSizes = { "example-4efabcc1-light.svg": { width: 120, height: 180 }, "example-4efabcc1-dark.svg": { width: 120, height: 180 } };
+export const diagramSizes = {
+  "example-4efabcc1-light.svg": { width: 120, height: 180 },
+  "example-4efabcc1-dark.svg": { width: 120, height: 180 },
+};
 
 export const packs = [editorialPack({ assetPrefix: "example-", diagramSizes })];
 
@@ -72,7 +81,10 @@ export const links = {
 export const linkIcons = {
   store: {
     /** @param {string} host */
-    get: async (host) => ({ bytes: new Uint8Array(host === "example.com" ? [0x89, 0x50, 0x4e, 0x47] : []), type: host === "example.com" ? "image/png" : "" }),
+    get: async (host) => ({
+      bytes: new Uint8Array(host === "example.com" ? [0x89, 0x50, 0x4e, 0x47] : []),
+      type: host === "example.com" ? "image/png" : "",
+    }),
     put: async () => {},
   },
 };
@@ -85,4 +97,12 @@ export function fixture(name) {
   return readFileSync(new URL(`./fixtures/render/${name}.md`, import.meta.url), "utf8");
 }
 
-export const FIXTURES = ["prose", "math", "untrusted-math", "code", "directives", "charts", "blocks"];
+export const FIXTURES = [
+  "prose",
+  "math",
+  "untrusted-math",
+  "code",
+  "directives",
+  "charts",
+  "blocks",
+];

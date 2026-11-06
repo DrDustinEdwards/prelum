@@ -24,8 +24,22 @@ import { editorialPack } from "../render-packs.mjs";
 
 const bin = new URL("../bin/chart-audit.mjs", import.meta.url).pathname;
 const chart = (/** @type {string} */ title, /** @type {object} */ extra = {}) =>
-  barChart({ data: [{ year: "2024", posts: 3 }, { year: "2025", posts: 5 }, { year: "2026", posts: 4 }], x: "year", y: "posts", alt: `${title}: posts rose from 3 in 2024 to 5 in 2025.`, title, caption: "Counted from the archive.", source: { name: "the archive", href: "/archive" }, ...extra });
-const frame = (/** @type {string} */ id, /** @type {string} */ body) => `<div class="cap-chart" id="${id}"><div class="cap-chart-figure">${body}</div></div>`;
+  barChart({
+    data: [
+      { year: "2024", posts: 3 },
+      { year: "2025", posts: 5 },
+      { year: "2026", posts: 4 },
+    ],
+    x: "year",
+    y: "posts",
+    alt: `${title}: posts rose from 3 in 2024 to 5 in 2025.`,
+    title,
+    caption: "Counted from the archive.",
+    source: { name: "the archive", href: "/archive" },
+    ...extra,
+  });
+const frame = (/** @type {string} */ id, /** @type {string} */ body) =>
+  `<div class="cap-chart" id="${id}"><div class="cap-chart-figure">${body}</div></div>`;
 const page = (/** @type {string} */ body, head = "") =>
   `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Charts</title><meta name="color-scheme" content="light dark">` +
   `<link rel="stylesheet" href="/charts.css">${head}</head><body><main><h1>Charts</h1>${body}</main></body></html>`;
@@ -37,7 +51,10 @@ const post = await render({
   options: { packs: [editorialPack({ assetPrefix: "test-" })] },
 });
 const entry = join(mkdtempSync(join(tmpdir(), "chart-audit-")), "charts.mjs");
-writeFileSync(entry, `import { enhanceCharts } from ${JSON.stringify(new URL("../render-chart-enhance.mjs", import.meta.url).pathname)};\nenhanceCharts();\n`);
+writeFileSync(
+  entry,
+  `import { enhanceCharts } from ${JSON.stringify(new URL("../render-chart-enhance.mjs", import.meta.url).pathname)};\nenhanceCharts();\n`,
+);
 const bundle = await rolldown({ input: entry, platform: "browser", logLevel: "silent" });
 const chartsJs = (await bundle.generate({ format: "esm" })).output[0].code;
 await bundle.close();
@@ -53,12 +70,52 @@ const site = {
       `<svg width="300" height="120" aria-hidden="true">${[10, 30, 50, 70, 90].map((y, i) => `<path d="M 10 ${y} C 100 ${y} 200 ${110 - y} ${290 - i * 20} ${110 - y}" fill="none" stroke="currentColor"/><circle cx="10" cy="${y}" r="2.5"/><circle cx="${290 - i * 20}" cy="${110 - y}" r="2.5"/>`).join("")}</svg>`,
       '<label>Password <input type="password"></label>',
       // B28: an enhanced chart's SVG is a group described as a chart (WAI-ARIA APG), drawn narrow enough for 320 px.
-      frame("enhanced", chart("Talks per year", { width: 300 }).replace(/ role="img"/, ' role="group" aria-roledescription="chart"')),
+      frame(
+        "enhanced",
+        chart("Talks per year", { width: 300 }).replace(
+          / role="img"/,
+          ' role="group" aria-roledescription="chart"',
+        ),
+      ),
       // Inline primitives: one named with its values, in a stat tile; one hidden beside the numbers, in a table row.
       `<dl><div class="cap-chart" data-variant="tile"><dt class="cap-chart-title">Posts</dt><dd>12 ${sparkline({ values: [3, 5, 4], alt: "Posts per year, 2024 to 2026: most in 2025, with 5.", inline: true })}</dd></div></dl>`,
       // B1's ground, not marks: a donut's hole in the background color, and the edge round a pale ramp step's swatch.
-      frame("donut", pieChart({ data: [{ answer: "Yes", n: 60 }, { answer: "No", n: 40 }], label: "answer", value: "n", donut: true, centerLabel: "100", width: 300, alt: "Yes 60, no 40.", title: "Answers", source: { name: "the survey" } })),
-      frame("cohorts", heatmap({ data: [1, 2, 3].flatMap((m) => ["A", "B"].map((c) => ({ month: `M${m}`, cohort: c, kept: m * 20 + (c === "A" ? 5 : 0) }))), x: "month", y: "cohort", value: "kept", width: 300, alt: "Cohort A kept more each month.", title: "Kept", source: { name: "the log" } })),
+      frame(
+        "donut",
+        pieChart({
+          data: [
+            { answer: "Yes", n: 60 },
+            { answer: "No", n: 40 },
+          ],
+          label: "answer",
+          value: "n",
+          donut: true,
+          centerLabel: "100",
+          width: 300,
+          alt: "Yes 60, no 40.",
+          title: "Answers",
+          source: { name: "the survey" },
+        }),
+      ),
+      frame(
+        "cohorts",
+        heatmap({
+          data: [1, 2, 3].flatMap((m) =>
+            ["A", "B"].map((c) => ({
+              month: `M${m}`,
+              cohort: c,
+              kept: m * 20 + (c === "A" ? 5 : 0),
+            })),
+          ),
+          x: "month",
+          y: "cohort",
+          value: "kept",
+          width: 300,
+          alt: "Cohort A kept more each month.",
+          title: "Kept",
+          source: { name: "the log" },
+        }),
+      ),
       `<table><caption>Uptime</caption><tr><th scope="row">API</th><td>99.9% ${uptimeStrip({ slots: ["up", "up", "down"], label: "API, last 3 hours", inline: true }).replace("<svg ", '<svg aria-hidden="true" ')}</td></tr></table>`,
     ].join(""),
     '<script type="module" src="/charts.js"></script>',
@@ -66,11 +123,16 @@ const site = {
   "/bad": page(
     [
       // B30, B28 and F: no data table, an SVG with no role or name, and Enarratio's bare figure outside the frame.
-      chart("No table", { csv: false }).replace(/<details[\s\S]*<\/details>/, "").replace(/ role="img" aria-label="[^"]*"/, ""),
+      chart("No table", { csv: false })
+        .replace(/<details[\s\S]*<\/details>/, "")
+        .replace(/ role="img" aria-label="[^"]*"/, ""),
       // B1 in dark only, and B3: the caption drawn at 10 px.
       frame("dim", chart("Dim in dark")),
       // B27: a link with no name inside the chart.
-      frame("unnamed-link", chart("Unnamed link").replace("</figcaption>", '<a href="/more"></a></figcaption>')),
+      frame(
+        "unnamed-link",
+        chart("Unnamed link").replace("</figcaption>", '<a href="/more"></a></figcaption>'),
+      ),
       // D6: a drawing over the 100 kB budget.
       frame("heavy", chart("Heavy").replace("</svg>", `<desc>${"x".repeat(110_000)}</desc></svg>`)),
       // F: an SVG chart drawn by hand.
@@ -85,9 +147,12 @@ const site = {
   "/charts.js": chartsJs,
   // Reached only through --pages, and drawn only after --start set the demo cookie.
   "/demo/start": page("<p>Demo session started.</p>"),
-  "/demo/charts": page(chart("Demo only", { csv: false }).replace(/<details[\s\S]*<\/details>/, "")),
+  "/demo/charts": page(
+    chart("Demo only", { csv: false }).replace(/<details[\s\S]*<\/details>/, ""),
+  ),
   "/charts.css": `${baseStylesheet}\n${stylesheet(defaultTheme)}\nbody { background: #fff; color: #111 } @media (prefers-color-scheme: dark) { body { background: #111; color: #eee } }`,
-  "/vendor/chart.umd.js": "/*! Chart.js v4.4.1 | (c) Chart.js Contributors */ window.Chart = function Chart() {};",
+  "/vendor/chart.umd.js":
+    "/*! Chart.js v4.4.1 | (c) Chart.js Contributors */ window.Chart = function Chart() {};",
 };
 
 test("prelum-chart-audit finds every planted mistake, as an error with the page as proof, and nothing on the clean chart", async () => {
@@ -96,24 +161,42 @@ test("prelum-chart-audit finds every planted mistake, as an error with the page 
     const path = new URL(request.url ?? "/", origin).pathname;
     if (path === "/sitemap.xml") {
       response.writeHead(200, { "content-type": "application/xml" });
-      response.end(`<urlset>${["/", "/good", "/bad"].map((p) => `<url><loc>${origin}${p}</loc></url>`).join("")}</urlset>`);
+      response.end(
+        `<urlset>${["/", "/good", "/bad"].map((p) => `<url><loc>${origin}${p}</loc></url>`).join("")}</urlset>`,
+      );
       return;
     }
     // A page behind Cloudflare Access: a 302 to its sign-in page, which has no chart (Desk's /demos/progress, 2026-11-03).
     if (path === "/private") {
-      response.writeHead(302, { location: "/cdn-cgi/access/login/desk.example.com?redirect_url=%2Fprivate" });
+      response.writeHead(302, {
+        location: "/cdn-cgi/access/login/desk.example.com?redirect_url=%2Fprivate",
+      });
       response.end();
       return;
     }
     if (path.startsWith("/cdn-cgi/access/login")) {
       response.writeHead(200, { "content-type": "text/html" });
-      response.end(page('<form><label>Email <input type="email"></label><label>Code <input type="password"></label></form>'));
+      response.end(
+        page(
+          '<form><label>Email <input type="email"></label><label>Code <input type="password"></label></form>',
+        ),
+      );
       return;
     }
     const demo = /(?:^|;\s*)demo=1/.test(request.headers.cookie ?? "");
-    const body = path === "/demo/charts" && !demo ? page("<p>Start a demo first.</p>") : /** @type {Record<string, string>} */ (site)[path];
-    const type = path.endsWith(".css") ? "text/css" : path.endsWith(".js") ? "text/javascript" : "text/html";
-    response.writeHead(body === undefined ? 404 : 200, { "content-type": type, ...(path === "/demo/start" ? { "set-cookie": "demo=1; Path=/" } : {}) });
+    const body =
+      path === "/demo/charts" && !demo
+        ? page("<p>Start a demo first.</p>")
+        : /** @type {Record<string, string>} */ (site)[path];
+    const type = path.endsWith(".css")
+      ? "text/css"
+      : path.endsWith(".js")
+        ? "text/javascript"
+        : "text/html";
+    response.writeHead(body === undefined ? 404 : 200, {
+      "content-type": type,
+      ...(path === "/demo/start" ? { "set-cookie": "demo=1; Path=/" } : {}),
+    });
     response.end(body ?? "not found");
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve(undefined)));
@@ -123,13 +206,18 @@ test("prelum-chart-audit finds every planted mistake, as an error with the page 
     /** @type {{ code: number | null, output: string }} */
     const { code, output } = await new Promise((resolve) => {
       let output = "";
-      const child = spawn(process.execPath, [bin, "--origin", origin, "--pages", "/demo/charts,/private", "--start", "/demo/start"], { stdio: ["ignore", "pipe", "pipe"] });
+      const child = spawn(
+        process.execPath,
+        [bin, "--origin", origin, "--pages", "/demo/charts,/private", "--start", "/demo/start"],
+        { stdio: ["ignore", "pipe", "pipe"] },
+      );
       child.stdout.on("data", (chunk) => (output += chunk));
       child.stderr.on("data", (chunk) => (output += chunk));
       child.on("close", (code) => resolve({ code, output }));
     });
     const lines = output.split("\n").filter((line) => line.startsWith("::"));
-    const on = (/** @type {string} */ path) => lines.filter((line) => line.includes(`::${origin}${path} `));
+    const on = (/** @type {string} */ path) =>
+      lines.filter((line) => line.includes(`::${origin}${path} `));
     assert.equal(code, 1, output);
     assert.deepEqual(on("/good"), [], output);
     const bad = on("/bad");
@@ -140,20 +228,42 @@ test("prelum-chart-audit finds every planted mistake, as an error with the page 
       ["error", "F", '"No table" (bar): not in Capsomer'],
       ["error", "C1", '"No table" (bar): no CSV link'],
       ["error", "C12", "320 px: the drawing is"],
-      ["error", "B18", '"Trend" (inline sparkline): an inline primitive whose name states no values'],
+      [
+        "error",
+        "B18",
+        '"Trend" (inline sparkline): an inline primitive whose name states no values',
+      ],
       ["error", "B1", "#dim (bar), dark:"],
-      ["error", "B3", "text under 12 px, smallest \"Dim in dark\""],
+      ["error", "B3", 'text under 12 px, smallest "Dim in dark"'],
       ["error", "B27", "#unnamed-link (bar), light: axe link-name"],
       ["error", "D6", "kB of inline SVG, over the 100 kB budget"],
       ["error", "B2", '"Only with scripts" (bar): drawn only with scripts on'],
       ["error", "F", "loads Chart.js"],
       ["error", "F", 'an SVG chart drawn outside Enarratio: "Visits" (a polyline)'],
     ]) {
-      assert.ok(bad.some((line) => line.startsWith(`::${severity} title=${item}::`) && line.includes(detail)), `${severity} ${item} ${detail}\n${output}`);
+      assert.ok(
+        bad.some(
+          (line) => line.startsWith(`::${severity} title=${item}::`) && line.includes(detail),
+        ),
+        `${severity} ${item} ${detail}\n${output}`,
+      );
     }
-    assert.ok(!bad.some((line) => line.includes("#dim (bar), light: ") && line.includes("title=B1")), `#dim passes in light\n${output}`);
-    assert.ok(on("/private").some((line) => line.startsWith("::error title=G::") && line.includes("redirected to sign-in")), output);
-    assert.ok(on("/demo/charts").some((line) => line.startsWith("::error title=B30::") && line.includes('"Demo only"')), output);
+    assert.ok(
+      !bad.some((line) => line.includes("#dim (bar), light: ") && line.includes("title=B1")),
+      `#dim passes in light\n${output}`,
+    );
+    assert.ok(
+      on("/private").some(
+        (line) => line.startsWith("::error title=G::") && line.includes("redirected to sign-in"),
+      ),
+      output,
+    );
+    assert.ok(
+      on("/demo/charts").some(
+        (line) => line.startsWith("::error title=B30::") && line.includes('"Demo only"'),
+      ),
+      output,
+    );
   } finally {
     server.close();
   }
@@ -168,7 +278,9 @@ test("prelum-chart-audit fails a run whose every page is behind sign-in, and doe
       response.end();
       return;
     }
-    response.writeHead(path.startsWith("/cdn-cgi/access/login") ? 200 : 404, { "content-type": "text/html" });
+    response.writeHead(path.startsWith("/cdn-cgi/access/login") ? 200 : 404, {
+      "content-type": "text/html",
+    });
     response.end(page('<form><label>Code <input type="password"></label></form>'));
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve(undefined)));
@@ -178,13 +290,19 @@ test("prelum-chart-audit fails a run whose every page is behind sign-in, and doe
     /** @type {{ code: number | null, output: string }} */
     const { code, output } = await new Promise((resolve) => {
       let output = "";
-      const child = spawn(process.execPath, [bin, "--origin", origin, "--pages", "/private"], { stdio: ["ignore", "pipe", "pipe"] });
+      const child = spawn(process.execPath, [bin, "--origin", origin, "--pages", "/private"], {
+        stdio: ["ignore", "pipe", "pipe"],
+      });
       child.stdout.on("data", (chunk) => (output += chunk));
       child.stderr.on("data", (chunk) => (output += chunk));
       child.on("close", (code) => resolve({ code, output }));
     });
     assert.equal(code, 1, output);
-    assert.ok(output.includes(`::error title=G::${origin}/private `) && output.includes("redirected to sign-in"), output);
+    assert.ok(
+      output.includes(`::error title=G::${origin}/private `) &&
+        output.includes("redirected to sign-in"),
+      output,
+    );
   } finally {
     server.close();
   }

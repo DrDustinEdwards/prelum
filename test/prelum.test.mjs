@@ -35,7 +35,8 @@ const fixture = (/** @type {string} */ name) =>
 /** The entries a sitemap lists, read back out of the captured document. */
 function entriesOf(/** @type {string} */ xml, /** @type {RegExp} */ lastmodPattern) {
   return [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)].map(([, body]) => {
-    const get = (/** @type {string} */ tag) => body.match(new RegExp(`<${tag}>([^<]*)</${tag}>`))?.[1];
+    const get = (/** @type {string} */ tag) =>
+      body.match(new RegExp(`<${tag}>([^<]*)</${tag}>`))?.[1];
     const lastmod = get("lastmod");
     const priority = get("priority");
     return {
@@ -54,22 +55,34 @@ test("sitemap: a compact document is reproduced byte for byte", () => {
 
 test("sitemap: a compact document with no trailing newline is reproduced byte for byte", () => {
   const xml = fixture("sitemap-compact-no-newline.xml");
-  assert.equal(sitemapDocument(entriesOf(xml, /^\d{4}-\d{2}-\d{2}$/), { trailingNewline: false }), xml);
+  assert.equal(
+    sitemapDocument(entriesOf(xml, /^\d{4}-\d{2}-\d{2}$/), { trailingNewline: false }),
+    xml,
+  );
 });
 
 test("sitemap: an expanded document with datetimes, changefreq and priority is reproduced byte for byte", () => {
   const xml = fixture("sitemap-expanded.xml");
   assert.equal(
-    sitemapDocument(entriesOf(xml, /^\d{4}-\d{2}-\d{2}T/), { layout: "expanded", lastmodFormat: "datetime" }),
+    sitemapDocument(entriesOf(xml, /^\d{4}-\d{2}-\d{2}T/), {
+      layout: "expanded",
+      lastmodFormat: "datetime",
+    }),
     xml,
   );
 });
 
 test("sitemap: a URL listed twice is written once, and compact layout refuses the fields it cannot write", () => {
-  const xml = sitemapDocument([{ loc: "https://x.test/a" }, { loc: "https://x.test/a", lastmod: "2026-01-01" }]);
+  const xml = sitemapDocument([
+    { loc: "https://x.test/a" },
+    { loc: "https://x.test/a", lastmod: "2026-01-01" },
+  ]);
   assert.equal(xml.match(/<url>/g)?.length, 1);
   assert.doesNotMatch(xml, /lastmod/);
-  assert.throws(() => sitemapDocument([{ loc: "https://x.test/a", priority: 1 }]), /only the expanded layout writes/);
+  assert.throws(
+    () => sitemapDocument([{ loc: "https://x.test/a", priority: 1 }]),
+    /only the expanded layout writes/,
+  );
 });
 
 test("sitemap: a loc with an ampersand does not end the document", () => {
@@ -79,20 +92,36 @@ test("sitemap: a loc with an ampersand does not end the document", () => {
 
 test("sitemap: images are listed under their page, and the image namespace is declared only when one is", () => {
   const compact = sitemapDocument([
-    { loc: "https://x.test/a", lastmod: "2026-10-01", images: ["https://x.test/a.png", "https://x.test/b.jpg?w=1&h=2"] },
+    {
+      loc: "https://x.test/a",
+      lastmod: "2026-10-01",
+      images: ["https://x.test/a.png", "https://x.test/b.jpg?w=1&h=2"],
+    },
     { loc: "https://x.test/b" },
   ]);
-  assert.match(compact, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9" xmlns:image="http:\/\/www\.google\.com\/schemas\/sitemap-image\/1\.1">/);
+  assert.match(
+    compact,
+    /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9" xmlns:image="http:\/\/www\.google\.com\/schemas\/sitemap-image\/1\.1">/,
+  );
   assert.match(
     compact,
     /<url><loc>https:\/\/x\.test\/a<\/loc><lastmod>2026-10-01<\/lastmod><image:image><image:loc>https:\/\/x\.test\/a\.png<\/image:loc><\/image:image><image:image><image:loc>https:\/\/x\.test\/b\.jpg\?w=1&amp;h=2<\/image:loc><\/image:image><\/url>/,
   );
   assert.match(compact, /<url><loc>https:\/\/x\.test\/b<\/loc><\/url>/);
 
-  const expanded = sitemapDocument([{ loc: "https://x.test/a", images: ["https://x.test/a.png"] }], { layout: "expanded" });
-  assert.match(expanded, /\n    <image:image><image:loc>https:\/\/x\.test\/a\.png<\/image:loc><\/image:image>\n  <\/url>/);
+  const expanded = sitemapDocument(
+    [{ loc: "https://x.test/a", images: ["https://x.test/a.png"] }],
+    { layout: "expanded" },
+  );
+  assert.match(
+    expanded,
+    /\n    <image:image><image:loc>https:\/\/x\.test\/a\.png<\/image:loc><\/image:image>\n  <\/url>/,
+  );
 
-  assert.doesNotMatch(sitemapDocument([{ loc: "https://x.test/a", images: [] }]), /xmlns:image|image:image/);
+  assert.doesNotMatch(
+    sitemapDocument([{ loc: "https://x.test/a", images: [] }]),
+    /xmlns:image|image:image/,
+  );
 });
 
 /** The sections of a captured llms.txt, parsed back so the skeleton can be rebuilt from them. */
@@ -130,7 +159,15 @@ test("llms: a file with prose sections is reproduced byte for byte from its part
     const [heading, ...body] = section.trimEnd().split("\n\n");
     return { heading, body };
   });
-  assert.equal(llmsDocument({ title: title.replace(/^# /, ""), summary: summary.replace(/^> /, ""), intro, sections }), text);
+  assert.equal(
+    llmsDocument({
+      title: title.replace(/^# /, ""),
+      summary: summary.replace(/^> /, ""),
+      intro,
+      sections,
+    }),
+    text,
+  );
 });
 
 test("llms: a link title's brackets are escaped and an empty section is dropped", () => {
@@ -147,14 +184,29 @@ test("llms: a link title's brackets are escaped and an empty section is dropped"
 });
 
 test("llms-full: the llms.txt header, then each page as its Markdown copy, so the two files and the .md cannot disagree", () => {
-  const page = { title: "Post", url: "https://x.test/post", description: "About it", markdown: "## Part\n\nText.\n" };
-  assert.equal(markdownPage(page), "# Post\n\n> About it\n\nSource: https://x.test/post\n\n## Part\n\nText.\n");
+  const page = {
+    title: "Post",
+    url: "https://x.test/post",
+    description: "About it",
+    markdown: "## Part\n\nText.\n",
+  };
+  assert.equal(
+    markdownPage(page),
+    "# Post\n\n> About it\n\nSource: https://x.test/post\n\n## Part\n\nText.\n",
+  );
   const doc = { title: "T", summary: "S", intro: ["Intro."] };
   assert.equal(
-    llmsFullDocument({ ...doc, pages: [page, { title: "Empty", url: "https://x.test/e", markdown: "" }] }),
+    llmsFullDocument({
+      ...doc,
+      pages: [page, { title: "Empty", url: "https://x.test/e", markdown: "" }],
+    }),
     `${llmsDocument({ ...doc, sections: [] })}\n${markdownPage(page)}\n# Empty\n\nSource: https://x.test/e\n`,
   );
-  assert.deepEqual(["/writing/post", "/a/", "/"].map(markdownPath), ["/writing/post.md", "/a.md", "/index.md"]);
+  assert.deepEqual(["/writing/post", "/a/", "/"].map(markdownPath), [
+    "/writing/post.md",
+    "/a.md",
+    "/index.md",
+  ]);
 });
 
 test("markdown: only an Accept header that ranks Markdown above HTML and every wildcard gets it", () => {
@@ -167,19 +219,50 @@ test("markdown: only an Accept header that ranks Markdown above HTML and every w
     "text/markdown;q=2": false,
     "": false,
   };
-  for (const [accept, wanted] of Object.entries(cases)) assert.equal(prefersMarkdown(accept), wanted, accept);
+  for (const [accept, wanted] of Object.entries(cases))
+    assert.equal(prefersMarkdown(accept), wanted, accept);
 });
 
 test("frontmatter: values, quoted values, inline and block lists, and the body after it", () => {
-  const { data, body } = frontmatter('---\r\nname: "Button"\r\nparts: [a, \'b\']\r\nstates:\r\n  - hover\r\n  - focus\r\nadded:\r\n---\r\n# Body\r\n');
-  assert.deepEqual(data, { name: "Button", parts: ["a", "b"], states: ["hover", "focus"], added: [] });
+  const { data, body } = frontmatter(
+    "---\r\nname: \"Button\"\r\nparts: [a, 'b']\r\nstates:\r\n  - hover\r\n  - focus\r\nadded:\r\n---\r\n# Body\r\n",
+  );
+  assert.deepEqual(data, {
+    name: "Button",
+    parts: ["a", "b"],
+    states: ["hover", "focus"],
+    added: [],
+  });
   assert.equal(body, "# Body\n");
   assert.deepEqual(frontmatter("# No header"), { data: {}, body: "# No header" });
 });
 
 test("frontmatter blocks: a write changes only the block it names, and every other byte comes back as it was", () => {
-  const source = ["---", 'title: "Every product"', "# kept: a comment", "draft: false", "further_reading:", "  - https://example.com/a", "key_takeaways:", '  - "First."', '  - "Second."', "weird_key: some value: with a colon", "---", "", "The body.", ""].join("\n");
-  for (const s of [source, "no frontmatter\n", "---\ntitle: x\n---", "---\r\ntitle: x\r\n---\r\nBody\r\n", "---\n---\nBody", ""]) assert.equal(joinSource(splitSource(s)), s);
+  const source = [
+    "---",
+    'title: "Every product"',
+    "# kept: a comment",
+    "draft: false",
+    "further_reading:",
+    "  - https://example.com/a",
+    "key_takeaways:",
+    '  - "First."',
+    '  - "Second."',
+    "weird_key: some value: with a colon",
+    "---",
+    "",
+    "The body.",
+    "",
+  ].join("\n");
+  for (const s of [
+    source,
+    "no frontmatter\n",
+    "---\ntitle: x\n---",
+    "---\r\ntitle: x\r\n---\r\nBody\r\n",
+    "---\n---\nBody",
+    "",
+  ])
+    assert.equal(joinSource(splitSource(s)), s);
   const { front: header, body } = splitSource(source);
   const front = header ?? "";
   assert.equal(body, "The body.\n");
@@ -189,19 +272,29 @@ test("frontmatter blocks: a write changes only the block it names, and every oth
   assert.equal(setRawKey(front, "draft", "true"), front.replace("draft: false", "draft: true"));
   assert.equal(setRawKey(front, "draft", "false"), front);
   assert.equal(setRawKey("title: x", "draft", "true"), "title: x\ndraft: true");
-  assert.equal(setBlock(front, "key_takeaways", ["key_takeaways:", '  - "One"']), front.replace('key_takeaways:\n  - "First."\n  - "Second."', 'key_takeaways:\n  - "One"'));
-  assert.equal(setBlock(front, "further_reading", []), front.replace("further_reading:\n  - https://example.com/a\n", ""));
+  assert.equal(
+    setBlock(front, "key_takeaways", ["key_takeaways:", '  - "One"']),
+    front.replace('key_takeaways:\n  - "First."\n  - "Second."', 'key_takeaways:\n  - "One"'),
+  );
+  assert.equal(
+    setBlock(front, "further_reading", []),
+    front.replace("further_reading:\n  - https://example.com/a\n", ""),
+  );
   const crlf = splitSource("---\r\ntitle: Hello\r\ntags: [old]\r\n---\r\nBody\r\n").front ?? "";
   assert.equal(setRawKey(crlf, "title", '"Hi"'), 'title: "Hi"\r\ntags: [old]');
 });
 
 test("xml: the sites' feed fragments are the primitives' output", () => {
   const escaped = fixture("feed.xml");
-  assert.ok(escaped.includes(`<title>${escapeXml(`Spring update: notes & "questions" <draft>`)}</title>`));
+  assert.ok(
+    escaped.includes(`<title>${escapeXml(`Spring update: notes & "questions" <draft>`)}</title>`),
+  );
   assert.ok(escaped.includes(`<pubDate>${rfc822("2026-06-21 09:30:00")}</pubDate>`));
   assert.ok(escaped.includes(`<pubDate>${rfc822("2026-05-02T08:00:00Z")}</pubDate>`));
   const wrapped = fixture("feed-cdata.rss");
-  assert.ok(wrapped.includes(`<title>${cdata(`Getting started: what works & what "doesn't"`)}</title>`));
+  assert.ok(
+    wrapped.includes(`<title>${cdata(`Getting started: what works & what "doesn't"`)}</title>`),
+  );
   assert.ok(wrapped.includes(`<pubDate>${rfc822(new Date("2026-08-01T12:00:00.000Z"))}</pubDate>`));
 });
 
@@ -211,7 +304,10 @@ test("search: a quote inside a term is doubled, so the term cannot leave its quo
 });
 
 test("search: operators and hyphens stay literal text", () => {
-  assert.equal(toMatchExpression({ terms: ["NEAR", "e-mail"], phrases: ["exact words"] }), `"exact words" AND "NEAR" AND "e-mail"`);
+  assert.equal(
+    toMatchExpression({ terms: ["NEAR", "e-mail"], phrases: ["exact words"] }),
+    `"exact words" AND "NEAR" AND "e-mail"`,
+  );
 });
 
 test("search: only the last term takes the prefix star, and nothing to match is null", () => {

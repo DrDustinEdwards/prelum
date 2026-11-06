@@ -23,6 +23,6 @@ export function setBlock(front: string, key: string, lines: string[]): string;
  * colon), one line of text otherwise. `body` is the file after the closing `---` and the blank lines after it.
  */
 export function frontmatter(source: string): {
-    data: Record<string, string | string[]>;
-    body: string;
+  data: Record<string, string | string[]>;
+  body: string;
 };

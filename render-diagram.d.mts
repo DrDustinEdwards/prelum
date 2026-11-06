@@ -8,11 +8,14 @@ export function diagramAssetPath(key: string, theme: string, assetPrefix: string
  * @param {Record<string, string>} attrs
  * @param {string} source the fenced mermaid block's contents
  */
-export function buildDiagramModel(attrs: Record<string, string>, source: string): {
-    alt: string;
-    title: string;
-    source: string;
-    key: string;
+export function buildDiagramModel(
+  attrs: Record<string, string>,
+  source: string,
+): {
+  alt: string;
+  title: string;
+  source: string;
+  key: string;
 };
 export const DIAGRAM_ASSET_DIR: "diagrams";
 export const DIAGRAM_THEMES: string[];
@@ -23,11 +26,14 @@ export const DIAGRAM_SIZES_FILE: "sizes.json";
  * role="img".
  */
 export function renderDiagramHast(
-    assetPrefix: string,
-    sizes?: Record<string, { width: number; height: number }>,
-): (model: ReturnType<typeof buildDiagramModel>, captionChildren: import("hast").ElementContent[]) => import("hast").ElementContent[];
+  assetPrefix: string,
+  sizes?: Record<string, { width: number; height: number }>,
+): (
+  model: ReturnType<typeof buildDiagramModel>,
+  captionChildren: import("hast").ElementContent[],
+) => import("hast").ElementContent[];
 /** A drawing's size from the site's sizes file, or null when it is not drawn yet. */
 export function diagramSize(
-    sizes: Record<string, { width: number; height: number }>,
-    src: string,
+  sizes: Record<string, { width: number; height: number }>,
+  src: string,
 ): { width: number; height: number } | null;

@@ -202,7 +202,8 @@ function remarkCollectMedia(sink, keyOf) {
             add(node.attributes?.dark, "figure-directive", node);
           }
           if (node.name === "video" || node.name === "audio" || node.name === "embed") {
-            for (const key of ["src", "poster", "captions", "transcript"]) add(node.attributes?.[key], "media-directive", node);
+            for (const key of ["src", "poster", "captions", "transcript"])
+              add(node.attributes?.[key], "media-directive", node);
           }
           break;
         // Regex, not a parser, so every URL-carrying attribute is caught; over-detection only refuses a delete.
@@ -258,8 +259,14 @@ function rehypeTableScroll() {
   return (/** @type {import("hast").Root} */ tree) => {
     visit(tree, "element", (node, index, parent) => {
       if (node.tagName !== "table" || !parent || index === undefined) return;
-      if (parent.type === "element" && parent.properties?.className?.includes?.("table-scroll")) return;
-      const wrapper = { type: "element", tagName: "div", properties: { className: ["table-scroll"] }, children: [node] };
+      if (parent.type === "element" && parent.properties?.className?.includes?.("table-scroll"))
+        return;
+      const wrapper = {
+        type: "element",
+        tagName: "div",
+        properties: { className: ["table-scroll"] },
+        children: [node],
+      };
       scrollRegion(/** @type {import("hast").Element} */ (wrapper), tableName(node));
       parent.children[index] = /** @type {import("hast").Element} */ (wrapper);
     });
@@ -291,8 +298,12 @@ function codeLanguageName(pre) {
   // render-highlight.mjs writes data-lang ("text" when there is none), as a raw key; without it the language is the code's class.
   const code = pre.children.find((child) => child.type === "element" && child.tagName === "code");
   const classes = code?.type === "element" ? [code.properties?.className ?? []].flat() : [];
-  const fromClass = String(classes.find((name) => String(name).startsWith("language-")) ?? "").slice("language-".length);
-  const lang = String(pre.properties?.["data-lang"] ?? pre.properties?.dataLang ?? fromClass).trim();
+  const fromClass = String(
+    classes.find((name) => String(name).startsWith("language-")) ?? "",
+  ).slice("language-".length);
+  const lang = String(
+    pre.properties?.["data-lang"] ?? pre.properties?.dataLang ?? fromClass,
+  ).trim();
   if (!lang || lang === "text") return "Code";
   return `Code: ${LANGUAGE_NAMES[lang.toLowerCase()] ?? lang}`;
 }
@@ -313,9 +324,13 @@ function rehypeCodeRegions() {
     /** @type {Set<import("hast").Element>} */
     const framed = new Set();
     visit(tree, "element", (figure) => {
-      if (figure.tagName !== "figure" || !figure.properties?.className?.includes?.("code-frame")) return;
+      if (figure.tagName !== "figure" || !figure.properties?.className?.includes?.("code-frame"))
+        return;
       const caption = figure.children.find(
-        (child) => child.type === "element" && child.tagName === "figcaption" && child.properties?.className?.includes?.("code-title"),
+        (child) =>
+          child.type === "element" &&
+          child.tagName === "figcaption" &&
+          child.properties?.className?.includes?.("code-title"),
       );
       const title = caption ? hastToString(caption).trim() : "";
       visit(figure, "element", (pre) => {
@@ -335,18 +350,41 @@ function rehypeCodeRegions() {
  * line, the inline content after it up to the first block (a nested list, a paragraph, a table). The name is then what the reader
  * sees once rendered (math, links, an image's alt), read once, and a loose item's later paragraphs stay out of it.
  */
-const BLOCK_TAGS = new Set(["blockquote", "details", "div", "figure", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "ol", "p", "pre", "table", "ul"]);
+const BLOCK_TAGS = new Set([
+  "blockquote",
+  "details",
+  "div",
+  "figure",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "hr",
+  "ol",
+  "p",
+  "pre",
+  "table",
+  "ul",
+]);
 
 function rehypeTaskListLabels() {
   return (/** @type {import("hast").Root} */ tree) => {
     visit(tree, "element", (item) => {
-      if (item.tagName !== "li" || !item.properties?.className?.includes?.("task-list-item")) return;
+      if (item.tagName !== "li" || !item.properties?.className?.includes?.("task-list-item"))
+        return;
       // The checkbox is first in the item, or first in its paragraph when the list is loose.
       const first = item.children.find((child) => child.type === "element");
       const line = first?.tagName === "p" ? first : item;
       const at = line.children.findIndex((child) => child.type === "element");
       const checkbox = line.children[at];
-      if (checkbox?.type !== "element" || checkbox.tagName !== "input" || checkbox.properties?.type !== "checkbox") return;
+      if (
+        checkbox?.type !== "element" ||
+        checkbox.tagName !== "input" ||
+        checkbox.properties?.type !== "checkbox"
+      )
+        return;
       let end = at + 1;
       while (end < line.children.length) {
         const child = line.children[end];
@@ -359,7 +397,12 @@ function rehypeTaskListLabels() {
         if (last.type !== "text" || last.value.trim() !== "") break;
         end -= 1;
       }
-      const label = { type: "element", tagName: "label", properties: {}, children: line.children.slice(at, end) };
+      const label = {
+        type: "element",
+        tagName: "label",
+        properties: {},
+        children: line.children.slice(at, end),
+      };
       line.children.splice(at, end - at, /** @type {import("hast").Element} */ (label));
     });
   };
@@ -407,7 +450,12 @@ const REDUCED_MOTION = /prefers-reduced-motion:\s*reduce/;
 const MEDIA_QUERY = /^[a-z0-9\s():,.-]+$/i;
 
 /** @param {string} tagName @param {Record<string, unknown>} properties @param {any[]} [children] @returns {import("hast").Element} */
-const el = (tagName, properties, children = []) => ({ type: "element", tagName, properties: /** @type {any} */ (properties), children });
+const el = (tagName, properties, children = []) => ({
+  type: "element",
+  tagName,
+  properties: /** @type {any} */ (properties),
+  children,
+});
 
 /** @param {any} node @param {string} name */
 const hasClass = (node, name) => [node?.properties?.className ?? []].flat().includes(name);
@@ -421,7 +469,8 @@ const hasClass = (node, name) => [node?.properties?.className ?? []].flat().incl
 function rightsOf(facts) {
   const credit = facts?.credit?.trim() || undefined;
   const license = facts?.license?.trim() || undefined;
-  const licenseUrl = license && /^https?:\/\//.test(license) && isAllowedUrl(license) ? license : undefined;
+  const licenseUrl =
+    license && /^https?:\/\//.test(license) && isAllowedUrl(license) ? license : undefined;
   const notice = license && !licenseUrl ? license : undefined;
   return { credit, licenseUrl, notice, shown: [credit, notice].filter(Boolean).join(" · ") };
 }
@@ -440,16 +489,21 @@ const libraryCredits = new WeakSet();
  */
 function showCredit(shown, parents, text) {
   let box = parents.get(shown);
-  while (box && box.type === "element" && box.tagName !== "figure" && box.tagName !== "p") box = parents.get(box);
+  while (box && box.type === "element" && box.tagName !== "figure" && box.tagName !== "p")
+    box = parents.get(box);
   if (!box || box.type !== "element") return;
   if (box.tagName === "p") {
-    const own = box.children.filter((/** @type {any} */ c) => !(c.type === "text" && c.value.trim() === ""));
+    const own = box.children.filter(
+      (/** @type {any} */ c) => !(c.type === "text" && c.value.trim() === ""),
+    );
     if (own.length !== 1 || own[0] !== shown) return;
     box.tagName = "figure";
     box.properties = { className: ["image-figure"] };
   }
   const credit = el("span", { className: ["figure-credit"] }, [{ type: "text", value: text }]);
-  let caption = box.children.find((/** @type {any} */ c) => c.type === "element" && c.tagName === "figcaption");
+  let caption = box.children.find(
+    (/** @type {any} */ c) => c.type === "element" && c.tagName === "figcaption",
+  );
   if (!caption) {
     caption = el("figcaption", {});
     box.children.push(caption);
@@ -463,7 +517,10 @@ function showCredit(shown, parents, text) {
   if (credits.length > 0 && !credits.some((c) => libraryCredits.has(c))) return;
   if (credits.some((c) => hastToString(c) === text)) return;
   libraryCredits.add(credit);
-  caption.children.push(...(caption.children.length > 0 ? [{ type: "text", value: " " }] : []), credit);
+  caption.children.push(
+    ...(caption.children.length > 0 ? [{ type: "text", value: " " }] : []),
+    credit,
+  );
 }
 
 /**
@@ -483,15 +540,25 @@ function motionControl(animated, img, stills, sizes) {
   const src = srcsetUrls(webp?.srcSet ?? "")[0];
   if (!webp || !src) return animated;
   const { alt, width, height } = /** @type {Record<string, unknown>} */ (img.properties);
-  const still = el(
-    "picture",
-    { className: ["motion-still"], style: "display:none" },
-    [
-      ...stills.filter((s) => s !== webp).map((s) => el("source", { type: s.type, srcSet: s.srcSet, ...(sizes ? { sizes } : {}) })),
-      el("img", { src, srcSet: webp.srcSet, ...(sizes ? { sizes } : {}), alt, width, height, loading: "lazy", decoding: "async" }),
-    ],
-  );
-  const control = el("label", { className: ["motion-pause"] }, [el("input", { type: "checkbox" }), { type: "text", value: " Pause animation" }]);
+  const still = el("picture", { className: ["motion-still"], style: "display:none" }, [
+    ...stills
+      .filter((s) => s !== webp)
+      .map((s) => el("source", { type: s.type, srcSet: s.srcSet, ...(sizes ? { sizes } : {}) })),
+    el("img", {
+      src,
+      srcSet: webp.srcSet,
+      ...(sizes ? { sizes } : {}),
+      alt,
+      width,
+      height,
+      loading: "lazy",
+      decoding: "async",
+    }),
+  ]);
+  const control = el("label", { className: ["motion-pause"] }, [
+    el("input", { type: "checkbox" }),
+    { type: "text", value: " Pause animation" },
+  ]);
   return el("span", { className: ["motion"] }, [animated, still, control]);
 }
 
@@ -534,7 +601,11 @@ function rehypeImageSources(file, resolveImage, pending, imageProps, priority, s
         };
         sinks.videos.push(entry);
         sinks.after.push(() => {
-          if (!entry.width) sinks.warnings.push({ line: null, message: `video ${entry.url} has no size: the site has none for its poster ${entry.poster}` });
+          if (!entry.width)
+            sinks.warnings.push({
+              line: null,
+              message: `video ${entry.url} has no size: the site has none for its poster ${entry.poster}`,
+            });
         });
         resolved(poster, (size) => {
           video.properties = { ...video.properties, width: size?.width, height: size?.height };
@@ -570,7 +641,9 @@ function rehypeImageSources(file, resolveImage, pending, imageProps, priority, s
       // srcset and the placeholder are written after rehypeUrlProtocols has run, so they are checked here: a candidate URL outside the
       // policy drops the srcset, and a placeholder that is not the base64 form drops the placeholder.
       const responsive =
-        props?.srcSet && srcsetUrls(props.srcSet).every(isAllowedUrl) ? { srcSet: props.srcSet, sizes: props.sizes } : {};
+        props?.srcSet && srcsetUrls(props.srcSet).every(isAllowedUrl)
+          ? { srcSet: props.srcSet, sizes: props.sizes }
+          : {};
       // Each format the site offers becomes a <source>, AVIF before WebP, so the browser takes the first it reads (Astro's <Picture>),
       // with its media query, which is how an animation's still reaches a reader who asks for reduced motion. Only beside a valid
       // srcset, and each source is held to the same URL policy, so one bad candidate drops that source alone.
@@ -588,7 +661,9 @@ function rehypeImageSources(file, resolveImage, pending, imageProps, priority, s
       // Links to the unsized original, which srcset never serves. A figure's light and dark pair is excluded, as diagrams are: an
       // anchor around the display: none half would be a focusable link with no name. So is a decorative image (`![""](x)`, alt ""):
       // its link would have no name either. An author's own link wins.
-      const themed = Array.isArray(classes) && (classes.includes("figure-light") || classes.includes("figure-dark"));
+      const themed =
+        Array.isArray(classes) &&
+        (classes.includes("figure-light") || classes.includes("figure-dark"));
       const poster = hasClass(node, "embed-poster");
       // An author's link (or an embed's) is never wrapped again, and holds no pause control: a checkbox in an <a> is an interactive
       // element inside another.
@@ -604,20 +679,31 @@ function rehypeImageSources(file, resolveImage, pending, imageProps, priority, s
       /** @type {import("hast").Element} */
       const picture =
         sources.length > 0
-          ? el(
-              "picture",
-              {},
-              [
-                ...sources.map((s) =>
-                  el("source", { type: s.type, srcSet: s.srcSet, ...(responsive.sizes ? { sizes: responsive.sizes } : {}), ...(s.media ? { media: s.media } : {}) }),
-                ),
-                node,
-              ],
-            )
+          ? el("picture", {}, [
+              ...sources.map((s) =>
+                el("source", {
+                  type: s.type,
+                  srcSet: s.srcSet,
+                  ...(responsive.sizes ? { sizes: responsive.sizes } : {}),
+                  ...(s.media ? { media: s.media } : {}),
+                }),
+              ),
+              node,
+            ])
           : node;
-      const linked = wrappable ? el("a", { className: ["image-link"], href: props?.href ?? src }, [picture]) : picture;
-      const shown = stills.length > 0 && !themed && !inLink ? motionControl(linked, node, stills, responsive.sizes) : linked;
-      if (shown !== node && parent && typeof index === "number" && parent.children[index] === node) {
+      const linked = wrappable
+        ? el("a", { className: ["image-link"], href: props?.href ?? src }, [picture])
+        : picture;
+      const shown =
+        stills.length > 0 && !themed && !inLink
+          ? motionControl(linked, node, stills, responsive.sizes)
+          : linked;
+      if (
+        shown !== node &&
+        parent &&
+        typeof index === "number" &&
+        parent.children[index] === node
+      ) {
         parent.children[index] = shown;
         parents.set(shown, parent);
       }
@@ -664,7 +750,10 @@ function rehypeImageSources(file, resolveImage, pending, imageProps, priority, s
           // The inline style carries only the per-image URL.
           ...(LQIP_STYLE.test(lqip)
             ? {
-                className: [...(Array.isArray(node.properties?.className) ? node.properties.className : []), "has-lqip"],
+                className: [
+                  ...(Array.isArray(node.properties?.className) ? node.properties.className : []),
+                  "has-lqip",
+                ],
                 // Only the form render-safe.mjs allows: base64 holds no quote, parenthesis or space.
                 style: lqip,
               }
@@ -762,8 +851,14 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   }
 
   const packs = options.packs ?? [];
-  const known = [...CORE_DIRECTIVES, ...BLOCK_DIRECTIVES, ...packs.flatMap((pack) => pack.directives)];
-  const runs = packs.map((pack) => pack.setup({ file, body, warn: (warning) => warnings.push(warning) }));
+  const known = [
+    ...CORE_DIRECTIVES,
+    ...BLOCK_DIRECTIVES,
+    ...packs.flatMap((pack) => pack.directives),
+  ];
+  const runs = packs.map((pack) =>
+    pack.setup({ file, body, warn: (warning) => warnings.push(warning) }),
+  );
 
   /** @type {Array<{ depth: number, id: string, text: string }>} */
   const toc = [];
@@ -788,7 +883,8 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
     warnings,
     after: /** @type {Array<() => void>} */ ([]),
   };
-  const priority = options.priority === false ? { taken: true } : (options.priority ?? { taken: false });
+  const priority =
+    options.priority === false ? { taken: true } : (options.priority ?? { taken: false });
 
   const keyOf = options.media?.keyOf ?? (() => null);
   // One lookup per src in a render: a resolver that reads D1 or R2 pays once for an image used twice.

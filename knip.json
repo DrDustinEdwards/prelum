@@ -1,19 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6.39.0/schema.json",
-  "entry": [
-    "*.mjs",
-    "bin/*.mjs",
-    "specimen/*.mjs",
-    "specimen/browser/*.mjs",
-    "test/*.test.mjs"
-  ],
-  "project": [
-    "*.mjs",
-    "bin/**/*.mjs",
-    "specimen/**/*.mjs",
-    "test/**/*.mjs"
-  ],
-  "ignoreDependencies": [
-    "@fontsource-variable/source-serif-4"
-  ]
+  "entry": ["*.mjs", "bin/*.mjs", "specimen/*.mjs", "specimen/browser/*.mjs", "test/*.test.mjs"],
+  "project": ["*.mjs", "bin/**/*.mjs", "specimen/**/*.mjs", "test/**/*.mjs"],
+  "ignoreDependencies": ["@fontsource-variable/source-serif-4"]
 }

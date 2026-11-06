@@ -18,7 +18,12 @@ export declare const ICONS: {
  * The `<link>`s for the icons, in the shape React Router's `links` export takes. `favicon.ico` holds 16, 32 and 48 pixel
  * images (Google wants a multiple of 48); the SVG is for browsers that draw it.
  */
-export declare function iconLinks(): Array<{ rel: string; href: string; type?: string; sizes?: string }>;
+export declare function iconLinks(): Array<{
+  rel: string;
+  href: string;
+  type?: string;
+  sizes?: string;
+}>;
 
 export interface ManifestSite {
   name: string;
@@ -59,4 +64,7 @@ export declare function icoFile(images: Array<{ size: number; png: Uint8Array }>
  * links an icon, an Apple touch icon and a manifest, and the manifest names the site and an icon at 192 and 512 pixels and a
  * maskable one, each of which loads.
  */
-export declare function auditIcons(site: { origin: string; fetch: typeof fetch }): Promise<AuditFinding[]>;
+export declare function auditIcons(site: {
+  origin: string;
+  fetch: typeof fetch;
+}): Promise<AuditFinding[]>;

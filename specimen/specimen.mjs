@@ -32,7 +32,9 @@ export const ORIGIN = "https://prelum.dustinedwards.info";
 export const ASSET_PREFIX = "prelum-";
 
 /** Each drawing's size, which drawDiagrams writes beside the drawings in specimen/diagrams. */
-const diagramSizes = JSON.parse(readFileSync(new URL(`./diagrams/${DIAGRAM_SIZES_FILE}`, import.meta.url), "utf8"));
+const diagramSizes = JSON.parse(
+  readFileSync(new URL(`./diagrams/${DIAGRAM_SIZES_FILE}`, import.meta.url), "utf8"),
+);
 
 const editorial = editorialPack({ assetPrefix: ASSET_PREFIX, diagramSizes });
 
@@ -59,7 +61,10 @@ export const ICON_DIR = new URL("./link-icons/", import.meta.url);
 function imageProps(src) {
   // The poster is a still PNG in two widths, so a phone downloads the small one.
   if (src === "/images/poster-640x360.png") {
-    return { srcSet: "/images/poster-320x180.png 320w, /images/poster-640x360.png 640w", sizes: "(min-width: 44rem) 640px, 100vw" };
+    return {
+      srcSet: "/images/poster-320x180.png 320w, /images/poster-640x360.png 640w",
+      sizes: "(min-width: 44rem) 640px, 100vw",
+    };
   }
   if (!src.endsWith(".gif")) return null;
   const width = /-(\d+)x\d+\.gif$/.exec(src)?.[1];
@@ -68,7 +73,11 @@ function imageProps(src) {
     srcSet: `${src} ${width}w`,
     sizes: `${width}px`,
     sources: [
-      { type: "image/png", srcSet: `${still} ${width}w`, media: "(prefers-reduced-motion: reduce)" },
+      {
+        type: "image/png",
+        srcSet: `${still} ${width}w`,
+        media: "(prefers-reduced-motion: reduce)",
+      },
       { type: "image/gif", srcSet: `${src} ${width}w` },
     ],
   };
@@ -101,7 +110,11 @@ export const options = {
         return bytes ? { bytes, type: linkIconType(bytes) ?? "" } : null;
       },
       /** @param {string} host @param {Uint8Array} bytes @param {string} type */
-      put: async (host, bytes, type) => writeFileSync(new URL(type ? `.${linkIconSrc("", host, type)}` : `${host}.none`, ICON_DIR), bytes),
+      put: async (host, bytes, type) =>
+        writeFileSync(
+          new URL(type ? `.${linkIconSrc("", host, type)}` : `${host}.none`, ICON_DIR),
+          bytes,
+        ),
     },
   },
   // The specimen shows only what the pipeline's own allowlist permits.
@@ -115,7 +128,10 @@ export const options = {
  */
 export async function resolveImage(src) {
   const size = /-(\d+)x(\d+)\.\w+$/.exec(src);
-  if (!size) throw new Error(`specimen image ${src} does not carry its size in its name (<name>-<width>x<height>.<ext>)`);
+  if (!size)
+    throw new Error(
+      `specimen image ${src} does not carry its size in its name (<name>-<width>x<height>.<ext>)`,
+    );
   return { width: Number(size[1]), height: Number(size[2]), ...RIGHTS[src] };
 }
 
@@ -141,7 +157,8 @@ export function splitHeader(file, text, required = ["name", "summary"]) {
   const { data, body } = frontmatter(text);
   if (body === text) throw new Error(`${file}: an element starts with a --- header naming it`);
   for (const key of required) {
-    if (typeof data[key] !== "string" || !data[key]) throw new Error(`${file}: the header has no ${key}`);
+    if (typeof data[key] !== "string" || !data[key])
+      throw new Error(`${file}: the header has no ${key}`);
   }
   return { header: /** @type {Record<string, string>} */ (data), source: body };
 }
@@ -158,20 +175,27 @@ function directivesOf(file, source) {
   /** @type {Set<string>} */
   const names = new Set();
   visit(tree, (node) => {
-    if (node.type === "containerDirective" || node.type === "leafDirective" || node.type === "textDirective") {
+    if (
+      node.type === "containerDirective" ||
+      node.type === "leafDirective" ||
+      node.type === "textDirective"
+    ) {
       if (/^[a-z]/i.test(node.name)) names.add(node.name);
     }
   });
   const known = [...PACKS.core, ...PACKS.editorial];
   for (const name of names) {
-    if (!known.includes(name)) throw new Error(`${file}: :${name} is not a directive Prelum handles`);
+    if (!known.includes(name))
+      throw new Error(`${file}: :${name} is not a directive Prelum handles`);
   }
   return [...names].sort();
 }
 
 /** @returns {Element[]} in file order */
 export function loadElements() {
-  const files = readdirSync(ELEMENTS_DIR).filter((f) => f.endsWith(".md")).sort();
+  const files = readdirSync(ELEMENTS_DIR)
+    .filter((f) => f.endsWith(".md"))
+    .sort();
   /** @type {Set<string>} */
   const ids = new Set();
   return files.map((file) => {
@@ -200,7 +224,12 @@ export function loadElements() {
  * @param {{ taken: boolean }} [priority] the page's, when several elements share one page, so only its first image is high
  */
 export function renderElement(element, priority) {
-  return render({ file: `specimen/elements/${element.file}`, body: element.source, resolveImage, options: { ...options, priority } });
+  return render({
+    file: `specimen/elements/${element.file}`,
+    body: element.source,
+    resolveImage,
+    options: { ...options, priority },
+  });
 }
 
 /**
@@ -244,20 +273,29 @@ export const DIAGRAM_CONFIG_FILE = "config.json";
 export function diagramColors(theme) {
   const tokensCss = pathToFileURL(createRequire(import.meta.url).resolve("capsomer/tokens.css"));
   const css = readFileSync(new URL("../tokens/color.css", tokensCss), "utf8");
-  const start = theme === "light" ? css.indexOf(":root {") : css.indexOf(':root[data-theme="dark"] {');
+  const start =
+    theme === "light" ? css.indexOf(":root {") : css.indexOf(':root[data-theme="dark"] {');
   if (start < 0) throw new Error(`Capsomer's color.css has no ${theme} block`);
   const family = readFileSync(new URL(`../tokens/family-${FAMILY}.css`, tokensCss), "utf8");
-  const familyStart = theme === "light" ? family.indexOf(`[data-family="${FAMILY}"] {`) : family.indexOf(`:root:not([data-theme="light"])[data-family="${FAMILY}"] {`);
+  const familyStart =
+    theme === "light"
+      ? family.indexOf(`[data-family="${FAMILY}"] {`)
+      : family.indexOf(`:root:not([data-theme="light"])[data-family="${FAMILY}"] {`);
   if (familyStart < 0) throw new Error(`Capsomer's family-${FAMILY}.css has no ${theme} block`);
   /** @type {Record<string, string>} */
   const tokens = {};
-  for (const block of [css.slice(start, css.indexOf("}", start)), family.slice(familyStart, family.indexOf("}", familyStart))]) {
-    for (const [, name, value] of block.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{3,8});/g)) tokens[name ?? ""] = value ?? "";
+  for (const block of [
+    css.slice(start, css.indexOf("}", start)),
+    family.slice(familyStart, family.indexOf("}", familyStart)),
+  ]) {
+    for (const [, name, value] of block.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{3,8});/g))
+      tokens[name ?? ""] = value ?? "";
   }
   /** @type {Record<string, string>} */
   const colors = {};
   for (const [role, token] of Object.entries(DIAGRAM_TOKENS)) {
-    if (!tokens[token]) throw new Error(`Capsomer's color.css has no --${token} in the ${theme} theme`);
+    if (!tokens[token])
+      throw new Error(`Capsomer's color.css has no --${token} in the ${theme} theme`);
     colors[role] = tokens[token];
   }
   return colors;
@@ -283,6 +321,11 @@ const DIAGRAM_TOKENS = {
  * leave the diagrams in the old palette.
  */
 export function diagramConfig() {
-  const mermaid = JSON.parse(readFileSync(new URL("../node_modules/@mermaid-js/mermaid-cli/package.json", import.meta.url), "utf8")).version;
+  const mermaid = JSON.parse(
+    readFileSync(
+      new URL("../node_modules/@mermaid-js/mermaid-cli/package.json", import.meta.url),
+      "utf8",
+    ),
+  ).version;
   return { mermaidCli: mermaid, light: diagramColors("light"), dark: diagramColors("dark") };
 }

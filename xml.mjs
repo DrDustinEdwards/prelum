@@ -62,7 +62,8 @@ export function isoDay(value) {
  * @returns {Date}
  */
 export function toDate(value, fallback = new Date(0)) {
-  if (value instanceof Date) return Number.isNaN(value.getTime()) ? (fallback ?? new Date(NaN)) : value;
+  if (value instanceof Date)
+    return Number.isNaN(value.getTime()) ? (fallback ?? new Date(NaN)) : value;
   if (typeof value === "number") return new Date(value);
   if (typeof value === "string" && value !== "") {
     const date = new Date(value.includes("T") ? value : `${value.replace(" ", "T")}Z`);
@@ -141,7 +142,9 @@ export function mathToTex(html) {
     if (end === -1) break;
 
     const region = source.slice(start, end);
-    const annotation = region.match(/<annotation encoding="application\/x-tex">([\s\S]*?)<\/annotation>/);
+    const annotation = region.match(
+      /<annotation encoding="application\/x-tex">([\s\S]*?)<\/annotation>/,
+    );
     // An empty annotation is left alone too, rather than emitting a bare pair of dollar signs.
     if (!annotation || !annotation[1]) {
       out += source.slice(cursor, end);

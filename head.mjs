@@ -14,14 +14,103 @@ export const SERP_DESCRIPTION = Object.freeze({ px: 920, font: 14 });
 // titles use; any other character takes the width of a lower-case letter, 556.
 const ARIAL = new Map(
   Object.entries({
-    " ": 278, "!": 278, '"': 355, "#": 556, $: 556, "%": 889, "&": 667, "'": 191, "(": 333, ")": 333, "*": 389, "+": 584, ",": 278,
-    "-": 333, ".": 278, "/": 278, ":": 278, ";": 278, "<": 584, "=": 584, ">": 584, "?": 556, "@": 1015, "[": 278, "\\": 278,
-    "]": 278, "^": 469, _: 556, "`": 333, "{": 334, "|": 260, "}": 334, "~": 584,
-    A: 667, B: 667, C: 722, D: 722, E: 667, F: 611, G: 778, H: 722, I: 278, J: 500, K: 667, L: 556, M: 833, N: 722, O: 778,
-    P: 667, Q: 778, R: 722, S: 667, T: 611, U: 722, V: 667, W: 944, X: 667, Y: 667, Z: 611,
-    a: 556, b: 556, c: 500, d: 556, e: 556, f: 278, g: 556, h: 556, i: 222, j: 222, k: 500, l: 222, m: 833, n: 556, o: 556,
-    p: 556, q: 556, r: 333, s: 500, t: 278, u: 556, v: 500, w: 722, x: 500, y: 500, z: 500,
-    "–": 556, "—": 1000, "‘": 222, "’": 222, "“": 333, "”": 333, "…": 1000, "·": 278, "•": 350, "©": 737, "®": 737, "™": 1000,
+    " ": 278,
+    "!": 278,
+    '"': 355,
+    "#": 556,
+    $: 556,
+    "%": 889,
+    "&": 667,
+    "'": 191,
+    "(": 333,
+    ")": 333,
+    "*": 389,
+    "+": 584,
+    ",": 278,
+    "-": 333,
+    ".": 278,
+    "/": 278,
+    ":": 278,
+    ";": 278,
+    "<": 584,
+    "=": 584,
+    ">": 584,
+    "?": 556,
+    "@": 1015,
+    "[": 278,
+    "\\": 278,
+    "]": 278,
+    "^": 469,
+    _: 556,
+    "`": 333,
+    "{": 334,
+    "|": 260,
+    "}": 334,
+    "~": 584,
+    A: 667,
+    B: 667,
+    C: 722,
+    D: 722,
+    E: 667,
+    F: 611,
+    G: 778,
+    H: 722,
+    I: 278,
+    J: 500,
+    K: 667,
+    L: 556,
+    M: 833,
+    N: 722,
+    O: 778,
+    P: 667,
+    Q: 778,
+    R: 722,
+    S: 667,
+    T: 611,
+    U: 722,
+    V: 667,
+    W: 944,
+    X: 667,
+    Y: 667,
+    Z: 611,
+    a: 556,
+    b: 556,
+    c: 500,
+    d: 556,
+    e: 556,
+    f: 278,
+    g: 556,
+    h: 556,
+    i: 222,
+    j: 222,
+    k: 500,
+    l: 222,
+    m: 833,
+    n: 556,
+    o: 556,
+    p: 556,
+    q: 556,
+    r: 333,
+    s: 500,
+    t: 278,
+    u: 556,
+    v: 500,
+    w: 722,
+    x: 500,
+    y: 500,
+    z: 500,
+    "–": 556,
+    "—": 1000,
+    "‘": 222,
+    "’": 222,
+    "“": 333,
+    "”": 333,
+    "…": 1000,
+    "·": 278,
+    "•": 350,
+    "©": 737,
+    "®": 737,
+    "™": 1000,
   }),
 );
 for (const digit of "0123456789") ARIAL.set(digit, 556);
@@ -150,8 +239,20 @@ const FEED_TYPES = {
  * @returns {HeadTag[]}
  */
 export function headTags(input) {
-  const { origin, path, title, description, siteName, type = "website", locale, noindex, article } = input;
-  const url = input.canonical ?? absoluteUrl(origin, input.keepTrailingSlash ? path : withoutTrailingSlash(path));
+  const {
+    origin,
+    path,
+    title,
+    description,
+    siteName,
+    type = "website",
+    locale,
+    noindex,
+    article,
+  } = input;
+  const url =
+    input.canonical ??
+    absoluteUrl(origin, input.keepTrailingSlash ? path : withoutTrailingSlash(path));
   const image = typeof input.image === "string" ? { url: input.image } : input.image;
   const imageUrl = absoluteUrl(origin, image.url);
   const socialTitle = input.socialTitle ?? title;
@@ -163,10 +264,21 @@ export function headTags(input) {
     { name: "description", content: description },
     { tagName: "link", rel: "canonical", href: url },
   ];
-  if (input.markdown) tags.push({ tagName: "link", rel: "alternate", type: "text/markdown", href: absoluteUrl(origin, input.markdown) });
+  if (input.markdown)
+    tags.push({
+      tagName: "link",
+      rel: "alternate",
+      type: "text/markdown",
+      href: absoluteUrl(origin, input.markdown),
+    });
   for (const feed of input.feeds ?? []) {
     /** @type {HeadTag} */
-    const link = { tagName: "link", rel: "alternate", type: FEED_TYPES[feed.type] ?? feed.type, href: absoluteUrl(origin, feed.href) };
+    const link = {
+      tagName: "link",
+      rel: "alternate",
+      type: FEED_TYPES[feed.type] ?? feed.type,
+      href: absoluteUrl(origin, feed.href),
+    };
     if (feed.title) link.title = feed.title;
     tags.push(link);
   }
@@ -189,7 +301,8 @@ export function headTags(input) {
   for (const video of input.videos ?? []) {
     const videoUrl = absoluteUrl(origin, video.url);
     tags.push({ property: "og:video", content: videoUrl });
-    if (videoUrl.startsWith("https:")) tags.push({ property: "og:video:secure_url", content: videoUrl });
+    if (videoUrl.startsWith("https:"))
+      tags.push({ property: "og:video:secure_url", content: videoUrl });
     const videoType = video.type ?? typeOf(videoUrl, VIDEO_TYPES);
     if (videoType) tags.push({ property: "og:video:type", content: videoType });
     if (video.width) tags.push({ property: "og:video:width", content: String(video.width) });
@@ -202,7 +315,11 @@ export function headTags(input) {
     { name: "twitter:description", content: socialDescription },
     { name: "twitter:image", content: imageUrl },
   );
-  if (image.alt) tags.push({ name: "twitter:image:alt", content: truncateForSerp(image.alt, TWITTER_ALT_LIMIT) });
+  if (image.alt)
+    tags.push({
+      name: "twitter:image:alt",
+      content: truncateForSerp(image.alt, TWITTER_ALT_LIMIT),
+    });
   return tags;
 }
 
@@ -302,7 +419,10 @@ export function headHtml(tags) {
  * @param {number | { px: number, font: number }} limit
  */
 export function truncateForSerp(text, limit) {
-  const size = typeof limit === "number" ? (/** @type {string} */ t) => Array.from(t).length : (/** @type {string} */ t) => serpWidth(t, limit.font);
+  const size =
+    typeof limit === "number"
+      ? (/** @type {string} */ t) => Array.from(t).length
+      : (/** @type {string} */ t) => serpWidth(t, limit.font);
   const max = typeof limit === "number" ? limit : limit.px;
   if (size(text) <= max) return text;
   // The "..." counts toward the limit, and punctuation left before it goes, so the cut never reads ",...".
@@ -323,7 +443,9 @@ export function truncateForSerp(text, limit) {
  */
 export function searchTitle(title, suffix) {
   const full = `${title}${suffix}`;
-  return serpWidth(full, SERP_TITLE.font) <= SERP_TITLE.px ? full : truncateForSerp(title, SERP_TITLE);
+  return serpWidth(full, SERP_TITLE.font) <= SERP_TITLE.px
+    ? full
+    : truncateForSerp(title, SERP_TITLE);
 }
 
 /**
@@ -380,24 +502,44 @@ export function defineHead(site) {
       feeds: [...(site.feeds ?? []), ...(feeds ?? [])],
     });
     if (page.noindex) return tags;
-    const url = page.canonical ?? absoluteUrl(site.origin, page.keepTrailingSlash ? page.path : withoutTrailingSlash(page.path));
-    const name = fullTitle && site.suffix && page.title.endsWith(site.suffix) ? page.title.slice(0, -site.suffix.length) : page.title;
-    const trail = breadcrumbs === false ? [] : (breadcrumbs ?? sectionTrail(site, page.path, name, page.keepTrailingSlash));
+    const url =
+      page.canonical ??
+      absoluteUrl(
+        site.origin,
+        page.keepTrailingSlash ? page.path : withoutTrailingSlash(page.path),
+      );
+    const name =
+      fullTitle && site.suffix && page.title.endsWith(site.suffix)
+        ? page.title.slice(0, -site.suffix.length)
+        : page.title;
+    const trail =
+      breadcrumbs === false
+        ? []
+        : (breadcrumbs ?? sectionTrail(site, page.path, name, page.keepTrailingSlash));
     /** @type {Record<string, unknown>[]} */
-    const nodes = [{
-      "@type": pageType ?? "WebPage",
-      "@id": `${url}#webpage`,
-      url,
-      name,
-      description: page.description,
-      isPartOf: { "@id": `${site.origin}/#website` },
-      ...(trail.length >= BREADCRUMB_MIN_ITEMS ? { breadcrumb: { "@id": `${url}#breadcrumb` } } : {}),
-    }];
+    const nodes = [
+      {
+        "@type": pageType ?? "WebPage",
+        "@id": `${url}#webpage`,
+        url,
+        name,
+        description: page.description,
+        isPartOf: { "@id": `${site.origin}/#website` },
+        ...(trail.length >= BREADCRUMB_MIN_ITEMS
+          ? { breadcrumb: { "@id": `${url}#breadcrumb` } }
+          : {}),
+      },
+    ];
     if (trail.length >= BREADCRUMB_MIN_ITEMS) {
       nodes.push({
         "@type": "BreadcrumbList",
         "@id": `${url}#breadcrumb`,
-        itemListElement: trail.map((crumb, i) => ({ "@type": "ListItem", position: i + 1, name: crumb.name, item: absoluteUrl(site.origin, crumb.path) })),
+        itemListElement: trail.map((crumb, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: crumb.name,
+          item: absoluteUrl(site.origin, crumb.path),
+        })),
       });
     }
     tags.push({ "script:ld+json": { "@context": "https://schema.org", "@graph": nodes } });
@@ -418,13 +560,38 @@ function sectionTrail(site, path, title, keepSlash) {
   if (bare === "/") return [{ name: site.siteName, path: "/" }];
   const at = (/** @type {string} */ p) => (keepSlash ? `${p}/` : p);
   const parts = bare.split("/").filter(Boolean);
-  const sections = parts.slice(0, -1).map((_, i) => `/${parts.slice(0, i + 1).join("/")}`).filter((p) => site.sections?.[p]);
-  return [{ name: site.siteName, path: "/" }, ...sections.map((p) => ({ name: site.sections?.[p] ?? "", path: at(p) })), { name: title, path: at(bare) }];
+  const sections = parts
+    .slice(0, -1)
+    .map((_, i) => `/${parts.slice(0, i + 1).join("/")}`)
+    .filter((p) => site.sections?.[p]);
+  return [
+    { name: site.siteName, path: "/" },
+    ...sections.map((p) => ({ name: site.sections?.[p] ?? "", path: at(p) })),
+    { name: title, path: at(bare) },
+  ];
 }
 
 /** @type {Record<string, string>} */
-const NAMED_ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", ndash: "–", mdash: "—", hellip: "…",
-  lsquo: "‘", rsquo: "’", ldquo: "“", rdquo: "”", copy: "©", reg: "®", trade: "™", middot: "·", bull: "•" };
+const NAMED_ENTITIES = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: " ",
+  ndash: "–",
+  mdash: "—",
+  hellip: "…",
+  lsquo: "‘",
+  rsquo: "’",
+  ldquo: "“",
+  rdquo: "”",
+  copy: "©",
+  reg: "®",
+  trade: "™",
+  middot: "·",
+  bull: "•",
+};
 
 /**
  * A meta tag's text from HTML (an excerpt, an abstract title): scripts, styles and tags dropped, entities decoded, white

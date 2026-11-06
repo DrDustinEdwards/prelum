@@ -12,34 +12,34 @@ needs the unified family, KaTeX and parse5, which are optional peers: a site tha
 
 The helpers every site wrote for itself, written once here in the form of the best of them:
 
-| Module | Exports |
-| --- | --- |
-| `xml` | `escapeXml`, `cdata`, `rfc822`, `isoDay`, `absolutizeUrls`, `jsonLdText`, `mathToTex` |
-| `slug` | `slugify(text, { max })` |
-| `feeds` | `rssDocument`, `rssItem`, `atomDocument`, `atomEntry`, `jsonFeedDocument`, `feedItem` (`itemPath` moves where a post lives) |
-| `sitemap` | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` (absolute URLs of the images the page shows: a render's `images`, each `src` made absolute) list them in the image sitemap |
-| `llms` | `llmsDocument`, `llmsLink`; `llmsFullDocument`, `markdownPage`, `markdownPath`, `prefersMarkdown`, `markdownResponse` (llms-full.txt and each page's Markdown copy), `serveMarkdownCopies` (a static site's Worker serving the copies `prelum-markdown` wrote); `llmsResponse` (the whole /llms.txt response) |
-| `markdown-copy` | `markdownCopies(fetch, { origin, llmsFull, skip })` (every page's Markdown copy and llms-full.txt, around a Worker's fetch handler), `htmlToMarkdown(html, { base })` |
-| `markdown-files` (Node, build time) | `writeMarkdownCopies({ dir, origin, skip })`: a static site's copies and llms-full.txt, written beside its pages; the `prelum-markdown` bin |
-| `frontmatter` | `frontmatter(source)`: the `---` header of a Markdown file as `{ data, body }`; `splitSource`, `joinSource`, `readKey`, `readList`, `setBlock`, `setRawKey`: read one field and write one block, every other byte as it was (the one reader site-api and Carrel use) |
-| `head` | `defineHead(site)` (the per-site builder: `(page) => HeadTag[]`), `headTags(input)` (title, description, canonical, the Markdown copy's and the feeds' links, Open Graph with `og:video`, Twitter, `article:*`), `headHtml(tags)`, `metaText(html, limit)`, `readingMinutes(text)`, `absoluteUrl`, `articleDates`, `searchTitle(title, suffix)`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT`, `BREADCRUMB_MIN_ITEMS` |
-| `schema` | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage`, `imageObject(image)` (an image's license metadata), `pageImage(image)` (an ImageObject, for `primaryImageOfPage`), `articleImageSet(crops, rights)` (an Article's 16:9, 4:3 and 1:1 crops), `videoObject(video)`, `ARTICLE_IMAGE_MIN_PIXELS`, `ARTICLE_IMAGE_RATIOS` |
-| `robots` | `robotsDocument(input)`, `aiTxt(input)`, `robotsResponse(input)`, `aiTxtResponse(input)` (the whole responses), `plainTextResponse`, `isPreviewRequest`, `robotsNotes`, `PLAIN_TEXT_CACHE_CONTROL`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS` |
-| `indexnow` | `submitIndexNow(input)`, `keyFileResponse(key, headers)` (the `/<key>.txt` file), `recentSitemapUrls(xml, { days })`; the `prelum-indexnow` bin |
-| `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-audit` bin |
-| `icons` | `ICONS` (the file paths), `iconLinks()`, `webManifest(site)`, `icoFile(images)`, `auditIcons({ origin, fetch })`; the `prelum-icons` bin |
-| `audit` | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-chart-audit` bin |
-| `search` | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` (D1's FTS5); `staticSearchIndex(pages)` at build and `staticSearch(index, query)` in the browser, `searchWords`, for a site with no database |
-| `render`, `render/nomath` | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl` |
-| `render/packs` | `editorialPack`, the `RenderPack` shape a site's own directives take |
-| `render/chart-enhance` (browser) | `enhanceCharts(root?, options?)`: Enarratio's enhancement and the narrow-screen redraw for every `:::chart` |
-| `render/highlight` | `createHighlight`, `LANGUAGES`, `SHIKI_THEMES` |
-| `render/safe` | `assertSafe`, `scanHtml`, `inventory` |
-| `render/conformance` | `HOSTILE_INPUTS`, `runConformance` |
-| `render/math`, `render/url` | `htmlHasMath`, `KATEX_OPTIONS`; `isAllowedUrl` |
-| `render/link-icons` | `linkIconResponse` (the icon route), `lookupLinkIcon`, `linkIconType`, `linkIconSrc`, `fitLinkIcon` (a fetched icon cut to `LINK_ICON_SIZE`, 32 px, for its 16 px display), `LINK_ICON_PATH`, `LINK_ICON_MAX_BYTES`, `LINK_ICON_TIMEOUT_MS` |
-| `render/diagram` | `DIAGRAM_ASSET_DIR`, `DIAGRAM_THEMES`, `diagramAssetPath`: where a `:::diagram`'s drawings live; `DIAGRAM_SIZES_FILE`, `diagramSize`: their sizes |
-| `render/diagram-draw` (Node, build time) | `drawDiagrams`, `pruneDiagrams`, `auditDiagramSvg`, `mermaidConfig`, `DIAGRAM_ROLES`, `DIAGRAM_ROLE_NAMES` |
+| Module                                   | Exports                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `xml`                                    | `escapeXml`, `cdata`, `rfc822`, `isoDay`, `absolutizeUrls`, `jsonLdText`, `mathToTex`                                                                                                                                                                                                                                                                                                                                                    |
+| `slug`                                   | `slugify(text, { max })`                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `feeds`                                  | `rssDocument`, `rssItem`, `atomDocument`, `atomEntry`, `jsonFeedDocument`, `feedItem` (`itemPath` moves where a post lives)                                                                                                                                                                                                                                                                                                              |
+| `sitemap`                                | `sitemapDocument(entries, { layout, lastmodFormat, trailingNewline })`; an entry's `images` (absolute URLs of the images the page shows: a render's `images`, each `src` made absolute) list them in the image sitemap                                                                                                                                                                                                                   |
+| `llms`                                   | `llmsDocument`, `llmsLink`; `llmsFullDocument`, `markdownPage`, `markdownPath`, `prefersMarkdown`, `markdownResponse` (llms-full.txt and each page's Markdown copy), `serveMarkdownCopies` (a static site's Worker serving the copies `prelum-markdown` wrote); `llmsResponse` (the whole /llms.txt response)                                                                                                                            |
+| `markdown-copy`                          | `markdownCopies(fetch, { origin, llmsFull, skip })` (every page's Markdown copy and llms-full.txt, around a Worker's fetch handler), `htmlToMarkdown(html, { base })`                                                                                                                                                                                                                                                                    |
+| `markdown-files` (Node, build time)      | `writeMarkdownCopies({ dir, origin, skip })`: a static site's copies and llms-full.txt, written beside its pages; the `prelum-markdown` bin                                                                                                                                                                                                                                                                                              |
+| `frontmatter`                            | `frontmatter(source)`: the `---` header of a Markdown file as `{ data, body }`; `splitSource`, `joinSource`, `readKey`, `readList`, `setBlock`, `setRawKey`: read one field and write one block, every other byte as it was (the one reader site-api and Carrel use)                                                                                                                                                                     |
+| `head`                                   | `defineHead(site)` (the per-site builder: `(page) => HeadTag[]`), `headTags(input)` (title, description, canonical, the Markdown copy's and the feeds' links, Open Graph with `og:video`, Twitter, `article:*`), `headHtml(tags)`, `metaText(html, limit)`, `readingMinutes(text)`, `absoluteUrl`, `articleDates`, `searchTitle(title, suffix)`, `truncateForSerp`, `SERP_TITLE_LIMIT`, `SERP_DESCRIPTION_LIMIT`, `BREADCRUMB_MIN_ITEMS` |
+| `schema`                                 | `jsonLd`, `thing(type, fields)`, `graph`, `website`, `article`, `breadcrumbs`, `itemList`, `faqPage`, `imageObject(image)` (an image's license metadata), `pageImage(image)` (an ImageObject, for `primaryImageOfPage`), `articleImageSet(crops, rights)` (an Article's 16:9, 4:3 and 1:1 crops), `videoObject(video)`, `ARTICLE_IMAGE_MIN_PIXELS`, `ARTICLE_IMAGE_RATIOS`                                                               |
+| `robots`                                 | `robotsDocument(input)`, `aiTxt(input)`, `robotsResponse(input)`, `aiTxtResponse(input)` (the whole responses), `plainTextResponse`, `isPreviewRequest`, `robotsNotes`, `PLAIN_TEXT_CACHE_CONTROL`, `TDM_RESERVATION_HEADERS`, `SEARCH_ENGINE_BOTS`, `AI_SEARCH_BOTS`, `AI_TRAINING_BOTS`, `DENIED_BOTS`                                                                                                                                 |
+| `indexnow`                               | `submitIndexNow(input)`, `keyFileResponse(key, headers)` (the `/<key>.txt` file), `recentSitemapUrls(xml, { days })`; the `prelum-indexnow` bin                                                                                                                                                                                                                                                                                          |
+| `audit`                                  | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-audit` bin                                                                                                                                                                                                                                                                                                                  |
+| `icons`                                  | `ICONS` (the file paths), `iconLinks()`, `webManifest(site)`, `icoFile(images)`, `auditIcons({ origin, fetch })`; the `prelum-icons` bin                                                                                                                                                                                                                                                                                                 |
+| `audit`                                  | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-chart-audit` bin                                                                                                                                                                                                                                                                                                            |
+| `search`                                 | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` (D1's FTS5); `staticSearchIndex(pages)` at build and `staticSearch(index, query)` in the browser, `searchWords`, for a site with no database                                                                                                                                                                                                                                          |
+| `render`, `render/nomath`                | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl`                                                                                                                                                                                                                                                                                                                                     |
+| `render/packs`                           | `editorialPack`, the `RenderPack` shape a site's own directives take                                                                                                                                                                                                                                                                                                                                                                     |
+| `render/chart-enhance` (browser)         | `enhanceCharts(root?, options?)`: Enarratio's enhancement and the narrow-screen redraw for every `:::chart`                                                                                                                                                                                                                                                                                                                              |
+| `render/highlight`                       | `createHighlight`, `LANGUAGES`, `SHIKI_THEMES`                                                                                                                                                                                                                                                                                                                                                                                           |
+| `render/safe`                            | `assertSafe`, `scanHtml`, `inventory`                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `render/conformance`                     | `HOSTILE_INPUTS`, `runConformance`                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `render/math`, `render/url`              | `htmlHasMath`, `KATEX_OPTIONS`; `isAllowedUrl`                                                                                                                                                                                                                                                                                                                                                                                           |
+| `render/link-icons`                      | `linkIconResponse` (the icon route), `lookupLinkIcon`, `linkIconType`, `linkIconSrc`, `fitLinkIcon` (a fetched icon cut to `LINK_ICON_SIZE`, 32 px, for its 16 px display), `LINK_ICON_PATH`, `LINK_ICON_MAX_BYTES`, `LINK_ICON_TIMEOUT_MS`                                                                                                                                                                                              |
+| `render/diagram`                         | `DIAGRAM_ASSET_DIR`, `DIAGRAM_THEMES`, `diagramAssetPath`: where a `:::diagram`'s drawings live; `DIAGRAM_SIZES_FILE`, `diagramSize`: their sizes                                                                                                                                                                                                                                                                                        |
+| `render/diagram-draw` (Node, build time) | `drawDiagrams`, `pruneDiagrams`, `auditDiagramSvg`, `mermaidConfig`, `DIAGRAM_ROLES`, `DIAGRAM_ROLE_NAMES`                                                                                                                                                                                                                                                                                                                               |
 
 ## Search and AI crawlers
 
@@ -191,11 +191,19 @@ A site serves the copy at `markdownPath(path)` (`/writing/post.md`, `/index.md` 
 it with `<link rel="alternate" type="text/markdown">`.
 
 ```js
-import { markdownPage, markdownPath, markdownResponse, prefersMarkdown } from "@drdustinedwards/site-helpers/llms";
+import {
+  markdownPage,
+  markdownPath,
+  markdownResponse,
+  prefersMarkdown,
+} from "@drdustinedwards/site-helpers/llms";
 
 // In the page's loader and in its .md route:
 if (prefersMarkdown(request.headers.get("Accept")) || url.pathname.endsWith(".md")) {
-  return markdownResponse(markdownPage({ title, url: canonical, description, markdown: post.body }), { canonical });
+  return markdownResponse(
+    markdownPage({ title, url: canonical, description, markdown: post.body }),
+    { canonical },
+  );
 }
 ```
 
@@ -239,22 +247,39 @@ import { render } from "@drdustinedwards/site-helpers/render";
 import { editorialPack } from "@drdustinedwards/site-helpers/render/packs";
 import { createHighlight } from "@drdustinedwards/site-helpers/render/highlight";
 
-const { html, toc, hasMath, mediaRefs, images, videos, diagrams, blockedUrls, renderVersion, faq, postLinks, words, readingMinutes, excerpt, warnings } =
-  await render({
+const {
+  html,
+  toc,
+  hasMath,
+  mediaRefs,
+  images,
+  videos,
+  diagrams,
+  blockedUrls,
+  renderVersion,
+  faq,
+  postLinks,
+  words,
+  readingMinutes,
+  excerpt,
+  warnings,
+} = await render({
   file: "content/posts/example.md", // for error messages
   body, // markdown with any frontmatter already stripped
   resolveImage, // async (src) => ({ width, height, placeholder?, credit?, license? }): sizes images, a video (its poster) and
-                // an embed's poster; credit and license (a URL, or words such as CC BY 4.0) are shown and returned in images
+  // an embed's poster; credit and license (a URL, or words such as CC BY 4.0) are shown and returned in images
   options: {
     media: { keyOf, imageProps }, // the site's image rules; without them images are left as written. imageProps may return
-                                  // sources (AVIF, then WebP, each with an optional media query) to wrap an image in <picture>
+    // sources (AVIF, then WebP, each with an optional media query) to wrap an image in <picture>
     priority, // one { taken: false } per page, passed to every render of that page, so the page has one fetchpriority=high
-    packs: [editorialPack({
-      assetPrefix: "example-", // chart, diagram, sidenote, pullquote, swatch
-      diagramSizes, // the sizes.json drawDiagrams writes beside the drawings; sizes each diagram
-      chartData: async (src, { file }) => csvText, // reads :::chart{src="..."}; without it a src is refused
-      strictCharts: false, // true refuses a chart with no title or too many series
-    })],
+    packs: [
+      editorialPack({
+        assetPrefix: "example-", // chart, diagram, sidenote, pullquote, swatch
+        diagramSizes, // the sizes.json drawDiagrams writes beside the drawings; sizes each diagram
+        chartData: async (src, { file }) => csvText, // reads :::chart{src="..."}; without it a src is refused
+        strictCharts: false, // true refuses a chart with no title or too many series
+      }),
+    ],
     highlight: createHighlight({ wasm }), // without it a code block is plain <pre><code>
     maxBytes: 512 * 1024, // refused before parsing
     maxDepth: 100, // refused after parsing
@@ -270,21 +295,21 @@ const { html, toc, hasMath, mediaRefs, images, videos, diagrams, blockedUrls, re
 **What writers get**, measured against Ghost's cards, WordPress's core blocks, GitHub's alerts and Astro's defaults. Each block
 refuses what it cannot render well, with the line and the fix:
 
-| Write | Renders |
-| --- | --- |
-| CommonMark and GFM: tables, task lists, `~~strike~~`, autolinks, footnotes | Scrollable tables, labeled checkboxes, footnotes with back links |
-| `> [!NOTE]` (TIP, IMPORTANT, WARNING, CAUTION), optional title after it | `<div class="callout callout-note" role="note">` |
-| `:::figure{src alt credit dark width}` | Figure, caption, credit, a dark-theme twin; `width=wide` or `width=full` |
-| `:::gallery` with 2 to 9 images | `<figure class="gallery">` grid |
-| `:::video{src title captions poster}`, `::audio{src title transcript}` | Native players; captions (or `silent`) and a poster, or a transcript, required. The video takes its poster's size; audio preloads nothing |
+| Write                                                                                                                                 | Renders                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CommonMark and GFM: tables, task lists, `~~strike~~`, autolinks, footnotes                                                            | Scrollable tables, labeled checkboxes, footnotes with back links                                                                                                                                                                                                                                |
+| `> [!NOTE]` (TIP, IMPORTANT, WARNING, CAUTION), optional title after it                                                               | `<div class="callout callout-note" role="note">`                                                                                                                                                                                                                                                |
+| `:::figure{src alt credit dark width}`                                                                                                | Figure, caption, credit, a dark-theme twin; `width=wide` or `width=full`                                                                                                                                                                                                                        |
+| `:::gallery` with 2 to 9 images                                                                                                       | `<figure class="gallery">` grid                                                                                                                                                                                                                                                                 |
+| `:::video{src title captions poster}`, `::audio{src title transcript}`                                                                | Native players; captions (or `silent`) and a poster, or a transcript, required. The video takes its poster's size; audio preloads nothing                                                                                                                                                       |
 | `::embed[Title]{url poster}` (YouTube, TikTok, Spotify, SoundCloud, Apple Podcasts, Amazon Music, Google Maps, X, Bluesky, Instagram) | A lite embed: the site's own poster (optional), a play button for video and audio, and the title, in a link carrying the player URL; `render/enhance` loads the player on a click. The site declares site-runtime's `embeds` opt-in, which lets the players into its CSP and Permissions-Policy |
-| `![alt](src)`, `![""](src)` | An image; one with no alt is refused, and `![""](src)` marks a decorative one. The library's credit and license show under it |
-| `::button[Label]{href}`, `::bookmark[Title]{url description}` | A button link, a link card |
-| `:::details{summary}`, `:::faq` with Q: and A: lines | Native `<details>`, a `<dl class="faq">` returned as `faq` |
-| `::postlink[slug\|text]` | A link to the post's current address |
-| `:lang[[Leer en español](url)]{hreflang=es}`, `:xref[[Figure 2](#figure-2)]` | A link in another language, named in itself; an author's cross-reference |
-| `:kbd[]`, `:abbr[]{title}`, `:mark[]`, `:sub[]`, `:sup[]` | The inline elements raw HTML would need |
-| ```` ```js title="app.ts" {2} ```` | Highlighted code with a file name and marked lines |
+| `![alt](src)`, `![""](src)`                                                                                                           | An image; one with no alt is refused, and `![""](src)` marks a decorative one. The library's credit and license show under it                                                                                                                                                                   |
+| `::button[Label]{href}`, `::bookmark[Title]{url description}`                                                                         | A button link, a link card                                                                                                                                                                                                                                                                      |
+| `:::details{summary}`, `:::faq` with Q: and A: lines                                                                                  | Native `<details>`, a `<dl class="faq">` returned as `faq`                                                                                                                                                                                                                                      |
+| `::postlink[slug\|text]`                                                                                                              | A link to the post's current address                                                                                                                                                                                                                                                            |
+| `:lang[[Leer en español](url)]{hreflang=es}`, `:xref[[Figure 2](#figure-2)]`                                                          | A link in another language, named in itself; an author's cross-reference                                                                                                                                                                                                                        |
+| `:kbd[]`, `:abbr[]{title}`, `:mark[]`, `:sub[]`, `:sup[]`                                                                             | The inline elements raw HTML would need                                                                                                                                                                                                                                                         |
+| ` ```js title="app.ts" {2} `                                                                                                          | Highlighted code with a file name and marked lines                                                                                                                                                                                                                                              |
 
 An h1 in the body moves every heading down a level, quotes and dashes are typeset (SmartyPants, `--` en, `---` em), and a
 skipped heading level, a diagram not drawn yet or a video whose poster has no size comes back in `warnings` for the editor to show.
@@ -319,17 +344,17 @@ which would have no name.
 wrote gets one `data-link` kind, the first that fits in this order; the pipeline's own links (heading anchors, image links, buttons,
 bookmarks, embeds, a chart's CSV) and GFM's footnote references keep their markup:
 
-| Kind | When |
-| --- | --- |
-| `xref` | `:xref[[text](url)]`: the author marked it a cross-reference |
-| `lang`, `hreflang` | `:lang[[text](url)]{hreflang=es}`; the tag is canonicalized and an unknown one refused. A following `<span class="cap-link-meta" lang="es">Español</span>` names the language in itself |
-| `jump` | the href is a `#fragment` |
-| `file` | the URL's path (not its query, fragment or host) ends in a file extension (PDF, Word, Excel, PowerPoint, OpenDocument, CSV, TSV, RTF, EPUB, ZIP, GZ, 7Z, audio, video, images, ICS, BIB, RIS); a following `<span class="cap-link-meta">PDF, 2.1 MB</span>`, the size from `links.fileSize(href)` and left out when it returns null |
-| `address` | the text is the link's own URL (scheme, `www.` and a trailing slash aside), a DOI, or the mailto's address |
-| `email`, `phone` | `mailto:` or `tel:` (tel: is allowed by the URL policy for this) |
-| `next` | the only content of a paragraph of the author's own, with words: not a list item's paragraph, not a linked picture |
-| `family`, `data-site` | the host is a family site, matched on `links.family` (Capsomer's `FAMILY_SITES`, `www.` aside) |
-| `away`, `rel="external"` | the host is neither `links.origin`'s nor a family site's; without `links.origin` no link is away |
+| Kind                     | When                                                                                                                                                                                                                                                                                                                                |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `xref`                   | `:xref[[text](url)]`: the author marked it a cross-reference                                                                                                                                                                                                                                                                        |
+| `lang`, `hreflang`       | `:lang[[text](url)]{hreflang=es}`; the tag is canonicalized and an unknown one refused. A following `<span class="cap-link-meta" lang="es">Español</span>` names the language in itself                                                                                                                                             |
+| `jump`                   | the href is a `#fragment`                                                                                                                                                                                                                                                                                                           |
+| `file`                   | the URL's path (not its query, fragment or host) ends in a file extension (PDF, Word, Excel, PowerPoint, OpenDocument, CSV, TSV, RTF, EPUB, ZIP, GZ, 7Z, audio, video, images, ICS, BIB, RIS); a following `<span class="cap-link-meta">PDF, 2.1 MB</span>`, the size from `links.fileSize(href)` and left out when it returns null |
+| `address`                | the text is the link's own URL (scheme, `www.` and a trailing slash aside), a DOI, or the mailto's address                                                                                                                                                                                                                          |
+| `email`, `phone`         | `mailto:` or `tel:` (tel: is allowed by the URL policy for this)                                                                                                                                                                                                                                                                    |
+| `next`                   | the only content of a paragraph of the author's own, with words: not a list item's paragraph, not a linked picture                                                                                                                                                                                                                  |
+| `family`, `data-site`    | the host is a family site, matched on `links.family` (Capsomer's `FAMILY_SITES`, `www.` aside)                                                                                                                                                                                                                                      |
+| `away`, `rel="external"` | the host is neither `links.origin`'s nor a family site's; without `links.origin` no link is away                                                                                                                                                                                                                                    |
 
 The host facts hold whatever the kind: a link off the family carries `rel="external"` and `<span class="cap-sr-only"> (opens another
 site)</span>` inside it, and a family link its `data-site`. Prelum does not depend on Capsomer: a site passes `FAMILY_SITES` from
@@ -359,7 +384,9 @@ KaTeX runs with `trust` off. Those are three options one edit could flip, so `re
 
 ```js
 import { runConformance } from "@drdustinedwards/site-helpers/render/conformance";
-const result = await runConformance((source) => render({ file: "x.md", body: source, resolveImage, options }));
+const result = await runConformance((source) =>
+  render({ file: "x.md", body: source, resolveImage, options }),
+);
 // result.violations must be empty; result.elements and result.attributes say how much was read.
 ```
 

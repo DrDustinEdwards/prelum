@@ -7,26 +7,29 @@ export type Wasm = Parameters<typeof import("shiki/engine/oniguruma").createOnig
  * @param {Record<string, import("shiki/core").LanguageInput>} [input.languages] name to grammar; default is the ten in GRAMMARS
  * @returns {import("./render.mjs").HighlightOptions}
  */
-export function createHighlight({ wasm, languages }?: {
-    wasm?: (() => Wasm | Promise<Wasm>) | undefined;
-    languages?: Record<string, import("shiki/core").LanguageInput> | undefined;
+export function createHighlight({
+  wasm,
+  languages,
+}?: {
+  wasm?: (() => Wasm | Promise<Wasm>) | undefined;
+  languages?: Record<string, import("shiki/core").LanguageInput> | undefined;
 }): import("./render.mjs").HighlightOptions;
 export namespace GRAMMARS {
-    export { bash };
-    export { css };
-    export { html };
-    export { javascript };
-    export { json };
-    export { markdown };
-    export { python };
-    export { sql };
-    export { tsx };
-    export { typescript };
+  export { bash };
+  export { css };
+  export { html };
+  export { javascript };
+  export { json };
+  export { markdown };
+  export { python };
+  export { sql };
+  export { tsx };
+  export { typescript };
 }
 export const LANGUAGES: string[];
 export namespace SHIKI_THEMES {
-    export { githubLight as light };
-    export { githubDark as dark };
+  export { githubLight as light };
+  export { githubDark as dark };
 }
 import bash from "shiki/langs/bash.mjs";
 import css from "shiki/langs/css.mjs";

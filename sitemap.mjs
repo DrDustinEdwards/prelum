@@ -41,7 +41,9 @@ export function sitemapDocument(entries, options = {}) {
   };
 
   const imagesOf = (/** @type {SitemapEntry} */ entry) =>
-    (entry.images ?? []).map((image) => `<image:image><image:loc>${escapeXml(image)}</image:loc></image:image>`);
+    (entry.images ?? []).map(
+      (image) => `<image:image><image:loc>${escapeXml(image)}</image:loc></image:image>`,
+    );
   const seen = new Set();
   const unique = entries.filter((entry) => !seen.has(entry.loc) && seen.add(entry.loc));
   const hasImages = unique.some((entry) => (entry.images ?? []).length > 0);
@@ -51,7 +53,9 @@ export function sitemapDocument(entries, options = {}) {
     const images = imagesOf(entry);
     if (layout === "compact") {
       if (entry.changefreq !== undefined || entry.priority !== undefined) {
-        throw new Error(`sitemap: ${entry.loc} has changefreq or priority, which only the expanded layout writes`);
+        throw new Error(
+          `sitemap: ${entry.loc} has changefreq or priority, which only the expanded layout writes`,
+        );
       }
       return `  <url><loc>${escapeXml(entry.loc)}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ""}${images.join("")}</url>`;
     }

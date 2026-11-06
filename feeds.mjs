@@ -19,7 +19,8 @@ const DEFAULT_ITEM_PATH = "/writing";
 function validDate(value, what) {
   if (value === null || value === undefined || value === "") return null;
   const date = toDate(/** @type {Date | number | string} */ (value), null);
-  if (Number.isNaN(date.getTime())) throw new Error(`${what} is not a date: ${JSON.stringify(value)}`);
+  if (Number.isNaN(date.getTime()))
+    throw new Error(`${what} is not a date: ${JSON.stringify(value)}`);
   return date;
 }
 
@@ -168,7 +169,13 @@ export function atomDocument(feed) {
   // are byte-identical and the edge can cache them. An empty feed gets the epoch,
   // which validates where an empty `<updated>` does not.
   const newest = feed.posts
-    .map((post) => validDate(post.updatedAt ?? post.publishAt, `post "${post.slug}": updatedAt or publishAt`)?.getTime() ?? 0)
+    .map(
+      (post) =>
+        validDate(
+          post.updatedAt ?? post.publishAt,
+          `post "${post.slug}": updatedAt or publishAt`,
+        )?.getTime() ?? 0,
+    )
     .reduce((a, b) => Math.max(a, b), 0);
 
   return `<?xml version="1.0" encoding="UTF-8"?>

@@ -12,7 +12,14 @@ export const AI_SEARCH_BOTS = [
   "PerplexityBot",
   "Perplexity-User",
 ];
-export const AI_TRAINING_BOTS = ["GPTBot", "ClaudeBot", "anthropic-ai", "CCBot", "Google-Extended", "Applebot-Extended"];
+export const AI_TRAINING_BOTS = [
+  "GPTBot",
+  "ClaudeBot",
+  "anthropic-ai",
+  "CCBot",
+  "Google-Extended",
+  "Applebot-Extended",
+];
 export const DENIED_BOTS = ["Bytespider"];
 
 /**
@@ -183,7 +190,11 @@ export function robotsNotes(origin) {
  * @returns {Response}
  */
 export function robotsResponse(input) {
-  const body = robotsDocument({ ...input, notes: input.notes ?? robotsNotes(input.origin), preview: isPreviewRequest(input) });
+  const body = robotsDocument({
+    ...input,
+    notes: input.notes ?? robotsNotes(input.origin),
+    preview: isPreviewRequest(input),
+  });
   return plainTextResponse(body, input);
 }
 

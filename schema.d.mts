@@ -8,7 +8,7 @@
  * @returns {{ "script:ld+json": SchemaNode }}
  */
 export function jsonLd(node: SchemaNode): {
-    "script:ld+json": SchemaNode;
+  "script:ld+json": SchemaNode;
 };
 /**
  * Any schema.org type, with the context added and every empty field dropped: `undefined`, `null`, `""` and `[]` would each
@@ -32,12 +32,18 @@ export function graph(nodes: SchemaNode[]): SchemaNode;
  * @param {{ origin: string, name: string, description?: string, searchUrl?: string, publisher?: SchemaNode }} site
  *   `searchUrl` holds `{search_term_string}` where the query goes
  */
-export function website({ origin, name, description, searchUrl, publisher }: {
-    origin: string;
-    name: string;
-    description?: string;
-    searchUrl?: string;
-    publisher?: SchemaNode;
+export function website({
+  origin,
+  name,
+  description,
+  searchUrl,
+  publisher,
+}: {
+  origin: string;
+  name: string;
+  description?: string;
+  searchUrl?: string;
+  publisher?: SchemaNode;
 }): Record<string, unknown>;
 /**
  * An image as an ImageObject, for `primaryImageOfPage` on a page that is not an article, or one of an Article's `image`s. Its
@@ -46,7 +52,17 @@ export function website({ origin, name, description, searchUrl, publisher }: {
  * @param {ImageInput} image
  * @returns {SchemaNode}
  */
-export function pageImage({ url, width, height, caption, creditText, creator, copyrightNotice, license, acquireLicensePage }: ImageInput): SchemaNode;
+export function pageImage({
+  url,
+  width,
+  height,
+  caption,
+  creditText,
+  creator,
+  copyrightNotice,
+  license,
+  acquireLicensePage,
+}: ImageInput): SchemaNode;
 /**
  * An image's license metadata, which Google Images shows as its credit and Licensable badge
  * (https://developers.google.com/search/docs/appearance/structured-data/image-license-metadata): null unless one of `creator`,
@@ -66,26 +82,28 @@ export const ARTICLE_IMAGE_RATIOS: readonly ["16x9", "4x3", "1x1"];
  * A crop whose size is not its ratio is refused.
  */
 export function articleImageSet(
-    crops: Partial<Record<(typeof ARTICLE_IMAGE_RATIOS)[number], { url: string; width: number; height: number }>>,
-    rights?: Omit<ImageInput, "url" | "width" | "height">,
+  crops: Partial<
+    Record<(typeof ARTICLE_IMAGE_RATIOS)[number], { url: string; width: number; height: number }>
+  >,
+  rights?: Omit<ImageInput, "url" | "width" | "height">,
 ): ImageInput[];
 export type VideoInput = {
-    /** the video's title */
-    name: string;
-    /** its poster, absolute */
-    thumbnailUrl: string;
-    uploadDate: Date | number | string;
-    description?: string | undefined;
-    /** the file, absolute (a :::video) */
-    contentUrl?: string | undefined;
-    /** the player (an ::embed) */
-    embedUrl?: string | undefined;
-    width?: number | undefined;
-    height?: number | undefined;
-    /** ISO 8601, e.g. `PT1M33S` */
-    duration?: string | undefined;
-    /** the words, or a caption file's address */
-    transcript?: string | undefined;
+  /** the video's title */
+  name: string;
+  /** its poster, absolute */
+  thumbnailUrl: string;
+  uploadDate: Date | number | string;
+  description?: string | undefined;
+  /** the file, absolute (a :::video) */
+  contentUrl?: string | undefined;
+  /** the player (an ::embed) */
+  embedUrl?: string | undefined;
+  width?: number | undefined;
+  height?: number | undefined;
+  /** ISO 8601, e.g. `PT1M33S` */
+  duration?: string | undefined;
+  /** the words, or a caption file's address */
+  transcript?: string | undefined;
 };
 /**
  * A VideoObject, which Google needs to show a video in results: `name`, `thumbnailUrl`, `uploadDate` and one of `contentUrl` or
@@ -112,82 +130,104 @@ export function videoObject(video: VideoInput): SchemaNode;
  *
  * @param {ArticleInput} article
  */
-export function article({ url, headline, description, image, published, modified, tags, author, publisher, type }: ArticleInput): Record<string, unknown>;
+export function article({
+  url,
+  headline,
+  description,
+  image,
+  published,
+  modified,
+  tags,
+  author,
+  publisher,
+  type,
+}: ArticleInput): Record<string, unknown>;
 /**
  * @param {string} origin
  * @param {Array<{ name: string, path: string }>} trail from the home page down
  */
-export function breadcrumbs(origin: string, trail: Array<{
+export function breadcrumbs(
+  origin: string,
+  trail: Array<{
     name: string;
     path: string;
-}>): Record<string, unknown>;
+  }>,
+): Record<string, unknown>;
 /**
  * @param {string} origin
  * @param {string} name
  * @param {Array<{ name: string, path: string }>} items
  */
-export function itemList(origin: string, name: string, items: Array<{
+export function itemList(
+  origin: string,
+  name: string,
+  items: Array<{
     name: string;
     path: string;
-}>): Record<string, unknown>;
+  }>,
+): Record<string, unknown>;
 /** @param {Array<{ question: string, answer: string }>} faqs */
-export function faqPage(faqs: Array<{
+export function faqPage(
+  faqs: Array<{
     question: string;
     answer: string;
-}>): Record<string, unknown>;
+  }>,
+): Record<string, unknown>;
 export type SchemaNode = Record<string, unknown>;
 export type ImageInput = {
-    /**
-     * the image file itself, absolute
-     */
-    url: string;
-    /**
-     * in pixels
-     */
-    width?: number | undefined;
-    height?: number | undefined;
-    caption?: string | undefined;
-    /**
-     * the name credited where the image is published
-     */
-    creditText?: string | undefined;
-    /**
-     * a Person unless `type` says Organization
-     */
-    creator?: {
+  /**
+   * the image file itself, absolute
+   */
+  url: string;
+  /**
+   * in pixels
+   */
+  width?: number | undefined;
+  height?: number | undefined;
+  caption?: string | undefined;
+  /**
+   * the name credited where the image is published
+   */
+  creditText?: string | undefined;
+  /**
+   * a Person unless `type` says Organization
+   */
+  creator?:
+    | {
         name: string;
         type?: "Person" | "Organization";
-    } | undefined;
-    copyrightNotice?: string | undefined;
-    /**
-     * a page that says how the image may be used
-     */
-    license?: string | undefined;
-    /**
-     * a page that says how to license it
-     */
-    acquireLicensePage?: string | undefined;
+      }
+    | undefined;
+  copyrightNotice?: string | undefined;
+  /**
+   * a page that says how the image may be used
+   */
+  license?: string | undefined;
+  /**
+   * a page that says how to license it
+   */
+  acquireLicensePage?: string | undefined;
 };
 /**
  * a URL, an image to write as an ImageObject, or a node `pageImage` built
  */
 export type ArticleImage = string | ImageInput | SchemaNode;
 export type ArticleInput = {
-    url: string;
-    headline: string;
-    description?: string | null | undefined;
-    /**
-     * Google asks for several crops, 16:9, 4:3 and 1:1, each at least `ARTICLE_IMAGE_MIN_PIXELS`; one whose `width` and
-     * `height` are given and smaller is refused
-     */
-    image?: ArticleImage | ArticleImage[] | undefined;
-    published?: string | number | Date | null | undefined;
-    modified?: string | number | Date | null | undefined;
-    tags?: string[] | undefined;
-    author?: Record<string, unknown> | undefined;
-    publisher?: Record<string, unknown> | undefined;
-    /**
-     * `Article` unless a subtype fits better (`ScholarlyArticle`, `TechArticle`, `BlogPosting`)
-     */
-    type?: string | undefined;
+  url: string;
+  headline: string;
+  description?: string | null | undefined;
+  /**
+   * Google asks for several crops, 16:9, 4:3 and 1:1, each at least `ARTICLE_IMAGE_MIN_PIXELS`; one whose `width` and
+   * `height` are given and smaller is refused
+   */
+  image?: ArticleImage | ArticleImage[] | undefined;
+  published?: string | number | Date | null | undefined;
+  modified?: string | number | Date | null | undefined;
+  tags?: string[] | undefined;
+  author?: Record<string, unknown> | undefined;
+  publisher?: Record<string, unknown> | undefined;
+  /**
+   * `Article` unless a subtype fits better (`ScholarlyArticle`, `TechArticle`, `BlogPosting`)
+   */
+  type?: string | undefined;
 };

@@ -45,14 +45,16 @@ export function auditContent(pages, { renderVersion = RENDER_VERSION } = {}) {
     if (page.status !== 200 || page.html === undefined) continue;
     const html = page.html;
     /** @param {string} check @param {"error" | "warning"} severity @param {string} detail */
-    const add = (check, severity, detail) => findings.push({ url: page.url, check, severity, detail });
+    const add = (check, severity, detail) =>
+      findings.push({ url: page.url, check, severity, detail });
 
     const levels = [...html.matchAll(/<h([1-6])\b/gi)].map((m) => Number(m[1]));
     const h1s = levels.filter((level) => level === 1).length;
     if (h1s !== 1) add("writing-h1", "error", `${h1s} h1 elements; a page has one`);
     let previous = 1;
     for (const level of levels) {
-      if (level > previous + 1) add("writing-heading-order", "warning", `h${level} follows h${previous}`);
+      if (level > previous + 1)
+        add("writing-heading-order", "warning", `h${level} follows h${previous}`);
       previous = level;
     }
 
@@ -60,7 +62,8 @@ export function auditContent(pages, { renderVersion = RENDER_VERSION } = {}) {
     const idSet = new Set(ids);
     const counted = new Map();
     for (const id of ids) counted.set(id, (counted.get(id) ?? 0) + 1);
-    for (const [id, count] of counted) if (count > 1) add("writing-duplicate-id", "error", `id "${id}" is on ${count} elements`);
+    for (const [id, count] of counted)
+      if (count > 1) add("writing-duplicate-id", "error", `id "${id}" is on ${count} elements`);
     for (const m of html.matchAll(/<a\b[^>]*\shref\s*=\s*"#([^"]+)"/gi)) {
       let id = m[1] ?? "";
       try {
@@ -72,21 +75,41 @@ export function auditContent(pages, { renderVersion = RENDER_VERSION } = {}) {
     for (const m of html.matchAll(/<img\b[^>]*>/gi)) {
       const tag = m[0];
       const src = attribute(tag, "src") ?? "(no src)";
-      if (attribute(tag, "alt") === null) add("writing-img-alt", "error", `image ${src} has no alt attribute`);
-      if (attribute(tag, "width") === null || attribute(tag, "height") === null) add("writing-img-size", "warning", `image ${src} has no width and height, so the page shifts as it loads`);
+      if (attribute(tag, "alt") === null)
+        add("writing-img-alt", "error", `image ${src} has no alt attribute`);
+      if (attribute(tag, "width") === null || attribute(tag, "height") === null)
+        add(
+          "writing-img-size",
+          "warning",
+          `image ${src} has no width and height, so the page shifts as it loads`,
+        );
     }
 
     const text = textOf(html);
     for (const leak of LEAKS) {
       const found = leak.pattern.exec(text);
-      if (found) add("writing-leak", "error", `${leak.what} shows as text: "${found[0].trim().slice(0, 40)}"`);
+      if (found)
+        add(
+          "writing-leak",
+          "error",
+          `${leak.what} shows as text: "${found[0].trim().slice(0, 40)}"`,
+        );
     }
 
     for (const m of html.matchAll(/\sdata-render-version\s*=\s*"([^"]*)"/gi)) {
-      if (m[1] !== renderVersion) add("writing-render-version", "error", `stored HTML from render version ${m[1]}; the pipeline is at ${renderVersion}`);
+      if (m[1] !== renderVersion)
+        add(
+          "writing-render-version",
+          "error",
+          `stored HTML from render version ${m[1]}; the pipeline is at ${renderVersion}`,
+        );
     }
     if (/class="heading-anchor"/.test(html) && !/\sdata-render-version\s*=/.test(html)) {
-      add("writing-render-version", "warning", "rendered writing with no data-render-version on its wrapper, so an upgrade cannot be seen");
+      add(
+        "writing-render-version",
+        "warning",
+        "rendered writing with no data-render-version on its wrapper, so an upgrade cannot be seen",
+      );
     }
   }
   return findings;

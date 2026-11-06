@@ -14,7 +14,8 @@
  * @param {string} origin the site origin, no trailing slash
  * @param {string} [itemPath]
  */
-export function rssItem(post: {
+export function rssItem(
+  post: {
     slug: string;
     title: string;
     html: string | null;
@@ -23,7 +24,10 @@ export function rssItem(post: {
     tags: string[];
     author?: string;
     guid?: string;
-}, origin: string, itemPath?: string): string;
+  },
+  origin: string,
+  itemPath?: string,
+): string;
 /**
  * @param {{
  *   title: string,
@@ -41,20 +45,20 @@ export function rssItem(post: {
  * @returns {string}
  */
 export function rssDocument(feed: {
+  title: string;
+  link: string;
+  description: string;
+  selfUrl: string;
+  posts: Array<Parameters<typeof rssItem>[0]>;
+  origin: string;
+  itemPath?: string;
+  lastBuildDate?: unknown;
+  image?: {
+    url: string;
     title: string;
     link: string;
-    description: string;
-    selfUrl: string;
-    posts: Array<Parameters<typeof rssItem>[0]>;
-    origin: string;
-    itemPath?: string;
-    lastBuildDate?: unknown;
-    image?: {
-        url: string;
-        title: string;
-        link: string;
-    };
-    language?: string;
+  };
+  language?: string;
 }): string;
 /**
  * The body is CDATA rather than escaped inline: double-escaping is how a feed
@@ -76,7 +80,8 @@ export function rssDocument(feed: {
  * @param {string} [itemPath]
  * @returns {string}
  */
-export function atomEntry(post: {
+export function atomEntry(
+  post: {
     slug: string;
     title: string;
     html: string | null;
@@ -85,7 +90,10 @@ export function atomEntry(post: {
     updatedAt: unknown;
     tags: string[];
     guid?: string;
-}, origin: string, itemPath?: string): string;
+  },
+  origin: string,
+  itemPath?: string,
+): string;
 /**
  * @param {{
  *   title: string,
@@ -100,14 +108,14 @@ export function atomEntry(post: {
  * @returns {string}
  */
 export function atomDocument(feed: {
-    title: string;
-    subtitle: string;
-    alternateUrl: string;
-    selfUrl: string;
-    authorName: string;
-    posts: Array<Parameters<typeof atomEntry>[0]>;
-    origin: string;
-    itemPath?: string;
+  title: string;
+  subtitle: string;
+  alternateUrl: string;
+  selfUrl: string;
+  authorName: string;
+  posts: Array<Parameters<typeof atomEntry>[0]>;
+  origin: string;
+  itemPath?: string;
 }): string;
 /**
  * Undefined-valued keys are how an optional field is omitted (JSON.stringify
@@ -126,7 +134,8 @@ export function atomDocument(feed: {
  * @param {string} origin the site origin, no trailing slash
  * @param {string} [itemPath]
  */
-export function feedItem(post: {
+export function feedItem(
+  post: {
     slug: string;
     title: string;
     body: string;
@@ -135,16 +144,19 @@ export function feedItem(post: {
     updatedAt: unknown;
     coverImage: string | null;
     tags: string[];
-}, origin: string, itemPath?: string): {
-    id: string;
-    url: string;
-    title: string;
-    content_text: string;
-    summary: string;
-    date_published: string;
-    date_modified: string;
-    tags: string[];
-    image: string;
+  },
+  origin: string,
+  itemPath?: string,
+): {
+  id: string;
+  url: string;
+  title: string;
+  content_text: string;
+  summary: string;
+  date_published: string;
+  date_modified: string;
+  tags: string[];
+  image: string;
 };
 /**
  * @param {{
@@ -160,35 +172,35 @@ export function feedItem(post: {
  * }} feed `language` is `en-US` by default
  */
 export function jsonFeedDocument(feed: {
-    title: string;
-    homePageUrl: string;
-    feedUrl: string;
-    description: string;
-    authorName: string;
-    posts: Array<Parameters<typeof feedItem>[0]>;
-    origin: string;
-    itemPath?: string;
-    language?: string;
+  title: string;
+  homePageUrl: string;
+  feedUrl: string;
+  description: string;
+  authorName: string;
+  posts: Array<Parameters<typeof feedItem>[0]>;
+  origin: string;
+  itemPath?: string;
+  language?: string;
 }): {
-    version: string;
+  version: string;
+  title: string;
+  home_page_url: string;
+  feed_url: string;
+  description: string;
+  language: string;
+  authors: {
+    name: string;
+    url: string;
+  }[];
+  items: {
+    id: string;
+    url: string;
     title: string;
-    home_page_url: string;
-    feed_url: string;
-    description: string;
-    language: string;
-    authors: {
-        name: string;
-        url: string;
-    }[];
-    items: {
-        id: string;
-        url: string;
-        title: string;
-        content_text: string;
-        summary: string;
-        date_published: string;
-        date_modified: string;
-        tags: string[];
-        image: string;
-    }[];
+    content_text: string;
+    summary: string;
+    date_published: string;
+    date_modified: string;
+    tags: string[];
+    image: string;
+  }[];
 };

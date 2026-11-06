@@ -13,10 +13,16 @@ export const HOSTILE_INPUTS = [
   { name: "inline script in prose", source: "text <script>alert(1)</script> text" },
   { name: "img onerror", source: '<img src="x" onerror="alert(1)">' },
   { name: "iframe", source: '<iframe src="https://example.com"></iframe>' },
-  { name: "style with url", source: '<style>body{background:url("https://example.com/x")}</style>' },
+  {
+    name: "style with url",
+    source: '<style>body{background:url("https://example.com/x")}</style>',
+  },
   { name: "svg onload", source: '<svg onload="alert(1)"><circle r="5"/></svg>' },
   { name: "form", source: '<form action="https://example.com"><input name="x"></form>' },
-  { name: "details ontoggle", source: "<details open ontoggle=\"alert(1)\"><summary>x</summary></details>" },
+  {
+    name: "details ontoggle",
+    source: '<details open ontoggle="alert(1)"><summary>x</summary></details>',
+  },
   { name: "javascript link", source: "[x](javascript:alert(1))" },
   { name: "javascript link, mixed case", source: "[x](JaVaScRiPt:alert(1))" },
   { name: "javascript link, entity", source: "[x](&#106;avascript:alert(1))" },
@@ -35,7 +41,10 @@ export const HOSTILE_INPUTS = [
   { name: "javascript autolink", source: "<javascript:alert(1)>" },
   { name: "javascript reference link", source: "[x][a]\n\n[a]: javascript:alert(1)" },
   { name: "html in link text", source: "[<img src=x onerror=alert(1)>](https://example.com)" },
-  { name: "quote break in title", source: '[x](https://example.com "a\\" onmouseover=\\"alert(1)")' },
+  {
+    name: "quote break in title",
+    source: '[x](https://example.com "a\\" onmouseover=\\"alert(1)")',
+  },
   { name: "quote break in alt", source: '![a" onerror="alert(1)](https://example.com/x.png)' },
   { name: "katex href", source: "$\\href{javascript:alert(1)}{x}$" },
   { name: "katex url", source: "$\\url{javascript:alert(1)}$" },
@@ -44,14 +53,21 @@ export const HOSTILE_INPUTS = [
   { name: "katex includegraphics", source: "$\\includegraphics{https://example.com/x.png}$" },
   { name: "unknown container directive", source: ":::evil\nx\n:::" },
   { name: "unknown text directive", source: "a :alert(1) b" },
-  { name: "malformed directive", source: ":::figure{src=\"x\" onerror=\"alert(1)\"\nx\n:::" },
-  { name: "directive attributes carrying markup", source: ':::details{summary="<img src=x onerror=alert(1)>"}\nbody\n:::' },
+  { name: "malformed directive", source: ':::figure{src="x" onerror="alert(1)"\nx\n:::' },
+  {
+    name: "directive attributes carrying markup",
+    source: ':::details{summary="<img src=x onerror=alert(1)>"}\nbody\n:::',
+  },
   {
     name: "chart text carrying markup",
     source:
       ':::chart{type="bar" x="label" y="value" title="<script>alert(1)</script>" alt="<img src=x onerror=alert(1)>"}\n```csv\nlabel,value\n<img src=x onerror=alert(1)>,1\n<script>alert(1)</script>,2\n```\n:::',
   },
-  { name: "diagram text carrying markup", source: ':::diagram{title="<script>alert(1)</script>" alt="<img src=x onerror=alert(1)>"}\n```mermaid\ngraph TD; A-->B\n```\n:::' },
+  {
+    name: "diagram text carrying markup",
+    source:
+      ':::diagram{title="<script>alert(1)</script>" alt="<img src=x onerror=alert(1)>"}\n```mermaid\ngraph TD; A-->B\n```\n:::',
+  },
   { name: "code fence language", source: '```"><script>alert(1)</script>\ncode\n```' },
   { name: "code fence meta", source: '```js {1} onmouseover="alert(1)"\ncode\n```' },
   { name: "heading markup", source: "# <img src=x onerror=alert(1)>" },
@@ -59,15 +75,30 @@ export const HOSTILE_INPUTS = [
   { name: "table cell markup", source: "| a |\n| - |\n| <img src=x onerror=alert(1)> |" },
   { name: "comment breakout", source: "<!-- --><script>alert(1)</script><!-- -->" },
   { name: "javascript video", source: ':::video{src="javascript:alert(1)" title="x" silent}\n:::' },
-  { name: "javascript captions", source: ':::video{src="/a.mp4" title="x" captions="javascript:alert(1)"}\n:::' },
-  { name: "javascript transcript", source: '::audio{src="/a.mp3" title="x" transcript="javascript:alert(1)"}' },
+  {
+    name: "javascript captions",
+    source: ':::video{src="/a.mp4" title="x" captions="javascript:alert(1)"}\n:::',
+  },
+  {
+    name: "javascript transcript",
+    source: '::audio{src="/a.mp3" title="x" transcript="javascript:alert(1)"}',
+  },
   { name: "embed from an unknown host", source: '::embed[x]{url="https://example.com/evil"}' },
-  { name: "embed id carrying markup", source: '::embed[x]{url="https://youtu.be/\\"><script>alert(1)</script>"}' },
+  {
+    name: "embed id carrying markup",
+    source: '::embed[x]{url="https://youtu.be/\\"><script>alert(1)</script>"}',
+  },
   { name: "javascript button", source: '::button[x]{href="javascript:alert(1)"}' },
   { name: "javascript bookmark", source: '::bookmark[x]{url="javascript:alert(1)"}' },
-  { name: "callout title carrying markup", source: "> [!NOTE] <img src=x onerror=alert(1)>\n> body" },
+  {
+    name: "callout title carrying markup",
+    source: "> [!NOTE] <img src=x onerror=alert(1)>\n> body",
+  },
   { name: "abbr title carrying markup", source: ':abbr[x]{title="\\" onmouseover=\\"alert(1)"}' },
-  { name: "code title carrying markup", source: '```js title="<script>alert(1)</script>"\ncode\n```' },
+  {
+    name: "code title carrying markup",
+    source: '```js title="<script>alert(1)</script>"\ncode\n```',
+  },
   { name: "long bracket run", source: "[".repeat(20000) },
 ];
 

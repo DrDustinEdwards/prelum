@@ -90,37 +90,43 @@ export function buildDiagramModel(attrs, source) {
  * @returns {(model: ReturnType<typeof buildDiagramModel>, captionChildren: import("hast").ElementContent[]) => import("hast").ElementContent[]} the rehype renderer
  *   `captionChildren` is hast for an author-written caption, may be empty
  */
-export const renderDiagramHast = (assetPrefix, sizes = {}) => (model, captionChildren) => {
-  /** @type {any[]} */
-  const children = [];
+export const renderDiagramHast =
+  (assetPrefix, sizes = {}) =>
+  (model, captionChildren) => {
+    /** @type {any[]} */
+    const children = [];
 
-  if (model.title) {
-    // A <p>, not a heading: rehypeCollectToc would put diagram titles in the table of contents.
-    children.push(h("p", { className: ["diagram-title"] }, [text(model.title)]));
-  }
+    if (model.title) {
+      // A <p>, not a heading: rehypeCollectToc would put diagram titles in the table of contents.
+      children.push(h("p", { className: ["diagram-title"] }, [text(model.title)]));
+    }
 
-  for (const theme of DIAGRAM_THEMES) {
-    const src = diagramAssetPath(model.key, theme, assetPrefix);
-    const size = diagramSize(sizes, src);
-    children.push(
-      h("img", {
-        className: ["diagram-image", `diagram-${theme}`],
-        src,
-        alt: model.alt,
-        role: "img",
-        ...(size ? { width: size.width, height: size.height } : {}),
-        loading: "lazy",
-        decoding: "async",
-      }, []),
-    );
-  }
+    for (const theme of DIAGRAM_THEMES) {
+      const src = diagramAssetPath(model.key, theme, assetPrefix);
+      const size = diagramSize(sizes, src);
+      children.push(
+        h(
+          "img",
+          {
+            className: ["diagram-image", `diagram-${theme}`],
+            src,
+            alt: model.alt,
+            role: "img",
+            ...(size ? { width: size.width, height: size.height } : {}),
+            loading: "lazy",
+            decoding: "async",
+          },
+          [],
+        ),
+      );
+    }
 
-  if (captionChildren.length > 0) {
-    children.push(h("figcaption", {}, captionChildren));
-  }
+    if (captionChildren.length > 0) {
+      children.push(h("figcaption", {}, captionChildren));
+    }
 
-  return children;
-};
+    return children;
+  };
 
 /**
  * A drawing's size from the site's sizes file, or null when it is not drawn yet.

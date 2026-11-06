@@ -14,19 +14,21 @@ export function remarkGallery(file: string): (tree: import("mdast").Root) => voi
 export function remarkLinkBlocks(file: string): (tree: import("mdast").Root) => void;
 /** :::faq, shown as a definition list and returned as `faq`. */
 export function remarkFaq(
-    file: string,
-    body: string,
-    sink: Array<{ question: string; answer: string }>,
+  file: string,
+  body: string,
+  sink: Array<{ question: string; answer: string }>,
 ): (tree: import("mdast").Root) => void;
 /** `::postlink[slug]` and `::postlink[slug|text]`, resolved by the site; every slug asked for goes to `sink`. */
 export function remarkPostLinks(
-    resolve: (slug: string) => Promise<{ url: string; title: string } | null>,
-    sink: string[],
-    faq: Array<{ question: string; answer: string }>,
+  resolve: (slug: string) => Promise<{ url: string; title: string } | null>,
+  sink: string[],
+  faq: Array<{ question: string; answer: string }>,
 ): (tree: import("mdast").Root) => Promise<void>;
 /** A fence's `title="…"` wraps it in a figure with the title as its caption. */
 export function remarkCodeFrames(): (tree: import("mdast").Root) => void;
 /** An h1 in the body moves every heading down a level; skipped levels and images without alt go to `sink` as warnings. */
-export function remarkOutline(sink: Array<{ line: number | null; message: string }>): (tree: import("mdast").Root) => void;
+export function remarkOutline(
+  sink: Array<{ line: number | null; message: string }>,
+): (tree: import("mdast").Root) => void;
 /** The directive names this module handles. */
 export const BLOCK_DIRECTIVES: string[];

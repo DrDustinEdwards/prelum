@@ -34,7 +34,12 @@ export function iconLinks() {
  *   startUrl?: string, display?: "standalone" | "minimal-ui" | "browser", lang?: string }} site
  */
 export function webManifest(site) {
-  const png = (/** @type {string} */ src, /** @type {number} */ size, purpose = "any") => ({ src, sizes: `${size}x${size}`, type: "image/png", purpose });
+  const png = (/** @type {string} */ src, /** @type {number} */ size, purpose = "any") => ({
+    src,
+    sizes: `${size}x${size}`,
+    type: "image/png",
+    purpose,
+  });
   return {
     name: site.name,
     short_name: site.shortName ?? site.name,
@@ -85,14 +90,25 @@ export function icoFile(images) {
 export async function auditIcons({ origin, fetch: fetcher }) {
   /** @type {import("./audit.mjs").AuditFinding[]} */
   const findings = [];
-  const add = (/** @type {string} */ url, /** @type {string} */ check, /** @type {"error" | "warning"} */ severity, /** @type {string} */ detail) =>
-    findings.push({ url, check, severity, detail });
+  const add = (
+    /** @type {string} */ url,
+    /** @type {string} */ check,
+    /** @type {"error" | "warning"} */ severity,
+    /** @type {string} */ detail,
+  ) => findings.push({ url, check, severity, detail });
   const get = (/** @type {string} */ url) => fetcher(url).catch(() => null);
-  const isImage = (/** @type {Response | null} */ response) => Boolean(response?.ok && (response.headers.get("content-type") ?? "").startsWith("image/"));
+  const isImage = (/** @type {Response | null} */ response) =>
+    Boolean(response?.ok && (response.headers.get("content-type") ?? "").startsWith("image/"));
 
   const ico = new URL(ICONS.ico, origin).href;
   const icoResponse = await get(ico);
-  if (!isImage(icoResponse)) add(ico, "icon-missing", "error", `answers ${icoResponse?.status ?? "nothing"} ${icoResponse?.headers.get("content-type") ?? ""}`.trim());
+  if (!isImage(icoResponse))
+    add(
+      ico,
+      "icon-missing",
+      "error",
+      `answers ${icoResponse?.status ?? "nothing"} ${icoResponse?.headers.get("content-type") ?? ""}`.trim(),
+    );
 
   const home = await get(`${origin}/`);
   const html = home?.ok ? await home.text() : "";
@@ -101,18 +117,27 @@ export async function auditIcons({ origin, fetch: fetcher }) {
   for (const tag of html.match(/<link\b[^>]*>/gi) ?? []) {
     const rel = /\brel=["']?([^"'\s>]+(?:\s+[^"'\s>]+)*)/i.exec(tag)?.[1]?.toLowerCase();
     const href = /\bhref=["']?([^"'\s>]+)/i.exec(tag)?.[1];
-    if (rel && href) for (const name of rel.split(/\s+/)) if (!links.has(name)) links.set(name, new URL(href.replace(/&amp;/g, "&"), `${origin}/`).href);
+    if (rel && href)
+      for (const name of rel.split(/\s+/))
+        if (!links.has(name))
+          links.set(name, new URL(href.replace(/&amp;/g, "&"), `${origin}/`).href);
   }
   if (!links.has("icon")) add(`${origin}/`, "icon-link", "error", "the home page links no icon");
-  for (const [rel, check] of [["apple-touch-icon", "icon-apple"], ["manifest", "icon-manifest"]]) {
+  for (const [rel, check] of [
+    ["apple-touch-icon", "icon-apple"],
+    ["manifest", "icon-manifest"],
+  ]) {
     const href = links.get(rel);
     if (!href) add(`${origin}/`, check, "warning", `the home page links no ${rel}`);
-    else if (rel === "apple-touch-icon" && !isImage(await get(href))) add(href, "icon-broken", "error", "the Apple touch icon does not load");
+    else if (rel === "apple-touch-icon" && !isImage(await get(href)))
+      add(href, "icon-broken", "error", "the Apple touch icon does not load");
   }
 
   const manifestUrl = links.get("manifest");
   if (!manifestUrl) return findings;
-  const manifest = await get(manifestUrl).then((response) => (response?.ok ? response.json() : null)).catch(() => null);
+  const manifest = await get(manifestUrl)
+    .then((response) => (response?.ok ? response.json() : null))
+    .catch(() => null);
   if (!manifest || typeof manifest !== "object") {
     add(manifestUrl, "icon-manifest", "error", "the manifest does not load as JSON");
     return findings;
@@ -120,9 +145,23 @@ export async function auditIcons({ origin, fetch: fetcher }) {
   if (!manifest.name) add(manifestUrl, "icon-manifest", "warning", "the manifest has no name");
   /** @type {Array<{ src?: unknown, sizes?: unknown, purpose?: unknown }>} */
   const icons = Array.isArray(manifest.icons) ? manifest.icons : [];
-  const sized = (/** @type {number} */ size) => icons.some((icon) => String(icon.sizes ?? "").split(/\s+/).includes(`${size}x${size}`));
-  for (const size of [192, 512]) if (!sized(size)) add(manifestUrl, "icon-manifest", "warning", `the manifest has no ${size}x${size} icon`);
-  if (!icons.some((icon) => String(icon.purpose ?? "").split(/\s+/).includes("maskable"))) add(manifestUrl, "icon-manifest", "warning", "the manifest has no maskable icon");
+  const sized = (/** @type {number} */ size) =>
+    icons.some((icon) =>
+      String(icon.sizes ?? "")
+        .split(/\s+/)
+        .includes(`${size}x${size}`),
+    );
+  for (const size of [192, 512])
+    if (!sized(size))
+      add(manifestUrl, "icon-manifest", "warning", `the manifest has no ${size}x${size} icon`);
+  if (
+    !icons.some((icon) =>
+      String(icon.purpose ?? "")
+        .split(/\s+/)
+        .includes("maskable"),
+    )
+  )
+    add(manifestUrl, "icon-manifest", "warning", "the manifest has no maskable icon");
   for (const icon of icons) {
     const src = new URL(String(icon.src), manifestUrl).href;
     if (!isImage(await get(src))) add(src, "icon-broken", "error", "a manifest icon does not load");

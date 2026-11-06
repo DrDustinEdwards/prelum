@@ -15,13 +15,17 @@ export function remarkLinkDirectives(file: string): (tree: import("mdast").Root)
  * @param {LinkIconOptions | undefined} icons
  * @param {Array<Promise<void>>} pending
  */
-export function rehypeLinks(links: LinkOptions, icons: LinkIconOptions | undefined, pending: Array<Promise<void>>): (tree: import("hast").Root) => void;
+export function rehypeLinks(
+  links: LinkOptions,
+  icons: LinkIconOptions | undefined,
+  pending: Array<Promise<void>>,
+): (tree: import("hast").Root) => void;
 export type LinkOptions = {
-    /** The site's own origin. Without it no link is called away: a link to the site's own absolute URL would be. */
-    origin?: string;
-    /** The family's sites: Capsomer's FAMILY_SITES, passed in by the site. */
-    family?: ReadonlyArray<{ id: string; href: string }>;
-    /** A file's size in bytes, or null when it is not known, in which case the meta names only the type. */
-    fileSize?: (href: string) => Promise<number | null | undefined>;
+  /** The site's own origin. Without it no link is called away: a link to the site's own absolute URL would be. */
+  origin?: string;
+  /** The family's sites: Capsomer's FAMILY_SITES, passed in by the site. */
+  family?: ReadonlyArray<{ id: string; href: string }>;
+  /** A file's size in bytes, or null when it is not known, in which case the meta names only the type. */
+  fileSize?: (href: string) => Promise<number | null | undefined>;
 };
 export type LinkIconOptions = import("./render-link-icons.mjs").LinkIconOptions;

@@ -14,7 +14,13 @@ import { fileURLToPath } from "node:url";
 
 import { drawDiagrams, pruneDiagrams } from "../render-diagram-draw.mjs";
 import { DIAGRAM_ASSET_DIR } from "../render-diagram.mjs";
-import { ASSET_PREFIX, DIAGRAM_CONFIG_FILE, diagramConfig, loadElements, renderElement } from "./specimen.mjs";
+import {
+  ASSET_PREFIX,
+  DIAGRAM_CONFIG_FILE,
+  diagramConfig,
+  loadElements,
+  renderElement,
+} from "./specimen.mjs";
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), DIAGRAM_ASSET_DIR);
 
@@ -24,8 +30,17 @@ for (const element of loadElements()) diagrams.push(...(await renderElement(elem
 const config = diagramConfig();
 const stamp = join(OUT, DIAGRAM_CONFIG_FILE);
 // Drawings made with another palette or Mermaid version are all drawn again: the file names hash only the source.
-const force = !existsSync(stamp) || readFileSync(stamp, "utf8") !== `${JSON.stringify(config, null, 2)}\n`;
-const { written, stale } = await drawDiagrams({ diagrams, dir: OUT, assetPrefix: ASSET_PREFIX, colors: config, force });
+const force =
+  !existsSync(stamp) || readFileSync(stamp, "utf8") !== `${JSON.stringify(config, null, 2)}\n`;
+const { written, stale } = await drawDiagrams({
+  diagrams,
+  dir: OUT,
+  assetPrefix: ASSET_PREFIX,
+  colors: config,
+  force,
+});
 await pruneDiagrams(OUT, stale);
 writeFileSync(stamp, `${JSON.stringify(config, null, 2)}\n`);
-console.log(`specimen diagrams: ${diagrams.length} diagram(s), ${written.length} drawn, ${stale.length} stale removed`);
+console.log(
+  `specimen diagrams: ${diagrams.length} diagram(s), ${written.length} drawn, ${stale.length} stale removed`,
+);

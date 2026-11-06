@@ -25,7 +25,11 @@ export const PAGE_PRELOADS = preloads([
   { href: "/fonts/source-serif-4-latin-wght-normal.woff2", as: "font", type: "font/woff2" },
 ]);
 
-const site = staticSite({ site: prelum, headers: TDM_RESERVATION_HEADERS, preload: PAGE_PRELOADS.header });
+const site = staticSite({
+  site: prelum,
+  headers: TDM_RESERVATION_HEADERS,
+  preload: PAGE_PRELOADS.header,
+});
 
 // The page's Markdown copy (/index.md, or Accept: text/markdown), which `npm run specimen` writes with prelum-markdown
 // beside llms-full.txt.

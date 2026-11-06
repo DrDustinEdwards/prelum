@@ -37,7 +37,10 @@ export function widthClass(file, node, name) {
   if (width === undefined || width === null) return [];
   if (!WIDTHS.includes(width)) {
     const line = directive.position?.start?.line;
-    throw new ContentError(file, `${name}${line ? ` on line ${line} of the body` : ""} has width=${JSON.stringify(width)}; use width=wide or width=full`);
+    throw new ContentError(
+      file,
+      `${name}${line ? ` on line ${line} of the body` : ""} has width=${JSON.stringify(width)}; use width=wide or width=full`,
+    );
   }
   return [`width-${width}`];
 }
@@ -65,13 +68,21 @@ export function remarkFigure(file) {
       // A `dark` image is a second drawing for the dark theme: an SVG in an <img> cannot read the page's theme, so each theme has
       // its own file, both in the HTML, and the site's stylesheet shows one (figure-light, figure-dark), as it does a diagram's.
       /** @type {any[]} */
-      const figureChildren = (attrs.dark ? [["figure-light", attrs.src], ["figure-dark", attrs.dark]] : [[null, attrs.src]]).map(
-        ([theme, src]) => ({
-          type: "paragraph",
-          data: { hName: "img", hProperties: { src, alt: attrs.alt, ...(theme ? { className: [theme] } : {}) } },
-          children: [],
-        }),
-      );
+      const figureChildren = (
+        attrs.dark
+          ? [
+              ["figure-light", attrs.src],
+              ["figure-dark", attrs.dark],
+            ]
+          : [[null, attrs.src]]
+      ).map(([theme, src]) => ({
+        type: "paragraph",
+        data: {
+          hName: "img",
+          hProperties: { src, alt: attrs.alt, ...(theme ? { className: [theme] } : {}) },
+        },
+        children: [],
+      }));
 
       if (captionChildren.length > 0 || attrs.credit) {
         /** @type {any[]} */
@@ -91,7 +102,11 @@ export function remarkFigure(file) {
       }
 
       const width = widthClass(file, node, ":::figure");
-      node.data = { ...node.data, hName: "figure", ...(width.length > 0 ? { hProperties: { className: width } } : {}) };
+      node.data = {
+        ...node.data,
+        hName: "figure",
+        ...(width.length > 0 ? { hProperties: { className: width } } : {}),
+      };
       node.children = figureChildren;
     });
   };
@@ -128,10 +143,15 @@ export function remarkNumericTextDirectives(source) {
  */
 export function refuseHeading(file, node, why) {
   const directive = /** @type {import("mdast-util-directive").Directives} */ (node);
-  const heading = ("children" in directive ? directive.children : []).find((/** @type {any} */ child) => child.type === "heading");
+  const heading = ("children" in directive ? directive.children : []).find(
+    (/** @type {any} */ child) => child.type === "heading",
+  );
   if (!heading) return;
   const line = heading.position?.start?.line;
-  throw new ContentError(file, `:::${directive.name} holds a heading${line ? ` on line ${line}` : ""}${why}`);
+  throw new ContentError(
+    file,
+    `:::${directive.name} holds a heading${line ? ` on line ${line}` : ""}${why}`,
+  );
 }
 
 /**
@@ -197,8 +217,7 @@ export function remarkUnknownDirectives(file, known) {
       const name = node.name ?? "";
       if (known.includes(name)) return;
 
-      const marker =
-        type === "containerDirective" ? ":::" : type === "leafDirective" ? "::" : ":";
+      const marker = type === "containerDirective" ? ":::" : type === "leafDirective" ? "::" : ":";
       const line = node.position?.start?.line;
       throw new ContentError(
         file,
@@ -229,46 +248,45 @@ export function remarkModelDirective(kind) {
    * @param {string} file
    * @param {unknown[]} sink models, indexed by the marker written onto the node
    */
-  return (file, sink) =>
-    (/** @type {import("mdast").Root} */ tree) => {
-      visit(tree, (node) => {
-        if (node.type !== "containerDirective" || node.name !== kind.name) return;
+  return (file, sink) => (/** @type {import("mdast").Root} */ tree) => {
+    visit(tree, (node) => {
+      if (node.type !== "containerDirective" || node.name !== kind.name) return;
 
-        const children = node.children ?? [];
-        const fences = children.filter((c) => c.type === "code");
-        const fence = fences[0];
-        if (fences.length !== 1 || !fence) {
-          throw new ContentError(
-            file,
-            `:::${kind.name} requires exactly one fenced code block of ${kind.what}, found ${fences.length}`,
-          );
-        }
-        // The mermaid fence is also what renders the source as a diagram in the .md twin and on GitHub.
-        const lang = fence.lang ?? "";
-        if (kind.lang !== undefined && lang !== kind.lang) {
-          throw new ContentError(
-            file,
-            `:::${kind.name} source must be a \`\`\`${kind.lang} fenced block, found \`\`\`${lang || "(none)"}`,
-          );
-        }
+      const children = node.children ?? [];
+      const fences = children.filter((c) => c.type === "code");
+      const fence = fences[0];
+      if (fences.length !== 1 || !fence) {
+        throw new ContentError(
+          file,
+          `:::${kind.name} requires exactly one fenced code block of ${kind.what}, found ${fences.length}`,
+        );
+      }
+      // The mermaid fence is also what renders the source as a diagram in the .md twin and on GitHub.
+      const lang = fence.lang ?? "";
+      if (kind.lang !== undefined && lang !== kind.lang) {
+        throw new ContentError(
+          file,
+          `:::${kind.name} source must be a \`\`\`${kind.lang} fenced block, found \`\`\`${lang || "(none)"}`,
+        );
+      }
 
-        /** @type {any} */
-        let model;
-        try {
-          model = kind.build(attributesOf(node), fence.value);
-        } catch (error) {
-          throw new ContentError(file, errorMessage(error));
-        }
+      /** @type {any} */
+      let model;
+      try {
+        model = kind.build(attributesOf(node), fence.value);
+      } catch (error) {
+        throw new ContentError(file, errorMessage(error));
+      }
 
-        const index = sink.push(model) - 1;
-        node.data = {
-          ...node.data,
-          hName: "figure",
-          hProperties: { className: [kind.className], [kind.marker]: String(index) },
-        };
-        node.children = children.filter((/** @type {any} */ c) => c.type !== "code");
-      });
-    };
+      const index = sink.push(model) - 1;
+      node.data = {
+        ...node.data,
+        hName: "figure",
+        hProperties: { className: [kind.className], [kind.marker]: String(index) },
+      };
+      node.children = children.filter((/** @type {any} */ c) => c.type !== "code");
+    });
+  };
 }
 
 /**
@@ -280,14 +298,13 @@ export function remarkModelDirective(kind) {
  */
 export function rehypeModelMarker(marker, render) {
   /** @param {Model[]} models */
-  return (models) =>
-    (/** @type {import("hast").Root} */ tree) => {
-      visit(tree, "element", (node) => {
-        const at = node.properties?.[marker];
-        if (at === undefined) return;
-        const model = models[Number(at)];
-        delete node.properties[marker];
-        node.children = render(model, node.children ?? [], node);
-      });
-    };
+  return (models) => (/** @type {import("hast").Root} */ tree) => {
+    visit(tree, "element", (node) => {
+      const at = node.properties?.[marker];
+      if (at === undefined) return;
+      const model = models[Number(at)];
+      delete node.properties[marker];
+      node.children = render(model, node.children ?? [], node);
+    });
+  };
 }

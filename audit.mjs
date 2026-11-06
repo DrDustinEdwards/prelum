@@ -44,37 +44,57 @@ const MAX_HOPS = 5;
 export function auditPages(pages, { origin, sitemap }) {
   /** @type {AuditFinding[]} */
   const findings = [];
-  const add = (/** @type {string} */ url, /** @type {string} */ check, /** @type {"error" | "warning" | "unmeasured"} */ severity, /** @type {string} */ detail) =>
-    findings.push({ url, check, severity, detail });
+  const add = (
+    /** @type {string} */ url,
+    /** @type {string} */ check,
+    /** @type {"error" | "warning" | "unmeasured"} */ severity,
+    /** @type {string} */ detail,
+  ) => findings.push({ url, check, severity, detail });
   const byUrl = new Map(pages.map((page) => [normalize(page.url), page]));
   const listed = new Set((sitemap ?? []).map(normalize));
-  const inSitemap = (/** @type {AuditPage} */ page) => Boolean(page.inSitemap) || listed.has(normalize(page.url));
-  const redirectTargets = new Set(pages.filter(isRedirect).map((page) => resolve(page.location, page.url)).filter(Boolean).map((url) => normalize(/** @type {string} */ (url))));
+  const inSitemap = (/** @type {AuditPage} */ page) =>
+    Boolean(page.inSitemap) || listed.has(normalize(page.url));
+  const redirectTargets = new Set(
+    pages
+      .filter(isRedirect)
+      .map((page) => resolve(page.location, page.url))
+      .filter(Boolean)
+      .map((url) => normalize(/** @type {string} */ (url))),
+  );
   /** @type {Map<string, string[]>} */
   const titles = new Map();
   /** @type {Map<string, string[]>} */
   const descriptions = new Map();
 
-  if (sitemap && sitemap.length === 0) add(origin, "sitemap-empty", "error", "the sitemap lists no pages, or did not load");
+  if (sitemap && sitemap.length === 0)
+    add(origin, "sitemap-empty", "error", "the sitemap lists no pages, or did not load");
 
   for (const page of pages) {
     const { url } = page;
     const from = page.redirectedFrom ?? [];
-    if (from.length > 1 && !byUrl.has(normalize(from[0]))) add(from[0], "redirect-chain", "warning", [...from, url].join(" -> "));
+    if (from.length > 1 && !byUrl.has(normalize(from[0])))
+      add(from[0], "redirect-chain", "warning", [...from, url].join(" -> "));
     if (isRedirect(page)) {
       if (!redirectTargets.has(normalize(url))) {
         const hops = chainFrom(page, byUrl);
         if (hops.length > 2) add(url, "redirect-chain", "warning", hops.join(" -> "));
       }
-      if (inSitemap(page)) add(url, "sitemap-redirect", "error", "the sitemap lists a URL that redirects");
+      if (inSitemap(page))
+        add(url, "sitemap-redirect", "error", "the sitemap lists a URL that redirects");
       continue;
     }
     if (page.status === 0) {
-      add(url, "fetch-failed", "unmeasured", `no answer (${page.error ?? "nothing came back"}), so the page was not audited`);
+      add(
+        url,
+        "fetch-failed",
+        "unmeasured",
+        `no answer (${page.error ?? "nothing came back"}), so the page was not audited`,
+      );
       continue;
     }
     if (page.status !== 200) {
-      if (inSitemap(page)) add(url, "sitemap-broken", "error", `the sitemap lists a URL that answers ${page.status}`);
+      if (inSitemap(page))
+        add(url, "sitemap-broken", "error", `the sitemap lists a URL that answers ${page.status}`);
       continue;
     }
     if (page.html === undefined) continue;
@@ -85,7 +105,13 @@ export function auditPages(pages, { origin, sitemap }) {
     if (!title) add(url, "title-missing", "error", "no <title>");
     else {
       const width = Math.round(serpWidth(title, SERP_TITLE.font));
-      if (width > SERP_TITLE.px) add(url, "title-long", "warning", `${width} px wide in Google's ${SERP_TITLE.font} px Arial (${Array.from(title).length} characters); a desktop result clips the title past ${SERP_TITLE.px} px`);
+      if (width > SERP_TITLE.px)
+        add(
+          url,
+          "title-long",
+          "warning",
+          `${width} px wide in Google's ${SERP_TITLE.font} px Arial (${Array.from(title).length} characters); a desktop result clips the title past ${SERP_TITLE.px} px`,
+        );
       push(titles, title, url);
     }
 
@@ -94,7 +120,12 @@ export function auditPages(pages, { origin, sitemap }) {
     else {
       const width = Math.round(serpWidth(description, SERP_DESCRIPTION.font));
       if (width > SERP_DESCRIPTION.px) {
-        add(url, "description-long", "warning", `${width} px wide in Google's ${SERP_DESCRIPTION.font} px Arial (${Array.from(description).length} characters); a desktop result clips the snippet past ${SERP_DESCRIPTION.px} px`);
+        add(
+          url,
+          "description-long",
+          "warning",
+          `${width} px wide in Google's ${SERP_DESCRIPTION.font} px Arial (${Array.from(description).length} characters); a desktop result clips the snippet past ${SERP_DESCRIPTION.px} px`,
+        );
       }
       push(descriptions, description, url);
     }
@@ -102,21 +133,42 @@ export function auditPages(pages, { origin, sitemap }) {
     const href = tags(head, "link").find((attrs) => attrs.rel?.toLowerCase() === "canonical")?.href;
     const canonical = href ? resolve(href, url) : null;
     if (!canonical) add(url, "canonical-missing", "error", "no canonical link");
-    else if (new URL(canonical).origin !== origin) add(url, "canonical-off-site", "error", `the canonical is ${canonical}, not on ${origin}`);
+    else if (new URL(canonical).origin !== origin)
+      add(url, "canonical-off-site", "error", `the canonical is ${canonical}, not on ${origin}`);
     else if (inSitemap(page) && normalize(canonical) !== normalize(url)) {
-      add(url, "canonical-elsewhere", "error", `the sitemap lists this page, but its canonical is ${canonical}`);
+      add(
+        url,
+        "canonical-elsewhere",
+        "error",
+        `the sitemap lists this page, but its canonical is ${canonical}`,
+      );
     }
 
     const robots = `${meta(head, "name", "robots") ?? ""} ${header(page.headers, "x-robots-tag")}`;
-    if (inSitemap(page) && /noindex/i.test(robots)) add(url, "sitemap-noindex", "error", "the sitemap lists a noindex page");
-    if (!meta(head, "property", "og:title")) add(url, "og-title-missing", "warning", "no og:title, so a shared link's card falls back to a guess");
+    if (inSitemap(page) && /noindex/i.test(robots))
+      add(url, "sitemap-noindex", "error", "the sitemap lists a noindex page");
+    if (!meta(head, "property", "og:title"))
+      add(
+        url,
+        "og-title-missing",
+        "warning",
+        "no og:title, so a shared link's card falls back to a guess",
+      );
     const card = meta(head, "property", "og:image");
     if (!card) add(url, "card-missing", "warning", "no og:image, so a shared link has no card");
     else {
       // What `headTags` writes from an image object; a bare image URL writes none of them.
-      const missing = ["og:image:type", "og:image:width", "og:image:height", "og:image:alt"].filter((property) => !meta(head, "property", property));
+      const missing = ["og:image:type", "og:image:width", "og:image:height", "og:image:alt"].filter(
+        (property) => !meta(head, "property", property),
+      );
       if (!card.startsWith("https://")) missing.unshift("an absolute https og:image");
-      if (missing.length > 0) add(url, "card-incomplete", "warning", `no ${missing.join(", ")}, so the card is drawn late or unnamed`);
+      if (missing.length > 0)
+        add(
+          url,
+          "card-incomplete",
+          "warning",
+          `no ${missing.join(", ")}, so the card is drawn late or unnamed`,
+        );
     }
 
     for (const script of jsonLdBlocks(html)) {
@@ -128,19 +180,44 @@ export function auditPages(pages, { origin, sitemap }) {
     }
     for (const img of tags(html, "img")) {
       // alt="" is a decorative image, and right; a file name for alt is read aloud as one.
-      if (img.alt === undefined) add(url, "image-alt-missing", "warning", `no alt on ${img.src ?? "an image"}`);
-      else if (isFileName(img.alt, img.src)) add(url, "image-alt-filename", "warning", `the alt on ${img.src ?? "an image"} is a file name, "${img.alt}"`);
+      if (img.alt === undefined)
+        add(url, "image-alt-missing", "warning", `no alt on ${img.src ?? "an image"}`);
+      else if (isFileName(img.alt, img.src))
+        add(
+          url,
+          "image-alt-filename",
+          "warning",
+          `the alt on ${img.src ?? "an image"} is a file name, "${img.alt}"`,
+        );
     }
     for (const target of new Set(internalLinks(html, url, origin).map(normalize))) {
       const linked = byUrl.get(target);
       if (!linked) continue;
-      if (linked.status >= 400) add(url, "link-broken", "error", `links to ${linked.url}, which answers ${linked.status}`);
-      else if (isRedirect(linked)) add(url, "link-redirect", "warning", `links to ${linked.url}, which redirects to ${linked.location ?? "somewhere"}`);
+      if (linked.status >= 400)
+        add(url, "link-broken", "error", `links to ${linked.url}, which answers ${linked.status}`);
+      else if (isRedirect(linked))
+        add(
+          url,
+          "link-redirect",
+          "warning",
+          `links to ${linked.url}, which redirects to ${linked.location ?? "somewhere"}`,
+        );
     }
   }
 
-  for (const [title, urls] of titles) if (urls.length > 1) for (const url of urls) add(url, "title-duplicate", "warning", `"${title}" is on ${urls.length} pages`);
-  for (const [, urls] of descriptions) if (urls.length > 1) for (const url of urls) add(url, "description-duplicate", "warning", `the same description is on ${urls.length} pages`);
+  for (const [title, urls] of titles)
+    if (urls.length > 1)
+      for (const url of urls)
+        add(url, "title-duplicate", "warning", `"${title}" is on ${urls.length} pages`);
+  for (const [, urls] of descriptions)
+    if (urls.length > 1)
+      for (const url of urls)
+        add(
+          url,
+          "description-duplicate",
+          "warning",
+          `the same description is on ${urls.length} pages`,
+        );
 
   /** @type {Record<string, number>} */
   const summary = {};
@@ -165,8 +242,15 @@ export function auditPages(pages, { origin, sitemap }) {
  * @param {CrawlInput} input
  * @returns {Promise<{ pages: AuditPage[], sitemap: string[] }>}
  */
-export async function crawlSite({ origin, fetch: fetcher, maxPages = 200, sitemapPath = "/sitemap.xml" }) {
-  const sitemap = [...new Set(await readSitemap(fetcher, new URL(sitemapPath, origin).href, origin, true))];
+export async function crawlSite({
+  origin,
+  fetch: fetcher,
+  maxPages = 200,
+  sitemapPath = "/sitemap.xml",
+}) {
+  const sitemap = [
+    ...new Set(await readSitemap(fetcher, new URL(sitemapPath, origin).href, origin, true)),
+  ];
   /** @type {AuditPage[]} */
   const pages = [];
   const seen = new Set();
@@ -174,7 +258,11 @@ export async function crawlSite({ origin, fetch: fetcher, maxPages = 200, sitema
   for (let url of sitemap) {
     /** @type {string[]} */
     const chain = [];
-    for (let hop = 0; hop <= MAX_HOPS && pages.length < maxPages && !seen.has(normalize(url)); hop++) {
+    for (
+      let hop = 0;
+      hop <= MAX_HOPS && pages.length < maxPages && !seen.has(normalize(url));
+      hop++
+    ) {
       seen.add(normalize(url));
       const page = await fetchPage(fetcher, url, "GET", true);
       if (chain.length > 0) page.redirectedFrom = [...chain];
@@ -192,7 +280,11 @@ export async function crawlSite({ origin, fetch: fetcher, maxPages = 200, sitema
       if (seen.has(normalize(url))) continue;
       seen.add(normalize(url));
       const head = await fetchPage(fetcher, url, "HEAD", false);
-      pages.push(head.status === 405 || head.status === 501 ? await fetchPage(fetcher, url, "GET", false) : head);
+      pages.push(
+        head.status === 405 || head.status === 501
+          ? await fetchPage(fetcher, url, "GET", false)
+          : head,
+      );
     }
   }
   return { pages, sitemap };
@@ -211,7 +303,9 @@ async function readSitemap(fetcher, url, origin, index) {
   } catch {
     return [];
   }
-  const locs = [...xml.matchAll(/<loc>\s*([^<]*?)\s*<\/loc>/gi)].map((match) => decodeEntities(match[1])).filter((loc) => sameOrigin(loc, origin));
+  const locs = [...xml.matchAll(/<loc>\s*([^<]*?)\s*<\/loc>/gi)]
+    .map((match) => decodeEntities(match[1]))
+    .filter((loc) => sameOrigin(loc, origin));
   if (!/<sitemapindex\b/i.test(xml)) return locs;
   if (!index) return [];
   const urls = [];
@@ -231,7 +325,8 @@ async function fetchPage(fetcher, url, method, body) {
     /** @type {AuditPage} */
     const page = { url, status: response.status, headers };
     if (headers.location) page.location = headers.location;
-    if (body && response.status === 200 && /html/i.test(headers["content-type"] ?? "text/html")) page.html = await response.text();
+    if (body && response.status === 200 && /html/i.test(headers["content-type"] ?? "text/html"))
+      page.html = await response.text();
     else await response.body?.cancel();
     return page;
   } catch (error) {
@@ -350,7 +445,11 @@ function meta(html, key, value) {
 
 /** @param {string} html */
 function jsonLdBlocks(html) {
-  return [...html.matchAll(/<script\b[^>]*type=["']?application\/ld\+json["']?[^>]*>([\s\S]*?)<\/script>/gi)].map((match) => match[1]);
+  return [
+    ...html.matchAll(
+      /<script\b[^>]*type=["']?application\/ld\+json["']?[^>]*>([\s\S]*?)<\/script>/gi,
+    ),
+  ].map((match) => match[1]);
 }
 
 /**
@@ -364,7 +463,9 @@ function tags(html, name) {
   return [...html.matchAll(new RegExp(`<${name}\\b([^>]*)>`, "gi"))].map((match) => {
     /** @type {Record<string, string>} */
     const attrs = {};
-    for (const attr of match[1].matchAll(/([^\s=/"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g)) {
+    for (const attr of match[1].matchAll(
+      /([^\s=/"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g,
+    )) {
       attrs[attr[1].toLowerCase()] = decodeEntities(attr[2] ?? attr[3] ?? attr[4] ?? "");
     }
     return attrs;
@@ -375,9 +476,12 @@ function tags(html, name) {
 function decodeEntities(text) {
   // One pass, so "&amp;lt;" stays "&lt;"; numeric references cover the &#x27; and &#8217; that sites write.
   const named = { quot: '"', apos: "'", lt: "<", gt: ">", amp: "&", nbsp: "\u00a0" };
-  return text.replace(/&(?:#x([0-9a-f]+)|#(\d+)|(quot|apos|lt|gt|amp|nbsp));/gi, (whole, hex, dec, name) => {
-    if (name) return named[/** @type {keyof typeof named} */ (name.toLowerCase())];
-    const code = Number.parseInt(hex ?? dec, hex ? 16 : 10);
-    return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
-  });
+  return text.replace(
+    /&(?:#x([0-9a-f]+)|#(\d+)|(quot|apos|lt|gt|amp|nbsp));/gi,
+    (whole, hex, dec, name) => {
+      if (name) return named[/** @type {keyof typeof named} */ (name.toLowerCase())];
+      const code = Number.parseInt(hex ?? dec, hex ? 16 : 10);
+      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
+    },
+  );
 }

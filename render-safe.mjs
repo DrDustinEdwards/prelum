@@ -29,7 +29,8 @@ const URL_ATTRIBUTES = new Set([
  * The one form of `style` that may carry a url(): the pipeline's own low-quality image placeholder (render-nomath.mjs, rehypeImageSources).
  * Anything else with a url() is refused.
  */
-export const LQIP_STYLE = /^background-image:url\("data:image\/(?:webp|png|jpeg|avif|gif);base64,[A-Za-z0-9+/=]*"\)$/;
+export const LQIP_STYLE =
+  /^background-image:url\("data:image\/(?:webp|png|jpeg|avif|gif);base64,[A-Za-z0-9+/=]*"\)$/;
 
 /**
  * The URLs in a srcset: each comma-separated candidate is a URL, then an optional descriptor.
@@ -113,13 +114,18 @@ export function scanHtml(html, allowlist = DEFAULT_ALLOWLIST) {
         violations.push({ kind: "attribute", tag, attribute: name });
         continue;
       }
-      const csv = tag === "a" && name === "href" && node.attrs.some((/** @type {{ name: string }} */ attr) => attr.name === "download") && isCsvDownload(value);
+      const csv =
+        tag === "a" &&
+        name === "href" &&
+        node.attrs.some((/** @type {{ name: string }} */ attr) => attr.name === "download") &&
+        isCsvDownload(value);
       if (URL_ATTRIBUTES.has(name.toLowerCase()) && !isAllowedUrl(value) && !csv) {
         violations.push({ kind: "url", tag, attribute: name, detail: value.slice(0, 80) });
       }
       if (name.toLowerCase() === "srcset") {
         for (const url of srcsetUrls(value)) {
-          if (!isAllowedUrl(url)) violations.push({ kind: "url", tag, attribute: name, detail: url.slice(0, 80) });
+          if (!isAllowedUrl(url))
+            violations.push({ kind: "url", tag, attribute: name, detail: url.slice(0, 80) });
         }
       }
       if (name === "style" && !styleIsSafe(value)) {
@@ -142,7 +148,10 @@ export function assertSafe(html, allowlist = DEFAULT_ALLOWLIST) {
   if (violations.length === 0) return;
   const shown = violations
     .slice(0, 5)
-    .map((v) => `${v.kind} ${v.tag}${v.attribute ? ` ${v.attribute}` : ""}${v.detail ? ` (${v.detail})` : ""}`)
+    .map(
+      (v) =>
+        `${v.kind} ${v.tag}${v.attribute ? ` ${v.attribute}` : ""}${v.detail ? ` (${v.detail})` : ""}`,
+    )
     .join("; ");
   throw new ContentError(
     "(rendered output)",
