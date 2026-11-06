@@ -300,8 +300,8 @@ export function buildChartModel(attrs, csv, { strict = false } = {}) {
  * puts its own; the directive's figure takes Enarratio's classes and data attributes, so there is one figure.
  *
  * @param {ReturnType<typeof buildChartModel>} model
- * @param {any[]} captionChildren hast for an author-written caption, may be empty
- * @param {any} figure the directive's figure node, which becomes the frame
+ * @param {import("hast").ElementContent[]} captionChildren hast for an author-written caption, may be empty
+ * @param {import("hast").Element} figure the directive's figure node, which becomes the frame
  */
 export function renderChartHast(model, captionChildren, figure) {
   const drawn = fromHtml(model.html, { fragment: true }).children.find(

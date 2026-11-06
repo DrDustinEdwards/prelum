@@ -65,7 +65,7 @@ export const SHIKI_THEMES = { light: githubLight, dark: githubDark };
  * @param {object} [input]
  * @param {() => Wasm | Promise<Wasm>} [input.wasm] Injected: a Worker refuses WebAssembly.instantiate() on bytes, so it passes an
  *   instantiator over a statically imported module. The engine is the same, so the HTML is byte-identical. Default is shiki's own.
- * @param {Record<string, any>} [input.languages] name to grammar; default is the ten in GRAMMARS
+ * @param {Record<string, import("shiki/core").LanguageInput>} [input.languages] name to grammar; default is the ten in GRAMMARS
  * @returns {import("./render.mjs").HighlightOptions}
  */
 export function createHighlight({ wasm = () => import("shiki/wasm"), languages = GRAMMARS } = {}) {

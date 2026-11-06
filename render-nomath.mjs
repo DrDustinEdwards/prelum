@@ -161,7 +161,7 @@ function remarkLimitDepth(file, maxDepth) {
  * Runs at render time so every citation the renderer emits is indexed by construction. Must run BEFORE remarkFigure, which erases the
  * directive and would turn figure-directive into markdown-image.
  *
- * @param {any[]} sink
+ * @param {unknown[]} sink
  * @param {(raw: string) => string | null} keyOf
  */
 function remarkCollectMedia(sink, keyOf) {
