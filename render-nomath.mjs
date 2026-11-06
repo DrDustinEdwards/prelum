@@ -426,6 +426,9 @@ function rightsOf(facts) {
   return { credit, licenseUrl, notice, shown: [credit, notice].filter(Boolean).join(" · ") };
 }
 
+/** The credits this pass added from the media library, so a gallery adds each picture's once and an author's own wins. */
+const libraryCredits = new WeakSet();
+
 /**
  * The library's credit, shown under the picture: in its figure's caption unless the author wrote a credit there, else the paragraph that
  * holds only the picture becomes a figure with it as the caption. A picture inside a sentence shows none (its rights still reach the
@@ -457,9 +460,9 @@ function showCredit(shown, parents, text) {
     if (hasClass(c, "figure-credit")) credits.push(c);
   });
   // The author's credit wins; a gallery lists each picture's credit once.
-  if (credits.length > 0 && !credits.some((c) => c.data?.fromLibrary)) return;
+  if (credits.length > 0 && !credits.some((c) => libraryCredits.has(c))) return;
   if (credits.some((c) => hastToString(c) === text)) return;
-  credit.data = { fromLibrary: true };
+  libraryCredits.add(credit);
   caption.children.push(...(caption.children.length > 0 ? [{ type: "text", value: " " }] : []), credit);
 }
 
@@ -520,19 +523,20 @@ function rehypeImageSources(file, resolveImage, pending, imageProps, priority, s
       if (node.tagName === "video" && node.properties?.poster) {
         const video = node;
         const track = video.children.find((c) => c.type === "element" && c.tagName === "track");
+        const poster = String(video.properties.poster);
         /** @type {RenderedVideo} */
         const entry = {
           kind: "file",
           url: String(video.properties.src ?? ""),
           title: String(video.properties.ariaLabel ?? ""),
-          poster: String(video.properties.poster),
+          poster,
           ...(track?.type === "element" ? { captions: String(track.properties?.src ?? "") } : {}),
         };
         sinks.videos.push(entry);
         sinks.after.push(() => {
           if (!entry.width) sinks.warnings.push({ line: null, message: `video ${entry.url} has no size: the site has none for its poster ${entry.poster}` });
         });
-        resolved(entry.poster, (size) => {
+        resolved(poster, (size) => {
           video.properties = { ...video.properties, width: size?.width, height: size?.height };
           Object.assign(entry, size ? { width: size.width, height: size.height } : {});
         });

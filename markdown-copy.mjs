@@ -341,7 +341,7 @@ export function markdownCopies(fetch, options) {
     return request.method === "HEAD" ? new Response(null, response) : response;
   }
 
-  /** @type {FetchHandler} */
+  /** @type {(request: Request, env?: any, ctx?: any) => Promise<Response>} */
   const wrapped = async (request, env, ctx) => {
     if (request.method !== "GET" && request.method !== "HEAD") return fetch(request, env, ctx);
     const path = new URL(request.url).pathname;

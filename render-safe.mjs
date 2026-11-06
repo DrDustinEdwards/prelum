@@ -113,7 +113,7 @@ export function scanHtml(html, allowlist = DEFAULT_ALLOWLIST) {
         violations.push({ kind: "attribute", tag, attribute: name });
         continue;
       }
-      const csv = tag === "a" && name === "href" && node.attrs.some((attr) => attr.name === "download") && isCsvDownload(value);
+      const csv = tag === "a" && name === "href" && node.attrs.some((/** @type {{ name: string }} */ attr) => attr.name === "download") && isCsvDownload(value);
       if (URL_ATTRIBUTES.has(name.toLowerCase()) && !isAllowedUrl(value) && !csv) {
         violations.push({ kind: "url", tag, attribute: name, detail: value.slice(0, 80) });
       }

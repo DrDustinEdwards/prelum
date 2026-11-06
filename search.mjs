@@ -141,6 +141,7 @@ export function staticSearch(index, query, { limit = 50, snippet = 160 } = {}) {
     }
     if (!every) continue;
     if (searchWords(page.t).join(" ") === whole) score += 10;
+    /** @type {string | null} */
     let heading = null;
     let headingHits = 0;
     page.h.forEach(([id], i) => {

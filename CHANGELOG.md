@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- The type check now checks the modules themselves. `tsconfig.json` listed both `*.mjs` and `*.d.mts`, and when a module
+  and its twin both match, tsc keeps only the declaration, so no implementation was checked. It now lists the modules
+  (lib es2023 with DOM iteration), and the 29 errors that surfaced are fixed: missing parameter types, and two places in
+  `render-nomath.mjs` (the library credit's mark is a WeakSet instead of an untyped `data` field; a video's poster is
+  read once). No behavior change.
+
 ## 0.33.0 (2026-11-05)
 
 - Titles and descriptions are measured as Google draws them, in pixels, not characters. Google cuts a result's title and
