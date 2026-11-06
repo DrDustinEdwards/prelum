@@ -168,7 +168,7 @@
     "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.24.0",
     "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.84.0",
     "@fontsource-variable/source-serif-4": "5.3.1",
-    "@mermaid-js/mermaid-cli": "11.17.0",
+    "@mermaid-js/mermaid-cli": "12.2.0",
     "@observablehq/plot": "0.6.17",
     "@resvg/resvg-js": "2.6.2",
     "@shikijs/rehype": "4.5.0",
@@ -209,7 +209,7 @@
     "unist-util-visit": "5.2.0"
   },
   "peerDependencies": {
-    "@mermaid-js/mermaid-cli": "11.17.0",
+    "@mermaid-js/mermaid-cli": "12.2.0",
     "@resvg/resvg-js": "^2.6.2",
     "@shikijs/rehype": "4.5.0",
     "@shikijs/transformers": "4.5.0",
