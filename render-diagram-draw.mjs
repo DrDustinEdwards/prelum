@@ -82,11 +82,15 @@ const VIEWPORT = { width: 1200, height: 800, deviceScaleFactor: 1 };
  * @param {Record<string, string>} colors one hex color per name in DIAGRAM_ROLE_NAMES
  */
 export function mermaidConfig(theme, colors) {
-  const missing = DIAGRAM_ROLE_NAMES.filter((role) => !/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(colors[role] ?? ""));
-  if (missing.length > 0) throw new Error(`the ${theme} diagram colors lack a hex color for ${missing.join(", ")}`);
+  const missing = DIAGRAM_ROLE_NAMES.filter(
+    (role) => !/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(colors[role] ?? ""),
+  );
+  if (missing.length > 0)
+    throw new Error(`the ${theme} diagram colors lack a hex color for ${missing.join(", ")}`);
   /** @type {Record<string, string | boolean>} */
   const themeVariables = { darkMode: theme === "dark", fontFamily: FONT_FAMILY };
-  for (const [variable, role] of Object.entries(DIAGRAM_ROLES)) themeVariables[variable] = /** @type {string} */ (colors[role]);
+  for (const [variable, role] of Object.entries(DIAGRAM_ROLES))
+    themeVariables[variable] = /** @type {string} */ (colors[role]);
   return {
     // "base" is the only built-in theme whose variables are fully overridable; every other one hardcodes part of its palette.
     theme: "base",
@@ -153,19 +157,34 @@ function sizeRoot(svg, label) {
  * @returns {Promise<{ written: string[], current: number, stale: string[], sizes: Record<string, { width: number, height: number }> }>}
  *   `sizes` is also written to DIAGRAM_SIZES_FILE in `dir`, for the site to pass to editorialPack's `diagramSizes`
  */
-export async function drawDiagrams({ diagrams, dir, assetPrefix, colors, force = false, log = console.log }) {
+export async function drawDiagrams({
+  diagrams,
+  dir,
+  assetPrefix,
+  colors,
+  force = false,
+  log = console.log,
+}) {
   const themes = /** @type {Array<"light" | "dark">} */ (DIAGRAM_THEMES);
-  const configs = { light: mermaidConfig("light", colors.light), dark: mermaidConfig("dark", colors.dark) };
-  const fileName = (/** @type {string} */ key, /** @type {string} */ theme) => basename(diagramAssetPath(key, theme, assetPrefix));
+  const configs = {
+    light: mermaidConfig("light", colors.light),
+    dark: mermaidConfig("dark", colors.dark),
+  };
+  const fileName = (/** @type {string} */ key, /** @type {string} */ theme) =>
+    basename(diagramAssetPath(key, theme, assetPrefix));
 
   await mkdir(dir, { recursive: true });
   const outstanding = diagrams.flatMap((diagram) =>
-    themes.filter((theme) => force || !existsSync(join(dir, fileName(diagram.key, theme)))).map((theme) => ({ diagram, theme })),
+    themes
+      .filter((theme) => force || !existsSync(join(dir, fileName(diagram.key, theme))))
+      .map((theme) => ({ diagram, theme })),
   );
 
   /** @type {string[]} */
   const written = [];
-  const launchOptions = process.env.MERMAID_PUPPETEER_CONFIG ? JSON.parse(process.env.MERMAID_PUPPETEER_CONFIG) : {};
+  const launchOptions = process.env.MERMAID_PUPPETEER_CONFIG
+    ? JSON.parse(process.env.MERMAID_PUPPETEER_CONFIG)
+    : {};
   const browser = outstanding.length > 0 ? await puppeteer.launch(launchOptions) : null;
   try {
     for (const { diagram, theme } of outstanding) {
@@ -173,18 +192,25 @@ export async function drawDiagrams({ diagrams, dir, assetPrefix, colors, force =
       const label = `${name}${diagram.label ? ` (${diagram.label})` : ""}`;
       // The renderer's API rather than its command line: Node will not spawn the shim without a shell, and a shell joins
       // an argument array without quoting.
-      const { data } = await renderMermaid(/** @type {import("puppeteer").Browser} */ (browser), diagram.source, "svg", {
-        backgroundColor: "transparent",
-        mermaidConfig: /** @type {any} */ (configs[theme]),
-        svgId: SVG_ID,
-        viewport: VIEWPORT,
-      });
+      const { data } = await renderMermaid(
+        /** @type {import("puppeteer").Browser} */ (browser),
+        diagram.source,
+        "svg",
+        {
+          backgroundColor: "transparent",
+          mermaidConfig: /** @type {any} */ (configs[theme]),
+          svgId: SVG_ID,
+          viewport: VIEWPORT,
+        },
+      );
       const svg = sizeRoot(Buffer.from(data).toString("utf8"), label);
       // Audited before it is written, so a color Mermaid derived rather than took from the palette stops the build
       // instead of shipping.
       const audit = auditDiagramSvg(svg, Object.values(colors[theme]));
       if (audit.problems.length > 0) {
-        throw new Error(`${label} uses colors that are not the site's:\n${audit.problems.map((p) => `    ${p}`).join("\n")}`);
+        throw new Error(
+          `${label} uses colors that are not the site's:\n${audit.problems.map((p) => `    ${p}`).join("\n")}`,
+        );
       }
       await writeFile(join(dir, name), svg, "utf8");
       written.push(name);
@@ -195,7 +221,9 @@ export async function drawDiagrams({ diagrams, dir, assetPrefix, colors, force =
   }
 
   const live = [...new Set(diagrams.flatMap((d) => themes.map((t) => fileName(d.key, t))))].sort();
-  const stale = (await readdir(dir)).filter((name) => name.endsWith(".svg") && !live.includes(name));
+  const stale = (await readdir(dir)).filter(
+    (name) => name.endsWith(".svg") && !live.includes(name),
+  );
   // Every drawing's size, read back from the root sizeRoot wrote, so the renderer sizes its <img> (DIAGRAM_SIZES_FILE).
   /** @type {Record<string, { width: number, height: number }>} */
   const sizes = {};
@@ -234,7 +262,15 @@ const COLOR_PROPERTIES = new Set([
 ]);
 
 // `currentColor` is safe because it resolves to `color`, which is itself audited.
-const NON_COLOR_VALUES = new Set(["none", "transparent", "currentcolor", "inherit", "initial", "unset", "revert"]);
+const NON_COLOR_VALUES = new Set([
+  "none",
+  "transparent",
+  "currentcolor",
+  "inherit",
+  "initial",
+  "unset",
+  "revert",
+]);
 
 /** @param {string} hex */
 function normalizeHex(hex) {
@@ -264,7 +300,10 @@ function cssRules(text) {
       depth -= 1;
       if (depth < 0) throw new Error(`unbalanced stylesheet: a "}" at offset ${i} closes nothing`);
       if (depth === 0) {
-        out.push({ selector: text.slice(start, selectorEnd).trim(), body: text.slice(selectorEnd + 1, i) });
+        out.push({
+          selector: text.slice(start, selectorEnd).trim(),
+          body: text.slice(selectorEnd + 1, i),
+        });
         start = i + 1;
       }
     }
@@ -298,7 +337,9 @@ function colorProblem(value, palette) {
   const lower = cleaned.toLowerCase();
   if (cleaned === "" || NON_COLOR_VALUES.has(lower) || lower.startsWith("url(")) return null;
   if (/^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$/.test(cleaned)) {
-    return palette.has(normalizeHex(cleaned)) ? null : `${cleaned} is not one of the palette's colors`;
+    return palette.has(normalizeHex(cleaned))
+      ? null
+      : `${cleaned} is not one of the palette's colors`;
   }
   return `${cleaned} is not a palette color`;
 }
@@ -351,7 +392,10 @@ export function auditDiagramSvg(svg, paletteHexes) {
         check(rule.selector, declarations);
         continue;
       }
-      const selectors = rule.selector.split(",").map((s) => s.trim()).filter(Boolean);
+      const selectors = rule.selector
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
       styling.push({ selectors, properties: new Set(declarations.map((d) => d.property)) });
       const reachable = selectors.some((one) => {
         try {
@@ -372,7 +416,10 @@ export function auditDiagramSvg(svg, paletteHexes) {
   const serialized = root.toString();
   const all = [root, ...root.querySelectorAll("*")];
   const hrefs = new Set(
-    all.flatMap((el) => ["href", "xlink:href"].map((n) => el.getAttribute(n) ?? "")).filter((v) => v.startsWith("#")).map((v) => v.slice(1)),
+    all
+      .flatMap((el) => ["href", "xlink:href"].map((n) => el.getAttribute(n) ?? ""))
+      .filter((v) => v.startsWith("#"))
+      .map((v) => v.slice(1)),
   );
   const dead = new Set();
   for (const defs of document.querySelectorAll("defs")) {
@@ -408,7 +455,8 @@ export function auditDiagramSvg(svg, paletteHexes) {
     if (dead.has(element)) continue;
     for (const attribute of element.attributes) {
       const name = attribute.name.toLowerCase();
-      if (name === "style") check(`<${element.localName} style>`, colorDeclarations(attribute.value));
+      if (name === "style")
+        check(`<${element.localName} style>`, colorDeclarations(attribute.value));
       else if (!COLOR_PROPERTIES.has(name)) continue;
       else if (styledBy(element, name)) overridden += 1;
       else check(`<${element.localName}>`, [{ property: name, value: attribute.value }]);

@@ -5,21 +5,27 @@
  *
  * @param {string} file
  */
-export function remarkSwatch(file: string): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
+export function remarkSwatch(
+  file: string,
+): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
 /**
  * Stays in the prose flow and the site's stylesheet floats it into the rail: that aligns it with its paragraph
  * without measuring, on a plane that does not hydrate.
  *
  * @param {string} file
  */
-export function remarkSidenote(file: string): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
+export function remarkSidenote(
+  file: string,
+): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
 /**
  * Marks a sentence already in the prose instead of duplicating it, so the .md twin, which serves the
  * source verbatim, has it once. The raised copy is aria-hidden so a screen reader hears it once.
  *
  * @param {string} file
  */
-export function remarkPullQuote(file: string): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
+export function remarkPullQuote(
+  file: string,
+): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => void;
 /**
  * `:::chart{src="..."}` (E3): the CSV comes from the site's `chartData(src, { file })`, called at render time, in place of the
  * fenced block. Prelum fetches nothing itself, so without the hook a `src` is refused; with it, the text it returns is the block.
@@ -27,9 +33,17 @@ export function remarkPullQuote(file: string): (/** @type {import("mdast").Root}
  * @param {string} file
  * @param {((src: string, context: { file: string }) => string | Promise<string>) | undefined} chartData
  */
-export function remarkChartSource(file: string, chartData: ((src: string, context: {
-    file: string;
-}) => string | Promise<string>) | undefined): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => Promise<void>;
+export function remarkChartSource(
+  file: string,
+  chartData:
+    | ((
+        src: string,
+        context: {
+          file: string;
+        },
+      ) => string | Promise<string>)
+    | undefined,
+): (/** @type {import("mdast").Root} */ tree: import("mdast").Root) => Promise<void>;
 /**
  * @typedef {object} RenderPack
  * @property {string} name
@@ -50,34 +64,39 @@ export function remarkChartSource(file: string, chartData: ((src: string, contex
  * @param {boolean} [options.strictCharts] refuse a chart with no title or too many series, where the default renders it with a warning (E4)
  * @returns {RenderPack}
  */
-export function editorialPack({ assetPrefix, chartData, strictCharts, diagramSizes }: {
-    assetPrefix: string;
-    chartData?: (src: string, context: {
-        file: string;
-    }) => string | Promise<string>;
-    strictCharts?: boolean;
-    /** The DIAGRAM_SIZES_FILE drawDiagrams writes beside the drawings: each drawing's size, by file name. */
-    diagramSizes?: Record<string, { width: number; height: number }>;
+export function editorialPack({
+  assetPrefix,
+  chartData,
+  strictCharts,
+  diagramSizes,
+}: {
+  assetPrefix: string;
+  chartData?: (
+    src: string,
+    context: {
+      file: string;
+    },
+  ) => string | Promise<string>;
+  strictCharts?: boolean;
+  /** The DIAGRAM_SIZES_FILE drawDiagrams writes beside the drawings: each drawing's size, by file name. */
+  diagramSizes?: Record<string, { width: number; height: number }>;
 }): RenderPack;
 export type RenderPack = {
-    name: string;
-    /**
-     * every directive name the pack handles, so the unknown-directive guard allows them
-     */
-    directives: readonly string[];
-    /**
-     * called once per render; `result` is merged into what render returns, and `warn` adds to its warnings
-     */
-    setup: (context: {
-        file: string;
-        body: string;
-        warn: (warning: {
-            line: number | null;
-            message: string;
-        }) => void;
-    }) => {
-        remark: Array<[unknown, ...unknown[]]>;
-        rehype: Array<[unknown, ...unknown[]]>;
-        result?: () => Record<string, unknown>;
-    };
+  name: string;
+  /**
+   * every directive name the pack handles, so the unknown-directive guard allows them
+   */
+  directives: readonly string[];
+  /**
+   * called once per render; `result` is merged into what render returns, and `warn` adds to its warnings
+   */
+  setup: (context: {
+    file: string;
+    body: string;
+    warn: (warning: { line: number | null; message: string }) => void;
+  }) => {
+    remark: Array<[unknown, ...unknown[]]>;
+    rehype: Array<[unknown, ...unknown[]]>;
+    result?: () => Record<string, unknown>;
+  };
 };

@@ -10,7 +10,13 @@ import { ContentError, errorMessage } from "./render-error.mjs";
 import { KATEX_OPTIONS } from "./render-math.mjs";
 import { renderWith } from "./render-nomath.mjs";
 
-export { ContentError, DEFAULT_MAX_BYTES, DEFAULT_MAX_DEPTH, RENDER_VERSION, isAllowedUrl } from "./render-nomath.mjs";
+export {
+  ContentError,
+  DEFAULT_MAX_BYTES,
+  DEFAULT_MAX_DEPTH,
+  RENDER_VERSION,
+  isAllowedUrl,
+} from "./render-nomath.mjs";
 
 /**
  * The AST-side owner of hasMath; a site compares it with htmlHasMath over its corpus.
@@ -54,5 +60,10 @@ function remarkMathValidate(file, sink) {
  */
 export function render(input) {
   // Option 3 in render-nomath.mjs's header: KATEX_OPTIONS leaves `trust` off.
-  return renderWith(input, { parse: remarkMath, validate: remarkMathValidate, html: rehypeKatex, options: KATEX_OPTIONS });
+  return renderWith(input, {
+    parse: remarkMath,
+    validate: remarkMathValidate,
+    html: rehypeKatex,
+    options: KATEX_OPTIONS,
+  });
 }

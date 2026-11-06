@@ -19,7 +19,14 @@ const ENDPOINT = "https://api.indexnow.org/indexnow";
  * @param {IndexNowInput} input
  * @returns {Promise<boolean>}
  */
-export async function submitIndexNow({ origin, key, urls, keyLocation, from, fetch: fetcher = fetch }) {
+export async function submitIndexNow({
+  origin,
+  key,
+  urls,
+  keyLocation,
+  from,
+  fetch: fetcher = fetch,
+}) {
   try {
     if (from !== undefined && new URL(from).origin !== origin) return false;
     const urlList = urls.filter((url) => url.startsWith(`${origin}/`));
@@ -71,6 +78,8 @@ export function recentSitemapUrls(xml, { days = 2, now = new Date() } = {}) {
   const dated = entries.some((entry) => entry.lastmod);
   const since = now.getTime() - days * 86_400_000;
   return entries
-    .filter((entry) => entry.loc && (!dated || (entry.lastmod && Date.parse(entry.lastmod) >= since)))
+    .filter(
+      (entry) => entry.loc && (!dated || (entry.lastmod && Date.parse(entry.lastmod) >= since)),
+    )
     .map((entry) => /** @type {string} */ (entry.loc));
 }

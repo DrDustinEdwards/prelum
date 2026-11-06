@@ -12,13 +12,26 @@ import { parseArgs } from "node:util";
 
 import { recentSitemapUrls, submitIndexNow } from "../indexnow.mjs";
 
-const { values } = parseArgs({ options: { origin: { type: "string" }, key: { type: "string" }, sitemap: { type: "string" }, days: { type: "string", default: "2" } } });
+const { values } = parseArgs({
+  options: {
+    origin: { type: "string" },
+    key: { type: "string" },
+    sitemap: { type: "string" },
+    days: { type: "string", default: "2" },
+  },
+});
 if (!values.origin || !values.key || !values.sitemap) {
-  console.error("usage: prelum-indexnow --origin https://example.com --key <key> --sitemap dist/sitemap.xml [--days 2]");
+  console.error(
+    "usage: prelum-indexnow --origin https://example.com --key <key> --sitemap dist/sitemap.xml [--days 2]",
+  );
   process.exit(2);
 }
 const origin = values.origin.replace(/\/$/, "");
 const urls = recentSitemapUrls(readFileSync(values.sitemap, "utf8"), { days: Number(values.days) });
 if (urls.length === 0) console.log("prelum-indexnow: no page changed; nothing sent.");
-else if (await submitIndexNow({ origin, key: values.key, urls })) console.log(`prelum-indexnow: sent ${urls.length} URL(s) to IndexNow.`);
-else console.log(`::warning::prelum-indexnow: IndexNow did not take the ${urls.length} URL(s); the engines will crawl them on their own schedule.`);
+else if (await submitIndexNow({ origin, key: values.key, urls }))
+  console.log(`prelum-indexnow: sent ${urls.length} URL(s) to IndexNow.`);
+else
+  console.log(
+    `::warning::prelum-indexnow: IndexNow did not take the ${urls.length} URL(s); the engines will crawl them on their own schedule.`,
+  );

@@ -14,9 +14,17 @@ import { parseArgs } from "node:util";
 import { auditPages, crawlSite } from "../audit.mjs";
 import { auditIcons } from "../icons.mjs";
 
-const { values } = parseArgs({ options: { origin: { type: "string" }, from: { type: "string" }, "max-pages": { type: "string", default: "3000" } } });
+const { values } = parseArgs({
+  options: {
+    origin: { type: "string" },
+    from: { type: "string" },
+    "max-pages": { type: "string", default: "3000" },
+  },
+});
 if (!values.origin) {
-  console.error("usage: prelum-audit --origin https://example.com [--from https://preview.example] [--max-pages 3000]");
+  console.error(
+    "usage: prelum-audit --origin https://example.com [--from https://preview.example] [--max-pages 3000]",
+  );
   process.exit(2);
 }
 const origin = values.origin.replace(/\/$/, "");
@@ -30,10 +38,16 @@ const fetcher = from ? viaFrom : fetch;
 
 const home = await fetcher(`${origin}/`).catch((error) => error);
 if (!(home instanceof Response) || home.status >= 500) {
-  console.error(`prelum-audit: ${origin} did not answer: ${home instanceof Response ? home.status : home.message}`);
+  console.error(
+    `prelum-audit: ${origin} did not answer: ${home instanceof Response ? home.status : home.message}`,
+  );
   process.exit(2);
 }
-const { pages, sitemap } = await crawlSite({ origin, fetch: fetcher, maxPages: Number(values["max-pages"]) });
+const { pages, sitemap } = await crawlSite({
+  origin,
+  fetch: fetcher,
+  maxPages: Number(values["max-pages"]),
+});
 const report = auditPages(pages, { origin, sitemap });
 for (const finding of await auditIcons({ origin, fetch: fetcher })) {
   report.findings.push(finding);
@@ -41,10 +55,17 @@ for (const finding of await auditIcons({ origin, fetch: fetcher })) {
 }
 for (const finding of report.findings) {
   // What could not be measured is a notice in devkit-live's form, never a pass or a failure; exit 3 when nothing failed.
-  console.log(finding.severity === "unmeasured" ? `::notice title=${finding.check}::${finding.url} could not measure: ${finding.detail}` : `::${finding.severity} title=${finding.check}::${finding.url} ${finding.detail}`);
+  console.log(
+    finding.severity === "unmeasured"
+      ? `::notice title=${finding.check}::${finding.url} could not measure: ${finding.detail}`
+      : `::${finding.severity} title=${finding.check}::${finding.url} ${finding.detail}`,
+  );
 }
 const errors = report.findings.filter((finding) => finding.severity === "error").length;
-const counts = Object.entries(report.summary).map(([check, n]) => `${check} ${n}`).join(", ") || "no findings";
+const counts =
+  Object.entries(report.summary)
+    .map(([check, n]) => `${check} ${n}`)
+    .join(", ") || "no findings";
 const unmeasured = report.findings.filter((finding) => finding.severity === "unmeasured").length;
 console.log(`prelum-audit: ${report.pages} pages on ${origin}; ${counts}.`);
 process.exit(errors > 0 ? 1 : unmeasured > 0 ? 3 : 0);

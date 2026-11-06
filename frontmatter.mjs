@@ -21,7 +21,12 @@ const KEY = /^([A-Za-z_][\w-]*):(.*)$/;
 export function splitSource(source) {
   const m = FENCE.exec(source);
   if (!m) return { front: null, body: source, open: "", close: "" };
-  return { front: m[2] ?? "", body: source.slice(m[0].length), open: m[1] ?? "", close: m[3] ?? "" };
+  return {
+    front: m[2] ?? "",
+    body: source.slice(m[0].length),
+    open: m[1] ?? "",
+    close: m[3] ?? "",
+  };
 }
 
 /**
@@ -62,7 +67,8 @@ function unquote(raw) {
       return v.slice(1, -1);
     }
   }
-  if (v.startsWith("'") && v.endsWith("'") && v.length >= 2) return v.slice(1, -1).replace(/''/g, "'");
+  if (v.startsWith("'") && v.endsWith("'") && v.length >= 2)
+    return v.slice(1, -1).replace(/''/g, "'");
   return v;
 }
 

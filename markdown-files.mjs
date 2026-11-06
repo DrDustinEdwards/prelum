@@ -40,15 +40,27 @@ export async function writeMarkdownCopies({ dir, origin, skip = () => false }) {
     if (skip(address)) continue;
     const facts = htmlToMarkdown(await readFile(file, "utf8"), { base: `${base}${address}` });
     if (facts.noindex) continue;
-    const page = { title: facts.title, description: facts.description, url: facts.canonical ?? `${base}${address}`, markdown: facts.markdown };
+    const page = {
+      title: facts.title,
+      description: facts.description,
+      url: facts.canonical ?? `${base}${address}`,
+      markdown: facts.markdown,
+    };
     await writeFile(join(dir, markdownPath(address).slice(1)), markdownPage(page));
     pages.set(address.replace(/\/$/, "") || "/", page);
   }
   const read = (/** @type {string} */ name) => readFile(join(dir, name), "utf8").catch(() => "");
-  const order = sitemapLocs(await read("sitemap.xml")).map((loc) => new URL(loc, base).pathname.replace(/\/$/, "") || "/");
-  const ordered = [...order.filter((path) => pages.has(path)), ...[...pages.keys()].filter((path) => !order.includes(path))];
+  const order = sitemapLocs(await read("sitemap.xml")).map(
+    (loc) => new URL(loc, base).pathname.replace(/\/$/, "") || "/",
+  );
+  const ordered = [
+    ...order.filter((path) => pages.has(path)),
+    ...[...pages.keys()].filter((path) => !order.includes(path)),
+  ];
   const header = llmsHeaderOf(await read("llms.txt"), base);
-  const list = ordered.map((path) => /** @type {import("./llms.mjs").LlmsPage} */ (pages.get(path)));
+  const list = ordered.map(
+    (path) => /** @type {import("./llms.mjs").LlmsPage} */ (pages.get(path)),
+  );
   await writeFile(join(dir, "llms-full.txt"), llmsFullDocument({ ...header, pages: list }));
   return ordered;
 }

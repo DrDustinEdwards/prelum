@@ -84,8 +84,14 @@ test("xml: feeds and a datetime sitemap read a stored date as UTC whatever zone 
     tags: /** @type {string[]} */ ([]),
   };
   inZone("America/Chicago", () => {
-    assert.match(rssItem(post, "https://x.test"), /<pubDate>Sun, 21 Jun 2026 09:30:00 GMT<\/pubDate>/);
-    assert.match(atomEntry(post, "https://x.test"), /<published>2026-06-21T09:30:00.000Z<\/published>/);
+    assert.match(
+      rssItem(post, "https://x.test"),
+      /<pubDate>Sun, 21 Jun 2026 09:30:00 GMT<\/pubDate>/,
+    );
+    assert.match(
+      atomEntry(post, "https://x.test"),
+      /<published>2026-06-21T09:30:00.000Z<\/published>/,
+    );
     const sitemap = sitemapDocument([{ loc: "https://x.test/a", lastmod: "2026-06-21 09:30:00" }], {
       lastmodFormat: "datetime",
     });

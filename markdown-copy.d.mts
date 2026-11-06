@@ -1,15 +1,15 @@
 /** What `htmlToMarkdown` reads from a page. */
 export type MarkdownCopy = {
-    /** the page's name: `og:title`, else `<title>`, else its first heading */
-    title: string;
-    /** the meta description, or "" */
-    description: string;
-    /** the canonical link, absolute */
-    canonical: string | undefined;
-    /** the page asks search engines to leave it out */
-    noindex: boolean;
-    /** the body of the page's `<main>` (or `<body>`) as Markdown, its headings from `##` */
-    markdown: string;
+  /** the page's name: `og:title`, else `<title>`, else its first heading */
+  title: string;
+  /** the meta description, or "" */
+  description: string;
+  /** the canonical link, absolute */
+  canonical: string | undefined;
+  /** the page asks search engines to leave it out */
+  noindex: boolean;
+  /** the body of the page's `<main>` (or `<body>`) as Markdown, its headings from `##` */
+  markdown: string;
 };
 /**
  * A page's HTML as Markdown: the facts from its head and the text of its `<main>`, or its `<body>` when it has none. The
@@ -17,9 +17,12 @@ export type MarkdownCopy = {
  * a chart's written description and data table stay, since they are its text. Links are made absolute against the
  * canonical URL, or `base`.
  */
-export function htmlToMarkdown(html: string, options?: {
+export function htmlToMarkdown(
+  html: string,
+  options?: {
     base?: string;
-}): MarkdownCopy;
+  },
+): MarkdownCopy;
 /**
  * A Worker's fetch handler; `env` and `ctx` (its ExecutionContext) are passed through untouched, so a handler that reads
  * `ctx.exports` or `ctx.passThroughOnException` keeps its own types.
@@ -29,15 +32,15 @@ export function htmlToMarkdown(html: string, options?: {
 // oxlint-disable-next-line typescript/no-explicit-any -- see above
 export type FetchHandler = (request: Request, env?: any, ctx?: any) => Promise<Response> | Response;
 export type MarkdownCopiesOptions = {
-    /** the site's production origin, for the canonical links and the llms-full.txt addresses */
-    origin: string;
-    /**
-     * build /llms-full.txt from the sitemap when the site serves none, with at most this many pages (200 by default); false
-     * leaves /llms-full.txt to the site
-     */
-    llmsFull?: number | false;
-    /** pages that get no Markdown copy, by path */
-    skip?: (path: string) => boolean;
+  /** the site's production origin, for the canonical links and the llms-full.txt addresses */
+  origin: string;
+  /**
+   * build /llms-full.txt from the sitemap when the site serves none, with at most this many pages (200 by default); false
+   * leaves /llms-full.txt to the site
+   */
+  llmsFull?: number | false;
+  /** pages that get no Markdown copy, by path */
+  skip?: (path: string) => boolean;
 };
 /**
  * Wraps a Worker's fetch handler so every page has a Markdown copy:
@@ -57,10 +60,13 @@ export type MarkdownCopiesOptions = {
  */
 export function markdownCopies<F extends FetchHandler>(fetch: F, options: MarkdownCopiesOptions): F;
 /** The title, summary and intro of an llms.txt (its `#` line, `>` lines and the paragraphs before the first `##`). */
-export function llmsHeaderOf(text: string, origin: string): {
-    title: string;
-    summary: string;
-    intro: string[];
+export function llmsHeaderOf(
+  text: string,
+  origin: string,
+): {
+  title: string;
+  summary: string;
+  intro: string[];
 };
 /** The `<loc>` addresses of a sitemap or sitemap index, in order. */
 export function sitemapLocs(xml: string): string[];

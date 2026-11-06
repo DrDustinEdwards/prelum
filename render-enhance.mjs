@@ -21,7 +21,6 @@ const GROW_NAME = "lightbox-figure";
 
 const SELECTION_LABEL = "Copy link to selection";
 
-
 let started = false;
 
 /**
@@ -76,8 +75,19 @@ export function enhanceEmbeds({ root = ".prose" } = {}) {
   if (embedsStarted) return;
   embedsStarted = true;
   document.addEventListener("click", (event) => {
-    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    const link = event.target instanceof Element ? event.target.closest(`${root} a.embed-link[data-embed-src]`) : null;
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
+    const link =
+      event.target instanceof Element
+        ? event.target.closest(`${root} a.embed-link[data-embed-src]`)
+        : null;
     if (!(link instanceof HTMLAnchorElement)) return;
     const src = embedPlayerUrl(link.dataset.embedSrc ?? "");
     if (!src) return;
@@ -106,7 +116,11 @@ export function enhanceEmbeds({ root = ".prose" } = {}) {
 export function enhance(options = {}) {
   if (started) return;
   started = true;
-  const { root = ".prose", toc: tocSelector = ".post-toc", article: articleSelector = ".post .prose" } = options;
+  const {
+    root = ".prose",
+    toc: tocSelector = ".post-toc",
+    article: articleSelector = ".post .prose",
+  } = options;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   /** @param {() => void} fn */
@@ -154,8 +168,12 @@ export function enhance(options = {}) {
     const toc = document.querySelector(tocSelector);
     if (!toc) return;
 
-    const links = Array.from(toc.querySelectorAll("a[href^='#']")).filter((link) => link instanceof HTMLAnchorElement);
-    const targets = links.map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1)))).filter((el) => el !== null);
+    const links = Array.from(toc.querySelectorAll("a[href^='#']")).filter(
+      (link) => link instanceof HTMLAnchorElement,
+    );
+    const targets = links
+      .map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1))))
+      .filter((el) => el !== null);
     if (targets.length === 0) return;
 
     /** @type {Map<string, boolean>} */
@@ -166,7 +184,8 @@ export function enhance(options = {}) {
         const active = targets.find((t) => seen.get(t.id));
         for (const link of links) {
           // The state itself, not a styling hook, so a screen reader hears which section is current.
-          if (active !== undefined && link.hash === `#${active.id}`) link.setAttribute("aria-current", "location");
+          if (active !== undefined && link.hash === `#${active.id}`)
+            link.setAttribute("aria-current", "location");
           else link.removeAttribute("aria-current");
         }
       },
@@ -269,7 +288,10 @@ export function enhance(options = {}) {
           heading.focus();
           // Removed on blur rather than immediately: taking it away while the element still holds focus drops focus to the body in
           // some engines.
-          if (!had) heading.addEventListener("blur", () => heading.removeAttribute("tabindex"), { once: true });
+          if (!had)
+            heading.addEventListener("blur", () => heading.removeAttribute("tabindex"), {
+              once: true,
+            });
         };
 
         void copyText(url.href)
@@ -459,7 +481,13 @@ export function enhance(options = {}) {
         if (!href) return;
         event.preventDefault();
         const image = link.querySelector("img");
-        openOverlay(href, image?.alt ?? "", () => link.focus({ preventScroll: true }), undefined, image ?? undefined);
+        openOverlay(
+          href,
+          image?.alt ?? "",
+          () => link.focus({ preventScroll: true }),
+          undefined,
+          image ?? undefined,
+        );
       });
     }
 
@@ -471,7 +499,14 @@ export function enhance(options = {}) {
       image.tabIndex = 0;
       image.setAttribute("role", "button");
       image.setAttribute("aria-label", `Enlarge diagram: ${image.alt}`);
-      const open = () => openOverlay(image.src, image.alt, () => image.focus({ preventScroll: true }), "Diagram, full size", image);
+      const open = () =>
+        openOverlay(
+          image.src,
+          image.alt,
+          () => image.focus({ preventScroll: true }),
+          "Diagram, full size",
+          image,
+        );
       image.addEventListener("click", open);
       image.addEventListener("keydown", (event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
@@ -516,8 +551,15 @@ export function enhance(options = {}) {
   function selectionLink() {
     const article = document.querySelector(articleSelector);
     // The post's own permalink, else its canonical link, which every page headTags writes carries.
-    const permalink = document.querySelector(".post-share .u-url") ?? document.querySelector('link[rel="canonical"]');
-    if (!(article instanceof HTMLElement) || !(permalink instanceof HTMLAnchorElement || permalink instanceof HTMLLinkElement) || !navigator.clipboard) return;
+    const permalink =
+      document.querySelector(".post-share .u-url") ??
+      document.querySelector('link[rel="canonical"]');
+    if (
+      !(article instanceof HTMLElement) ||
+      !(permalink instanceof HTMLAnchorElement || permalink instanceof HTMLLinkElement) ||
+      !navigator.clipboard
+    )
+      return;
 
     const button = document.createElement("button");
     button.type = "button";
@@ -530,14 +572,19 @@ export function enhance(options = {}) {
     /** @param {Node} node */
     const blockOf = (node) => {
       let element = node instanceof Element ? node : node.parentElement;
-      while (element && element !== article && element.parentElement !== article) element = element.parentElement;
+      while (element && element !== article && element.parentElement !== article)
+        element = element.parentElement;
       return element === article ? null : element;
     };
 
     const update = () => {
       const selection = getSelection();
       const fragment = selection?.isCollapsed ? null : textFragment(selection?.toString() ?? "");
-      if (!selection || !fragment || !article.contains(selection.getRangeAt(0).commonAncestorContainer)) {
+      if (
+        !selection ||
+        !fragment ||
+        !article.contains(selection.getRangeAt(0).commonAncestorContainer)
+      ) {
         button.remove();
         return;
       }

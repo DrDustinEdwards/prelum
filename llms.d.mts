@@ -27,10 +27,10 @@
  * @returns {string}
  */
 export function llmsDocument(doc: {
-    title: string;
-    summary: string;
-    intro?: string[];
-    sections: LlmsSection[];
+  title: string;
+  summary: string;
+  intro?: string[];
+  sections: LlmsSection[];
 }): string;
 /** @param {LlmsLink} link */
 export function llmsLink(link: LlmsLink): string;
@@ -51,10 +51,10 @@ export function markdownPage(page: LlmsPage): string;
  * @returns {string}
  */
 export function llmsFullDocument(doc: {
-    title: string;
-    summary: string;
-    intro?: string[];
-    pages: LlmsPage[];
+  title: string;
+  summary: string;
+  intro?: string[];
+  pages: LlmsPage[];
 }): string;
 /**
  * Where a page's Markdown copy lives: `/writing/post` is `/writing/post.md`, and the home page is `/index.md`.
@@ -91,7 +91,9 @@ export function markdownResponse(markdown: string, options?: MarkdownResponseOpt
  * @param {LlmsContent & import("./robots.mjs").PlainTextOptions} input
  * @returns {Response}
  */
-export function llmsResponse(input: LlmsContent & import("./robots.mjs").PlainTextOptions): Response;
+export function llmsResponse(
+  input: LlmsContent & import("./robots.mjs").PlainTextOptions,
+): Response;
 /**
  * Wraps a static site's Worker so it serves the Markdown copies `writeMarkdownCopies` (`./markdown-files`) wrote at build
  * time, with no HTML parser in the Worker: `/path.md` gets `Content-Type: text/markdown; charset=utf-8` and a
@@ -100,67 +102,74 @@ export function llmsResponse(input: LlmsContent & import("./robots.mjs").PlainTe
  * `Link: rel="alternate"; type="text/markdown"` naming its copy. A rendered site uses `markdownCopies` instead.
  */
 // `any[]`, not `unknown[]` or `never[]`: the handler's own `env` and `ctx` types pass through (see markdown-copy.d.mts FetchHandler).
-// oxlint-disable-next-line typescript/no-explicit-any -- see above
-export function serveMarkdownCopies<F extends (request: Request, ...rest: any[]) => Promise<Response> | Response>(fetch: F, options: {
+export function serveMarkdownCopies<
+  // oxlint-disable-next-line typescript/no-explicit-any -- see above
+  F extends (request: Request, ...rest: any[]) => Promise<Response> | Response,
+>(
+  fetch: F,
+  options: {
     origin: string;
     skip?: (path: string) => boolean;
-}): F;
+  },
+): F;
 export type MarkdownResponseOptions = {
-    /**
-     * the HTML page's absolute URL, sent as `Link: <url>; rel="canonical"`
-     */
-    canonical?: string | undefined;
-    /**
-     * more `Link` values, written after the canonical one (a license, say)
-     */
-    links?: string[] | undefined;
-    /**
-     * `Vary: Accept`, true by default; false for a copy served only at its own `.md` URL, so a cache
-     * keeps it as one entry
-     */
-    vary?: boolean | undefined;
-    /**
-     * added, e.g. the site's cache policy
-     */
-    headers?: Record<string, string> | undefined;
+  /**
+   * the HTML page's absolute URL, sent as `Link: <url>; rel="canonical"`
+   */
+  canonical?: string | undefined;
+  /**
+   * more `Link` values, written after the canonical one (a license, say)
+   */
+  links?: string[] | undefined;
+  /**
+   * `Vary: Accept`, true by default; false for a copy served only at its own `.md` URL, so a cache
+   * keeps it as one entry
+   */
+  vary?: boolean | undefined;
+  /**
+   * added, e.g. the site's cache policy
+   */
+  headers?: Record<string, string> | undefined;
 };
 /**
  * the document's parts for `llmsDocument`, or a file the site already has (one written by hand, say) as `body`
  */
-export type LlmsContent = {
-    title: string;
-    summary: string;
-    intro?: string[];
-    sections: LlmsSection[];
-} | {
-    body: string;
-};
+export type LlmsContent =
+  | {
+      title: string;
+      summary: string;
+      intro?: string[];
+      sections: LlmsSection[];
+    }
+  | {
+      body: string;
+    };
 export type LlmsLink = {
-    title: string;
-    url: string;
-    description?: string;
+  title: string;
+  url: string;
+  description?: string;
 };
 export type LlmsLinkSection = {
-    heading: string;
-    links: LlmsLink[];
+  heading: string;
+  links: LlmsLink[];
 };
 export type LlmsProseSection = {
-    heading: string;
-    /**
-     * paragraphs, kept as written and separated by a blank line
-     */
-    body: string[];
+  heading: string;
+  /**
+   * paragraphs, kept as written and separated by a blank line
+   */
+  body: string[];
 };
 export type LlmsSection = LlmsLinkSection | LlmsProseSection;
 export type LlmsPage = {
-    title: string;
-    /**
-     * the page's absolute URL
-     */
-    url: string;
-    description?: string;
-    /**
-     * the page's body as Markdown, frontmatter already stripped; its headings start at `##`
-     */
-    markdown: string;
+  title: string;
+  /**
+   * the page's absolute URL
+   */
+  url: string;
+  description?: string;
+  /**
+   * the page's body as Markdown, frontmatter already stripped; its headings start at `##`
+   */
+  markdown: string;
 };

@@ -29,34 +29,34 @@
  */
 export function sitemapDocument(entries: SitemapEntry[], options?: SitemapOptions): string;
 export type SitemapEntry = {
-    /**
-     * absolute URL
-     */
-    loc: string;
-    lastmod?: Date | number | string | null;
-    /**
-     * expanded layout only (Google ignores it)
-     */
-    changefreq?: string;
-    /**
-     * 0 to 1, expanded layout only (Google ignores it)
-     */
-    priority?: number;
-    /**
-     * absolute URLs of the images the page shows, listed in Google's image sitemap extension. A rendered page's are the
-     * `mediaRefs` entries `render` returns with form `markdown-image` or `figure-directive`, each key made the image's
-     * absolute URL again. Another host is allowed (a media host verified in Search Console); 1,000 at most
-     */
-    images?: string[];
+  /**
+   * absolute URL
+   */
+  loc: string;
+  lastmod?: Date | number | string | null;
+  /**
+   * expanded layout only (Google ignores it)
+   */
+  changefreq?: string;
+  /**
+   * 0 to 1, expanded layout only (Google ignores it)
+   */
+  priority?: number;
+  /**
+   * absolute URLs of the images the page shows, listed in Google's image sitemap extension. A rendered page's are the
+   * `mediaRefs` entries `render` returns with form `markdown-image` or `figure-directive`, each key made the image's
+   * absolute URL again. Another host is allowed (a media host verified in Search Console); 1,000 at most
+   */
+  images?: string[];
 };
 export type SitemapOptions = {
-    /**
-     * compact is one line per url; expanded is one element per line
-     */
-    layout?: "compact" | "expanded";
-    /**
-     * `2026-07-01` or `2026-07-01T12:00:00.000Z`
-     */
-    lastmodFormat?: "day" | "datetime";
-    trailingNewline?: boolean;
+  /**
+   * compact is one line per url; expanded is one element per line
+   */
+  layout?: "compact" | "expanded";
+  /**
+   * `2026-07-01` or `2026-07-01T12:00:00.000Z`
+   */
+  lastmodFormat?: "day" | "datetime";
+  trailingNewline?: boolean;
 };

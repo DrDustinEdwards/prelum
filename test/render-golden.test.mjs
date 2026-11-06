@@ -17,12 +17,20 @@ test("the corpus renders to the recorded bytes, and a change to them is a new re
   /** @type {Record<string, string>} */
   const hashes = {};
   for (const name of FIXTURES) {
-    const { html } = await render({ file: name, body: fixture(name), resolveImage, options: siteOptions });
+    const { html } = await render({
+      file: name,
+      body: fixture(name),
+      resolveImage,
+      options: siteOptions,
+    });
     hashes[name] = createHash("sha256").update(html).digest("hex");
   }
 
   if (process.env.UPDATE_GOLDEN === "1") {
-    writeFileSync(GOLDEN, `${JSON.stringify({ renderVersion: RENDER_VERSION, hashes }, null, 2)}\n`);
+    writeFileSync(
+      GOLDEN,
+      `${JSON.stringify({ renderVersion: RENDER_VERSION, hashes }, null, 2)}\n`,
+    );
     return;
   }
 
@@ -35,9 +43,19 @@ test("the corpus renders to the recorded bytes, and a change to them is a new re
     );
   }
   // The hand-written twin's literal type is what sites check their stored version against; it was left at "10" through two bumps.
-  const declared = readFileSync(new URL("../render-version.d.mts", import.meta.url), "utf8").match(/RENDER_VERSION: "([^"]+)"/)?.[1];
-  assert.equal(declared, RENDER_VERSION, "render-version.d.mts declares another RENDER_VERSION than render-version.mjs exports");
-  assert.equal(golden.renderVersion, RENDER_VERSION, "golden.json belongs to another renderVersion: run UPDATE_GOLDEN=1 npm test");
+  const declared = readFileSync(new URL("../render-version.d.mts", import.meta.url), "utf8").match(
+    /RENDER_VERSION: "([^"]+)"/,
+  )?.[1];
+  assert.equal(
+    declared,
+    RENDER_VERSION,
+    "render-version.d.mts declares another RENDER_VERSION than render-version.mjs exports",
+  );
+  assert.equal(
+    golden.renderVersion,
+    RENDER_VERSION,
+    "golden.json belongs to another renderVersion: run UPDATE_GOLDEN=1 npm test",
+  );
   assert.deepEqual(hashes, golden.hashes);
 });
 

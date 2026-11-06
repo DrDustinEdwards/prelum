@@ -6,7 +6,13 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { UPLOAD_HEADERS } from "@dustinedwards/site-runtime/headers";
 
-import { DEFAULT_MAX_BYTES, DEFAULT_MAX_DEPTH, RENDER_VERSION, ContentError, render } from "../render.mjs";
+import {
+  DEFAULT_MAX_BYTES,
+  DEFAULT_MAX_DEPTH,
+  RENDER_VERSION,
+  ContentError,
+  render,
+} from "../render.mjs";
 import { htmlHasMath } from "../render-math.mjs";
 import { render as renderNoMath } from "../render-nomath.mjs";
 import { linkIconResponse, lookupLinkIcon } from "../render-link-icons.mjs";
@@ -55,7 +61,11 @@ test("render returns the contract: a fragment, the outline, and what the page ci
 });
 
 test("an image the site has no size for is written unsized, not refused", async () => {
-  const { html } = await renderNoMath({ file: "post.md", body: "![A fox](https://example.com/fox.png)", resolveImage: async () => null });
+  const { html } = await renderNoMath({
+    file: "post.md",
+    body: "![A fox](https://example.com/fox.png)",
+    resolveImage: async () => null,
+  });
   assert.match(html, /<img src="https:\/\/example\.com\/fox\.png" alt="A fox" loading="eager"/);
   assert.doesNotMatch(html, /width=/);
 });
@@ -71,7 +81,10 @@ test("render is deterministic: the same input is the same bytes, run after run",
 test("render needs no site: the core renders without media, packs or highlighting", async () => {
   const { html, mediaRefs } = await core(fixture("prose"));
   assert.match(html, /<h2 id="second-heading">/);
-  assert.match(html, /<div class="table-scroll" tabindex="0" role="region" aria-label="Table: [^"]+"><table>/);
+  assert.match(
+    html,
+    /<div class="table-scroll" tabindex="0" role="region" aria-label="Table: [^"]+"><table>/,
+  );
   assert.match(html, /<img src="\/media\/example-sample-0123456789abcdef-640x480.png"/);
   assert.doesNotMatch(html, /srcset=/);
   assert.deepEqual(mediaRefs, []);
@@ -79,26 +92,45 @@ test("render needs no site: the core renders without media, packs or highlightin
 
 test("headings get an id, a keyboard-reachable anchor named for the heading, and an outline entry; footnotes do not", async () => {
   const { html, toc } = await core("## Methods & `code`\n\ntext[^1]\n\n[^1]: note");
-  assert.match(html, /<h2 id="methods--code">Methods &#x26; <code>code<\/code><a class="heading-anchor" aria-label="Link to section: Methods &#x26; code" href="#methods--code">#<\/a><\/h2>/);
+  assert.match(
+    html,
+    /<h2 id="methods--code">Methods &#x26; <code>code<\/code><a class="heading-anchor" aria-label="Link to section: Methods &#x26; code" href="#methods--code">#<\/a><\/h2>/,
+  );
   assert.deepEqual(toc, [{ depth: 2, id: "methods--code", text: "Methods & code" }]);
   // The outline is read before the anchor's "#" is added, so a heading's own "#" stays.
   assert.equal((await core("## Learning C#")).toc[0]?.text, "Learning C#");
 });
 
 test("a task-list checkbox is named by its item's first line, wrapped in a label, so a screen reader says what is done", async () => {
-  const tight = (await core("- [x] Draft **written**\n- [ ] Figures checked\n  - [ ] nested\n")).html;
-  assert.match(tight, /<label><input type="checkbox" checked disabled> Draft <strong>written<\/strong><\/label>/);
+  const tight = (await core("- [x] Draft **written**\n- [ ] Figures checked\n  - [ ] nested\n"))
+    .html;
+  assert.match(
+    tight,
+    /<label><input type="checkbox" checked disabled> Draft <strong>written<\/strong><\/label>/,
+  );
   // The nested list is outside the parent's label and has its own.
   assert.match(tight, /<label><input type="checkbox" disabled> Figures checked<\/label>\n<ul/);
   assert.match(tight, /<label><input type="checkbox" disabled> nested<\/label>/);
 
   // A loose item: the label is the first paragraph's, and the paragraphs after it are not part of the name.
-  const loose = (await core("- [ ] Task with $x^2$\n\n  More text.\n\n- [ ] ![a chart](/media/c.png)\n")).html;
-  assert.match(loose, /<p><label><input type="checkbox" disabled> Task with <span class="katex">[\s\S]*?<\/span><\/label><\/p>\n<p>More text.<\/p>/);
-  assert.match(loose, /<label><input type="checkbox" disabled> (?:<a [^>]*>)?<img[^>]*alt="a chart"[^>]*>(?:<\/a>)?<\/label>/);
+  const loose = (
+    await core("- [ ] Task with $x^2$\n\n  More text.\n\n- [ ] ![a chart](/media/c.png)\n")
+  ).html;
+  assert.match(
+    loose,
+    /<p><label><input type="checkbox" disabled> Task with <span class="katex">[\s\S]*?<\/span><\/label><\/p>\n<p>More text.<\/p>/,
+  );
+  assert.match(
+    loose,
+    /<label><input type="checkbox" disabled> (?:<a [^>]*>)?<img[^>]*alt="a chart"[^>]*>(?:<\/a>)?<\/label>/,
+  );
 
   for (const html of [tight, loose]) {
-    assert.equal((html.match(/<input/g) ?? []).length, (html.match(/<label><input/g) ?? []).length, html);
+    assert.equal(
+      (html.match(/<input/g) ?? []).length,
+      (html.match(/<label><input/g) ?? []).length,
+      html,
+    );
   }
 });
 
@@ -112,12 +144,22 @@ test("math is validated, flagged, and rendered as MathML plus HTML", async () =>
 });
 
 test("math KaTeX cannot render stops the render and names the line and the expression", async () => {
-  await refuses(core("one\n\ntwo $\\notacommand{x}$ three"), /KaTeX cannot render the inline expression on line 3 of the body: .*The expression is: \\notacommand\{x\}/s);
-  await refuses(core("$$\n\\frac{1}\n$$"), /KaTeX cannot render the display expression on line 1 of the body/);
+  await refuses(
+    core("one\n\ntwo $\\notacommand{x}$ three"),
+    /KaTeX cannot render the inline expression on line 3 of the body: .*The expression is: \\notacommand\{x\}/s,
+  );
+  await refuses(
+    core("$$\n\\frac{1}\n$$"),
+    /KaTeX cannot render the display expression on line 1 of the body/,
+  );
 });
 
 test("render/nomath leaves dollars as text", async () => {
-  const { html, hasMath } = await renderNoMath({ file: "post.md", body: "Awards of $3,000 to $6,500.", resolveImage });
+  const { html, hasMath } = await renderNoMath({
+    file: "post.md",
+    body: "Awards of $3,000 to $6,500.",
+    resolveImage,
+  });
   assert.equal(html, "<p>Awards of $3,000 to $6,500.</p>");
   assert.equal(hasMath, false);
 });
@@ -142,28 +184,48 @@ test("prose that looks like a directive stays prose; an unknown directive is ref
   const { html } = await core("Meet at 12:30, ratio 4.5:1, see localhost:8080.");
   assert.equal(html, "<p>Meet at 12:30, ratio 4.5:1, see localhost:8080.</p>");
 
-  await refuses(core("one\n\n:::figrue{src=\"/a.png\" alt=\"x\"}\n:::"), /unknown directive ":::figrue" on line 3\. Known directives: details, figure, lang, xref, abbr, /);
+  await refuses(
+    core('one\n\n:::figrue{src="/a.png" alt="x"}\n:::'),
+    /unknown directive ":::figrue" on line 3\. Known directives: details, figure, lang, xref, abbr, /,
+  );
   await refuses(core("see :alert here"), /unknown directive ":alert" on line 1/);
-  await refuses(core(":::chart{type=\"bar\"}\n:::"), /unknown directive ":::chart"/);
+  await refuses(core(':::chart{type="bar"}\n:::'), /unknown directive ":::chart"/);
 });
 
 test("figure requires a source and alt text, and carries a caption and a credit", async () => {
-  await refuses(core(":::figure{alt=\"x\"}\n:::"), /:::figure requires a src attribute/);
-  await refuses(core(":::figure{src=\"/a.png\"}\n:::"), /:::figure \/a\.png requires an alt attribute/);
+  await refuses(core(':::figure{alt="x"}\n:::'), /:::figure requires a src attribute/);
+  await refuses(
+    core(':::figure{src="/a.png"}\n:::'),
+    /:::figure \/a\.png requires an alt attribute/,
+  );
 
-  const { html } = await core(':::figure{src="/a.png" alt="A thing" credit="Someone"}\nThe *caption*.\n:::');
-  assert.match(html, /<figure><a class="image-link" href="\/a\.png"><img src="\/a\.png" alt="A thing" width="800" height="600" loading="eager"/);
-  assert.match(html, /<figcaption><p>The <em>caption<\/em>\.<\/p><span class="figure-credit">Someone<\/span><\/figcaption>/);
+  const { html } = await core(
+    ':::figure{src="/a.png" alt="A thing" credit="Someone"}\nThe *caption*.\n:::',
+  );
+  assert.match(
+    html,
+    /<figure><a class="image-link" href="\/a\.png"><img src="\/a\.png" alt="A thing" width="800" height="600" loading="eager"/,
+  );
+  assert.match(
+    html,
+    /<figcaption><p>The <em>caption<\/em>\.<\/p><span class="figure-credit">Someone<\/span><\/figcaption>/,
+  );
 
   // A credit alone still gets a figcaption; no credit and no caption gets none.
   const credited = await core(':::figure{src="/a.png" alt="A thing" credit="Someone"}\n:::');
-  assert.match(credited.html, /<figcaption><span class="figure-credit">Someone<\/span><\/figcaption>/);
+  assert.match(
+    credited.html,
+    /<figcaption><span class="figure-credit">Someone<\/span><\/figcaption>/,
+  );
   const bare = await core(':::figure{src="/a.png" alt="A thing"}\n:::');
   assert.doesNotMatch(bare.html, /figcaption/);
 
   // A dark twin: both images, each themed, neither wrapped in a link (the hidden half would be a focusable link with no name).
   const themed = await core(':::figure{src="/a.svg" dark="/a-dark.svg" alt="A thing"}\n:::');
-  assert.match(themed.html, /^<figure><img src="\/a\.svg" alt="A thing" class="figure-light" width="800" height="600"[^>]*><img src="\/a-dark\.svg" alt="A thing" class="figure-dark" width="800" height="600"[^>]*><\/figure>$/);
+  assert.match(
+    themed.html,
+    /^<figure><img src="\/a\.svg" alt="A thing" class="figure-light" width="800" height="600"[^>]*><img src="\/a-dark\.svg" alt="A thing" class="figure-dark" width="800" height="600"[^>]*><\/figure>$/,
+  );
 });
 
 test("images: a srcset or placeholder outside the policy is dropped, since both are written after the URL check", async () => {
@@ -183,22 +245,35 @@ test("images: a srcset or placeholder outside the policy is dropped, since both 
 
 test("details requires a summary and refuses a heading inside, which would hide a section", async () => {
   await refuses(core(":::details\nx\n:::"), /:::details requires a summary attribute/);
-  await refuses(core(':::details{summary="More"}\n## Hidden\n:::'), /:::details holds a heading on line 2/);
+  await refuses(
+    core(':::details{summary="More"}\n## Hidden\n:::'),
+    /:::details holds a heading on line 2/,
+  );
   const { html, toc } = await core(':::details{summary="More"}\nbody\n:::');
   assert.equal(html, '<details class="post-details"><summary>More</summary><p>body</p></details>');
   assert.deepEqual(toc, []);
 });
 
 test("images: the site's media rules decide srcset, the link, the citation and the media query; the library's credit shows; an animation pauses; a page has one high", async () => {
-  const body = "![one](/media/example-a-0123456789abcdef-640x480.png)\n\n![two](/static/b.png)\n\n![three](/media/example-c-fedcba9876543210-100x100.png)\n\n![\"\"](/static/rule.svg)";
+  const body =
+    '![one](/media/example-a-0123456789abcdef-640x480.png)\n\n![two](/static/b.png)\n\n![three](/media/example-c-fedcba9876543210-100x100.png)\n\n![""](/static/rule.svg)';
   const { html, mediaRefs } = await core(body, { media });
 
   // AVIF first, so a browser that reads it takes it; the <img> keeps the WebP srcset for the rest.
-  assert.match(html, /<a class="image-link" href="\/media\/example-a-0123456789abcdef-640x480\.png"><picture><source type="image\/avif" srcset="[^"]+\?w=640&#x26;f=avif 640w, [^"]+" sizes="[^"]+"><source type="image\/webp" srcset="[^"]+\?w=640 640w, [^"]+" sizes="[^"]+"><img src="[^"]+" alt="one" srcset="\/media\/[^"]+\?w=640 640w, [^"]+ 1024w, [^"]+ 1408w" sizes="\(min-width: 46rem\) 704px, calc\(100vw - 2rem\)" width="640" height="480" loading="eager" decoding="async" fetchpriority="high" class="has-lqip" style="background-image:url\(&#x22;data:image\/webp;base64,/);
+  assert.match(
+    html,
+    /<a class="image-link" href="\/media\/example-a-0123456789abcdef-640x480\.png"><picture><source type="image\/avif" srcset="[^"]+\?w=640&#x26;f=avif 640w, [^"]+" sizes="[^"]+"><source type="image\/webp" srcset="[^"]+\?w=640 640w, [^"]+" sizes="[^"]+"><img src="[^"]+" alt="one" srcset="\/media\/[^"]+\?w=640 640w, [^"]+ 1024w, [^"]+ 1408w" sizes="\(min-width: 46rem\) 704px, calc\(100vw - 2rem\)" width="640" height="480" loading="eager" decoding="async" fetchpriority="high" class="has-lqip" style="background-image:url\(&#x22;data:image\/webp;base64,/,
+  );
   // Not a media image: no srcset, no placeholder, and the link goes to the image itself.
-  assert.match(html, /<a class="image-link" href="\/static\/b\.png"><img src="\/static\/b\.png" alt="two" width="800" height="600" loading="lazy" decoding="async"><\/a>/);
+  assert.match(
+    html,
+    /<a class="image-link" href="\/static\/b\.png"><img src="\/static\/b\.png" alt="two" width="800" height="600" loading="lazy" decoding="async"><\/a>/,
+  );
   // A decorative image (alt "") is not wrapped: a link around it would have no name.
-  assert.match(html, /<p><img src="\/static\/rule\.svg" alt="" width="800" height="600" loading="lazy" decoding="async"><\/p>/);
+  assert.match(
+    html,
+    /<p><img src="\/static\/rule\.svg" alt="" width="800" height="600" loading="lazy" decoding="async"><\/p>/,
+  );
   assert.equal((html.match(/fetchpriority/g) ?? []).length, 1);
   assert.deepEqual(
     mediaRefs.map(({ key, form, detail }) => ({ key, form, detail })),
@@ -210,8 +285,14 @@ test("images: the site's media rules decide srcset, the link, the citation and t
 
   const { html: shown, images } = await site(fixture("directives"));
   // B5, C7: the credit and the license in words under the picture, whose paragraph becomes its figure; an author's credit wins.
-  assert.match(shown, /<figure class="image-figure"><a class="image-link"[^>]*>.*<\/a><figcaption><span class="figure-credit">Sample Lab · CC BY 4\.0<\/span><\/figcaption><\/figure>/);
-  assert.match(shown, /<figcaption><p>A caption with <em>emphasis<\/em>\.<\/p><span class="figure-credit">Photo: Someone<\/span><\/figcaption>/);
+  assert.match(
+    shown,
+    /<figure class="image-figure"><a class="image-link"[^>]*>.*<\/a><figcaption><span class="figure-credit">Sample Lab · CC BY 4\.0<\/span><\/figcaption><\/figure>/,
+  );
+  assert.match(
+    shown,
+    /<figcaption><p>A caption with <em>emphasis<\/em>\.<\/p><span class="figure-credit">Photo: Someone<\/span><\/figcaption>/,
+  );
   assert.deepEqual(images.at(-1), {
     src: "/media/example-credited-0123456789abcdef-1200x800.jpg",
     alt: "A photograph from the library",
@@ -222,8 +303,14 @@ test("images: the site's media rules decide srcset, the link, the citation and t
   });
   // A9: the still keeps its media query, so the GIF moves unless the reader asks for less motion. B7: a pause for everyone, without
   // script, whose still stays hidden until the site's stylesheet shows it.
-  assert.match(shown, /<source type="image\/webp" srcset="[^"]+still=1 640w[^"]*" sizes="[^"]+" media="\(prefers-reduced-motion: reduce\)">/);
-  assert.match(shown, /<picture class="motion-still" style="display:none">.*?<img src="[^"]+\.gif\?w=640&#x26;still=1"[^>]* width="320" height="240" loading="lazy" decoding="async"><\/picture><label class="motion-pause"><input type="checkbox"> Pause animation<\/label><\/span>/);
+  assert.match(
+    shown,
+    /<source type="image\/webp" srcset="[^"]+still=1 640w[^"]*" sizes="[^"]+" media="\(prefers-reduced-motion: reduce\)">/,
+  );
+  assert.match(
+    shown,
+    /<picture class="motion-still" style="display:none">.*?<img src="[^"]+\.gif\?w=640&#x26;still=1"[^>]* width="320" height="240" loading="lazy" decoding="async"><\/picture><label class="motion-pause"><input type="checkbox"> Pause animation<\/label><\/span>/,
+  );
 
   // A5: one `priority` passed to every render of a page leaves one image high on the page; false leaves none.
   const priority = { taken: false };
@@ -245,10 +332,10 @@ test("every way a page can cite media is collected, figure directives included",
     "[link](/media/k1.png)",
     "![img](/media/k2.png)",
     '<img src="/media/k3.png">',
-    '[ref][r]',
-    '[r]: /media/k4.png',
-    '![pic][i]',
-    '[i]: /media/k7.png',
+    "[ref][r]",
+    "[r]: /media/k4.png",
+    "![pic][i]",
+    "[i]: /media/k7.png",
     ':::figure{src="/media/k5.png" dark="/media/k6.png" alt="x"}',
     ":::",
   ].join("\n\n");
@@ -267,10 +354,16 @@ test("every way a page can cite media is collected, figure directives included",
 
 test("code is plain without a highlighter, and highlighted, labeled and line-marked with one", async () => {
   const plain = await core("```js\nlet a\n```");
-  assert.equal(plain.html, '<pre tabindex="0" role="region" aria-label="Code: JavaScript"><code class="language-js">let a\n</code></pre>');
+  assert.equal(
+    plain.html,
+    '<pre tabindex="0" role="region" aria-label="Code: JavaScript"><code class="language-js">let a\n</code></pre>',
+  );
 
   const { html } = await core(fixture("code"), { highlight });
-  assert.match(html, /<pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast" style="[^"]*" data-lang="js" tabindex="0" role="region" aria-label="Code: JavaScript">/);
+  assert.match(
+    html,
+    /<pre class="shiki shiki-themes github-light-high-contrast github-dark-high-contrast" style="[^"]*" data-lang="js" tabindex="0" role="region" aria-label="Code: JavaScript">/,
+  );
   assert.match(html, /data-lang="bash"/);
   assert.match(html, /<span class="line highlighted">/);
   assert.match(html, /data-lang="text"/);
@@ -282,13 +375,19 @@ test("a source over the byte limit is refused before it is parsed, and the limit
   await refuses(core("é".repeat(10), { maxBytes: 19 }), /source is 20 bytes and the limit is 19/);
   await core("é".repeat(10), { maxBytes: 20 });
   const started = performance.now();
-  await refuses(core("x".repeat(DEFAULT_MAX_BYTES + 1)), /source is 524289 bytes and the limit is 524288/);
+  await refuses(
+    core("x".repeat(DEFAULT_MAX_BYTES + 1)),
+    /source is 524289 bytes and the limit is 524288/,
+  );
   assert.ok(performance.now() - started < 1000, "refused without rendering");
 });
 
 test("markdown nested past the depth limit is refused, with the line, instead of exhausting the stack", async () => {
   assert.equal(DEFAULT_MAX_DEPTH, 100);
-  await refuses(core("> ".repeat(150) + "deep"), /nested more than 100 levels deep at line 1 of the body/);
+  await refuses(
+    core("> ".repeat(150) + "deep"),
+    /nested more than 100 levels deep at line 1 of the body/,
+  );
   await core("> ".repeat(20) + "fine");
   await refuses(core("> > > deep", { maxDepth: 3 }), /nested more than 3 levels deep/);
 });
@@ -325,7 +424,11 @@ test("a pack may add to the result but cannot replace the fields that are the co
   const greedy = {
     name: "greedy",
     directives: [],
-    setup: () => ({ remark: [], rehype: [], result: () => ({ html: "stolen", toc: "stolen", renderVersion: "0", extra: 1 }) }),
+    setup: () => ({
+      remark: [],
+      rehype: [],
+      result: () => ({ html: "stolen", toc: "stolen", renderVersion: "0", extra: 1 }),
+    }),
   };
   const result = await core("# Real", { packs: [greedy] });
   // An h1 in the body moves down a level: the page's title is the h1.
@@ -340,35 +443,80 @@ test("the editorial pack: sidenotes, pull quotes, swatches, charts and diagrams,
 
   assert.match(html, /<aside class="post-note" id="sn-1"><b class="post-note-kind">Fallback<\/b>/);
   assert.match(html, /<p class="pull-quote" aria-hidden="true">sentence worth raising<\/p>/);
-  assert.match(html, /<span class="swatch"><span class="swatch-chip" style="--swatch:#6B4FBB" aria-hidden="true"><\/span><code class="swatch-label">#6B4FBB<\/code><\/span>/);
-  assert.match(html, /<span class="swatch-chip" style="--swatch:#FFF" aria-hidden="true"><\/span><code class="swatch-label">the brand<\/code>/);
-  assert.equal((html.match(/<div class="cap-chart" data-prelum-chart="[^"]*"><div class="cap-chart-figure"><figure class="chart-figure enarratio"/g) ?? []).length, 2);
+  assert.match(
+    html,
+    /<span class="swatch"><span class="swatch-chip" style="--swatch:#6B4FBB" aria-hidden="true"><\/span><code class="swatch-label">#6B4FBB<\/code><\/span>/,
+  );
+  assert.match(
+    html,
+    /<span class="swatch-chip" style="--swatch:#FFF" aria-hidden="true"><\/span><code class="swatch-label">the brand<\/code>/,
+  );
+  assert.equal(
+    (
+      html.match(
+        /<div class="cap-chart" data-prelum-chart="[^"]*"><div class="cap-chart-figure"><figure class="chart-figure enarratio"/g,
+      ) ?? []
+    ).length,
+    2,
+  );
   // Sized from the drawing (A4), lazy (A6) and announced as an image by VoiceOver (B6).
-  assert.match(html, /src="\/diagrams\/example-4efabcc1-light\.svg" alt="Box A points to box B" role="img" width="120" height="180" loading="lazy" decoding="async"/);
+  assert.match(
+    html,
+    /src="\/diagrams\/example-4efabcc1-light\.svg" alt="Box A points to box B" role="img" width="120" height="180" loading="lazy" decoding="async"/,
+  );
   assert.match(html, /src="\/diagrams\/example-4efabcc1-dark\.svg"/);
   assert.deepEqual(diagrams, [{ key: "4efabcc1", source: "graph TD\n  A --> B" }]);
 
   // A hex in the attribute with no label falls back to the hex as the label, the second channel for the color.
   assert.match((await site(":swatch{color=#fff}")).html, /<code class="swatch-label">#FFF<\/code>/);
   // A pull quote that cannot be raised is refused, not left as a block <div> in the middle of a sentence.
-  await refuses(site("- a :pullquote[hello there] b"), /:pullquote on line 1 of the body is not in a top-level paragraph/);
+  await refuses(
+    site("- a :pullquote[hello there] b"),
+    /:pullquote on line 1 of the body is not in a top-level paragraph/,
+  );
   await refuses(site("> a :pullquote[hello there] b"), /is not in a top-level paragraph/);
   await refuses(site(":swatch[red]"), /:swatch on line 1 of the body cannot use "red" as a color/);
   await refuses(site(":swatch[]"), /carries no color/);
-  await refuses(site("A :pullquote[one] and :pullquote[two] here."), /one paragraph carries 2 pull quotes/);
-  await refuses(site(`A :pullquote[${"x".repeat(161)}] here.`), /is 161 characters and the limit is 160/);
-  await refuses(site("A.\n\nB :pullquote[b].\n\nC :pullquote[c].\n\nD :pullquote[d]."), /pull quote number 3 and the limit is 2/);
+  await refuses(
+    site("A :pullquote[one] and :pullquote[two] here."),
+    /one paragraph carries 2 pull quotes/,
+  );
+  await refuses(
+    site(`A :pullquote[${"x".repeat(161)}] here.`),
+    /is 161 characters and the limit is 160/,
+  );
+  await refuses(
+    site("A.\n\nB :pullquote[b].\n\nC :pullquote[c].\n\nD :pullquote[d]."),
+    /pull quote number 3 and the limit is 2/,
+  );
   await refuses(site(":::sidenote\nx\n:::"), /:::sidenote requires a kind attribute/);
   await refuses(site(':::sidenote{kind="K"}\n# H\n:::'), /:::sidenote holds a heading on line 2/);
-  await refuses(site(':::chart{type="bar" x="a" y="b"}\n```csv\na,b\n1,2\n```\n:::'), /:::chart "bar" requires an alt attribute/);
-  await refuses(site(':::chart{type="pie" alt="x"}\n```csv\na,b\n1,2\n```\n:::'), /:::chart type "pie" is not one of bar, line, dot, area/);
-  await refuses(site(':::chart{type="bar" x="a" y="b" alt="x" src="/media/a.csv"}\n:::'), /passes no chartData loader/);
-  await refuses(site(':::diagram{alt="x"}\n```text\nA\n```\n:::'), /source must be a ```mermaid fenced block, found ```text/);
-  await refuses(site(':::diagram{title="T"}\n```mermaid\nA-->B\n```\n:::'), /:::diagram "T" requires an alt attribute/);
+  await refuses(
+    site(':::chart{type="bar" x="a" y="b"}\n```csv\na,b\n1,2\n```\n:::'),
+    /:::chart "bar" requires an alt attribute/,
+  );
+  await refuses(
+    site(':::chart{type="pie" alt="x"}\n```csv\na,b\n1,2\n```\n:::'),
+    /:::chart type "pie" is not one of bar, line, dot, area/,
+  );
+  await refuses(
+    site(':::chart{type="bar" x="a" y="b" alt="x" src="/media/a.csv"}\n:::'),
+    /passes no chartData loader/,
+  );
+  await refuses(
+    site(':::diagram{alt="x"}\n```text\nA\n```\n:::'),
+    /source must be a ```mermaid fenced block, found ```text/,
+  );
+  await refuses(
+    site(':::diagram{title="T"}\n```mermaid\nA-->B\n```\n:::'),
+    /:::diagram "T" requires an alt attribute/,
+  );
 });
 
 test("a chart's data may come from the site's loader (E3), and strict charts refuse what the default only warns about (E4)", async () => {
-  const pack = (/** @type {object} */ extra) => ({ packs: [editorialPack({ assetPrefix: "x-", ...extra })] });
+  const pack = (/** @type {object} */ extra) => ({
+    packs: [editorialPack({ assetPrefix: "x-", ...extra })],
+  });
   /** @type {string[]} */
   const asked = [];
   const chartData = async (/** @type {string} */ src) => {
@@ -376,14 +524,24 @@ test("a chart's data may come from the site's loader (E3), and strict charts ref
     if (src.endsWith("missing.csv")) throw new Error("404");
     return "year,posts\r\n2024,3\r\n2025,5\r\n";
   };
-  const cited = ':::chart{type="bar" x="year" y="posts" alt="Posts rose from 3 to 5" src="/media/posts.csv"}\n:::';
+  const cited =
+    ':::chart{type="bar" x="year" y="posts" alt="Posts rose from 3 to 5" src="/media/posts.csv"}\n:::';
   const { html, warnings } = await core(cited, pack({ chartData }));
   assert.deepEqual(asked, ["/media/posts.csv"]);
   assert.match(html, /<td>5<\/td>/);
-  await refuses(core(cited.replace("posts.csv", "missing.csv"), pack({ chartData })), /src="\/media\/missing.csv" did not load: 404/);
-  await refuses(core(cited.replace("\n:::", "\n```csv\na,b\n1,2\n```\n:::"), pack({ chartData })), /holds a CSV block; give the data one way/);
+  await refuses(
+    core(cited.replace("posts.csv", "missing.csv"), pack({ chartData })),
+    /src="\/media\/missing.csv" did not load: 404/,
+  );
+  await refuses(
+    core(cited.replace("\n:::", "\n```csv\na,b\n1,2\n```\n:::"), pack({ chartData })),
+    /holds a CSV block; give the data one way/,
+  );
   // No title: a warning by default, a refusal when strict.
-  assert.ok(warnings.some((w) => /title/i.test(w.message)), JSON.stringify(warnings));
+  assert.ok(
+    warnings.some((w) => /title/i.test(w.message)),
+    JSON.stringify(warnings),
+  );
   await refuses(core(cited, pack({ chartData, strictCharts: true })), /:::chart "bar": .*title/i);
 });
 
@@ -394,7 +552,10 @@ test("diagram assets are named by the site's prefix, and the key moves with the 
   const crlf = await core(':::diagram{alt="x"}\n```mermaid\r\ngraph TD\r\n  A --> B\r\n```\n:::', {
     packs: [(await import("../render-packs.mjs")).editorialPack({ assetPrefix: "other-" })],
   });
-  assert.match(lf.html, /src="\/diagrams\/other-4efabcc1-light\.svg" alt="x" role="img" loading="lazy"/);
+  assert.match(
+    lf.html,
+    /src="\/diagrams\/other-4efabcc1-light\.svg" alt="x" role="img" loading="lazy"/,
+  );
   assert.deepEqual(crlf.diagrams, lf.diagrams);
   // Not drawn yet: unsized, and the editor is told why.
   assert.match(lf.warnings[0]?.message ?? "", /"4efabcc1" is not drawn yet/);
@@ -404,20 +565,35 @@ test("the blocks every site gets: callouts, media, embeds, galleries, links, FAQ
   const result = await site(fixture("blocks"));
   const { html } = result;
 
-  assert.match(html, /<div class="callout callout-note" role="note">\n?<p class="callout-title">Note<\/p>/);
+  assert.match(
+    html,
+    /<div class="callout callout-note" role="note">\n?<p class="callout-title">Note<\/p>/,
+  );
   assert.match(html, /<p class="callout-title">Read this first<\/p>/);
-  assert.match(html, /<kbd>Ctrl<\/kbd>.*<abbr title="HyperText Markup Language">HTML<\/abbr>.*<mark>highlight<\/mark>, H<sub>2<\/sub>O/);
+  assert.match(
+    html,
+    /<kbd>Ctrl<\/kbd>.*<abbr title="HyperText Markup Language">HTML<\/abbr>.*<mark>highlight<\/mark>, H<sub>2<\/sub>O/,
+  );
   // A lone tilde is prose, and SmartyPants curls quotes and writes TeX's dashes.
   assert.match(html, /H~2~O stays prose, “quotes” curl – and dashes—too…/);
   // The poster's size is the player's (A4); audio loads nothing until played (E3).
-  assert.match(html, /<video [^>]*controls preload="metadata"[^>]*aria-label="A short demo" width="640" height="360"><track kind="captions"/);
+  assert.match(
+    html,
+    /<video [^>]*controls preload="metadata"[^>]*aria-label="A short demo" width="640" height="360"><track kind="captions"/,
+  );
   assert.match(html, /<audio [^>]*preload="none"/);
   assert.match(html, /<figure class="media media-video width-wide">/);
   assert.match(html, /<a href="\/writing\/talk-transcript">Transcript: A talk<\/a>/);
   // No request to the service until a click: a link with the no-cookie player beside it.
-  assert.match(html, /<a class="embed-link" href="https:\/\/www\.youtube\.com\/watch\?v=dQw4w9WgXcQ" data-embed-src="https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ\?autoplay=1"/);
+  assert.match(
+    html,
+    /<a class="embed-link" href="https:\/\/www\.youtube\.com\/watch\?v=dQw4w9WgXcQ" data-embed-src="https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ\?autoplay=1"/,
+  );
   // The lite embed: the site's own poster with a play button, the title as the link's name (E1).
-  assert.match(html, /<img class="embed-poster[^"]*" src="\/media\/example-keynote-[^"]+" alt=""[^>]* width="1280" height="720"[^>]*><\/picture><span class="embed-play" aria-hidden="true"><\/span><span class="embed-label">Watch on YouTube: A keynote<\/span><\/a>/);
+  assert.match(
+    html,
+    /<img class="embed-poster[^"]*" src="\/media\/example-keynote-[^"]+" alt=""[^>]* width="1280" height="720"[^>]*><\/picture><span class="embed-play" aria-hidden="true"><\/span><span class="embed-label">Watch on YouTube: A keynote<\/span><\/a>/,
+  );
   assert.deepEqual(
     result.videos.map((v) => [v.kind, v.embedUrl ?? v.url, v.width]),
     [
@@ -427,42 +603,77 @@ test("the blocks every site gets: callouts, media, embeds, galleries, links, FAQ
   );
   assert.equal((html.match(/<li><a class="image-link"/g) ?? []).length, 2);
   assert.match(html, /<figcaption>Two pictures side by side\.<\/figcaption>/);
-  assert.match(html, /<p class="button-row"><a href="\/join" class="button">Join the list<\/a><\/p>/);
+  assert.match(
+    html,
+    /<p class="button-row"><a href="\/join" class="button">Join the list<\/a><\/p>/,
+  );
   assert.match(html, /<span class="bookmark-host">ghost\.org<\/span>/);
-  assert.match(html, /<figure class="code-frame"><figcaption class="code-title">example\.js<\/figcaption><pre[^>]* aria-label="Code: example\.js">/);
+  assert.match(
+    html,
+    /<figure class="code-frame"><figcaption class="code-title">example\.js<\/figcaption><pre[^>]* aria-label="Code: example\.js">/,
+  );
   assert.deepEqual(result.faq, [
     { question: "What is this?", answer: "A fixture." },
     { question: "Does an answer run on?", answer: "It runs on over the next line." },
   ]);
-  assert.ok(result.mediaRefs.some((ref) => ref.form === "media-directive" && ref.key.endsWith(".vtt")));
+  assert.ok(
+    result.mediaRefs.some((ref) => ref.form === "media-directive" && ref.key.endsWith(".vtt")),
+  );
   assert.ok(result.words > 60 && result.readingMinutes === 1, `${result.words} words`);
 
-  const linked = await core("See ::postlink[old|that post] and ::postlink[gone].\n\n:::faq\nQ: Where?\nA: In ::postlink[old].\n:::", {
-    postLink: async (slug) => (slug === "old" ? { url: "/writing/new", title: "New" } : null),
-  });
-  assert.match(linked.html, /<a href="\/writing\/new">that post<\/a> and <code>::postlink\[gone\]<\/code>/);
+  const linked = await core(
+    "See ::postlink[old|that post] and ::postlink[gone].\n\n:::faq\nQ: Where?\nA: In ::postlink[old].\n:::",
+    {
+      postLink: async (slug) => (slug === "old" ? { url: "/writing/new", title: "New" } : null),
+    },
+  );
+  assert.match(
+    linked.html,
+    /<a href="\/writing\/new">that post<\/a> and <code>::postlink\[gone\]<\/code>/,
+  );
   assert.deepEqual(linked.postLinks, ["old", "gone"]);
   // Foxhound's live FAQ showed ::postlink[…] as text: the answer links on the page and reads as words in the JSON-LD.
   assert.match(linked.html, /<dd>In <a href="\/writing\/new">New<\/a>\.<\/dd>/);
   assert.deepEqual(linked.faq, [{ question: "Where?", answer: "In New." }]);
 
   const outline = await core("Intro words here.\n\n## A\n\n#### Too deep");
-  assert.deepEqual(outline.warnings.map((w) => w.line), [5]);
+  assert.deepEqual(
+    outline.warnings.map((w) => w.line),
+    [5],
+  );
   assert.equal(outline.excerpt, "Intro words here.");
 
-  await refuses(core("![a clip](/media/clip.mp4)"), /links \/media\/clip\.mp4, a video or audio file\. Write :::video or :::audio/);
+  await refuses(
+    core("![a clip](/media/clip.mp4)"),
+    /links \/media\/clip\.mp4, a video or audio file\. Write :::video or :::audio/,
+  );
   await refuses(core(':::video{src="/a.mp4" title="x"}\n:::'), /requires a captions attribute/);
-  await refuses(core(':::video{src="/a.mp4" title="x" silent}\n:::'), /requires a poster attribute/);
+  await refuses(
+    core(':::video{src="/a.mp4" title="x" silent}\n:::'),
+    /requires a poster attribute/,
+  );
   // A missing alt is refused (B1); `![""](x)` is the author saying it is decorative.
-  await refuses(core("Text.\n\n![](/a.png)"), /line 3 of the body \/a\.png has no alt text\. Say what it shows, or write !\[""\]/);
+  await refuses(
+    core("Text.\n\n![](/a.png)"),
+    /line 3 of the body \/a\.png has no alt text\. Say what it shows, or write !\[""\]/,
+  );
   await refuses(core("![ ][a]\n\n[a]: /a.png"), /has no alt text/);
   assert.match((await core('![""](/a.png)')).html, /<img src="\/a\.png" alt=""/);
   await refuses(core('::audio{src="/a.mp3" title="x"}'), /requires a transcript attribute/);
-  await refuses(core('::embed[x]{url="https://example.com/v"}'), /cannot embed .* Embeds come from youtube, tiktok, spotify, soundcloud, apple-podcasts, amazon-music, google-maps, x, bluesky, instagram;/);
-  await refuses(core('::embed[x]{url="https://bsky.app/profile/example.com/post/3l6oveex3ii2l"}'), /needs the Bluesky post's DID URL/);
+  await refuses(
+    core('::embed[x]{url="https://example.com/v"}'),
+    /cannot embed .* Embeds come from youtube, tiktok, spotify, soundcloud, apple-podcasts, amazon-music, google-maps, x, bluesky, instagram;/,
+  );
+  await refuses(
+    core('::embed[x]{url="https://bsky.app/profile/example.com/post/3l6oveex3ii2l"}'),
+    /needs the Bluesky post's DID URL/,
+  );
   await refuses(core('::embed{url="https://youtu.be/dQw4w9WgXcQ"}'), /requires a title/);
   await refuses(core(":::gallery\n![one](/a.png)\n:::"), /holds 1 images; a gallery takes 2 to 9/);
-  await refuses(core(':::figure{src="/a.png" alt="x" width=huge}\n:::'), /use width=wide or width=full/);
+  await refuses(
+    core(':::figure{src="/a.png" alt="x" width=huge}\n:::'),
+    /use width=wide or width=full/,
+  );
   await refuses(core(":abbr[HTML]"), /requires a title attribute/);
 });
 
@@ -473,7 +684,10 @@ test("a link's kind is read only from what marks it: a path's extension, the who
     { links: { origin: "https://dustinedwards.info" } },
   );
   // Away, not file: the extension is the query's, and .zip is the host's.
-  assert.match(html, /<a href="https:\/\/example.com\/get\?format=pdf" data-link="away" rel="external">/);
+  assert.match(
+    html,
+    /<a href="https:\/\/example.com\/get\?format=pdf" data-link="away" rel="external">/,
+  );
   assert.match(html, /<a href="https:\/\/example.zip" data-link="away" rel="external">/);
   assert.match(html, /<a href="https:\/\/www.dustinedwards.info\/a">own<\/a>/);
   assert.match(html, /data-link="email">mail</);
@@ -482,7 +696,10 @@ test("a link's kind is read only from what marks it: a path's extension, the who
   assert.doesNotMatch(html, /data-link="next"/);
   // Without the site's origin nothing is called away: its own absolute links would be.
   assert.doesNotMatch((await core("See [x](https://example.com/).")).html, /data-link/);
-  await refuses(core(":lang[[x](/es/)]{hreflang=not_a_tag}"), /:lang on line 1 of the body needs a language tag/);
+  await refuses(
+    core(":lang[[x](/es/)]{hreflang=not_a_tag}"),
+    /:lang on line 1 of the body needs a language tag/,
+  );
   await refuses(core(":xref[the headings]"), /:xref on line 1 of the body holds exactly one link/);
 });
 
@@ -498,7 +715,9 @@ function fakeNetwork(routes) {
     const url = String(input);
     asked.push(url);
     const body = routes[url];
-    return body === undefined ? new Response("no", { status: 404 }) : new Response(/** @type {BodyInit} */ (body));
+    return body === undefined
+      ? new Response("no", { status: 404 })
+      : new Response(/** @type {BodyInit} */ (body));
   };
   /** @type {Map<string, { bytes: Uint8Array, type: string }>} */
   const kept = new Map();
@@ -515,9 +734,12 @@ test("an icon is the host's own, fetched once, and anything the step cannot vouc
   const net = fakeNetwork({
     "https://a.example/": '<head><link href="/i.png?v=1&amp;x=2" rel="shortcut icon"></head>',
     "https://a.example/i.png?v=1&x=2": PNG,
-    "https://b.example/favicon.ico": '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+    "https://b.example/favicon.ico":
+      '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
     "https://c.example/favicon.ico": Uint8Array.from({ length: 70 * 1024 }, (_, i) => PNG[i] ?? 0),
-    "https://d.example/favicon.ico": new Uint8Array(readFileSync(new URL("./fixtures/icon-48.png", import.meta.url))),
+    "https://d.example/favicon.ico": new Uint8Array(
+      readFileSync(new URL("./fixtures/icon-48.png", import.meta.url)),
+    ),
   });
   // A 48 px favicon, shown at 16: kept at 32, which covers a 2x screen (A7), as a PNG a browser decodes.
   assert.equal(await lookupLinkIcon("d.example", net), "image/png");
@@ -525,7 +747,11 @@ test("an icon is the host's own, fetched once, and anything the step cannot vouc
   assert.deepEqual(Array.from(shrunk.slice(16, 24)), [0, 0, 0, 32, 0, 0, 0, 32]);
   assert.equal(await lookupLinkIcon("a.example", net), "image/png");
   assert.equal(await lookupLinkIcon("a.example", net), "image/png");
-  assert.equal(net.asked.filter((url) => url.startsWith("https://a.example/")).length, 3, "favicon.ico, the page, its icon; then the store");
+  assert.equal(
+    net.asked.filter((url) => url.startsWith("https://a.example/")).length,
+    3,
+    "favicon.ico, the page, its icon; then the store",
+  );
   // A script in an SVG, and an icon over the cap: refused, and stored empty so the next publish does not ask again.
   assert.equal(await lookupLinkIcon("b.example", net), null);
   assert.equal(await lookupLinkIcon("c.example", net), null);
@@ -535,11 +761,21 @@ test("an icon is the host's own, fetched once, and anything the step cannot vouc
   assert.equal(await lookupLinkIcon("10.0.0.1", net), null);
   assert.ok(!net.asked.some((url) => /localhost|10\.0\.0\.1/.test(url)));
 
-  const served = /** @type {Response} */ (await linkIconResponse("/link-icons/a.example.png", net.store, { headers: UPLOAD_HEADERS }));
+  const served = /** @type {Response} */ (
+    await linkIconResponse("/link-icons/a.example.png", net.store, { headers: UPLOAD_HEADERS })
+  );
   assert.equal(served.status, 200);
   assert.equal(served.headers.get("Content-Type"), "image/png");
   assert.match(String(served.headers.get("Cache-Control")), /immutable/);
-  assert.equal((await linkIconResponse("/link-icons/a.example.svg", net.store, { headers: UPLOAD_HEADERS }))?.status, 404);
-  assert.equal((await linkIconResponse("/link-icons/b.example.svg", net.store, { headers: UPLOAD_HEADERS }))?.status, 404);
+  assert.equal(
+    (await linkIconResponse("/link-icons/a.example.svg", net.store, { headers: UPLOAD_HEADERS }))
+      ?.status,
+    404,
+  );
+  assert.equal(
+    (await linkIconResponse("/link-icons/b.example.svg", net.store, { headers: UPLOAD_HEADERS }))
+      ?.status,
+    404,
+  );
   assert.equal(await linkIconResponse("/writing/a", net.store, { headers: UPLOAD_HEADERS }), null);
 });

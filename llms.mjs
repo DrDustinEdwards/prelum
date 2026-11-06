@@ -149,7 +149,8 @@ export function prefersMarkdown(accept) {
     if (q !== undefined && !/^(0(\.\d{0,3})?|1(\.0{0,3})?)$/.test(q)) return false;
     const weight = q === undefined ? 1 : Number(q);
     if (type === "text/markdown") markdown = Math.max(markdown, weight);
-    else if (type === "text/html" || type === "text/*" || type === "*/*") html = Math.max(html, weight);
+    else if (type === "text/html" || type === "text/*" || type === "*/*")
+      html = Math.max(html, weight);
   }
   return markdown > 0 && markdown > html;
 }
@@ -177,7 +178,10 @@ export function markdownResponse(markdown, options = {}) {
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "text/markdown; charset=utf-8");
   if (options.vary !== false) headers.set("Vary", "Accept");
-  const links = [...(options.canonical ? [`<${options.canonical}>; rel="canonical"`] : []), ...(options.links ?? [])];
+  const links = [
+    ...(options.canonical ? [`<${options.canonical}>; rel="canonical"`] : []),
+    ...(options.links ?? []),
+  ];
   if (links.length > 0) headers.set("Link", links.join(", "));
   return new Response(markdown, { headers });
 }
@@ -207,14 +211,25 @@ export function serveMarkdownCopies(fetch, { origin, skip = () => false }) {
       if (response.status !== 200) return response;
       const out = new Response(response.body, response);
       out.headers.set("Content-Type", "text/markdown; charset=utf-8");
-      out.headers.set("Link", `<${base}${path === "/index.md" ? "/" : path.slice(0, -3)}>; rel="canonical"`);
+      out.headers.set(
+        "Link",
+        `<${base}${path === "/index.md" ? "/" : path.slice(0, -3)}>; rel="canonical"`,
+      );
       return out;
     }
-    if (response.status !== 200 || !(response.headers.get("Content-Type") ?? "").startsWith("text/html") || skip(path)) return response;
+    if (
+      response.status !== 200 ||
+      !(response.headers.get("Content-Type") ?? "").startsWith("text/html") ||
+      skip(path)
+    )
+      return response;
     if (prefersMarkdown(request)) {
       const headers = new Headers(request.headers);
       headers.set("Accept", "text/markdown");
-      const copy = await fetch(new Request(new URL(markdownPath(path), url), { method: request.method, headers }), ...rest);
+      const copy = await fetch(
+        new Request(new URL(markdownPath(path), url), { method: request.method, headers }),
+        ...rest,
+      );
       if (copy.status === 200) {
         void response.body?.cancel();
         const out = new Response(copy.body, copy);
@@ -227,7 +242,10 @@ export function serveMarkdownCopies(fetch, { origin, skip = () => false }) {
     }
     const out = new Response(response.body, response);
     out.headers.append("Vary", "Accept");
-    out.headers.append("Link", `<${base}${markdownPath(path)}>; rel="alternate"; type="text/markdown"`);
+    out.headers.append(
+      "Link",
+      `<${base}${markdownPath(path)}>; rel="alternate"; type="text/markdown"`,
+    );
     return out;
   };
   return /** @type {F} */ (/** @type {unknown} */ (wrapped));
@@ -247,5 +265,8 @@ export function serveMarkdownCopies(fetch, { origin, skip = () => false }) {
  * @returns {Response}
  */
 export function llmsResponse(input) {
-  return plainTextResponse("body" in input ? input.body : llmsDocument(input), { ...input, noindex: true });
+  return plainTextResponse("body" in input ? input.body : llmsDocument(input), {
+    ...input,
+    noindex: true,
+  });
 }

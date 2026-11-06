@@ -17,7 +17,20 @@ export const HAND_CHECK_LIMITATIONS = [
   "Pages you reach only after signing in are checked by hand, not yet by the automatic scan.",
 ];
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 /**
  * How links in running text stand apart from the words around them, one sentence per site setup. Each passes WCAG 2.2
@@ -26,7 +39,8 @@ const MONTHS = ["January", "February", "March", "April", "May", "June", "July", 
 const LINK_CUES = {
   marked:
     "Links never rely on color alone: each carries the link color and a heavier weight, and says when it leaves the site, opens a file, or sends mail.",
-  underline: "Links never rely on color alone: each link in running text is underlined as well as colored.",
+  underline:
+    "Links never rely on color alone: each link in running text is underlined as well as colored.",
   bold: "Links never rely on color alone: each link in running text is set in a heavier weight than the words around it as well as colored.",
 };
 
@@ -43,18 +57,41 @@ function longDate(day) {
 
 /** Text for an HTML element or a double-quoted attribute. @param {unknown} text */
 function esc(text) {
-  return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 /**
  * @param {import("./accessibility.d.mts").AccessibilityInput} input
  * @returns {import("./accessibility.d.mts").AccessibilityStatement}
  */
-export function accessibilityStatement({ siteName, contact, date, capsomer, links, conformance = "partial", limitations = [], measures = [] }) {
-  if (!siteName || !contact?.href || !contact.label) throw new Error("accessibilityStatement: siteName and contact { href, label } are required");
-  if (typeof capsomer !== "boolean") throw new Error("accessibilityStatement: capsomer must say whether the site's pages are built from Capsomer");
-  if (!Object.hasOwn(LINK_CUES, links)) throw new Error(`accessibilityStatement: links must be one of ${Object.keys(LINK_CUES).join(", ")}, got ${links}`);
-  if (links === "marked" && !capsomer) throw new Error('accessibilityStatement: links "marked" is Capsomer\'s link system, so it needs capsomer: true');
+export function accessibilityStatement({
+  siteName,
+  contact,
+  date,
+  capsomer,
+  links,
+  conformance = "partial",
+  limitations = [],
+  measures = [],
+}) {
+  if (!siteName || !contact?.href || !contact.label)
+    throw new Error("accessibilityStatement: siteName and contact { href, label } are required");
+  if (typeof capsomer !== "boolean")
+    throw new Error(
+      "accessibilityStatement: capsomer must say whether the site's pages are built from Capsomer",
+    );
+  if (!Object.hasOwn(LINK_CUES, links))
+    throw new Error(
+      `accessibilityStatement: links must be one of ${Object.keys(LINK_CUES).join(", ")}, got ${links}`,
+    );
+  if (links === "marked" && !capsomer)
+    throw new Error(
+      'accessibilityStatement: links "marked" is Capsomer\'s link system, so it needs capsomer: true',
+    );
   const standard = ACCESSIBILITY_STANDARD;
   const status =
     conformance === "full"
@@ -81,7 +118,8 @@ export function accessibilityStatement({ siteName, contact, date, capsomer, link
     `## Tell us about a problem\n\n${report(`[${contact.label}](${contact.href})`)}`,
     `## Date\n\n${reviewed}`,
   ].join("\n\n");
-  const ul = (/** @type {string[]} */ items) => `<ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`;
+  const ul = (/** @type {string[]} */ items) =>
+    `<ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`;
   const html = [
     `<p>${esc(intro)}</p>`,
     `<h2>Conformance status</h2><p>${esc(status)}</p>`,

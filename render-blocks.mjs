@@ -28,7 +28,8 @@ const where = (node, name) => {
 const attrsOf = (node) => /** @type {Record<string, string>} */ (node.attributes ?? {});
 
 /** @param {any} node @returns {string} */
-const textOf = (node) => (typeof node.value === "string" ? node.value : (node.children ?? []).map(textOf).join(""));
+const textOf = (node) =>
+  typeof node.value === "string" ? node.value : (node.children ?? []).map(textOf).join("");
 
 /**
  * @param {string} file
@@ -43,12 +44,20 @@ function urlAttribute(file, node, name, key, required = true) {
     if (required) throw new ContentError(file, `${where(node, name)} requires a ${key} attribute`);
     return undefined;
   }
-  if (!isAllowedUrl(url)) throw new ContentError(file, `${where(node, name)} ${key} ${JSON.stringify(url)} is not an allowed URL`);
+  if (!isAllowedUrl(url))
+    throw new ContentError(
+      file,
+      `${where(node, name)} ${key} ${JSON.stringify(url)} is not an allowed URL`,
+    );
   return url;
 }
 
 /** @param {string} tagName @param {Record<string, unknown>} properties @param {any[]} [children] @returns {any} */
-const element = (tagName, properties, children = []) => ({ type: "paragraph", data: { hName: tagName, hProperties: properties }, children });
+const element = (tagName, properties, children = []) => ({
+  type: "paragraph",
+  data: { hName: tagName, hProperties: properties },
+  children,
+});
 
 /** @param {any[]} children */
 const caption = (children) => (children.length > 0 ? [element("figcaption", {}, children)] : []);
@@ -73,8 +82,16 @@ export function remarkCallouts() {
       if (first.children[0]?.type === "break") first.children.shift();
       if (first.children.length === 0) node.children.shift();
       const title = (match[2] ?? "").trim() || type[0]?.toUpperCase() + type.slice(1);
-      node.data = { ...node.data, hName: "div", hProperties: { className: ["callout", `callout-${type}`], role: "note" } };
-      node.children.unshift(/** @type {any} */ (element("p", { className: ["callout-title"] }, [{ type: "text", value: title }])));
+      node.data = {
+        ...node.data,
+        hName: "div",
+        hProperties: { className: ["callout", `callout-${type}`], role: "note" },
+      };
+      node.children.unshift(
+        /** @type {any} */ (
+          element("p", { className: ["callout-title"] }, [{ type: "text", value: title }])
+        ),
+      );
     });
   };
 }
@@ -89,12 +106,17 @@ export function remarkInlineMarks(file) {
   return (/** @type {import("mdast").Root} */ tree) => {
     visit(tree, "textDirective", (node) => {
       if (!["kbd", "abbr", "mark", "sub", "sup"].includes(node.name)) return;
-      if (node.children.length === 0) throw new ContentError(file, `${where(node, `:${node.name}`)} has no text`);
+      if (node.children.length === 0)
+        throw new ContentError(file, `${where(node, `:${node.name}`)} has no text`);
       /** @type {Record<string, string>} */
       const properties = {};
       if (node.name === "abbr") {
         const title = attrsOf(node).title;
-        if (!title) throw new ContentError(file, `${where(node, ":abbr")} requires a title attribute, the expansion`);
+        if (!title)
+          throw new ContentError(
+            file,
+            `${where(node, ":abbr")} requires a title attribute, the expansion`,
+          );
         properties.title = title;
       }
       node.data = { ...node.data, hName: node.name, hProperties: properties };
@@ -119,33 +141,72 @@ export function remarkMedia(file) {
       if (node.type === "image" || node.type === "imageReference") {
         const url = node.type === "image" ? node.url : `[${node.label ?? node.identifier}]`;
         if (node.type === "image" && MEDIA_FILE.test(url)) {
-          throw new ContentError(file, `${where(node, "an image")} links ${url}, a video or audio file. Write :::video or :::audio`);
+          throw new ContentError(
+            file,
+            `${where(node, "an image")} links ${url}, a video or audio file. Write :::video or :::audio`,
+          );
         }
         const alt = (node.alt ?? "").trim();
         if (!alt) {
-          throw new ContentError(file, `${where(node, "an image")} ${url} has no alt text. Say what it shows, or write ![""](…) if it is decorative`);
+          throw new ContentError(
+            file,
+            `${where(node, "an image")} ${url} has no alt text. Say what it shows, or write ![""](…) if it is decorative`,
+          );
         }
         if (DECORATIVE_ALT.test(alt)) node.alt = "";
         return;
       }
-      if ((node.type !== "containerDirective" && node.type !== "leafDirective") || !["video", "audio"].includes(node.name)) return;
+      if (
+        (node.type !== "containerDirective" && node.type !== "leafDirective") ||
+        !["video", "audio"].includes(node.name)
+      )
+        return;
       const name = `:::${node.name}`;
       const attrs = attrsOf(node);
       const src = urlAttribute(file, node, name, "src");
       const title = attrs.title;
-      if (!title) throw new ContentError(file, `${where(node, name)} requires a title attribute, its accessible name`);
-      if (node.type === "containerDirective") refuseHeading(file, node, ", which belongs outside the media's caption.");
-      const children = /** @type {any[]} */ (node.type === "containerDirective" ? node.children : []);
+      if (!title)
+        throw new ContentError(
+          file,
+          `${where(node, name)} requires a title attribute, its accessible name`,
+        );
+      if (node.type === "containerDirective")
+        refuseHeading(file, node, ", which belongs outside the media's caption.");
+      const children = /** @type {any[]} */ (
+        node.type === "containerDirective" ? node.children : []
+      );
 
       if (node.name === "video") {
         const captions = urlAttribute(file, node, name, "captions", !("silent" in attrs));
         const poster = urlAttribute(file, node, name, "poster");
         const track = captions
-          ? [element("track", { kind: "captions", src: captions, srcLang: attrs.lang ?? "en", label: attrs.label ?? "English", default: true })]
+          ? [
+              element("track", {
+                kind: "captions",
+                src: captions,
+                srcLang: attrs.lang ?? "en",
+                label: attrs.label ?? "English",
+                default: true,
+              }),
+            ]
           : [];
-        node.data = { hName: "figure", hProperties: { className: ["media", "media-video", ...widthClass(file, node, name)] } };
+        node.data = {
+          hName: "figure",
+          hProperties: { className: ["media", "media-video", ...widthClass(file, node, name)] },
+        };
         node.children = [
-          element("video", { src, poster, controls: true, preload: "metadata", playsInline: true, ariaLabel: title }, track),
+          element(
+            "video",
+            {
+              src,
+              poster,
+              controls: true,
+              preload: "metadata",
+              playsInline: true,
+              ariaLabel: title,
+            },
+            track,
+          ),
           ...caption(children),
         ];
         return;
@@ -155,7 +216,13 @@ export function remarkMedia(file) {
       node.data = { hName: "figure", hProperties: { className: ["media", "media-audio"] } };
       node.children = [
         element("audio", { src, controls: true, preload: "none", ariaLabel: title }),
-        element("p", { className: ["media-transcript"] }, [{ type: "link", url: transcript, children: [{ type: "text", value: `Transcript: ${title}` }] }]),
+        element("p", { className: ["media-transcript"] }, [
+          {
+            type: "link",
+            url: transcript,
+            children: [{ type: "text", value: `Transcript: ${title}` }],
+          },
+        ]),
         ...caption(children),
       ];
     });
@@ -174,25 +241,53 @@ export function remarkMedia(file) {
 export function remarkEmbeds(file) {
   return (/** @type {import("mdast").Root} */ tree) => {
     visit(tree, (node) => {
-      if ((node.type !== "leafDirective" && node.type !== "containerDirective") || node.name !== "embed") return;
+      if (
+        (node.type !== "leafDirective" && node.type !== "containerDirective") ||
+        node.name !== "embed"
+      )
+        return;
       const url = attrsOf(node).url ?? "";
-      const title = (node.type === "leafDirective" ? textOf(node).trim() : "") || attrsOf(node).title;
+      const title =
+        (node.type === "leafDirective" ? textOf(node).trim() : "") || attrsOf(node).title;
       for (const provider of EMBED_PROVIDERS) {
         const match = provider.pattern.exec(url);
         if (!match) continue;
-        if (!title) throw new ContentError(file, `${where(node, "::embed")} requires a title: ::embed[What it shows]{url="…"}`);
-        const children = /** @type {any[]} */ (node.type === "containerDirective" ? node.children : []);
+        if (!title)
+          throw new ContentError(
+            file,
+            `${where(node, "::embed")} requires a title: ::embed[What it shows]{url="…"}`,
+          );
+        const children = /** @type {any[]} */ (
+          node.type === "containerDirective" ? node.children : []
+        );
         const poster = urlAttribute(file, node, "::embed", "poster", false);
         node.data = {
           hName: "figure",
-          hProperties: { className: ["embed", `embed-${provider.name}`, ...widthClass(file, node, "::embed")] },
+          hProperties: {
+            className: ["embed", `embed-${provider.name}`, ...widthClass(file, node, "::embed")],
+          },
         };
         node.children = [
-          element("a", { className: ["embed-link"], href: url, dataEmbedSrc: provider.player(match, url), dataEmbedTitle: title }, [
-            ...(poster ? [element("img", { className: ["embed-poster"], src: poster, alt: "" })] : []),
-            ...(provider.kind === "video" || provider.kind === "audio" ? [element("span", { className: ["embed-play"], ariaHidden: "true" })] : []),
-            element("span", { className: ["embed-label"] }, [{ type: "text", value: `${provider.label}: ${title}` }]),
-          ]),
+          element(
+            "a",
+            {
+              className: ["embed-link"],
+              href: url,
+              dataEmbedSrc: provider.player(match, url),
+              dataEmbedTitle: title,
+            },
+            [
+              ...(poster
+                ? [element("img", { className: ["embed-poster"], src: poster, alt: "" })]
+                : []),
+              ...(provider.kind === "video" || provider.kind === "audio"
+                ? [element("span", { className: ["embed-play"], ariaHidden: "true" })]
+                : []),
+              element("span", { className: ["embed-label"] }, [
+                { type: "text", value: `${provider.label}: ${title}` },
+              ]),
+            ],
+          ),
           ...caption(children),
         ];
         return;
@@ -232,20 +327,42 @@ export function remarkGallery(file) {
           continue;
         }
         const own = child.children.filter((c) => c.type === "image");
-        const text = child.children.filter((c) => c.type !== "image" && !(c.type === "text" && c.value.trim() === ""));
+        const text = child.children.filter(
+          (c) => c.type !== "image" && !(c.type === "text" && c.value.trim() === ""),
+        );
         images.push(...own);
         if (text.length > 0) rest.push({ ...child, children: text });
       }
       if (images.length < 2 || images.length > 9) {
-        throw new ContentError(file, `${where(node, ":::gallery")} holds ${images.length} images; a gallery takes 2 to 9`);
+        throw new ContentError(
+          file,
+          `${where(node, ":::gallery")} holds ${images.length} images; a gallery takes 2 to 9`,
+        );
       }
       for (const image of images) {
-        if (!image.alt?.trim()) throw new ContentError(file, `${where(node, ":::gallery")} image ${image.url} requires alt text`);
+        if (!image.alt?.trim())
+          throw new ContentError(
+            file,
+            `${where(node, ":::gallery")} image ${image.url} requires alt text`,
+          );
       }
-      node.data = { hName: "figure", hProperties: { className: ["gallery", ...widthClass(file, node, ":::gallery")] } };
+      node.data = {
+        hName: "figure",
+        hProperties: { className: ["gallery", ...widthClass(file, node, ":::gallery")] },
+      };
       node.children = /** @type {any[]} */ ([
-        element("ul", { className: ["gallery-grid"] }, images.map((image) => element("li", {}, [image]))),
-        ...caption(rest.flatMap((c) => (c.type === "paragraph" ? c.children : [c])).map((c, i) => (i === 0 && c.type === "text" ? { ...c, value: c.value.trimStart() } : c))),
+        element(
+          "ul",
+          { className: ["gallery-grid"] },
+          images.map((image) => element("li", {}, [image])),
+        ),
+        ...caption(
+          rest
+            .flatMap((c) => (c.type === "paragraph" ? c.children : [c]))
+            .map((c, i) =>
+              i === 0 && c.type === "text" ? { ...c, value: c.value.trimStart() } : c,
+            ),
+        ),
       ]);
     });
   };
@@ -262,23 +379,52 @@ export function remarkLinkBlocks(file) {
     visit(tree, "leafDirective", (node) => {
       if (node.name !== "button" && node.name !== "bookmark") return;
       const label = textOf(node).trim();
-      if (!label) throw new ContentError(file, `${where(node, `::${node.name}`)} has no label: ::${node.name}[Label]{…}`);
+      if (!label)
+        throw new ContentError(
+          file,
+          `${where(node, `::${node.name}`)} has no label: ::${node.name}[Label]{…}`,
+        );
       if (node.name === "button") {
         const href = attrsOf(node).href;
-        if (!href) throw new ContentError(file, `${where(node, "::button")} requires an href attribute`);
+        if (!href)
+          throw new ContentError(file, `${where(node, "::button")} requires an href attribute`);
         node.data = { hName: "p", hProperties: { className: ["button-row"] } };
-        node.children = [{ type: "link", url: href, data: { hProperties: { className: ["button"] } }, children: [{ type: "text", value: label }] }];
+        node.children = [
+          {
+            type: "link",
+            url: href,
+            data: { hProperties: { className: ["button"] } },
+            children: [{ type: "text", value: label }],
+          },
+        ];
         return;
       }
       const url = /** @type {string} */ (urlAttribute(file, node, "::bookmark", "url"));
       const description = attrsOf(node).description;
       /** @type {any[]} */
-      const parts = [element("span", { className: ["bookmark-title"] }, [{ type: "text", value: label }])];
-      if (description) parts.push(element("span", { className: ["bookmark-description"] }, [{ type: "text", value: description }]));
+      const parts = [
+        element("span", { className: ["bookmark-title"] }, [{ type: "text", value: label }]),
+      ];
+      if (description)
+        parts.push(
+          element("span", { className: ["bookmark-description"] }, [
+            { type: "text", value: description },
+          ]),
+        );
       const host = /^https?:\/\//.test(url) ? new URL(url).host.replace(/^www\./, "") : "";
-      if (host) parts.push(element("span", { className: ["bookmark-host"] }, [{ type: "text", value: host }]));
+      if (host)
+        parts.push(
+          element("span", { className: ["bookmark-host"] }, [{ type: "text", value: host }]),
+        );
       node.data = { hName: "figure", hProperties: { className: ["bookmark"] } };
-      node.children = [{ type: "link", url, data: { hProperties: { className: ["bookmark-link"] } }, children: parts }];
+      node.children = [
+        {
+          type: "link",
+          url,
+          data: { hProperties: { className: ["bookmark-link"] } },
+          children: parts,
+        },
+      ];
     });
   };
 }
@@ -297,7 +443,8 @@ function faqPairs(content) {
   /** @type {string[]} */
   let answer = [];
   const flush = () => {
-    if (question && answer.length > 0) pairs.push({ question: question.trim(), answer: answer.join(" ").trim() });
+    if (question && answer.length > 0)
+      pairs.push({ question: question.trim(), answer: answer.join(" ").trim() });
     question = null;
     answer = [];
   };
@@ -328,17 +475,21 @@ export function remarkFaq(file, body, sink) {
       const start = node.position?.start.offset ?? 0;
       const end = node.position?.end.offset ?? start;
       const lines = body.slice(start, end).split("\n");
-      const pairs = faqPairs(lines.slice(1, lines.at(-1)?.trim() === ":::" ? -1 : undefined).join("\n"));
-      if (pairs.length === 0) throw new ContentError(file, `${where(node, ":::faq")} holds no Q: and A: pair`);
+      const pairs = faqPairs(
+        lines.slice(1, lines.at(-1)?.trim() === ":::" ? -1 : undefined).join("\n"),
+      );
+      if (pairs.length === 0)
+        throw new ContentError(file, `${where(node, ":::faq")} holds no Q: and A: pair`);
       sink.push(...pairs);
       node.data = { hName: "dl", hProperties: { className: ["faq"] } };
-      node.children = pairs.map(({ question, answer }) =>
-        /** @type {any} */ (
-          element("div", { className: ["faq-item"] }, [
-            element("dt", {}, [{ type: "text", value: question }]),
-            element("dd", {}, [{ type: "text", value: answer }]),
-          ])
-        ),
+      node.children = pairs.map(
+        ({ question, answer }) =>
+          /** @type {any} */ (
+            element("div", { className: ["faq-item"] }, [
+              element("dt", {}, [{ type: "text", value: question }]),
+              element("dd", {}, [{ type: "text", value: answer }]),
+            ])
+          ),
       );
     });
   };
@@ -363,11 +514,24 @@ export function remarkPostLinks(resolve, sink, faq) {
     visit(tree, "text", (node, _index, parent) => {
       if (parent && node.value.includes("::postlink[")) found.push({ node, parent });
     });
-    const slugs = [...new Set(found.flatMap(({ node }) => [...node.value.matchAll(POSTLINK)].map((m) => (m[1] ?? "").trim())))];
+    const slugs = [
+      ...new Set(
+        found.flatMap(({ node }) =>
+          [...node.value.matchAll(POSTLINK)].map((m) => (m[1] ?? "").trim()),
+        ),
+      ),
+    ];
     sink.push(...slugs);
-    const targets = new Map(await Promise.all(slugs.map(async (slug) => /** @type {const} */ ([slug, await resolve(slug)]))));
+    const targets = new Map(
+      await Promise.all(
+        slugs.map(async (slug) => /** @type {const} */ ([slug, await resolve(slug)])),
+      ),
+    );
     for (const pair of faq) {
-      pair.answer = pair.answer.replace(POSTLINK, (_m, slug, text) => text?.trim() || targets.get(slug.trim())?.title || slug.trim());
+      pair.answer = pair.answer.replace(
+        POSTLINK,
+        (_m, slug, text) => text?.trim() || targets.get(slug.trim())?.title || slug.trim(),
+      );
     }
     for (const { node, parent } of found) {
       /** @type {any[]} */
@@ -380,7 +544,11 @@ export function remarkPostLinks(resolve, sink, faq) {
         const target = targets.get(slug);
         parts.push(
           target
-            ? { type: "link", url: target.url, children: [{ type: "text", value: text || target.title }] }
+            ? {
+                type: "link",
+                url: target.url,
+                children: [{ type: "text", value: text || target.title }],
+              }
             : { type: "inlineCode", value: m[0] },
         );
         at = m.index + m[0].length;
@@ -404,7 +572,10 @@ export function remarkCodeFrames() {
       if (!match || !parent || index === undefined) return;
       const title = match[1] ?? match[2] ?? match[3] ?? "";
       parent.children[index] = /** @type {any} */ (
-        element("figure", { className: ["code-frame"] }, [element("figcaption", { className: ["code-title"] }, [{ type: "text", value: title }]), node])
+        element("figure", { className: ["code-frame"] }, [
+          element("figcaption", { className: ["code-title"] }, [{ type: "text", value: title }]),
+          node,
+        ])
       );
     });
   };
@@ -424,7 +595,8 @@ export function remarkOutline(sink) {
       if (node.type === "heading") headings.push(node);
     });
     if (headings.some((h) => h.depth === 1)) {
-      for (const heading of headings) heading.depth = /** @type {any} */ (Math.min(heading.depth + 1, 6));
+      for (const heading of headings)
+        heading.depth = /** @type {any} */ (Math.min(heading.depth + 1, 6));
     }
     let previous = 1;
     for (const heading of headings) {
@@ -441,4 +613,17 @@ export function remarkOutline(sink) {
 }
 
 /** The directive names this module handles, added to the core's list the unknown-directive guard checks. */
-export const BLOCK_DIRECTIVES = ["abbr", "audio", "bookmark", "button", "embed", "faq", "gallery", "kbd", "mark", "sub", "sup", "video"];
+export const BLOCK_DIRECTIVES = [
+  "abbr",
+  "audio",
+  "bookmark",
+  "button",
+  "embed",
+  "faq",
+  "gallery",
+  "kbd",
+  "mark",
+  "sub",
+  "sup",
+  "video",
+];

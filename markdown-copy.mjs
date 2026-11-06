@@ -13,7 +13,13 @@ import { toMdast } from "hast-util-to-mdast";
 import { gfmToMarkdown } from "mdast-util-gfm";
 import { toMarkdown } from "mdast-util-to-markdown";
 
-import { llmsFullDocument, markdownPage, markdownPath, markdownResponse, prefersMarkdown } from "./llms.mjs";
+import {
+  llmsFullDocument,
+  markdownPage,
+  markdownPath,
+  markdownResponse,
+  prefersMarkdown,
+} from "./llms.mjs";
 import { plainTextResponse } from "./robots.mjs";
 
 /** Elements that carry no reading text: scripts, styles, controls, the site's own navigation, players and drawings. */
@@ -45,12 +51,20 @@ const DROPPED = new Set([
 /** @param {import("hast").Element} node @param {string} name */
 const prop = (node, name) => {
   const value = node.properties?.[name];
-  return Array.isArray(value) ? value.join(" ") : value === undefined || value === null ? undefined : String(value);
+  return Array.isArray(value)
+    ? value.join(" ")
+    : value === undefined || value === null
+      ? undefined
+      : String(value);
 };
 
 /** @param {import("hast").Nodes} node @returns {string} */
 const text = (node) =>
-  node.type === "text" ? node.value : "children" in node ? node.children.map((child) => text(/** @type {import("hast").Nodes} */ (child))).join("") : "";
+  node.type === "text"
+    ? node.value
+    : "children" in node
+      ? node.children.map((child) => text(/** @type {import("hast").Nodes} */ (child))).join("")
+      : "";
 
 /**
  * The first element that passes `test`, depth first.
@@ -102,7 +116,11 @@ function settle(node, base) {
   if (!("children" in node)) return;
   /** @type {any[]} */
   const children = node.children;
-  node.children = /** @type {any} */ (children.flatMap((child) => (child.type === "link" && child.url.startsWith("data:") ? child.children : [child])));
+  node.children = /** @type {any} */ (
+    children.flatMap((child) =>
+      child.type === "link" && child.url.startsWith("data:") ? child.children : [child],
+    )
+  );
   for (const child of node.children) settle(child, base);
 }
 
@@ -129,18 +147,41 @@ export function htmlToMarkdown(html, { base } = {}) {
   const tree = fromHtml(html);
   const head = find(tree, (element) => element.tagName === "head");
   const meta = (/** @type {string} */ key, /** @type {string} */ value) =>
-    head ? find(head, (element) => element.tagName === "meta" && prop(element, key)?.toLowerCase() === value) : undefined;
+    head
+      ? find(
+          head,
+          (element) => element.tagName === "meta" && prop(element, key)?.toLowerCase() === value,
+        )
+      : undefined;
   const titleElement = head && find(head, (element) => element.tagName === "title");
-  const canonicalElement = head && find(head, (element) => element.tagName === "link" && (prop(element, "rel") ?? "").split(/\s+/).includes("canonical"));
+  const canonicalElement =
+    head &&
+    find(
+      head,
+      (element) =>
+        element.tagName === "link" &&
+        (prop(element, "rel") ?? "").split(/\s+/).includes("canonical"),
+    );
   const href = canonicalElement && prop(canonicalElement, "href");
   const canonical = href && base ? new URL(href, base).href : href;
-  const robots = prop(meta("name", "robots") ?? { type: "element", tagName: "meta", properties: {}, children: [] }, "content") ?? "";
+  const robots =
+    prop(
+      meta("name", "robots") ?? { type: "element", tagName: "meta", properties: {}, children: [] },
+      "content",
+    ) ?? "";
 
-  const main = find(tree, (element) => element.tagName === "main") ?? find(tree, (element) => element.tagName === "body") ?? tree;
+  const main =
+    find(tree, (element) => element.tagName === "main") ??
+    find(tree, (element) => element.tagName === "body") ??
+    tree;
   prune(main);
   const h1 = find(main, (element) => element.tagName === "h1");
   const ogTitle = meta("property", "og:title");
-  const title = (ogTitle && prop(ogTitle, "content")) || (titleElement && text(titleElement).trim()) || (h1 && text(h1).trim()) || "";
+  const title =
+    (ogTitle && prop(ogTitle, "content")) ||
+    (titleElement && text(titleElement).trim()) ||
+    (h1 && text(h1).trim()) ||
+    "";
   if (h1) {
     /** @param {Parent} node @returns {boolean} */
     const remove = (node) => {
@@ -156,7 +197,12 @@ export function htmlToMarkdown(html, { base } = {}) {
   const description = meta("name", "description");
   const mdast = toMdast(main);
   settle(mdast, canonical ?? base ?? "https://invalid.example/");
-  const markdown = toMarkdown(mdast, { extensions: [gfmToMarkdown()], bullet: "-", emphasis: "_", rule: "-" })
+  const markdown = toMarkdown(mdast, {
+    extensions: [gfmToMarkdown()],
+    bullet: "-",
+    emphasis: "_",
+    rule: "-",
+  })
     .replace(/\n{3,}/g, "\n\n")
     .trim();
   return {
@@ -177,7 +223,11 @@ export function htmlToMarkdown(html, { base } = {}) {
  */
 export function llmsHeaderOf(text, origin) {
   const lines = text.split("\n");
-  const title = lines.find((line) => line.startsWith("# "))?.slice(2).trim() ?? new URL(origin).hostname;
+  const title =
+    lines
+      .find((line) => line.startsWith("# "))
+      ?.slice(2)
+      .trim() ?? new URL(origin).hostname;
   const summary = lines
     .filter((line) => line.startsWith("> "))
     .map((line) => line.slice(2).trim())
@@ -194,7 +244,8 @@ export function llmsHeaderOf(text, origin) {
 }
 
 /** The `<loc>` addresses of a sitemap or sitemap index, in order. @param {string} xml */
-export const sitemapLocs = (xml) => [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((match) => match[1] ?? "");
+export const sitemapLocs = (xml) =>
+  [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((match) => match[1] ?? "");
 
 /**
  * @typedef {(request: Request, env?: any, ctx?: any) => Promise<Response> | Response} FetchHandler
@@ -211,7 +262,15 @@ export const sitemapLocs = (xml) => [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc
  */
 
 /** A response's headers, carried to its Markdown copy without the ones that describe the HTML body. */
-const BODY_HEADERS = ["content-type", "content-length", "content-encoding", "etag", "last-modified", "link", "vary"];
+const BODY_HEADERS = [
+  "content-type",
+  "content-length",
+  "content-encoding",
+  "etag",
+  "last-modified",
+  "link",
+  "vary",
+];
 
 /**
  * The same request for another path, asking for HTML: the page a Markdown copy is made from.
@@ -228,7 +287,8 @@ function htmlRequest(request, path) {
 }
 
 /** @param {Response} response */
-const isHtml = (response) => response.status === 200 && (response.headers.get("Content-Type") ?? "").startsWith("text/html");
+const isHtml = (response) =>
+  response.status === 200 && (response.headers.get("Content-Type") ?? "").startsWith("text/html");
 
 /**
  * Wraps a Worker's fetch handler so every page has a Markdown copy:
@@ -264,7 +324,8 @@ export function markdownCopies(fetch, options) {
     let current = path;
     for (let hops = 0; hops < 3; hops++) {
       const response = await fetch(htmlRequest(request, current), env, ctx);
-      const location = response.status >= 300 && response.status < 400 ? response.headers.get("Location") : null;
+      const location =
+        response.status >= 300 && response.status < 400 ? response.headers.get("Location") : null;
       if (!location) return response;
       const next = new URL(location, new URL(current, request.url));
       if (next.origin !== new URL(request.url).origin) return response;
@@ -285,8 +346,17 @@ export function markdownCopies(fetch, options) {
     for (const name of BODY_HEADERS) headers.delete(name);
     if (facts.noindex) headers.set("X-Robots-Tag", "noindex");
     const canonical = facts.canonical ?? `${origin}${path}`;
-    const markdown = markdownPage({ title: facts.title, description: facts.description, url: canonical, markdown: facts.markdown });
-    const out = markdownResponse(markdown, { canonical, vary, headers: Object.fromEntries(headers) });
+    const markdown = markdownPage({
+      title: facts.title,
+      description: facts.description,
+      url: canonical,
+      markdown: facts.markdown,
+    });
+    const out = markdownResponse(markdown, {
+      canonical,
+      vary,
+      headers: Object.fromEntries(headers),
+    });
     return request.method === "HEAD" ? new Response(null, out) : out;
   }
 
@@ -307,9 +377,13 @@ export function markdownCopies(fetch, options) {
       if (!response.ok) return [];
       const xml = await response.text();
       const found = sitemapLocs(xml);
-      return /<sitemapindex\b/.test(xml) ? (await Promise.all(found.map((loc) => locs(new URL(loc).pathname)))).flat() : found;
+      return /<sitemapindex\b/.test(xml)
+        ? (await Promise.all(found.map((loc) => locs(new URL(loc).pathname)))).flat()
+        : found;
     };
-    const paths = [...new Set((await locs("/sitemap.xml")).map((loc) => new URL(loc, origin).pathname))]
+    const paths = [
+      ...new Set((await locs("/sitemap.xml")).map((loc) => new URL(loc, origin).pathname)),
+    ]
       .filter((path) => !skip(path))
       .slice(0, maxPages);
 
@@ -327,12 +401,27 @@ export function markdownCopies(fetch, options) {
         }
         const facts = htmlToMarkdown(await response.text(), { base: `${origin}${path}` });
         if (facts.noindex) continue;
-        pages[at] = { title: facts.title, description: facts.description, url: facts.canonical ?? `${origin}${path}`, markdown: facts.markdown };
+        pages[at] = {
+          title: facts.title,
+          description: facts.description,
+          url: facts.canonical ?? `${origin}${path}`,
+          markdown: facts.markdown,
+        };
       }
     };
     await Promise.all(Array.from({ length: 4 }, worker));
-    const body = llmsFullDocument({ title, summary, intro, pages: pages.filter((entry) => entry !== null) });
-    const response = plainTextResponse(body, { origin, request, noindex: true, headers: { Link: `<${origin}/>; rel="canonical"` } });
+    const body = llmsFullDocument({
+      title,
+      summary,
+      intro,
+      pages: pages.filter((entry) => entry !== null),
+    });
+    const response = plainTextResponse(body, {
+      origin,
+      request,
+      noindex: true,
+      headers: { Link: `<${origin}/>; rel="canonical"` },
+    });
     if (cache && !preview) {
       const stored = cache.put(key, response.clone());
       if (ctx?.waitUntil) ctx.waitUntil(stored);
@@ -369,13 +458,17 @@ export function markdownCopies(fetch, options) {
     if (prefersMarkdown(request)) {
       // A HEAD has no body to read, so the copy is made from the page's GET.
       if (request.method === "HEAD") void response.body?.cancel();
-      const html = request.method === "HEAD" ? await fetch(htmlRequest(request, path), env, ctx) : response;
+      const html =
+        request.method === "HEAD" ? await fetch(htmlRequest(request, path), env, ctx) : response;
       const made = await copy(request, html, path, true);
       if (made) return made;
     }
     const out = new Response(response.body, response);
     out.headers.append("Vary", "Accept");
-    out.headers.append("Link", `<${origin}${markdownPath(path)}>; rel="alternate"; type="text/markdown"`);
+    out.headers.append(
+      "Link",
+      `<${origin}${markdownPath(path)}>; rel="alternate"; type="text/markdown"`,
+    );
     return out;
   };
   return /** @type {F} */ (/** @type {unknown} */ (wrapped));

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Formatting is the network's shared Oxfmt config (`oxfmt.config.ts` spreads devkit's `./oxfmt`; `npm run format`, and
+  `npm run format:check` in CI). The whole tree was reformatted in one formatting-only commit, listed in
+  `.git-blame-ignore-revs`; the golden render fixtures, the specimen's inputs and its expected output are ignored, so they
+  stay byte for byte. No behavior change. devkit is v0.24.0.
 - Lint is the network's shared Oxlint config (`oxlint.config.ts` extends devkit's `base`, `node` for the modules, bin, tests
   and specimen), type-aware through `oxlint-tsgolint`, run as `npm run lint`. What its first run found is fixed in place,
   behavior unchanged: a dropped `body.cancel()` promise is `void`ed; two click handlers that were `async` are a named
@@ -346,8 +350,6 @@ Prelum's chart redraw now lives in Enarratio, shared with Capsomer (charts, area
 The Prelum side of the family's link contract (Dustin, 2026-10-31): every link a body renders says what kind it is, for Capsomer to
 style from the markup.
 
-
-
 ### Changed
 
 - `RENDER_VERSION` is 11: links carry the contract above, and the allowlist gains `a data-link`, `a data-site`, `a hreflang`,
@@ -607,6 +609,7 @@ Charts move to Enarratio 0.4 (the charts checklist, area 10).
 - The conformance corpus gains 10 hostile inputs for the new blocks (54 in all).
 
 ### Changed
+
 - `headTags` sends `robots: max-image-preview:large` on every indexable page, so Google can show the whole share image.
 - `RENDER_VERSION` is 7. A decorative image (`![](x)`, `alt=""`) is no longer wrapped in its `image-link`: a link whose only
   content has an empty alt has no name.

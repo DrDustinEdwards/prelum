@@ -16,4 +16,6 @@ if (!values.dir || !values.origin) {
   process.exit(2);
 }
 const written = await writeMarkdownCopies({ dir: values.dir, origin: values.origin });
-console.log(`prelum-markdown: ${written.length} Markdown copies and llms-full.txt in ${values.dir}`);
+console.log(
+  `prelum-markdown: ${written.length} Markdown copies and llms-full.txt in ${values.dir}`,
+);

@@ -15,7 +15,10 @@ test("the writing check finds each defect it names, and nothing on a clean page"
     { url: "https://example.com/bad", status: 200, html: bad },
     { url: "https://example.com/good", status: 200, html: good },
   ]);
-  assert.deepEqual(findings.filter((f) => f.url.endsWith("/good")), []);
+  assert.deepEqual(
+    findings.filter((f) => f.url.endsWith("/good")),
+    [],
+  );
   assert.deepEqual([...new Set(findings.map((f) => f.check))].sort(), [
     "writing-duplicate-id",
     "writing-fragment",

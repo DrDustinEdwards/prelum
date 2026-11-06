@@ -6,7 +6,7 @@
  * written, in order.
  */
 export function writeMarkdownCopies(options: {
-    dir: string;
-    origin: string;
-    skip?: (path: string) => boolean;
+  dir: string;
+  origin: string;
+  skip?: (path: string) => boolean;
 }): Promise<string[]>;

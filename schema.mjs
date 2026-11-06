@@ -38,7 +38,9 @@ export function thing(type, fields) {
 export function graph(nodes) {
   return {
     "@context": CONTEXT,
-    "@graph": nodes.map((node) => Object.fromEntries(Object.entries(node).filter(([key]) => key !== "@context"))),
+    "@graph": nodes.map((node) =>
+      Object.fromEntries(Object.entries(node).filter(([key]) => key !== "@context")),
+    ),
   };
 }
 
@@ -56,7 +58,11 @@ export function website({ origin, name, description, searchUrl, publisher }) {
     description,
     publisher,
     potentialAction: searchUrl
-      ? { "@type": "SearchAction", target: searchUrl, "query-input": "required name=search_term_string" }
+      ? {
+          "@type": "SearchAction",
+          target: searchUrl,
+          "query-input": "required name=search_term_string",
+        }
       : undefined,
   });
 }
@@ -84,7 +90,17 @@ export const ARTICLE_IMAGE_MIN_PIXELS = 50_000;
  * @param {ImageInput} image
  * @returns {SchemaNode}
  */
-export function pageImage({ url, width, height, caption, creditText, creator, copyrightNotice, license, acquireLicensePage }) {
+export function pageImage({
+  url,
+  width,
+  height,
+  caption,
+  creditText,
+  creator,
+  copyrightNotice,
+  license,
+  acquireLicensePage,
+}) {
   return thing("ImageObject", {
     url,
     contentUrl: url,
@@ -130,7 +146,9 @@ export function articleImageSet(crops, rights = {}) {
     if (!crop) return [];
     const [w, h] = ratio.split("x").map(Number);
     if (Math.abs(crop.width / crop.height - (w ?? 1) / (h ?? 1)) > 0.01) {
-      throw new Error(`article image ${crop.url} is ${crop.width}x${crop.height}, not ${ratio.replace("x", ":")}`);
+      throw new Error(
+        `article image ${crop.url} is ${crop.width}x${crop.height}, not ${ratio.replace("x", ":")}`,
+      );
     }
     return [{ ...rights, ...crop }];
   });
@@ -158,10 +176,23 @@ export function articleImageSet(crops, rights = {}) {
  * @param {VideoInput} video
  * @returns {SchemaNode}
  */
-export function videoObject({ name, thumbnailUrl, uploadDate, description, contentUrl, embedUrl, width, height, duration, transcript }) {
+export function videoObject({
+  name,
+  thumbnailUrl,
+  uploadDate,
+  description,
+  contentUrl,
+  embedUrl,
+  width,
+  height,
+  duration,
+  transcript,
+}) {
   const date = toDate(uploadDate, null);
   if (!name || !thumbnailUrl || Number.isNaN(date.getTime()) || !(contentUrl || embedUrl)) {
-    throw new Error(`videoObject "${name}": name, thumbnailUrl, uploadDate and a contentUrl or embedUrl are required`);
+    throw new Error(
+      `videoObject "${name}": name, thumbnailUrl, uploadDate and a contentUrl or embedUrl are required`,
+    );
   }
   return thing("VideoObject", {
     name,
@@ -202,12 +233,25 @@ export function videoObject({ name, thumbnailUrl, uploadDate, description, conte
  *
  * @param {ArticleInput} article
  */
-export function article({ url, headline, description, image, published, modified, tags, author, publisher, type = "Article" }) {
+export function article({
+  url,
+  headline,
+  description,
+  image,
+  published,
+  modified,
+  tags,
+  author,
+  publisher,
+  type = "Article",
+}) {
   const dates = articleDates({ published, modified });
   return thing(type, {
     headline,
     description,
-    image: Array.isArray(image) ? image.map((each) => articleImage(url, each)) : image && articleImage(url, image),
+    image: Array.isArray(image)
+      ? image.map((each) => articleImage(url, each))
+      : image && articleImage(url, image),
     datePublished: dates.published,
     dateModified: dates.modified,
     keywords: tags && tags.length > 0 ? tags.join(", ") : undefined,
@@ -267,7 +311,9 @@ function articleImage(url, image) {
   if (typeof image === "string" || "@type" in image) return image;
   const { width, height } = /** @type {ImageInput} */ (image);
   if (width && height && width * height < ARTICLE_IMAGE_MIN_PIXELS) {
-    throw new Error(`article ${url}: image ${image.url} is ${width}x${height}, under Google's ${ARTICLE_IMAGE_MIN_PIXELS} pixels`);
+    throw new Error(
+      `article ${url}: image ${image.url} is ${width}x${height}, under Google's ${ARTICLE_IMAGE_MIN_PIXELS} pixels`,
+    );
   }
   return pageImage(/** @type {ImageInput} */ (image));
 }
@@ -276,7 +322,11 @@ function articleImage(url, image) {
 function compact(fields) {
   return Object.fromEntries(
     Object.entries(fields).filter(
-      ([, value]) => value !== undefined && value !== null && value !== "" && !(Array.isArray(value) && value.length === 0),
+      ([, value]) =>
+        value !== undefined &&
+        value !== null &&
+        value !== "" &&
+        !(Array.isArray(value) && value.length === 0),
     ),
   );
 }

@@ -13,9 +13,18 @@ import { parseArgs } from "node:util";
 
 import { ICONS, icoFile } from "../icons.mjs";
 
-const { values } = parseArgs({ options: { svg: { type: "string" }, background: { type: "string" }, maskable: { type: "string" }, out: { type: "string", default: "public" } } });
+const { values } = parseArgs({
+  options: {
+    svg: { type: "string" },
+    background: { type: "string" },
+    maskable: { type: "string" },
+    out: { type: "string", default: "public" },
+  },
+});
 if (!values.svg || !values.background) {
-  console.error('usage: prelum-icons --svg mark.svg --background "#4F2D7F" [--maskable mark-maskable.svg] [--out public]');
+  console.error(
+    'usage: prelum-icons --svg mark.svg --background "#4F2D7F" [--maskable mark-maskable.svg] [--out public]',
+  );
   process.exit(2);
 }
 const { Resvg } = await import("@resvg/resvg-js");
@@ -25,7 +34,8 @@ const markDir = dirname(resolve(values.svg));
 // mark's folder, since resvg loads no files on its own.
 const png = async (/** @type {string} */ svg, /** @type {number} */ size) => {
   const resvg = new Resvg(svg, { fitTo: { mode: "width", value: size } });
-  for (const href of resvg.imagesToResolve()) if (!href.startsWith("data:")) resvg.resolveImage(href, await readFile(resolve(markDir, href)));
+  for (const href of resvg.imagesToResolve())
+    if (!href.startsWith("data:")) resvg.resolveImage(href, await readFile(resolve(markDir, href)));
   return resvg.render().asPng();
 };
 // The mark scaled into a square of the background. A maskable icon's safe zone is the centered circle of 80% of the width
@@ -36,15 +46,26 @@ const onBackground = async (/** @type {number} */ share) => {
   const href = `data:image/png;base64,${Buffer.from(await png(mark, Math.round(512 * share))).toString("base64")}`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="${values.background}"/><image href="${href}" x="${inset}" y="${inset}" width="${512 * share}" height="${512 * share}"/></svg>`;
 };
-const maskable = values.maskable ? await readFile(values.maskable, "utf8") : await onBackground(0.8 / Math.SQRT2);
+const maskable = values.maskable
+  ? await readFile(values.maskable, "utf8")
+  : await onBackground(0.8 / Math.SQRT2);
 
 const out = values.out;
 await mkdir(out, { recursive: true });
 const file = (/** @type {string} */ path) => join(out, path.slice(1));
-await writeFile(file(ICONS.ico), icoFile(await Promise.all([16, 32, 48].map(async (size) => ({ size, png: await png(mark, size) })))));
+await writeFile(
+  file(ICONS.ico),
+  icoFile(
+    await Promise.all([16, 32, 48].map(async (size) => ({ size, png: await png(mark, size) }))),
+  ),
+);
 await copyFile(values.svg, file(ICONS.svg));
 await writeFile(file(ICONS.apple), await png(await onBackground(0.8), 180));
 await writeFile(file(ICONS.any192), await png(mark, 192));
 await writeFile(file(ICONS.any512), await png(mark, 512));
 await writeFile(file(ICONS.maskable), await png(maskable, 512));
-console.log(`prelum-icons: wrote ${Object.values(ICONS).filter((path) => path !== ICONS.manifest).join(", ")} to ${out}`);
+console.log(
+  `prelum-icons: wrote ${Object.values(ICONS)
+    .filter((path) => path !== ICONS.manifest)
+    .join(", ")} to ${out}`,
+);

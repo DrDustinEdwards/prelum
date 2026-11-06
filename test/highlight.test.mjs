@@ -12,7 +12,9 @@ test("a failed wasm load fails only its own render; the next one loads it again"
   const highlight = createHighlight({
     wasm: () => {
       calls += 1;
-      return calls === 1 ? Promise.reject(new Error("planted wasm load failure")) : import("shiki/wasm");
+      return calls === 1
+        ? Promise.reject(new Error("planted wasm load failure"))
+        : import("shiki/wasm");
     },
   });
   const body = "```js\nconst x = 1;\n```\n";

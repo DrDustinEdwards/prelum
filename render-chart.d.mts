@@ -4,23 +4,31 @@
  * @param {{ strict?: boolean }} [options] `strict` refuses the chart on an issue in STRICT_CHART_ISSUES, where
  *   the default only reports it (E4), so an editor can block a publish on one
  */
-export function buildChartModel(attrs: Record<string, string>, csv: string, { strict }?: {
+export function buildChartModel(
+  attrs: Record<string, string>,
+  csv: string,
+  {
+    strict,
+  }?: {
     strict?: boolean;
-}): {
-    type: string;
-    alt: string;
-    title: string;
-    columns: string[];
-    rows: string[][];
-    html: string;
-    issues: string[];
-    /** What `render/chart-enhance` redraws the chart from: bar, line and area by their options, dot by its 240 px drawing. */
-    redraw: {
+  },
+): {
+  type: string;
+  alt: string;
+  title: string;
+  columns: string[];
+  rows: string[][];
+  html: string;
+  issues: string[];
+  /** What `render/chart-enhance` redraws the chart from: bar, line and area by their options, dot by its 240 px drawing. */
+  redraw:
+    | {
         chart: "bar" | "line" | "area";
         options: Record<string, unknown>;
-    } | {
+      }
+    | {
         narrow: string;
-    };
+      };
 };
 /**
  * The figure Enarratio drew, as hast, in Capsomer 0.53's chart frame: the markup of its `frameHtml(figure)`,
@@ -33,5 +41,9 @@ export function buildChartModel(attrs: Record<string, string>, csv: string, { st
  * @param {any[]} captionChildren hast for an author-written caption, may be empty
  * @param {any} figure the directive's figure node, which becomes the frame
  */
-export function renderChartHast(model: ReturnType<typeof buildChartModel>, captionChildren: import("hast").ElementContent[], figure: import("hast").Element): import("hast").ElementContent[];
+export function renderChartHast(
+  model: ReturnType<typeof buildChartModel>,
+  captionChildren: import("hast").ElementContent[],
+  figure: import("hast").Element,
+): import("hast").ElementContent[];
 export const CHART_TYPES: string[];

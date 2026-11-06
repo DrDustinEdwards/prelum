@@ -8,5 +8,8 @@ test("recentSitemapUrls: only pages changed within the window, or every page whe
   const xml = `<urlset><url><loc>https://example.com/a?x=1&amp;y=2</loc><lastmod>2026-10-24</lastmod></url>
 <url><loc>https://example.com/old</loc><lastmod>2026-01-01</lastmod></url><url><loc>https://example.com/undated</loc></url></urlset>`;
   assert.deepEqual(recentSitemapUrls(xml, { now }), ["https://example.com/a?x=1&y=2"]);
-  assert.deepEqual(recentSitemapUrls("<urlset><url><loc>https://example.com/</loc></url></urlset>", { now }), ["https://example.com/"]);
+  assert.deepEqual(
+    recentSitemapUrls("<urlset><url><loc>https://example.com/</loc></url></urlset>", { now }),
+    ["https://example.com/"],
+  );
 });

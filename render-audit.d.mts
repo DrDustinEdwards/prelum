@@ -3,6 +3,6 @@
  * size, leaked markdown, and stored HTML at the current render version (`data-render-version` on its wrapper).
  */
 export function auditContent(
-    pages: import("./audit.mjs").AuditPage[],
-    options?: { renderVersion?: string },
+  pages: import("./audit.mjs").AuditPage[],
+  options?: { renderVersion?: string },
 ): import("./audit.mjs").AuditFinding[];

@@ -6,7 +6,10 @@
  * @param {import("enarratio/enhance").EnhanceOptions} [options] passed to Enarratio's `enhance`
  * @returns {Array<{ frame: HTMLElement, destroy(): void }>}
  */
-export function enhanceCharts(root?: ParentNode, options?: import("enarratio/enhance").EnhanceOptions): Array<{
-    frame: HTMLElement;
-    destroy(): void;
+export function enhanceCharts(
+  root?: ParentNode,
+  options?: import("enarratio/enhance").EnhanceOptions,
+): Array<{
+  frame: HTMLElement;
+  destroy(): void;
 }>;

@@ -60,7 +60,12 @@ import { crawlSite } from "../audit.mjs";
 
 const LIBRARIES = /** @type {const} */ ([
   // name, DOM container, a string only that library's code carries, and the page global it sets
-  ["Recharts", ".recharts-wrapper, .recharts-surface", /recharts-(?:wrapper|surface|cartesian)/, null],
+  [
+    "Recharts",
+    ".recharts-wrapper, .recharts-surface",
+    /recharts-(?:wrapper|surface|cartesian)/,
+    null,
+  ],
   ["Chart.js", null, /Chart\.js v\d|chartjs-(?:render|size)/, "Chart"],
   ["ApexCharts", ".apexcharts-canvas", /apexcharts-canvas/, "ApexCharts"],
   ["ECharts", "[_echarts_instance_]", /_echarts_instance_/, "echarts"],
@@ -84,14 +89,21 @@ const { values } = parseArgs({
   },
 });
 if (!values.origin) {
-  console.error("usage: prelum-chart-audit --origin https://example.com [--from https://preview.example] [--max-pages 1500] [--chart-kb 100] [--no-strict-frame] [--pages <file | a,b>] [--start <url>]...");
+  console.error(
+    "usage: prelum-chart-audit --origin https://example.com [--from https://preview.example] [--max-pages 1500] [--chart-kb 100] [--no-strict-frame] [--pages <file | a,b>] [--start <url>]...",
+  );
   process.exit(2);
 }
 const origin = values.origin.replace(/\/$/, "");
 const from = values.from?.replace(/\/$/, "");
-const served = (/** @type {string} */ url) => (from && url.startsWith(origin) ? from + url.slice(origin.length) : url);
+const served = (/** @type {string} */ url) =>
+  from && url.startsWith(origin) ? from + url.slice(origin.length) : url;
 /** @type {typeof fetch} */
-const fetcher = (input, init) => fetch(served(typeof input === "string" ? input : input instanceof URL ? input.href : input.url), init);
+const fetcher = (input, init) =>
+  fetch(
+    served(typeof input === "string" ? input : input instanceof URL ? input.href : input.url),
+    init,
+  );
 const budget = Number(values["chart-kb"]) * 1024;
 const frameSeverity = values["no-strict-frame"] ? "warning" : "error";
 // D5: chart layout shift at or over this is an error. The checklist asks for 0; under 0.01 is sub-pixel rounding.
@@ -101,7 +113,10 @@ const NARROW = 320;
 const at = (/** @type {string} */ ref) => new URL(ref, `${origin}/`).href;
 /** @type {string[]} */
 const extra = values.pages
-  ? (existsSync(values.pages) ? readFileSync(values.pages, "utf8").split(/\r?\n/) : values.pages.split(","))
+  ? (existsSync(values.pages)
+      ? readFileSync(values.pages, "utf8").split(/\r?\n/)
+      : values.pages.split(",")
+    )
       .map((line) => line.trim())
       .filter((line) => line && !line.startsWith("#"))
       .map(at)
@@ -110,12 +125,16 @@ const starts = (values.start ?? []).map(at);
 
 const home = await fetcher(`${origin}/`).catch((error) => error);
 if (!(home instanceof Response) || home.status >= 500) {
-  console.error(`prelum-chart-audit: ${origin} did not answer: ${home instanceof Response ? home.status : home.message}`);
+  console.error(
+    `prelum-chart-audit: ${origin} did not answer: ${home instanceof Response ? home.status : home.message}`,
+  );
   process.exit(2);
 }
 const { pages, sitemap } = await crawlSite({ origin, fetch: fetcher, maxPages: 3000 });
 if (sitemap.length === 0 && extra.length === 0) {
-  console.error(`prelum-chart-audit: ${origin}/sitemap.xml lists no pages, or did not load, so there is nothing to crawl`);
+  console.error(
+    `prelum-chart-audit: ${origin}/sitemap.xml lists no pages, or did not load, so there is nothing to crawl`,
+  );
   process.exit(2);
 }
 // One URL per path: a filter link (`/?year=2024`) draws the page's charts again, so it would only repeat their findings. A
@@ -128,16 +147,26 @@ const paths = new Set();
 // is keyed by its path alone, so filters and sorts never multiply the crawl.
 const enqueue = (/** @type {string} */ url, named = false) => {
   const parsed = new URL(url);
-  const path = parsed.pathname.replace(/(\/index)?(\.html)?\/?$/, "") + (named ? parsed.search : "");
-  if (parsed.origin !== origin || paths.has(path) || paths.size >= Number(values["max-pages"])) return;
+  const path =
+    parsed.pathname.replace(/(\/index)?(\.html)?\/?$/, "") + (named ? parsed.search : "");
+  if (parsed.origin !== origin || paths.has(path) || paths.size >= Number(values["max-pages"]))
+    return;
   paths.add(path);
   queue.push(parsed.href);
 };
 // The named pages first, so --max-pages never drops them.
 for (const url of extra) enqueue(url, true);
 for (const page of pages) {
-  if (page.status === 200 && (page.html !== undefined || /html/i.test(String(/** @type {Record<string, string>} */ (page.headers ?? {})["content-type"] ?? "")))) enqueue(page.url);
-  else if (page.status >= 300 && page.status < 400 && page.location) enqueue(new URL(page.location, page.url).href);
+  if (
+    page.status === 200 &&
+    (page.html !== undefined ||
+      /html/i.test(
+        String(/** @type {Record<string, string>} */ (page.headers ?? {})["content-type"] ?? ""),
+      ))
+  )
+    enqueue(page.url);
+  else if (page.status >= 300 && page.status < 400 && page.location)
+    enqueue(new URL(page.location, page.url).href);
 }
 
 let browser;
@@ -148,7 +177,9 @@ try {
   axeSource = tools.axeSource;
   browser = await launch(tools.chromium);
 } catch (error) {
-  console.error(`prelum-chart-audit: could not start a browser: ${error instanceof Error ? error.message : error}`);
+  console.error(
+    `prelum-chart-audit: could not start a browser: ${error instanceof Error ? error.message : error}`,
+  );
   process.exit(2);
 }
 const contexts = {
@@ -163,9 +194,12 @@ for (const url of starts) {
     const page = await context.newPage();
     try {
       const response = await page.goto(served(url), { waitUntil: "load", timeout: 30_000 });
-      if (!response || response.status() >= 400) throw new Error(`answered ${response?.status() ?? "nothing"}`);
+      if (!response || response.status() >= 400)
+        throw new Error(`answered ${response?.status() ?? "nothing"}`);
     } catch (error) {
-      console.error(`prelum-chart-audit: the start URL ${url} did not open: ${String(error instanceof Error ? error.message : error).split("\n")[0]}`);
+      console.error(
+        `prelum-chart-audit: the start URL ${url} did not open: ${String(error instanceof Error ? error.message : error).split("\n")[0]}`,
+      );
       process.exit(2);
     } finally {
       await page.close();
@@ -200,10 +234,17 @@ await Promise.all(
         // An empty page is broken for every reader, so it fails; a timeout or a refused load may be this run's alone, so
         // its charts are not measured: never a warning that passes.
         // A sign-in wall hides every chart on the page from the check, so it fails too: a false "no charts" is a false pass.
-        const broken = message.startsWith("answered 200 with an empty body") || message.startsWith("redirected to sign-in");
+        const broken =
+          message.startsWith("answered 200 with an empty body") ||
+          message.startsWith("redirected to sign-in");
         // Such a page did open, so a run whose every page is behind sign-in fails with the G error, not "could not run".
         if (broken) opened++;
-        findings.push({ severity: broken ? "error" : "unmeasured", item: "G", url, detail: `the browser could not open it: ${message}` });
+        findings.push({
+          severity: broken ? "error" : "unmeasured",
+          item: "G",
+          url,
+          detail: `the browser could not open it: ${message}`,
+        });
       } finally {
         busy--;
       }
@@ -212,7 +253,9 @@ await Promise.all(
 );
 await browser.close();
 if (opened === 0) {
-  console.error(`prelum-chart-audit: none of the ${paths.size} pages on ${origin} opened in the browser`);
+  console.error(
+    `prelum-chart-audit: none of the ${paths.size} pages on ${origin} opened in the browser`,
+  );
   process.exit(2);
 }
 
@@ -221,17 +264,34 @@ const unique = findings.filter((f) => {
   const key = `${f.severity} ${f.item} ${f.url} ${f.detail}`;
   return !seen.has(key) && seen.add(key);
 });
-unique.sort((a, b) => a.url.localeCompare(b.url) || a.item.localeCompare(b.item, "en", { numeric: true }));
+unique.sort(
+  (a, b) => a.url.localeCompare(b.url) || a.item.localeCompare(b.item, "en", { numeric: true }),
+);
 for (const f of unique) {
   const detail = f.detail.replace(/\r?\n/g, " ");
-  console.log(f.severity === "unmeasured" ? `::notice title=${f.item}::${f.url} could not measure: ${detail}` : `::${f.severity} title=${f.item}::${f.url} ${detail}`);
+  console.log(
+    f.severity === "unmeasured"
+      ? `::notice title=${f.item}::${f.url} could not measure: ${detail}`
+      : `::${f.severity} title=${f.item}::${f.url} ${detail}`,
+  );
 }
 /** @type {Record<string, number>} */
 const summary = {};
 for (const f of unique) summary[f.item] = (summary[f.item] ?? 0) + 1;
-const counts = Object.entries(summary).map(([item, n]) => `${item} ${n}`).join(", ") || "no findings";
-console.log(`prelum-chart-audit: ${opened} pages on ${origin}, ${charts} charts on ${withCharts} of them; ${counts}.`);
-process.exit(unique.some((f) => f.severity === "error") ? 1 : unique.some((f) => f.severity === "unmeasured") ? 3 : 0);
+const counts =
+  Object.entries(summary)
+    .map(([item, n]) => `${item} ${n}`)
+    .join(", ") || "no findings";
+console.log(
+  `prelum-chart-audit: ${opened} pages on ${origin}, ${charts} charts on ${withCharts} of them; ${counts}.`,
+);
+process.exit(
+  unique.some((f) => f.severity === "error")
+    ? 1
+    : unique.some((f) => f.severity === "unmeasured")
+      ? 3
+      : 0,
+);
 
 /**
  * One page: with scripts on in light first, and only when that finds a chart, a chart library or a drawn SVG, again with
@@ -241,76 +301,152 @@ process.exit(unique.some((f) => f.severity === "error") ? 1 : unique.some((f) =>
  */
 async function auditPage(url) {
   const light = await visit(contexts.light, url, true);
-  for (const frame of light.frames) enqueue(from && frame.startsWith(from) ? origin + frame.slice(from.length) : frame);
+  for (const frame of light.frames)
+    enqueue(from && frame.startsWith(from) ? origin + frame.slice(from.length) : frame);
   const libraries = new Set([...light.libraries, ...(await scriptLibraries(light.scripts))]);
-  if (light.units.length === 0 && light.drawn.length === 0 && libraries.size === 0) return { charts: 0, findings: [] };
+  if (light.units.length === 0 && light.drawn.length === 0 && libraries.size === 0)
+    return { charts: 0, findings: [] };
   const off = await visit(contexts.off, url, false);
   const dark = await visit(contexts.dark, url, true);
   const narrow = await visit(contexts.narrow, url, true, true);
   /** @type {Finding[]} */
   const out = [];
-  const add = (/** @type {"error" | "warning"} */ severity, /** @type {string} */ item, /** @type {string} */ detail) => out.push({ severity, item, url, detail });
+  const add = (
+    /** @type {"error" | "warning"} */ severity,
+    /** @type {string} */ item,
+    /** @type {string} */ detail,
+  ) => out.push({ severity, item, url, detail });
 
   for (const unit of off.units) {
     const name = `${unit.label} (${unit.kind})`;
     if (unit.inline) {
       // An inline primitive carries its own words, or sits beside the words that carry its numbers.
-      if (!unit.inline.ok) add("error", "B18", `${name}: an inline primitive whose ${unit.inline.hidden ? "visible neighbor gives no numbers" : "name states no values or finding"}`);
-      for (const svg of unit.svgs) if (!svg.roleOk) add("error", "B28", `${name}: the SVG has role="${svg.role}", not role="img"`);
+      if (!unit.inline.ok)
+        add(
+          "error",
+          "B18",
+          `${name}: an inline primitive whose ${unit.inline.hidden ? "visible neighbor gives no numbers" : "name states no values or finding"}`,
+        );
+      for (const svg of unit.svgs)
+        if (!svg.roleOk)
+          add("error", "B28", `${name}: the SVG has role="${svg.role}", not role="img"`);
       continue;
     }
     if (!unit.drawing) add("error", "B2", `${name}: no SVG with scripts off`);
     if (!unit.title) add("error", "B18", `${name}: no visible title`);
     if (!unit.finding) add("error", "B18", `${name}: no finding sentence in the HTML`);
-    else if (unit.findingHidden) add("warning", "B18", `${name}: the finding sentence is hidden from sight`);
+    else if (unit.findingHidden)
+      add("warning", "B18", `${name}: the finding sentence is hidden from sight`);
     if (!unit.caption) add("error", "B18", `${name}: no caption`);
     if (!unit.table) add("error", "B30", `${name}: no data table`);
     else {
-      if (unit.table.th === 0) add("error", "B28", `${name}: the data table has no th header cells`);
-      if (unit.table.unscoped > 0) add("error", "B28", `${name}: ${unit.table.unscoped} th without scope`);
+      if (unit.table.th === 0)
+        add("error", "B28", `${name}: the data table has no th header cells`);
+      if (unit.table.unscoped > 0)
+        add("error", "B28", `${name}: ${unit.table.unscoped} th without scope`);
       if (!unit.table.caption) add("error", "B28", `${name}: the data table has no caption`);
     }
     for (const svg of unit.svgs) {
-      if (!svg.roleOk) add("error", "B28", `${name}: the SVG has role="${svg.role}", not role="img" (or role="group" with aria-roledescription="chart" when enhanced)`);
+      if (!svg.roleOk)
+        add(
+          "error",
+          "B28",
+          `${name}: the SVG has role="${svg.role}", not role="img" (or role="group" with aria-roledescription="chart" when enhanced)`,
+        );
       if (!svg.name) add("error", "B28", `${name}: the SVG has no accessible name`);
     }
-    if (unit.bytes > budget) add("error", "D6", `${name}: ${(unit.bytes / 1024).toFixed(1)} kB of inline SVG, over the ${values["chart-kb"]} kB budget`);
+    if (unit.bytes > budget)
+      add(
+        "error",
+        "D6",
+        `${name}: ${(unit.bytes / 1024).toFixed(1)} kB of inline SVG, over the ${values["chart-kb"]} kB budget`,
+      );
     if (!unit.csv) add(frameSeverity, "C1", `${name}: no CSV link`);
     if (!unit.source) add(frameSeverity, "C2", `${name}: no source line`);
     if (!unit.frame) add(frameSeverity, "F", `${name}: not in Capsomer's chart frame (.cap-chart)`);
   }
   const offLabels = new Set(off.units.map((unit) => unit.label));
   for (const unit of light.units) {
-    if (!offLabels.has(unit.label)) add("error", "B2", `${unit.label} (${unit.kind}): drawn only with scripts on, so there is no chart, text or table without them`);
+    if (!offLabels.has(unit.label))
+      add(
+        "error",
+        "B2",
+        `${unit.label} (${unit.kind}): drawn only with scripts on, so there is no chart, text or table without them`,
+      );
   }
-  for (const [scheme, pass] of /** @type {const} */ ([["light", light], ["dark", dark]])) {
+  for (const [scheme, pass] of /** @type {const} */ ([
+    ["light", light],
+    ["dark", dark],
+  ])) {
     for (const unit of pass.units) {
       const name = `${unit.label} (${unit.kind})`;
       const m = unit.measured;
       if (!m) continue;
-      if (m.lowText) add("error", "B1", `${name}, ${scheme}: ${m.lowText.count} text under 4.5:1, lowest "${m.lowText.sample}" ${m.lowText.fg} on ${m.lowText.bg} at ${m.lowText.ratio.toFixed(2)}:1`);
-      if (m.lowMark) add("error", "B1", `${name}, ${scheme}: ${m.lowMark.count} marks under 3:1, lowest ${m.lowMark.sample} ${m.lowMark.fg} on ${m.lowMark.bg} at ${m.lowMark.ratio.toFixed(2)}:1`);
-      if (scheme === "light" && m.smallText) add("error", "B3", `${name}: ${m.smallText.count} text under 12 px, smallest "${m.smallText.sample}" at ${m.smallText.px.toFixed(1)} px`);
+      if (m.lowText)
+        add(
+          "error",
+          "B1",
+          `${name}, ${scheme}: ${m.lowText.count} text under 4.5:1, lowest "${m.lowText.sample}" ${m.lowText.fg} on ${m.lowText.bg} at ${m.lowText.ratio.toFixed(2)}:1`,
+        );
+      if (m.lowMark)
+        add(
+          "error",
+          "B1",
+          `${name}, ${scheme}: ${m.lowMark.count} marks under 3:1, lowest ${m.lowMark.sample} ${m.lowMark.fg} on ${m.lowMark.bg} at ${m.lowMark.ratio.toFixed(2)}:1`,
+        );
+      if (scheme === "light" && m.smallText)
+        add(
+          "error",
+          "B3",
+          `${name}: ${m.smallText.count} text under 12 px, smallest "${m.smallText.sample}" at ${m.smallText.px.toFixed(1)} px`,
+        );
       for (const v of m.axe) add("error", "B27", `${name}, ${scheme}: axe ${v}`);
     }
   }
   for (const unit of narrow.units) {
     const name = `${unit.label} (${unit.kind}), ${NARROW} px`;
     // A table chart is a data table, which WCAG 1.4.10 lets scroll sideways in its frame (two-dimensional layout).
-    if (unit.overflow && !/^table\b/.test(unit.kind)) add("error", "C12", `${name}: the drawing is ${unit.overflow.content} px wide in a ${unit.overflow.box} px frame, so it scrolls sideways`);
+    if (unit.overflow && !/^table\b/.test(unit.kind))
+      add(
+        "error",
+        "C12",
+        `${name}: the drawing is ${unit.overflow.content} px wide in a ${unit.overflow.box} px frame, so it scrolls sideways`,
+      );
     const small = unit.measured?.smallText;
-    if (small) add("error", "C12", `${name}: ${small.count} text under 12 px, smallest "${small.sample}" at ${small.px.toFixed(1)} px`);
+    if (small)
+      add(
+        "error",
+        "C12",
+        `${name}: ${small.count} text under 12 px, smallest "${small.sample}" at ${small.px.toFixed(1)} px`,
+      );
   }
-  for (const [width, pass] of /** @type {const} */ ([[1280, light], [NARROW, narrow]])) {
+  for (const [width, pass] of /** @type {const} */ ([
+    [1280, light],
+    [NARROW, narrow],
+  ])) {
     const score = total(pass.shifts);
     if (score < D5_LIMIT) continue;
     const worst = [...pass.shifts].sort((a, b) => b.value - a.value)[0];
-    add("error", "D5", `at ${width} px, charts shift the page by ${score.toFixed(3)} (layout shift); largest ${worst.value.toFixed(3)}, ${worst.moved}`);
+    add(
+      "error",
+      "D5",
+      `at ${width} px, charts shift the page by ${score.toFixed(3)} (layout shift); largest ${worst.value.toFixed(3)}, ${worst.moved}`,
+    );
   }
-  for (const library of libraries) add("error", "F", `loads ${library}; every chart is drawn by Enarratio`);
-  for (const library of light.libraryCharts) add("error", "B2", `a ${library} chart is drawn in the browser, so with scripts off there is no chart, text or table`);
-  for (const svg of new Set([...off.drawn, ...light.drawn])) add("error", "F", `an SVG chart drawn outside Enarratio: ${svg}`);
-  return { charts: Math.max(off.units.length, light.units.length) + light.libraryCharts.length, findings: out };
+  for (const library of libraries)
+    add("error", "F", `loads ${library}; every chart is drawn by Enarratio`);
+  for (const library of light.libraryCharts)
+    add(
+      "error",
+      "B2",
+      `a ${library} chart is drawn in the browser, so with scripts off there is no chart, text or table`,
+    );
+  for (const svg of new Set([...off.drawn, ...light.drawn]))
+    add("error", "F", `an SVG chart drawn outside Enarratio: ${svg}`);
+  return {
+    charts: Math.max(off.units.length, light.units.length) + light.libraryCharts.length,
+    findings: out,
+  };
 }
 
 /**
@@ -334,18 +470,28 @@ async function visit(context, url, measured, narrow = false) {
     let response = await page.goto(served(url), { waitUntil: "load", timeout: 30_000 });
     // A cache that now and then answers 200 with no body (germomics, October 2026) would read as a page with no chart. The
     // retry skips the browser's cache, which would otherwise revalidate and keep the empty body.
-    for (let retry = 0; retry < 3 && response?.ok() && (await response.body()).length === 0; retry++) {
-      await (await context.newCDPSession(page)).send("Network.setCacheDisabled", { cacheDisabled: true });
+    for (
+      let retry = 0;
+      retry < 3 && response?.ok() && (await response.body()).length === 0;
+      retry++
+    ) {
+      await (
+        await context.newCDPSession(page)
+      ).send("Network.setCacheDisabled", { cacheDisabled: true });
       await new Promise((resolve) => setTimeout(resolve, 3000));
       response = await page.goto(served(url), { waitUntil: "load", timeout: 30_000 });
     }
-    if (!response || response.status() >= 400) throw new Error(`answered ${response?.status() ?? "nothing"}`);
-    if ((await response.body()).length === 0) throw new Error("answered 200 with an empty body four times in 12 seconds");
+    if (!response || response.status() >= 400)
+      throw new Error(`answered ${response?.status() ?? "nothing"}`);
+    if ((await response.body()).length === 0)
+      throw new Error("answered 200 with an empty body four times in 12 seconds");
     // A page behind a sign-in wall (Cloudflare Access, a site's own login) shows the sign-in page in its place: no chart on it
     // was read, so it must not pass as a page with none.
     const signIn = await signInWall(page, served(url));
-    if (signIn) throw new Error(`redirected to sign-in at ${signIn}, so its charts were never read`);
-    if (measured) await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => undefined);
+    if (signIn)
+      throw new Error(`redirected to sign-in at ${signIn}, so its charts were never read`);
+    if (measured)
+      await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => undefined);
     // A chart in a closed fold is read as the reader sees it once they open the fold: a frame redraws at its width only then.
     let foldsAt = -1;
     if (await page.evaluate(openFolds)) {
@@ -366,7 +512,14 @@ async function visit(context, url, measured, narrow = false) {
       await page.evaluate(settle);
       if (!narrow) await page.evaluate(axeSource);
     }
-    const result = await page.evaluate(readCharts, { measured, narrow, libraries: LIBRARIES.map(([name, container, , global]) => /** @type {const} */ ([name, container, global])), tags: AXE_TAGS });
+    const result = await page.evaluate(readCharts, {
+      measured,
+      narrow,
+      libraries: LIBRARIES.map(
+        ([name, container, , global]) => /** @type {const} */ ([name, container, global]),
+      ),
+      tags: AXE_TAGS,
+    });
     /** @type {Array<{ t: number, value: number, moved: string }>} */
     let shifts = [];
     if (pinned && result.units.length > 0) {
@@ -376,17 +529,28 @@ async function visit(context, url, measured, narrow = false) {
       shifts = await page.evaluate(readShifts, foldsAt);
       // A chart that changed its size out of sight as the page loaded moved nothing the Layout Instability API could count, so
       // the page is loaded again with that chart held in view, as a reader who scrolled to it would see it (at most 3 more loads).
-      const opened = (/** @type {number} */ t) => foldsAt >= 0 && t >= foldsAt && t < foldsAt + 1000;
+      const opened = (/** @type {number} */ t) =>
+        foldsAt >= 0 && t >= foldsAt && t < foldsAt + 1000;
       /** @type {Map<number, number>} */
       const unseen = new Map();
-      for (const r of loading?.resized ?? []) if (r.index > 0 && !opened(r.t)) unseen.set(r.index, Math.max(unseen.get(r.index) ?? 0, r.t));
+      for (const r of loading?.resized ?? [])
+        if (r.index > 0 && !opened(r.t))
+          unseen.set(r.index, Math.max(unseen.get(r.index) ?? 0, r.t));
       for (const [index, last] of [...unseen].slice(0, 3)) {
         if (total(shifts) >= D5_LIMIT) break;
         const again = await reloadPinned(context, url, index, last);
         if (total(again) > total(shifts)) shifts = again;
       }
     }
-    for (const url of scriptUrls) if (!scripts.has(url)) scripts.set(url, page.request.get(url).then((r) => r.text()).catch(() => ""));
+    for (const url of scriptUrls)
+      if (!scripts.has(url))
+        scripts.set(
+          url,
+          page.request
+            .get(url)
+            .then((r) => r.text())
+            .catch(() => ""),
+        );
     return { ...result, shifts, scripts: scriptUrls };
   } finally {
     await page.close();
@@ -405,7 +569,8 @@ async function signInWall(page, asked) {
     /(?:^|\.)cloudflareaccess\.com$/i.test(landed.hostname) ||
     /\/cdn-cgi\/access\//i.test(landed.pathname) ||
     (landed.href !== asked &&
-      (/\/(?:sign-?in|log-?in|auth)(?:\/|$)/i.test(landed.pathname) || (await page.locator('input[type="password"]').count()) > 0));
+      (/\/(?:sign-?in|log-?in|auth)(?:\/|$)/i.test(landed.pathname) ||
+        (await page.locator('input[type="password"]').count()) > 0));
   return wall ? landed.origin + landed.pathname : null;
 }
 
@@ -435,7 +600,9 @@ async function scrollThrough() {
  */
 function openFolds() {
   let opened = 0;
-  for (const fold of Array.from(document.querySelectorAll("details:not([open]):not(.enarratio-data)"))) {
+  for (const fold of Array.from(
+    document.querySelectorAll("details:not([open]):not(.enarratio-data)"),
+  )) {
     if (!fold.querySelector(".enarratio[data-enarratio], .cap-chart")) continue;
     /** @type {HTMLDetailsElement} */ (fold).open = true;
     opened++;
@@ -445,9 +612,16 @@ function openFolds() {
 
 /** In the page: fonts loaded and every finite animation finished, so colors are read as they rest. */
 function settle() {
-  const animations = document.getAnimations().filter((a) => Number.isFinite(a.effect?.getComputedTiming().endTime ?? Infinity));
-  const done = Promise.all([document.fonts.ready, ...animations.map((a) => a.finished.catch(() => undefined))]);
-  return Promise.race([done, new Promise((resolve) => setTimeout(resolve, 3000))]).then(() => undefined);
+  const animations = document
+    .getAnimations()
+    .filter((a) => Number.isFinite(a.effect?.getComputedTiming().endTime ?? Infinity));
+  const done = Promise.all([
+    document.fonts.ready,
+    ...animations.map((a) => a.finished.catch(() => undefined)),
+  ]);
+  return Promise.race([done, new Promise((resolve) => setTimeout(resolve, 3000))]).then(
+    () => undefined,
+  );
 }
 
 /**
@@ -456,37 +630,62 @@ function settle() {
  * @param {{ measured: boolean, narrow: boolean, libraries: Array<readonly [string, string | null, string | null]>, tags: string[] }} input
  */
 async function readCharts({ measured, narrow, libraries, tags }) {
-  const text = (/** @type {Element | null | undefined} */ el) => (el?.textContent ?? "").replace(/\s+/g, " ").trim();
+  const text = (/** @type {Element | null | undefined} */ el) =>
+    (el?.textContent ?? "").replace(/\s+/g, " ").trim();
   const shown = (/** @type {Element} */ el) => {
     const box = el.getBoundingClientRect();
     return box.width * box.height > 2 && el.checkVisibility({ visibilityProperty: true });
   };
-  const libraryContainers = libraries.map(([, container]) => container).filter(Boolean).join(", ");
+  const libraryContainers = libraries
+    .map(([, container]) => container)
+    .filter(Boolean)
+    .join(", ");
 
   const roots = new Set();
-  for (const el of Array.from(document.querySelectorAll(".enarratio[data-enarratio], .cap-chart"))) {
+  for (const el of Array.from(
+    document.querySelectorAll(".enarratio[data-enarratio], .cap-chart"),
+  )) {
     if (libraryContainers && el.closest(libraryContainers)) continue;
     roots.add(el.closest(".cap-chart") ?? el.closest("figure.enarratio") ?? el);
   }
   // A frame showing no data, or Capsomer's refusal in place of a chart, carries no figure to check.
-  const units = [...roots].filter((unit) => !["nodata", "refused"].includes(unit.getAttribute("data-state") ?? ""));
+  const units = [...roots].filter(
+    (unit) => !["nodata", "refused"].includes(unit.getAttribute("data-state") ?? ""),
+  );
   const PRIMITIVES = ["sparkline", "heat-strip", "progress-ring", "uptime-strip", "timeline"];
   // At the narrow width: a frame that scrolls (its content wider than its box), or a drawing wider than the chart around it.
   const overflowOf = (/** @type {Element} */ unit) => {
-    for (const el of [unit, ...Array.from(unit.querySelectorAll(".enarratio-frame, .cap-chart-figure, .cap-chart-body, figure.enarratio"))]) {
-      if (el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 0) return { content: el.scrollWidth, box: el.clientWidth };
+    for (const el of [
+      unit,
+      ...Array.from(
+        unit.querySelectorAll(
+          ".enarratio-frame, .cap-chart-figure, .cap-chart-body, figure.enarratio",
+        ),
+      ),
+    ]) {
+      if (el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 0)
+        return { content: el.scrollWidth, box: el.clientWidth };
     }
     const outer = (unit.matches("svg") ? unit.parentElement : unit)?.getBoundingClientRect();
-    for (const svg of Array.from(unit.querySelectorAll("svg")).concat(unit.matches("svg") ? [/** @type {any} */ (unit)] : [])) {
+    for (const svg of Array.from(unit.querySelectorAll("svg")).concat(
+      unit.matches("svg") ? [/** @type {any} */ (unit)] : [],
+    )) {
       const box = svg.getBoundingClientRect();
-      if (outer && box.width > 0 && box.right > outer.right + 1) return { content: Math.round(box.width), box: Math.round(outer.width) };
+      if (outer && box.width > 0 && box.right > outer.right + 1)
+        return { content: Math.round(box.width), box: Math.round(outer.width) };
     }
     return null;
   };
 
   // Paint on a one-pixel canvas, so any CSS color syntax and any alpha composite as the browser would.
-  const ctx = /** @type {CanvasRenderingContext2D} */ (Object.assign(document.createElement("canvas"), { width: 1, height: 1 }).getContext("2d", { willReadFrequently: true }));
-  const dark = matchMedia("(prefers-color-scheme: dark)").matches && /dark/.test(getComputedStyle(document.documentElement).colorScheme);
+  const ctx = /** @type {CanvasRenderingContext2D} */ (
+    Object.assign(document.createElement("canvas"), { width: 1, height: 1 }).getContext("2d", {
+      willReadFrequently: true,
+    })
+  );
+  const dark =
+    matchMedia("(prefers-color-scheme: dark)").matches &&
+    /dark/.test(getComputedStyle(document.documentElement).colorScheme);
   const paint = (/** @type {Array<[string, number]>} */ layers) => {
     ctx.globalAlpha = 1;
     ctx.fillStyle = dark ? "#121212" : "#ffffff";
@@ -508,10 +707,13 @@ async function readCharts({ measured, narrow, libraries, tags }) {
     return layers;
   };
   const luminance = (/** @type {number[]} */ rgb) => {
-    const [r, g, b] = rgb.map((v) => v / 255).map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+    const [r, g, b] = rgb
+      .map((v) => v / 255)
+      .map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   };
-  const hex = (/** @type {number[]} */ rgb) => `#${rgb.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+  const hex = (/** @type {number[]} */ rgb) =>
+    `#${rgb.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
   // Inside an SVG, what is behind a label is the page behind the SVG and then the last shape drawn before it that covers
   // its center (a label on a gene's box). A mark is read against the page, not against the marks it touches.
   /** @type {Map<Element, Array<{ el: Element, box: DOMRect, fill: string, alpha: number }>>} */
@@ -520,34 +722,66 @@ async function readCharts({ measured, narrow, libraries, tags }) {
     const svg = el instanceof SVGElement ? el.closest("svg") : null;
     if (!svg) return [];
     if (!shapesOf.has(svg)) {
-      shapesOf.set(svg, Array.from(svg.querySelectorAll("rect, circle, ellipse, path, polygon")).flatMap((shape) => {
-        const style = getComputedStyle(shape);
-        const alpha = Number(style.fillOpacity) * Number(style.opacity);
-        const fill = solid(style.fill);
-        return isColor(fill) && alpha > 0 ? [{ el: shape, box: shape.getBoundingClientRect(), fill, alpha }] : [];
-      }));
+      shapesOf.set(
+        svg,
+        Array.from(svg.querySelectorAll("rect, circle, ellipse, path, polygon")).flatMap(
+          (shape) => {
+            const style = getComputedStyle(shape);
+            const alpha = Number(style.fillOpacity) * Number(style.opacity);
+            const fill = solid(style.fill);
+            return isColor(fill) && alpha > 0
+              ? [{ el: shape, box: shape.getBoundingClientRect(), fill, alpha }]
+              : [];
+          },
+        ),
+      );
     }
     const box = el.getBoundingClientRect();
     const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
     /** @type {Array<[string, number]>} */
     let layer = [];
-    for (const shape of /** @type {Array<{ el: Element, box: DOMRect, fill: string, alpha: number }>} */ (shapesOf.get(svg))) {
+    for (const shape of /** @type {Array<{ el: Element, box: DOMRect, fill: string, alpha: number }>} */ (
+      shapesOf.get(svg)
+    )) {
       if (shape.el === el) break;
-      if (shape.el.contains(el) || x < shape.box.left || x > shape.box.right || y < shape.box.top || y > shape.box.bottom) continue;
+      if (
+        shape.el.contains(el) ||
+        x < shape.box.left ||
+        x > shape.box.right ||
+        y < shape.box.top ||
+        y > shape.box.bottom
+      )
+        continue;
       layer = [[shape.fill, shape.alpha]];
     }
     return layer;
   };
-  const contrast = (/** @type {Element} */ el, /** @type {string} */ color, /** @type {number} */ alpha, /** @type {Element} */ ground, label = false) => {
+  const contrast = (
+    /** @type {Element} */ el,
+    /** @type {string} */ color,
+    /** @type {number} */ alpha,
+    /** @type {Element} */ ground,
+    label = false,
+  ) => {
     const layers = [...behind(ground), ...(label ? under(el) : [])];
     const bg = paint(layers);
     const fg = paint([...layers, [color, alpha]]);
     const [a, b] = [luminance(fg), luminance(bg)];
-    return { fg: hex(fg), bg: hex(bg), ratio: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05), el };
+    return {
+      fg: hex(fg),
+      bg: hex(bg),
+      ratio: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05),
+      el,
+    };
   };
   const opacity = (/** @type {Element} */ el, /** @type {Element} */ stop) => {
     let value = 1;
-    for (let node = /** @type {Element | null} */ (el); node && node !== stop.parentElement; node = node.parentElement) value *= Number(getComputedStyle(node).opacity);
+    for (
+      let node = /** @type {Element | null} */ (el);
+      node && node !== stop.parentElement;
+      node = node.parentElement
+    )
+      value *= Number(getComputedStyle(node).opacity);
     return value;
   };
   // The theme's grid color as painted where the chart is: the custom property's value, resolved by a probe element so
@@ -566,7 +800,8 @@ async function readCharts({ measured, narrow, libraries, tags }) {
     }
     return grids.get(raw);
   };
-  const isColor = (/** @type {string} */ paint) => Boolean(paint) && !/^(none|transparent|url\()|^rgba\([^)]*,\s*0\)$/.test(paint);
+  const isColor = (/** @type {string} */ paint) =>
+    Boolean(paint) && !/^(none|transparent|url\()|^rgba\([^)]*,\s*0\)$/.test(paint);
   // A fill of url(#id) is painted by a pattern or a gradient: read it as the pattern's base <rect> (Enarratio's texture fills
   // draw the series color first, the texture over it) or the gradient's first stop, or it would read as nothing painted.
   /** @type {(paint: string, depth?: number) => string} */
@@ -578,7 +813,9 @@ async function readCharts({ measured, narrow, libraries, tags }) {
     const tag = target.tagName.toLowerCase();
     if (tag === "pattern") {
       /** @type {Element | undefined} */
-      const base = Array.from(target.querySelectorAll("rect")).find((rect) => isColor(solid(getComputedStyle(rect).fill, depth + 1)));
+      const base = Array.from(target.querySelectorAll("rect")).find((rect) =>
+        isColor(solid(getComputedStyle(rect).fill, depth + 1)),
+      );
       return base ? solid(getComputedStyle(base).fill, depth + 1) : paint;
     }
     if (tag === "lineargradient" || tag === "radialgradient") {
@@ -594,13 +831,25 @@ async function readCharts({ measured, narrow, libraries, tags }) {
 
   const out = units.map((unit, index) => {
     unit.setAttribute("data-chart-audit", String(index));
-    const own = (/** @type {string} */ selector) => (unit.matches(selector) ? unit : unit.querySelector(selector));
-    const svgs = [unit, ...Array.from(unit.querySelectorAll("svg"))].filter((el) => el.tagName.toLowerCase() === "svg" && !el.parentElement?.closest("svg") && el.getAttribute("aria-hidden") !== "true");
+    const own = (/** @type {string} */ selector) =>
+      unit.matches(selector) ? unit : unit.querySelector(selector);
+    const svgs = [unit, ...Array.from(unit.querySelectorAll("svg"))].filter(
+      (el) =>
+        el.tagName.toLowerCase() === "svg" &&
+        !el.parentElement?.closest("svg") &&
+        el.getAttribute("aria-hidden") !== "true",
+    );
     // Enarratio's `inline: true` primitive: the bare drawing, outside any figure or frame.
     // Enarratio's `inline: true` primitives: bare drawings, in no Enarratio figure, alone or in a frame that is not a chart's (a
     // Capsomer stat tile, a table cell). The unit is inline when every Enarratio drawing in it is one.
-    const pieces = [unit, ...Array.from(unit.querySelectorAll("[data-enarratio]"))].filter((el) => el.hasAttribute("data-enarratio"));
-    const bare = pieces.length > 0 && !unit.matches("figure.enarratio") && !unit.querySelector("figure.enarratio") && pieces.every((el) => PRIMITIVES.includes(el.getAttribute("data-enarratio") ?? ""));
+    const pieces = [unit, ...Array.from(unit.querySelectorAll("[data-enarratio]"))].filter((el) =>
+      el.hasAttribute("data-enarratio"),
+    );
+    const bare =
+      pieces.length > 0 &&
+      !unit.matches("figure.enarratio") &&
+      !unit.querySelector("figure.enarratio") &&
+      pieces.every((el) => PRIMITIVES.includes(el.getAttribute("data-enarratio") ?? ""));
     /** @type {null | { hidden: boolean, ok: boolean }} */
     let inline = null;
     if (bare) {
@@ -608,53 +857,108 @@ async function readCharts({ measured, narrow, libraries, tags }) {
         if (piece.getAttribute("aria-hidden") === "true" || piece.closest("[aria-hidden='true']")) {
           // The words beside it: the nearest ancestor (a stat tile, a table row) with visible text of its own.
           let near = piece.parentElement;
-          const said = (/** @type {Element} */ el) => (/** @type {HTMLElement} */ (el).innerText ?? "").trim();
+          const said = (/** @type {Element} */ el) =>
+            (/** @type {HTMLElement} */ (el).innerText ?? "").trim();
           while (near && near !== document.body && !said(near)) near = near.parentElement;
-          return { hidden: true, ok: Boolean(near) && /\d/.test(said(/** @type {Element} */ (near))) };
+          return {
+            hidden: true,
+            ok: Boolean(near) && /\d/.test(said(/** @type {Element} */ (near))),
+          };
         }
-        const name = (piece.getAttribute("aria-label") ?? "").trim() || (piece.getAttribute("aria-labelledby") ?? "").split(/\s+/).map((/** @type {string} */ id) => text(document.getElementById(id))).join(" ").trim();
-        return { hidden: false, ok: piece.getAttribute("role") === "img" && (/\d/.test(name) || name.split(/\s+/).length >= 4) };
+        const name =
+          (piece.getAttribute("aria-label") ?? "").trim() ||
+          (piece.getAttribute("aria-labelledby") ?? "")
+            .split(/\s+/)
+            .map((/** @type {string} */ id) => text(document.getElementById(id)))
+            .join(" ")
+            .trim();
+        return {
+          hidden: false,
+          ok:
+            piece.getAttribute("role") === "img" &&
+            (/\d/.test(name) || name.split(/\s+/).length >= 4),
+        };
       });
       inline = verdicts.find((v) => !v.ok) ?? { hidden: verdicts.every((v) => v.hidden), ok: true };
     }
-    const drawing = own(".enarratio-frame svg, svg.enarratio, div.enarratio, .cap-chart-body svg") ?? svgs[0] ?? null;
+    const drawing =
+      own(".enarratio-frame svg, svg.enarratio, div.enarratio, .cap-chart-body svg") ??
+      svgs[0] ??
+      null;
     const title = text(own(".enarratio-title, .cap-chart-title"));
     const finding = own(".enarratio-finding, .enarratio-summary, .cap-chart-reason");
     const table = unit.querySelector("table");
     const names = svgs.map((svg) => {
-      const labeledBy = (svg.getAttribute("aria-labelledby") ?? "").split(/\s+/).map((/** @type {string} */ id) => text(document.getElementById(id))).join(" ").trim();
+      const labeledBy = (svg.getAttribute("aria-labelledby") ?? "")
+        .split(/\s+/)
+        .map((/** @type {string} */ id) => text(document.getElementById(id)))
+        .join(" ")
+        .trim();
       const role = svg.getAttribute("role") ?? "none";
       // WAI-ARIA APG: a static chart is an image; an enhanced one the reader can enter is a group described as a chart.
-      const roleOk = role === "img" || (role === "group" && (svg.getAttribute("aria-roledescription") ?? "").trim().toLowerCase() === "chart");
-      return { role, roleOk, name: (svg.getAttribute("aria-label") ?? "").trim() || labeledBy || text(svg.querySelector(":scope > title")) };
+      const roleOk =
+        role === "img" ||
+        (role === "group" &&
+          (svg.getAttribute("aria-roledescription") ?? "").trim().toLowerCase() === "chart");
+      return {
+        role,
+        roleOk,
+        name:
+          (svg.getAttribute("aria-label") ?? "").trim() ||
+          labeledBy ||
+          text(svg.querySelector(":scope > title")),
+      };
     });
-    const kindFirst = [...new Set([unit, ...Array.from(unit.querySelectorAll("[data-enarratio]"))].map((el) => el.getAttribute("data-enarratio")).filter(Boolean))].join("+") || "frame";
+    const kindFirst =
+      [
+        ...new Set(
+          [unit, ...Array.from(unit.querySelectorAll("[data-enarratio]"))]
+            .map((el) => el.getAttribute("data-enarratio"))
+            .filter(Boolean),
+        ),
+      ].join("+") || "frame";
     const kind = bare ? `inline ${kindFirst}` : kindFirst;
     const label = unit.id ? `#${unit.id}` : `"${(title || names[0]?.name || kind).slice(0, 60)}"`;
-    const sourceText = Array.from(unit.querySelectorAll("p, figcaption, small, footer")).some((el) => /^(sources?|data)\s*:/i.test(text(el)));
+    const sourceText = Array.from(unit.querySelectorAll("p, figcaption, small, footer")).some(
+      (el) => /^(sources?|data)\s*:/i.test(text(el)),
+    );
     return {
       label,
       kind,
       drawing: Boolean(drawing),
       title,
       finding: Boolean(text(finding)),
-      findingHidden: Boolean(finding && (finding.closest("[data-summary='hidden']") || !shown(finding))),
+      findingHidden: Boolean(
+        finding && (finding.closest("[data-summary='hidden']") || !shown(finding)),
+      ),
       caption: Boolean(text(unit.querySelector("figcaption, .cap-chart-caption"))),
       table: table && {
         th: table.querySelectorAll("th").length,
-        unscoped: Array.from(table.querySelectorAll("th")).filter((th) => !th.getAttribute("scope")).length,
+        unscoped: Array.from(table.querySelectorAll("th")).filter((th) => !th.getAttribute("scope"))
+          .length,
         caption: Boolean(text(table.querySelector("caption"))),
       },
       svgs: names,
       // D6 weighs the drawing a reader is shown (checklist D6: "inline SVG under a set size per chart"), not the data
       // table, which is the accessible equivalent, nor the narrow drawing the redraw spec holds for a phone.
-      bytes: Array.from(unit.querySelectorAll(".enarratio-frame svg, svg[role='img']")).filter((svg, _i, all) => !all.some((other) => other !== svg && other.contains(svg))).reduce((sum, svg) => sum + new Blob([svg.outerHTML]).size, 0) || new Blob([unit.outerHTML]).size,
-      csv: Boolean(unit.querySelector("a[href$='.csv' i], a[href*='.csv?' i], a[href^='data:text/csv' i], a[download][href*='csv' i], a.enarratio-csv, .enarratio-csv a")),
-      source: Boolean(unit.querySelector(".enarratio-source, .cap-chart-source, [data-chart-source]")) || sourceText,
+      bytes:
+        Array.from(unit.querySelectorAll(".enarratio-frame svg, svg[role='img']"))
+          .filter((svg, _i, all) => !all.some((other) => other !== svg && other.contains(svg)))
+          .reduce((sum, svg) => sum + new Blob([svg.outerHTML]).size, 0) ||
+        new Blob([unit.outerHTML]).size,
+      csv: Boolean(
+        unit.querySelector(
+          "a[href$='.csv' i], a[href*='.csv?' i], a[href^='data:text/csv' i], a[download][href*='csv' i], a.enarratio-csv, .enarratio-csv a",
+        ),
+      ),
+      source:
+        Boolean(unit.querySelector(".enarratio-source, .cap-chart-source, [data-chart-source]")) ||
+        sourceText,
       frame: unit.matches(".cap-chart"),
       inline,
       overflow: narrow ? overflowOf(unit) : null,
-      measured: /** @type {null | { lowText: any, lowMark: any, smallText: any, axe: string[] }} */ (null),
+      measured:
+        /** @type {null | { lowText: any, lowMark: any, smallText: any, axe: string[] }} */ (null),
     };
   });
 
@@ -666,8 +970,14 @@ async function readCharts({ measured, narrow, libraries, tags }) {
       const lowMark = [];
       /** @type {Array<{ px: number, el: Element }>} */
       const small = [];
-      const texts = [...(unit.matches("svg") ? [unit] : []), ...Array.from(unit.querySelectorAll("*"))].filter(
-        (el) => el.tagName.toLowerCase() === "text" || (!(el instanceof SVGElement) && Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent?.trim())),
+      const texts = [
+        ...(unit.matches("svg") ? [unit] : []),
+        ...Array.from(unit.querySelectorAll("*")),
+      ].filter(
+        (el) =>
+          el.tagName.toLowerCase() === "text" ||
+          (!(el instanceof SVGElement) &&
+            Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent?.trim())),
       );
       for (const el of texts) {
         if (!shown(el)) continue;
@@ -676,35 +986,64 @@ async function readCharts({ measured, narrow, libraries, tags }) {
         const ground = svg ? /** @type {Element} */ (svg.ownerSVGElement ?? svg) : el;
         const color = svg ? solid(style.fill) : style.color;
         if (isColor(color)) {
-          const reading = contrast(el, color, opacity(el, unit) * (svg ? Number(style.fillOpacity) : 1), ground, true);
+          const reading = contrast(
+            el,
+            color,
+            opacity(el, unit) * (svg ? Number(style.fillOpacity) : 1),
+            ground,
+            true,
+          );
           if (reading.ratio < 4.5) lowText.push(reading);
         }
         const matrix = svg?.getScreenCTM();
-        const px = Number.parseFloat(style.fontSize) * (matrix ? Math.hypot(matrix.a, matrix.b) : 1);
+        const px =
+          Number.parseFloat(style.fontSize) * (matrix ? Math.hypot(matrix.a, matrix.b) : 1);
         if (px < 11.95) small.push({ px, el });
       }
-      for (const el of Array.from(unit.querySelectorAll("rect, circle, ellipse, path, line, polyline, polygon, .enarratio-swatch"))) {
-        if (el.closest("defs, clipPath, mask, pattern, marker, [data-enarratio-mark*='grid'], [aria-hidden='true'] > title") || !el.checkVisibility({ visibilityProperty: true })) continue;
+      for (const el of Array.from(
+        unit.querySelectorAll(
+          "rect, circle, ellipse, path, line, polyline, polygon, .enarratio-swatch",
+        ),
+      )) {
+        if (
+          el.closest(
+            "defs, clipPath, mask, pattern, marker, [data-enarratio-mark*='grid'], [aria-hidden='true'] > title",
+          ) ||
+          !el.checkVisibility({ visibilityProperty: true })
+        )
+          continue;
         const box = el.getBoundingClientRect();
         if (box.width === 0 && box.height === 0) continue;
         const style = getComputedStyle(el);
-        const ground = el instanceof SVGGraphicsElement ? /** @type {Element} */ (el.ownerSVGElement ?? el) : /** @type {Element} */ (el.parentElement);
+        const ground =
+          el instanceof SVGGraphicsElement
+            ? /** @type {Element} */ (el.ownerSVGElement ?? el)
+            : /** @type {Element} */ (el.parentElement);
         const base = opacity(el, unit);
         // A mark is seen by its fill or its outline, whichever stands out more; a translucent fill (an area under its
         // line) and the grid color (gridlines, a ring's track) are context, not marks.
         const grid = gridOf(el);
-        const paints = el instanceof SVGElement
-          ? [
-              ...(el.tagName.toLowerCase() !== "line" ? [[solid(style.fill), base * Number(style.fillOpacity)]] : []),
-              ...(Number.parseFloat(style.strokeWidth) >= 0.5 ? [[solid(style.stroke), base * Number(style.strokeOpacity)]] : []),
-            ]
-          : [
-              [style.backgroundColor, base],
-              // An HTML swatch's edge counts as its outline (Enarratio's 1px edge on a pale ramp step's legend swatch).
-              ...(Number.parseFloat(style.borderTopWidth) >= 0.5 ? [[style.borderTopColor, base]] : []),
-            ];
+        const paints =
+          el instanceof SVGElement
+            ? [
+                ...(el.tagName.toLowerCase() !== "line"
+                  ? [[solid(style.fill), base * Number(style.fillOpacity)]]
+                  : []),
+                ...(Number.parseFloat(style.strokeWidth) >= 0.5
+                  ? [[solid(style.stroke), base * Number(style.strokeOpacity)]]
+                  : []),
+              ]
+            : [
+                [style.backgroundColor, base],
+                // An HTML swatch's edge counts as its outline (Enarratio's 1px edge on a pale ramp step's legend swatch).
+                ...(Number.parseFloat(style.borderTopWidth) >= 0.5
+                  ? [[style.borderTopColor, base]]
+                  : []),
+              ];
         const readings = /** @type {Array<[string, number]>} */ (paints)
-          .filter(([color, alpha]) => isColor(color) && alpha >= 0.5 && hex(paint([[color, 1]])) !== grid)
+          .filter(
+            ([color, alpha]) => isColor(color) && alpha >= 0.5 && hex(paint([[color, 1]])) !== grid,
+          )
           .map(([color, alpha]) => contrast(el, color, alpha, ground));
         if (readings.length === 0) continue;
         const reading = readings.reduce((a, b) => (b.ratio > a.ratio ? b : a));
@@ -714,31 +1053,58 @@ async function readCharts({ measured, narrow, libraries, tags }) {
         if (el.closest("[aria-hidden='true']") && reading.ratio < 1.1) continue;
         if (reading.ratio < 3) lowMark.push(reading);
       }
-      const lowest = (/** @type {Array<{ fg: string, bg: string, ratio: number, el: Element }>} */ list, /** @type {boolean} */ quote) => {
+      const lowest = (
+        /** @type {Array<{ fg: string, bg: string, ratio: number, el: Element }>} */ list,
+        /** @type {boolean} */ quote,
+      ) => {
         if (list.length === 0) return null;
         const worst = list.reduce((a, b) => (b.ratio < a.ratio ? b : a));
-        return { count: list.length, fg: worst.fg, bg: worst.bg, ratio: worst.ratio, sample: quote ? text(worst.el).slice(0, 40) : describe(worst.el) };
+        return {
+          count: list.length,
+          fg: worst.fg,
+          bg: worst.bg,
+          ratio: worst.ratio,
+          sample: quote ? text(worst.el).slice(0, 40) : describe(worst.el),
+        };
       };
       const smallest = small.length ? small.reduce((a, b) => (b.px < a.px ? b : a)) : null;
       out[index].measured = {
         lowText: lowest(lowText, true),
         lowMark: lowest(lowMark, false),
-        smallText: smallest && { count: small.length, px: smallest.px, sample: text(smallest.el).slice(0, 40) },
+        smallText: smallest && {
+          count: small.length,
+          px: smallest.px,
+          sample: text(smallest.el).slice(0, 40),
+        },
         axe: [],
       };
     }
     // @ts-ignore axe is the axe-core source the audit evaluated in the page
     const axe = /** @type {any} */ (window).axe;
     if (units.length > 0 && axe) {
-      const { violations } = narrow ? { violations: [] } : await axe.run({ include: [["[data-chart-audit]"]] }, { runOnly: { type: "tag", values: tags }, resultTypes: ["violations"], elementRef: true });
+      const { violations } = narrow
+        ? { violations: [] }
+        : await axe.run(
+            { include: [["[data-chart-audit]"]] },
+            {
+              runOnly: { type: "tag", values: tags },
+              resultTypes: ["violations"],
+              elementRef: true,
+            },
+          );
       for (const violation of violations) {
         /** @type {Map<number, number>} */
         const hits = new Map();
         for (const node of violation.nodes) {
-          const index = Number(node.element?.closest("[data-chart-audit]")?.getAttribute("data-chart-audit"));
+          const index = Number(
+            node.element?.closest("[data-chart-audit]")?.getAttribute("data-chart-audit"),
+          );
           if (Number.isInteger(index)) hits.set(index, (hits.get(index) ?? 0) + 1);
         }
-        for (const [index, count] of hits) out[index].measured?.axe.push(`${violation.id} (${violation.impact}): ${violation.help}, ${count} node${count === 1 ? "" : "s"}`);
+        for (const [index, count] of hits)
+          out[index].measured?.axe.push(
+            `${violation.id} (${violation.impact}): ${violation.help}, ${count} node${count === 1 ? "" : "s"}`,
+          );
       }
     }
   }
@@ -760,15 +1126,24 @@ async function readCharts({ measured, narrow, libraries, tags }) {
   // system map, 2026-11-05), and a decorative badge hidden with its lettering do not count.
   /** @type {string[]} */
   const drawn = [];
-  const distinct = (/** @type {number[]} */ list) => new Set(list.map((n) => Math.round(n * 2))).size;
+  const distinct = (/** @type {number[]} */ list) =>
+    new Set(list.map((n) => Math.round(n * 2))).size;
   for (const svg of Array.from(document.querySelectorAll("svg"))) {
-    if (svg.parentElement?.closest("svg") || svg.closest(".enarratio, [data-enarratio]") || (libraryContainers && svg.closest(libraryContainers))) continue;
+    if (
+      svg.parentElement?.closest("svg") ||
+      svg.closest(".enarratio, [data-enarratio]") ||
+      (libraryContainers && svg.closest(libraryContainers))
+    )
+      continue;
     const box = svg.getBoundingClientRect();
     if (box.width < 60 || box.height < 16) continue;
     if (svg.getAttribute("aria-hidden") === "true" && svg.querySelector("text")) continue;
-    const boxes = (/** @type {string} */ tag) => Array.from(svg.querySelectorAll(tag)).map((el) => el.getBoundingClientRect());
+    const boxes = (/** @type {string} */ tag) =>
+      Array.from(svg.querySelectorAll(tag)).map((el) => el.getBoundingClientRect());
     const labels = boxes("text").map((t) => [t.x + t.width / 2, t.y + t.height / 2]);
-    const rects = boxes("rect").filter((r) => !labels.some(([x, y]) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom));
+    const rects = boxes("rect").filter(
+      (r) => !labels.some(([x, y]) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom),
+    );
     /** Where each wire starts and ends, on screen. */
     const ends = Array.from(svg.querySelectorAll("path")).flatMap((path) => {
       const matrix = path.getScreenCTM();
@@ -776,25 +1151,48 @@ async function readCharts({ measured, narrow, libraries, tags }) {
       if (!matrix || !(length > 0)) return [];
       return [0, length].map((at) => path.getPointAtLength(at).matrixTransform(matrix));
     });
-    const port = (/** @type {DOMRect} */ d) => ends.some((end) => Math.hypot(end.x - (d.x + d.width / 2), end.y - (d.y + d.height / 2)) < 1);
+    const port = (/** @type {DOMRect} */ d) =>
+      ends.some((end) => Math.hypot(end.x - (d.x + d.width / 2), end.y - (d.y + d.height / 2)) < 1);
     const dots = boxes("circle, ellipse").filter((d) => !port(d));
     const lines = boxes("line");
-    const polyline = Array.from(svg.querySelectorAll("polyline")).some((el) => /** @type {SVGPolylineElement} */ (el).points.length >= 4);
+    const polyline = Array.from(svg.querySelectorAll("polyline")).some(
+      (el) => /** @type {SVGPolylineElement} */ (el).points.length >= 4,
+    );
     const why = polyline
       ? "a polyline"
-      : rects.length >= 5 && (distinct(rects.map((r) => r.height)) >= 3 || distinct(rects.map((r) => r.width)) >= 3 || (rects.length >= 8 && distinct(rects.map((r) => r.x)) >= 8))
+      : rects.length >= 5 &&
+          (distinct(rects.map((r) => r.height)) >= 3 ||
+            distinct(rects.map((r) => r.width)) >= 3 ||
+            (rects.length >= 8 && distinct(rects.map((r) => r.x)) >= 8))
         ? `${rects.length} rects`
-        : dots.length >= 5 && distinct(dots.map((d) => d.x * 10_000 + d.y)) >= 5 && dots.some((d) => dots.filter((e) => Math.abs(e.width - d.width) < 0.5).length >= 5)
+        : dots.length >= 5 &&
+            distinct(dots.map((d) => d.x * 10_000 + d.y)) >= 5 &&
+            dots.some((d) => dots.filter((e) => Math.abs(e.width - d.width) < 0.5).length >= 5)
           ? `${dots.length} dots`
-          : lines.length >= 5 && distinct(lines.map((l) => Math.hypot(l.width, l.height))) >= 3 && [(/** @type {DOMRect} */ l) => l.bottom, (/** @type {DOMRect} */ l) => l.left].some((edge) => lines.some((l) => lines.filter((m) => Math.abs(edge(m) - edge(l)) < 0.5).length >= 5))
+          : lines.length >= 5 &&
+              distinct(lines.map((l) => Math.hypot(l.width, l.height))) >= 3 &&
+              [(/** @type {DOMRect} */ l) => l.bottom, (/** @type {DOMRect} */ l) => l.left].some(
+                (edge) =>
+                  lines.some(
+                    (l) => lines.filter((m) => Math.abs(edge(m) - edge(l)) < 0.5).length >= 5,
+                  ),
+              )
             ? `${lines.length} lines`
             : null;
     if (!why) continue;
-    const heading = svg.closest("section, figure, article")?.querySelector("h1, h2, h3, h4, figcaption");
-    const name = (svg.getAttribute("aria-label") ?? "").trim() || text(heading) || svg.getAttribute("class") || "an svg";
+    const heading = svg
+      .closest("section, figure, article")
+      ?.querySelector("h1, h2, h3, h4, figcaption");
+    const name =
+      (svg.getAttribute("aria-label") ?? "").trim() ||
+      text(heading) ||
+      svg.getAttribute("class") ||
+      "an svg";
     drawn.push(`"${name.slice(0, 60)}" (${why})`);
   }
-  const frames = Array.from(document.querySelectorAll("iframe[src]")).map((frame) => /** @type {HTMLIFrameElement} */ (frame).src);
+  const frames = Array.from(document.querySelectorAll("iframe[src]")).map(
+    (frame) => /** @type {HTMLIFrameElement} */ (frame).src,
+  );
   return { units: out, libraries: found, libraryCharts, drawn, frames };
 }
 
@@ -807,12 +1205,19 @@ async function loadTools() {
   } catch {
     const pins = createRequire(import.meta.url)("../package.json").peerDependencies;
     const specs = ["playwright-core", "axe-core"].map((name) => `${name}@${pins[name]}`);
-    const dir = join(tmpdir(), `prelum-chart-audit-${specs.join("-").replace(/[^A-Za-z0-9.-]/g, "_")}`);
+    const dir = join(
+      tmpdir(),
+      `prelum-chart-audit-${specs.join("-").replace(/[^A-Za-z0-9.-]/g, "_")}`,
+    );
     if (!existsSync(join(dir, "node_modules", "axe-core", "package.json"))) {
       mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, "package.json"), "{}");
       console.error(`prelum-chart-audit: installing ${specs.join(" and ")} into ${dir}`);
-      execFileSync("npm", ["install", "--no-save", "--ignore-scripts", "--no-audit", "--no-fund", ...specs], { cwd: dir, stdio: "pipe" });
+      execFileSync(
+        "npm",
+        ["install", "--no-save", "--ignore-scripts", "--no-audit", "--no-fund", ...specs],
+        { cwd: dir, stdio: "pipe" },
+      );
     }
     const local = createRequire(join(dir, "package.json"));
     return { chromium: local("playwright-core").chromium, axeSource: local("axe-core").source };
@@ -842,7 +1247,14 @@ async function launch(chromium) {
 async function newContext(browser, colorScheme, javaScriptEnabled, width = 1280) {
   // Headless Chrome's own user agent says HeadlessChrome, which some bot rules refuse; this one names the audit instead.
   const userAgent = `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${browser.version().split(".")[0]}.0.0.0 Safari/537.36 prelum-chart-audit`;
-  const context = await browser.newContext({ colorScheme, javaScriptEnabled, reducedMotion: "reduce", bypassCSP: true, viewport: { width, height: 900 }, userAgent });
+  const context = await browser.newContext({
+    colorScheme,
+    javaScriptEnabled,
+    reducedMotion: "reduce",
+    bypassCSP: true,
+    viewport: { width, height: 900 },
+    userAgent,
+  });
   if (javaScriptEnabled) await context.addInitScript(watchShifts);
   return context;
 }
@@ -866,7 +1278,11 @@ function watchShifts() {
           const tag = `${el.localName}${el.classList.length ? `.${[...el.classList].join(".")}` : ""}`;
           const dy = Math.round(source.currentRect.y - source.previousRect.y);
           const dh = Math.round(source.currentRect.height - source.previousRect.height);
-          shifts.push({ t: entry.startTime, value: entry.value, moved: `${tag} ${dy >= 0 ? "+" : ""}${dy} px${dh ? `, height ${dh >= 0 ? "+" : ""}${dh}` : ""}` });
+          shifts.push({
+            t: entry.startTime,
+            value: entry.value,
+            moved: `${tag} ${dy >= 0 ? "+" : ""}${dy} px${dh ? `, height ${dh >= 0 ? "+" : ""}${dh}` : ""}`,
+          });
           break;
         }
       }
@@ -905,12 +1321,18 @@ function pinChart(index) {
   Object.defineProperty(window, "__chartAuditPin", { value: state });
   const frame = () => {
     if (state.stop) return;
-    const charts = Array.from(document.querySelectorAll(ROOT)).filter((chart) => !chart.parentElement?.closest(ROOT));
+    const charts = Array.from(document.querySelectorAll(ROOT)).filter(
+      (chart) => !chart.parentElement?.closest(ROOT),
+    );
     charts.forEach((chart, i) => {
       const box = chart.getBoundingClientRect();
       if (box.width === 0) return;
-      const inSight = box.height <= innerHeight ? box.top >= 0 && box.bottom <= innerHeight : box.top < innerHeight && box.bottom > 0;
-      if (heights[i] !== undefined && Math.abs(box.height - heights[i]) >= 1 && !inSight) resized.push({ index: i, t: performance.now() });
+      const inSight =
+        box.height <= innerHeight
+          ? box.top >= 0 && box.bottom <= innerHeight
+          : box.top < innerHeight && box.bottom > 0;
+      if (heights[i] !== undefined && Math.abs(box.height - heights[i]) >= 1 && !inSight)
+        resized.push({ index: i, t: performance.now() });
       heights[i] = box.height;
     });
     const top = charts[index]?.getBoundingClientRect().top;
@@ -922,7 +1344,10 @@ function pinChart(index) {
 
 /** In the page: stop pinChart; the charts that changed size out of sight. */
 function stopPin() {
-  const state = /** @type {{ stop: boolean, resized: Array<{ index: number, t: number }> } | undefined} */ (/** @type {any} */ (window).__chartAuditPin);
+  const state =
+    /** @type {{ stop: boolean, resized: Array<{ index: number, t: number }> } | undefined} */ (
+      /** @type {any} */ (window).__chartAuditPin
+    );
   if (!state) return { resized: [] };
   state.stop = true;
   return { resized: state.resized };
@@ -978,6 +1403,8 @@ function quietShifts(until) {
 
 /** In the page: the chart shifts watchShifts kept, less those in the second after a fold the check opened. @param {number} opened */
 function readShifts(opened) {
-  const shifts = /** @type {Array<{ t: number, value: number, moved: string }>} */ (/** @type {any} */ (window).__chartAuditShifts ?? []);
+  const shifts = /** @type {Array<{ t: number, value: number, moved: string }>} */ (
+    /** @type {any} */ (window).__chartAuditShifts ?? []
+  );
   return shifts.filter((s) => !(opened >= 0 && s.t >= opened && s.t < opened + 1000));
 }

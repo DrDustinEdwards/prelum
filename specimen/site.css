@@ -500,7 +500,9 @@ main {
   font-weight: 600;
   text-decoration: none;
 }
-.enarratio :is(.enarratio-source, .enarratio-note, .enarratio-caption) :is(a, .enarratio-export):hover {
+.enarratio
+  :is(.enarratio-source, .enarratio-note, .enarratio-caption)
+  :is(a, .enarratio-export):hover {
   color: var(--accent-hover);
 }
 .enarratio svg :is([data-enarratio-mark$="tick label"], .enarratio-numeric) {

@@ -33,7 +33,33 @@ export const LINK_DIRECTIVES = ["lang", "xref"];
  * feed and a page's Markdown copy are read in the browser, not saved.
  */
 const FILE_TYPES = new Map([
-  ...["pdf", "csv", "tsv", "rtf", "epub", "zip", "gz", "7z", "mp3", "m4a", "wav", "flac", "mp4", "mov", "webm", "png", "jpg", "jpeg", "gif", "webp", "avif", "svg", "ics", "bib", "ris"].map(
+  ...[
+    "pdf",
+    "csv",
+    "tsv",
+    "rtf",
+    "epub",
+    "zip",
+    "gz",
+    "7z",
+    "mp3",
+    "m4a",
+    "wav",
+    "flac",
+    "mp4",
+    "mov",
+    "webm",
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "webp",
+    "avif",
+    "svg",
+    "ics",
+    "bib",
+    "ris",
+  ].map(
     (ext) => /** @type {[string, string]} */ ([ext, ext === "jpeg" ? "JPG" : ext.toUpperCase()]),
   ),
   ["doc", "Word"],
@@ -91,7 +117,12 @@ const decodeOrSelf = (value) => {
 /** @param {number} n bytes */
 const sizeWords = (n) => {
   if (n < 1024) return `${n} bytes`;
-  const [value, unit] = n < 1024 ** 2 ? [n / 1024, "KB"] : n < 1024 ** 3 ? [n / 1024 ** 2, "MB"] : [n / 1024 ** 3, "GB"];
+  const [value, unit] =
+    n < 1024 ** 2
+      ? [n / 1024, "KB"]
+      : n < 1024 ** 3
+        ? [n / 1024 ** 2, "MB"]
+        : [n / 1024 ** 3, "GB"];
   // One decimal under 10 (1.4 MB), whole above (12 MB), and never "2.0".
   return `${value < 10 ? Number(value.toFixed(1)) : Math.round(value)} ${unit}`;
 };
@@ -125,10 +156,15 @@ export function remarkLinkDirectives(file) {
       if (!LINK_DIRECTIVES.includes(node.name) || !parent || index === undefined) return;
       const line = node.position?.start?.line;
       const where = `:${node.name}${line ? ` on line ${line} of the body` : ""}`;
-      const children = node.children.filter((child) => child.type !== "text" || child.value.trim() !== "");
+      const children = node.children.filter(
+        (child) => child.type !== "text" || child.value.trim() !== "",
+      );
       const link = children[0];
       if (children.length !== 1 || link?.type !== "link") {
-        throw new ContentError(file, `${where} holds exactly one link: :${node.name}[[text](url)]${node.name === "lang" ? "{hreflang=es}" : ""}`);
+        throw new ContentError(
+          file,
+          `${where} holds exactly one link: :${node.name}[[text](url)]${node.name === "lang" ? "{hreflang=es}" : ""}`,
+        );
       }
       /** @type {Record<string, string>} */
       let properties = { dataLink: "xref" };
@@ -141,10 +177,17 @@ export function remarkLinkDirectives(file) {
         } catch {
           tag = undefined;
         }
-        if (!tag) throw new ContentError(file, `${where} needs a language tag such as {hreflang=es}, not ${JSON.stringify(raw)}`);
+        if (!tag)
+          throw new ContentError(
+            file,
+            `${where} needs a language tag such as {hreflang=es}, not ${JSON.stringify(raw)}`,
+          );
         properties = { hrefLang: tag };
       }
-      link.data = { ...link.data, hProperties: { .../** @type {any} */ (link.data)?.hProperties, ...properties } };
+      link.data = {
+        ...link.data,
+        hProperties: { .../** @type {any} */ (link.data)?.hProperties, ...properties },
+      };
       parent.children[index] = link;
     });
   };
@@ -189,7 +232,13 @@ export function rehypeLinks(links, icons, pending) {
     visit(tree, "element", (node, index, parent) => {
       if (node.tagName !== "a" || !parent || index === undefined) return;
       const p = node.properties ?? {};
-      if (p.className || p.download !== undefined || p.dataFootnoteRef !== undefined || p.dataFootnoteBackref !== undefined) return;
+      if (
+        p.className ||
+        p.download !== undefined ||
+        p.dataFootnoteRef !== undefined ||
+        p.dataFootnoteBackref !== undefined
+      )
+        return;
       const href = String(p.href ?? "");
       // Left for rehypeUrlProtocols, which shows a blocked link as its markdown.
       if (!href || !isAllowedUrl(href)) return;
@@ -199,11 +248,19 @@ export function rehypeLinks(links, icons, pending) {
       const host = web ? bareHost(href) : href.startsWith("//") ? bareHost(`https:${href}`) : null;
       const site = host && host !== own ? family.get(host) : undefined;
       const away = Boolean(host && own && host !== own && site === undefined);
-      const fileType = !scheme || web ? FILE_TYPES.get(/\.([a-z0-9]+)$/i.exec(pathOf(href))?.[1]?.toLowerCase() ?? "") : undefined;
+      const fileType =
+        !scheme || web
+          ? FILE_TYPES.get(/\.([a-z0-9]+)$/i.exec(pathOf(href))?.[1]?.toLowerCase() ?? "")
+          : undefined;
       const text = hastToString(node).trim();
       const doi = DOI.exec(text)?.[1];
-      const address = text !== "" && (asAddress(text) === asAddress(decodeOrSelf(href)) || Boolean(doi && decodeOrSelf(href).toLowerCase().includes(doi.toLowerCase())));
-      const meaningful = parent.children.filter((child) => child.type !== "text" || child.value.trim() !== "");
+      const address =
+        text !== "" &&
+        (asAddress(text) === asAddress(decodeOrSelf(href)) ||
+          Boolean(doi && decodeOrSelf(href).toLowerCase().includes(doi.toLowerCase())));
+      const meaningful = parent.children.filter(
+        (child) => child.type !== "text" || child.value.trim() !== "",
+      );
       // A paragraph of the author's own (the pipeline's have a class: a transcript's, a button row), and a link with words: one around
       // an image alone is a picture, not a way on.
       const alone =
@@ -213,7 +270,10 @@ export function rehypeLinks(links, icons, pending) {
         !listed.has(parent) &&
         meaningful.length === 1 &&
         text !== "" &&
-        !node.children.some((child) => child.type === "element" && (child.tagName === "img" || child.tagName === "picture"));
+        !node.children.some(
+          (child) =>
+            child.type === "element" && (child.tagName === "img" || child.tagName === "picture"),
+        );
 
       const kind =
         p.dataLink === "xref"
@@ -244,25 +304,44 @@ export function rehypeLinks(links, icons, pending) {
         ...(site !== undefined ? { dataSite: site } : {}),
         ...(away ? { rel: ["external"] } : {}),
       };
-      if (away) node.children.push({ type: "element", tagName: "span", properties: { className: ["cap-sr-only"] }, children: [{ type: "text", value: AWAY_WORDS }] });
+      if (away)
+        node.children.push({
+          type: "element",
+          tagName: "span",
+          properties: { className: ["cap-sr-only"] },
+          children: [{ type: "text", value: AWAY_WORDS }],
+        });
 
       /** @type {import("hast").Element | null} */
       let meta = null;
       if (kind === "file") {
-        meta = { type: "element", tagName: "span", properties: { className: ["cap-link-meta"] }, children: [{ type: "text", value: String(fileType) }] };
+        meta = {
+          type: "element",
+          tagName: "span",
+          properties: { className: ["cap-link-meta"] },
+          children: [{ type: "text", value: String(fileType) }],
+        };
         const shown = meta;
         if (links.fileSize) {
           if (!sizes.has(href)) sizes.set(href, links.fileSize(href));
           pending.push(
             /** @type {Promise<number | null | undefined>} */ (sizes.get(href)).then((bytes) => {
               // Never guessed: an unknown or nonsensical size leaves the type alone.
-              if (typeof bytes === "number" && Number.isFinite(bytes) && bytes >= 0) shown.children = [{ type: "text", value: `${fileType}, ${sizeWords(Math.round(bytes))}` }];
+              if (typeof bytes === "number" && Number.isFinite(bytes) && bytes >= 0)
+                shown.children = [
+                  { type: "text", value: `${fileType}, ${sizeWords(Math.round(bytes))}` },
+                ];
             }),
           );
         }
       } else if (kind === "lang") {
         const tag = String(p.hrefLang);
-        meta = { type: "element", tagName: "span", properties: { className: ["cap-link-meta"], lang: tag }, children: [{ type: "text", value: languageName(tag) }] };
+        meta = {
+          type: "element",
+          tagName: "span",
+          properties: { className: ["cap-link-meta"], lang: tag },
+          children: [{ type: "text", value: languageName(tag) }],
+        };
       }
       // After the link, outside its name, with a space so the text still reads without the stylesheet (a feed, reader view).
       if (meta) parent.children.splice(index + 1, 0, { type: "text", value: " " }, meta);
@@ -273,7 +352,21 @@ export function rehypeLinks(links, icons, pending) {
           /** @type {Promise<string | null>} */ (hosts.get(host)).then((type) => {
             const src = type ? linkIconSrc(iconPath, host, type) : null;
             // No icon: the link is left as it is, and Capsomer draws its arrow.
-            if (src) node.children.unshift({ type: "element", tagName: "img", properties: { className: ["cap-link-icon"], src, alt: "", width: 16, height: 16, loading: "lazy", decoding: "async" }, children: [] });
+            if (src)
+              node.children.unshift({
+                type: "element",
+                tagName: "img",
+                properties: {
+                  className: ["cap-link-icon"],
+                  src,
+                  alt: "",
+                  width: 16,
+                  height: 16,
+                  loading: "lazy",
+                  decoding: "async",
+                },
+                children: [],
+              });
           }),
         );
       }

@@ -24,7 +24,11 @@ test("the hostile corpus renders nothing unsafe, and says how much it read", asy
   const result = await runConformance(renderSite);
 
   assert.equal(result.inputs, HOSTILE_INPUTS.length);
-  assert.equal(result.rendered + result.refused.length, result.inputs, "every input either rendered or was refused");
+  assert.equal(
+    result.rendered + result.refused.length,
+    result.inputs,
+    "every input either rendered or was refused",
+  );
   assert.deepEqual(result.violations, []);
   // Zero violations must not mean zero read: most inputs render, and the scan walked real elements and attributes.
   assert.ok(result.rendered >= 36, `only ${result.rendered} of ${result.inputs} rendered`);
@@ -48,14 +52,35 @@ test("a renderer that crashes is a failure of the check, not a refusal", async (
 
 test("the corpus is large enough to cover the classes it names", () => {
   assert.ok(HOSTILE_INPUTS.length >= 44);
-  assert.equal(new Set(HOSTILE_INPUTS.map((input) => input.name)).size, HOSTILE_INPUTS.length, "names are unique");
-  for (const word of ["script", "onerror", "iframe", "svg", "form", "vbscript", "file", "katex", "directive", "comment", "bracket"]) {
-    assert.ok(HOSTILE_INPUTS.some((input) => input.name.includes(word)), `no input for ${word}`);
+  assert.equal(
+    new Set(HOSTILE_INPUTS.map((input) => input.name)).size,
+    HOSTILE_INPUTS.length,
+    "names are unique",
+  );
+  for (const word of [
+    "script",
+    "onerror",
+    "iframe",
+    "svg",
+    "form",
+    "vbscript",
+    "file",
+    "katex",
+    "directive",
+    "comment",
+    "bracket",
+  ]) {
+    assert.ok(
+      HOSTILE_INPUTS.some((input) => input.name.includes(word)),
+      `no input for ${word}`,
+    );
   }
 });
 
 test("the construction holds: raw HTML in the source never becomes markup", async () => {
-  const { html } = await renderSite('<script>alert(1)</script>\n\n<img src="x" onerror="alert(1)">\n\n<!-- c -->');
+  const { html } = await renderSite(
+    '<script>alert(1)</script>\n\n<img src="x" onerror="alert(1)">\n\n<!-- c -->',
+  );
   assert.doesNotMatch(html, /<script|<img|<!--/);
 });
 
@@ -63,7 +88,10 @@ test("the construction holds: a link outside https, http, mailto or relative is 
   const link = await renderSite("[x](javascript:alert(1))");
   assert.doesNotMatch(link.html, /<a /);
   assert.match(link.html, /\[x\]\(javascript:alert\(1\)\)/);
-  assert.deepEqual(link.blockedUrls.map(({ tag, url }) => ({ tag, url })), [{ tag: "a", url: "javascript:alert(1)" }]);
+  assert.deepEqual(
+    link.blockedUrls.map(({ tag, url }) => ({ tag, url })),
+    [{ tag: "a", url: "javascript:alert(1)" }],
+  );
 
   // No wrapper link is made for a blocked image, and the site's resolver is never asked about it.
   /** @type {string[]} */
@@ -79,12 +107,19 @@ test("the construction holds: a link outside https, http, mailto or relative is 
   });
   assert.doesNotMatch(image.html, /<a |<img/);
   assert.match(image.html, /!\[y\]\(data:image\/png;base64,AAAA\)/);
-  assert.deepEqual(image.blockedUrls.map(({ tag, url }) => ({ tag, url })), [{ tag: "img", url: "data:image/png;base64,AAAA" }]);
+  assert.deepEqual(
+    image.blockedUrls.map(({ tag, url }) => ({ tag, url })),
+    [{ tag: "img", url: "data:image/png;base64,AAAA" }],
+  );
   assert.deepEqual(asked, []);
 });
 
 test("the construction holds: KaTeX does not turn \\href or \\url into a link", async () => {
-  for (const source of ["$\\href{javascript:alert(1)}{x}$", "$\\url{javascript:alert(1)}$", "$\\href{https://example.com}{x}$"]) {
+  for (const source of [
+    "$\\href{javascript:alert(1)}{x}$",
+    "$\\url{javascript:alert(1)}$",
+    "$\\href{https://example.com}{x}$",
+  ]) {
     const rendered = await renderSite(source).then(
       ({ html }) => html,
       (error) => error,
@@ -102,12 +137,21 @@ test("the scan catches each class of attack it exists to catch", () => {
   assert.deepEqual(kinds("<a href='javascript:alert(1)'>t</a>"), ["url"]);
   assert.deepEqual(kinds("<a href='JaVa&#9;Script:alert(1)'>t</a>"), ["url"]);
   assert.deepEqual(kinds("<a href='data:text/html,x'>t</a>"), ["url"]);
-  assert.deepEqual(kinds("<img src='/a.png' alt='' srcset='/a.png 1x, javascript:alert(1) 2x'>"), ["url"]);
-  assert.deepEqual(kinds("<img src='/a.png' alt='' srcset='/a.png 640w, /a.png?w=1024 1024w'>"), []);
+  assert.deepEqual(kinds("<img src='/a.png' alt='' srcset='/a.png 1x, javascript:alert(1) 2x'>"), [
+    "url",
+  ]);
+  assert.deepEqual(
+    kinds("<img src='/a.png' alt='' srcset='/a.png 640w, /a.png?w=1024 1024w'>"),
+    [],
+  );
   assert.deepEqual(kinds("<p><!-- c --></p>"), ["comment"]);
   assert.deepEqual(kinds("<svg onload='alert(1)'></svg>"), ["event-handler"]);
-  assert.deepEqual(kinds("<span style='background:url(https://example.com/x)'>t</span>"), ["style"]);
-  assert.deepEqual(kinds("<span style='background:u\\72l(https://example.com/x)'>t</span>"), ["style"]);
+  assert.deepEqual(kinds("<span style='background:url(https://example.com/x)'>t</span>"), [
+    "style",
+  ]);
+  assert.deepEqual(kinds("<span style='background:u\\72l(https://example.com/x)'>t</span>"), [
+    "style",
+  ]);
   assert.deepEqual(kinds("<span style='width:expression(alert(1))'>t</span>"), ["style"]);
   assert.deepEqual(kinds("<p class='a' unknown-attribute='1'>t</p>"), ["attribute"]);
 });
@@ -122,15 +166,25 @@ test("the scan reads with a parser: attribute-looking text inside a value is not
 test("the one style that may carry a url() is the pipeline's own image placeholder", () => {
   const placeholder = 'background-image:url("data:image/webp;base64,UklGRhoAAABXRUJQ")';
   assert.deepEqual(kinds(`<img src="/a.png" alt="" class="has-lqip" style='${placeholder}'>`), []);
-  assert.deepEqual(kinds(`<img src="/a.png" alt="" class="has-lqip" style='background-image:url("https://example.com/x.png")'>`), ["style"]);
-  assert.deepEqual(kinds(`<img src="/a.png" alt="" class="has-lqip" style='${placeholder};background:url(x)'>`), ["style"]);
+  assert.deepEqual(
+    kinds(
+      `<img src="/a.png" alt="" class="has-lqip" style='background-image:url("https://example.com/x.png")'>`,
+    ),
+    ["style"],
+  );
+  assert.deepEqual(
+    kinds(`<img src="/a.png" alt="" class="has-lqip" style='${placeholder};background:url(x)'>`),
+    ["style"],
+  );
 });
 
 test("assertSafe throws a ContentError that names what it found, and passes safe output", () => {
   assert.doesNotThrow(() => assertSafe("<p>fine <em>text</em></p>"));
   assert.throws(
     () => assertSafe("<p>x</p><script>alert(1)</script>"),
-    (error) => error instanceof ContentError && /unsafe output refused: 1 violation: element script/.test(error.message),
+    (error) =>
+      error instanceof ContentError &&
+      /unsafe output refused: 1 violation: element script/.test(error.message),
   );
 });
 
@@ -142,7 +196,12 @@ test("render with assertSafe refuses a write the allowlist cannot vouch for", as
     render({ file: "test.md", body: source, resolveImage, options }),
     (error) => error instanceof ContentError && /unsafe output refused/.test(error.message),
   );
-  const ok = await render({ file: "test.md", body: source, resolveImage, options: { ...siteOptions, assertSafe: true } });
+  const ok = await render({
+    file: "test.md",
+    body: source,
+    resolveImage,
+    options: { ...siteOptions, assertSafe: true },
+  });
   assert.equal(ok.html, "<p>plain text</p>");
 });
 
@@ -157,12 +216,15 @@ test("the allowlist is derived from the corpus output, and fails both ways", asy
   /** @type {string[]} */
   const outputs = [];
   for (const name of FIXTURES) {
-    outputs.push((await render({ file: name, body: fixture(name), resolveImage, options: siteOptions })).html);
+    outputs.push(
+      (await render({ file: name, body: fixture(name), resolveImage, options: siteOptions })).html,
+    );
   }
   const derived = inventory(outputs);
 
   if (process.env.UPDATE_ALLOWLIST === "1") {
-    const lines = (/** @type {string[]} */ list) => list.map((item) => `    ${JSON.stringify(item)},`).join("\n");
+    const lines = (/** @type {string[]} */ list) =>
+      list.map((item) => `    ${JSON.stringify(item)},`).join("\n");
     writeFileSync(
       new URL("../render-allowlist.mjs", import.meta.url),
       "// GENERATED by test/render-safe.test.mjs from the benign corpus (UPDATE_ALLOWLIST=1 npm test). Do not edit by hand.\n" +

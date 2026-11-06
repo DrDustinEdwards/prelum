@@ -5,7 +5,16 @@
 //
 //   node specimen/build.mjs [outDir]
 
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,7 +39,20 @@ import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-d
 import { absolutizeUrls, escapeXml, mathToTex } from "../xml.mjs";
 import { ACCESSIBILITY_PATH, accessibilityStatement } from "../accessibility.mjs";
 import { PAGE_PRELOADS } from "./worker.mjs";
-import { ASSET_PREFIX, DIAGRAM_CONFIG_FILE, FAMILY, ICON_DIR, ORIGIN, diagramConfig, elementIndex, loadElements, options, renderElement, resolveImage, splitHeader } from "./specimen.mjs";
+import {
+  ASSET_PREFIX,
+  DIAGRAM_CONFIG_FILE,
+  FAMILY,
+  ICON_DIR,
+  ORIGIN,
+  diagramConfig,
+  elementIndex,
+  loadElements,
+  options,
+  renderElement,
+  resolveImage,
+  splitHeader,
+} from "./specimen.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..");
@@ -122,7 +144,10 @@ function writeStyles(outDir) {
   // swap shows it in the fallback face at once.
   const katex = dirname(packageFile("katex/dist/katex.min.css"));
   mkdirSync(join(outDir, "katex", "fonts"), { recursive: true });
-  const katexCss = readFileSync(join(katex, "katex.min.css"), "utf8").replaceAll("font-display:block", "font-display:swap");
+  const katexCss = readFileSync(join(katex, "katex.min.css"), "utf8").replaceAll(
+    "font-display:block",
+    "font-display:swap",
+  );
   writeFileSync(join(outDir, "katex", "katex.min.css"), katexCss);
   for (const font of readdirSync(join(katex, "fonts")).filter((f) => f.endsWith(".woff2"))) {
     copyFileSync(join(katex, "fonts", font), join(outDir, "katex", "fonts", font));
@@ -138,7 +163,11 @@ function writeStyles(outDir) {
  */
 function copyDiagrams(outDir, diagrams) {
   const stamp = join(HERE, DIAGRAM_ASSET_DIR, DIAGRAM_CONFIG_FILE);
-  if (diagrams.length > 0 && (!existsSync(stamp) || readFileSync(stamp, "utf8") !== `${JSON.stringify(diagramConfig(), null, 2)}\n`)) {
+  if (
+    diagrams.length > 0 &&
+    (!existsSync(stamp) ||
+      readFileSync(stamp, "utf8") !== `${JSON.stringify(diagramConfig(), null, 2)}\n`)
+  ) {
     throw new Error(
       `specimen diagrams were drawn with another palette or Mermaid version than ${DIAGRAM_ASSET_DIR}/${DIAGRAM_CONFIG_FILE} now ` +
         "calls for. Run npm run specimen:diagrams and commit them.",
@@ -158,7 +187,9 @@ function copyDiagrams(outDir, diagrams) {
     }
   }
   if (missing.length > 0) {
-    throw new Error(`specimen diagrams not drawn: ${missing.join(", ")}. Run npm run specimen:diagrams and commit them.`);
+    throw new Error(
+      `specimen diagrams not drawn: ${missing.join(", ")}. Run npm run specimen:diagrams and commit them.`,
+    );
   }
 }
 
@@ -170,11 +201,16 @@ function copyDiagrams(outDir, diagrams) {
  * @param {"esm" | "iife"} format
  */
 async function bundle(file, format) {
-  const built = await rolldown({ input: join(HERE, "browser", file), platform: "browser", logLevel: "silent" });
+  const built = await rolldown({
+    input: join(HERE, "browser", file),
+    platform: "browser",
+    logLevel: "silent",
+  });
   const { output } = await built.generate({ format, minify: true, inlineDynamicImports: true });
   await built.close();
   const [chunk] = output;
-  if (output.length !== 1 || chunk?.type !== "chunk") throw new Error(`${file}: expected one chunk`);
+  if (output.length !== 1 || chunk?.type !== "chunk")
+    throw new Error(`${file}: expected one chunk`);
   return chunk.code;
 }
 
@@ -218,7 +254,12 @@ const HEADER = letterheadHtml({
 });
 
 const ICON_LINKS = iconLinks()
-  .map((link) => `<link ${Object.entries(link).map(([name, value]) => `${name}="${value}"`).join(" ")}>`)
+  .map(
+    (link) =>
+      `<link ${Object.entries(link)
+        .map(([name, value]) => `${name}="${value}"`)
+        .join(" ")}>`,
+  )
   .join("\n");
 
 /** The share card (specimen/static/share-card.png), drawn once at the size every card in the network has. */
@@ -233,14 +274,21 @@ const SHARE_CARD = {
 const head = defineHead({ origin: ORIGIN, siteName: "Prelum", image: SHARE_CARD, locale: "en_US" });
 
 /** What the specimen is about, on its page beside the WebPage: the site, and the library it shows. */
-const SITE_DESCRIPTION = "Prelum, the publishing library for Dustin Edwards's sites: markdown to pages, feeds, sitemaps, llms.txt and search.";
-const AUTHOR = { "@type": "Person", "@id": "https://dustinedwards.info/#person", name: "Dustin Edwards", url: "https://dustinedwards.info" };
+const SITE_DESCRIPTION =
+  "Prelum, the publishing library for Dustin Edwards's sites: markdown to pages, feeds, sitemaps, llms.txt and search.";
+const AUTHOR = {
+  "@type": "Person",
+  "@id": "https://dustinedwards.info/#person",
+  name: "Dustin Edwards",
+  url: "https://dustinedwards.info",
+};
 const SITE_GRAPH = [
   website({ origin: ORIGIN, name: "Prelum", description: SITE_DESCRIPTION, publisher: AUTHOR }),
   thing("SoftwareSourceCode", {
     "@id": `${ORIGIN}/#code`,
     name: "Prelum (@drdustinedwards/site-helpers)",
-    description: "One publishing library for every site: the markdown pipeline, feeds, sitemaps, llms.txt and search.",
+    description:
+      "One publishing library for every site: the markdown pipeline, feeds, sitemaps, llms.txt and search.",
     url: `${ORIGIN}/`,
     codeRepository: REPO,
     license: "https://opensource.org/licenses/MIT",
@@ -261,7 +309,10 @@ const SITE_GRAPH = [
  */
 function documentHtml({ title, description, body, version, path, scripts, media }) {
   const tags = path
-    ? headHtml([...head({ path, title, fullTitle: true, description, videos: media?.videos }), jsonLd(graph([...SITE_GRAPH, ...(media?.schema ?? [])]))])
+    ? headHtml([
+        ...head({ path, title, fullTitle: true, description, videos: media?.videos }),
+        jsonLd(graph([...SITE_GRAPH, ...(media?.schema ?? [])])),
+      ])
     : `<title>${escapeXml(title)}</title>\n<meta name="description" content="${escapeXml(description)}">`;
   return `<!doctype html>
 <html lang="en" data-family="${FAMILY}">
@@ -336,8 +387,18 @@ ${feed === html ? "" : codeView("In the RSS item", feed)}
  */
 async function outputsSection(version, no, priority) {
   const text = readFileSync(join(HERE, "sample-post.md"), "utf8");
-  const { header: meta, source: body } = splitHeader("specimen/sample-post.md", text, ["title", "slug", "description", "date"]);
-  const { html } = await render({ file: "specimen/sample-post.md", body, resolveImage, options: { ...options, priority } });
+  const { header: meta, source: body } = splitHeader("specimen/sample-post.md", text, [
+    "title",
+    "slug",
+    "description",
+    "date",
+  ]);
+  const { html } = await render({
+    file: "specimen/sample-post.md",
+    body,
+    resolveImage,
+    options: { ...options, priority },
+  });
   const post = {
     slug: meta.slug ?? "",
     title: meta.title ?? "",
@@ -353,7 +414,12 @@ async function outputsSection(version, no, priority) {
   const llms = llmsDocument({
     title: "Prelum specimen",
     summary: `Every element Prelum ${version} renders from markdown.`,
-    sections: [{ heading: "Writing", links: [{ title: post.title, url: link, description: meta.description }] }],
+    sections: [
+      {
+        heading: "Writing",
+        links: [{ title: post.title, url: link, description: meta.description }],
+      },
+    ],
   });
   return `<section class="outputs" id="outputs" aria-labelledby="outputs-name">
 <h2 class="element-name cap-part-title" id="outputs-name"><span class="cap-part-no">${no}</span><a href="#outputs">One source, three outputs</a></h2>
@@ -386,9 +452,11 @@ ${html}
 function assertUniqueIds(html) {
   /** @type {Map<string, number>} */
   const counts = new Map();
-  for (const [, id] of html.matchAll(/\sid="([^"]+)"/g)) counts.set(/** @type {string} */ (id), (counts.get(/** @type {string} */ (id)) ?? 0) + 1);
+  for (const [, id] of html.matchAll(/\sid="([^"]+)"/g))
+    counts.set(/** @type {string} */ (id), (counts.get(/** @type {string} */ (id)) ?? 0) + 1);
   const repeated = [...counts].filter(([, n]) => n > 1).map(([id]) => id);
-  if (repeated.length > 0) throw new Error(`the specimen page repeats the id ${repeated.join(", ")}`);
+  if (repeated.length > 0)
+    throw new Error(`the specimen page repeats the id ${repeated.join(", ")}`);
 }
 
 /**
@@ -406,16 +474,37 @@ export async function buildSpecimen(outDir) {
   for (const element of elements) rendered.push(await renderElement(element, priority));
 
   // Only an earlier build is deleted: a mistyped outDir must not take the working tree with it.
-  if (existsSync(outDir) && readdirSync(outDir).length > 0 && !existsSync(join(outDir, "elements.json"))) {
-    throw new Error(`${outDir} is not empty and holds no earlier specimen build; refusing to delete it`);
+  if (
+    existsSync(outDir) &&
+    readdirSync(outDir).length > 0 &&
+    !existsSync(join(outDir, "elements.json"))
+  ) {
+    throw new Error(
+      `${outDir} is not empty and holds no earlier specimen build; refusing to delete it`,
+    );
   }
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   copyTree(join(HERE, "static"), outDir);
-  writeFileSync(join(outDir, "site.webmanifest"), JSON.stringify(webManifest({ name: "Prelum specimen", shortName: "Prelum", themeColor: "#4f2d7f", backgroundColor: "#4f2d7f" })));
+  writeFileSync(
+    join(outDir, "site.webmanifest"),
+    JSON.stringify(
+      webManifest({
+        name: "Prelum specimen",
+        shortName: "Prelum",
+        themeColor: "#4f2d7f",
+        backgroundColor: "#4f2d7f",
+      }),
+    ),
+  );
   writeStyles(outDir);
-  const missing = PAGE_PRELOADS.links.filter(({ href }) => !existsSync(join(outDir, href.slice(1))));
-  if (missing.length) throw new Error(`preloads name files the build did not write: ${missing.map(({ href }) => href).join(", ")}`);
+  const missing = PAGE_PRELOADS.links.filter(
+    ({ href }) => !existsSync(join(outDir, href.slice(1))),
+  );
+  if (missing.length)
+    throw new Error(
+      `preloads name files the build did not write: ${missing.map(({ href }) => href).join(", ")}`,
+    );
   // The remembered theme before first paint (a plain script in the head), and the letterhead's behavior.
   // Each tag carries its file's sha384 and crossorigin, which Integrity-Policy needs of every script (a classic one included).
   const theme = await bundle("theme.mjs", "iife");
@@ -424,17 +513,23 @@ export async function buildSpecimen(outDir) {
   writeFileSync(join(outDir, "specimen.js"), specimen);
   /** @type {Scripts} */
   const scripts = { theme: await integrityHash(theme), specimen: await integrityHash(specimen) };
-  copyDiagrams(outDir, rendered.flatMap((r) => r.diagrams));
+  copyDiagrams(
+    outDir,
+    rendered.flatMap((r) => r.diagrams),
+  );
   // The icons the renders found, at the path the pages name; an empty file is a host with none.
   mkdirSync(join(outDir, "link-icons"));
   for (const name of readdirSync(ICON_DIR)) {
-    if (statSync(new URL(name, ICON_DIR)).size > 0) copyFileSync(new URL(name, ICON_DIR), join(outDir, "link-icons", name));
+    if (statSync(new URL(name, ICON_DIR)).size > 0)
+      copyFileSync(new URL(name, ICON_DIR), join(outDir, "link-icons", name));
   }
 
   /** @param {number} no @param {string} href @param {string} name @param {string} fact */
   const indexRow = (no, href, name, fact) =>
     `<li><a class="cap-leader-index-link" href="${href}"><span class="cap-leader-index-no">${no}</span><span class="cap-leader-index-name">${escapeXml(name)}</span><span class="cap-leader-index-dots" aria-hidden="true"></span><span class="cap-leader-index-fact">${fact}</span></a></li>`;
-  const contents = elements.map((e, i) => indexRow(i + 1, `#el-${e.id}`, e.name, e.pack)).join("\n");
+  const contents = elements
+    .map((e, i) => indexRow(i + 1, `#el-${e.id}`, e.name, e.pack))
+    .join("\n");
   const editorialCount = elements.filter((e) => e.pack === "editorial").length;
   const body = `<main id="main" tabindex="-1">
 <header class="page-head">
@@ -464,9 +559,18 @@ ${await outputsSection(version, elements.length + 1, priority)}
   const media = {
     videos: videos.map((v) => ({ url: v.url, width: v.width, height: v.height })),
     schema: [
-      ...images.map((i) => imageObject({ ...i, url: absoluteUrl(ORIGIN, i.src) })).filter((node) => node !== null),
+      ...images
+        .map((i) => imageObject({ ...i, url: absoluteUrl(ORIGIN, i.src) }))
+        .filter((node) => node !== null),
       ...videos.map((v) =>
-        videoObject({ name: v.title, thumbnailUrl: absoluteUrl(ORIGIN, v.poster ?? ""), uploadDate: "2026-10-31", contentUrl: absoluteUrl(ORIGIN, v.url), width: v.width, height: v.height }),
+        videoObject({
+          name: v.title,
+          thumbnailUrl: absoluteUrl(ORIGIN, v.poster ?? ""),
+          uploadDate: "2026-10-31",
+          contentUrl: absoluteUrl(ORIGIN, v.url),
+          width: v.width,
+          height: v.height,
+        }),
       ),
     ],
   };
@@ -497,7 +601,10 @@ ${await outputsSection(version, elements.length + 1, priority)}
   // devkit-a11y's 2026-11-01 run.
   const statement = accessibilityStatement({
     siteName: "The Prelum specimen",
-    contact: { href: "https://dustinedwards.info/contact", label: "the contact page on dustinedwards.info" },
+    contact: {
+      href: "https://dustinedwards.info/contact",
+      label: "the contact page on dustinedwards.info",
+    },
     date: "2026-11-01",
     capsomer: true,
     links: "marked",
@@ -515,23 +622,51 @@ ${await outputsSection(version, elements.length + 1, priority)}
     }),
   );
 
-  writeFileSync(join(outDir, "elements.json"), `${JSON.stringify(elementIndex(elements, version), null, 2)}\n`);
+  writeFileSync(
+    join(outDir, "elements.json"),
+    `${JSON.stringify(elementIndex(elements, version), null, 2)}\n`,
+  );
 
   // security.txt (site-runtime), the IndexNow key file, and a sitemap of the one page, which the deploy hands to
   // prelum-indexnow.
   mkdirSync(join(outDir, ".well-known"), { recursive: true });
   writeFileSync(
     join(outDir, ".well-known", "security.txt"),
-    securityTxt({ origin: ORIGIN, contact: "security@dustinedwards.info", expires: SECURITY_TXT_EXPIRES }),
+    securityTxt({
+      origin: ORIGIN,
+      contact: "security@dustinedwards.info",
+      expires: SECURITY_TXT_EXPIRES,
+    }),
   );
   writeFileSync(join(outDir, `${INDEXNOW_KEY}.txt`), INDEXNOW_KEY);
   // The page changes with each release, so its lastmod is the date of the release it shows (the CHANGELOG's top entry).
-  const released = /^## [\d.]+ \((\d{4}-\d{2}-\d{2})\)/m.exec(readFileSync(join(ROOT, "CHANGELOG.md"), "utf8"))?.[1];
-  writeFileSync(join(outDir, "sitemap.xml"), sitemapDocument([{ loc: `${ORIGIN}/`, lastmod: released, images: images.map((i) => absoluteUrl(ORIGIN, i.src)) }, { loc: `${ORIGIN}${ACCESSIBILITY_PATH}` }]));
+  const released = /^## [\d.]+ \((\d{4}-\d{2}-\d{2})\)/m.exec(
+    readFileSync(join(ROOT, "CHANGELOG.md"), "utf8"),
+  )?.[1];
+  writeFileSync(
+    join(outDir, "sitemap.xml"),
+    sitemapDocument([
+      {
+        loc: `${ORIGIN}/`,
+        lastmod: released,
+        images: images.map((i) => absoluteUrl(ORIGIN, i.src)),
+      },
+      { loc: `${ORIGIN}${ACCESSIBILITY_PATH}` },
+    ]),
+  );
   // robots.txt and ai.txt (the network's bot policy, Content-Signal and the sitemap) and llms.txt; llms-full.txt and the
   // page's Markdown copy are written from the built page by prelum-markdown (`npm run specimen`).
-  writeFileSync(join(outDir, "robots.txt"), robotsDocument({ origin: ORIGIN, notes: [`AI usage policy: ${ORIGIN}/ai.txt`, `LLM guide: ${ORIGIN}/llms.txt`] }));
-  writeFileSync(join(outDir, "ai.txt"), aiTxt({ origin: ORIGIN, name: "Prelum", contact: "contact@dustinedwards.info" }));
+  writeFileSync(
+    join(outDir, "robots.txt"),
+    robotsDocument({
+      origin: ORIGIN,
+      notes: [`AI usage policy: ${ORIGIN}/ai.txt`, `LLM guide: ${ORIGIN}/llms.txt`],
+    }),
+  );
+  writeFileSync(
+    join(outDir, "ai.txt"),
+    aiTxt({ origin: ORIGIN, name: "Prelum", contact: "contact@dustinedwards.info" }),
+  );
   writeFileSync(
     join(outDir, "llms.txt"),
     llmsDocument({
@@ -550,9 +685,21 @@ ${await outputsSection(version, elements.length + 1, priority)}
         {
           heading: "Documentation",
           links: [
-            { title: "README", url: `${REPO}#readme`, description: "every module, what it exports and how a site uses it" },
-            { title: "Changelog", url: `${REPO}/blob/main/CHANGELOG.md`, description: "every release" },
-            { title: "Specimen", url: `${ORIGIN}/`, description: "the rendered elements, in both themes" },
+            {
+              title: "README",
+              url: `${REPO}#readme`,
+              description: "every module, what it exports and how a site uses it",
+            },
+            {
+              title: "Changelog",
+              url: `${REPO}/blob/main/CHANGELOG.md`,
+              description: "every release",
+            },
+            {
+              title: "Specimen",
+              url: `${ORIGIN}/`,
+              description: "the rendered elements, in both themes",
+            },
           ],
         },
       ],
@@ -575,5 +722,7 @@ ${await outputsSection(version, elements.length + 1, priority)}
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const outDir = process.argv[2] ?? join(HERE, "dist");
   const result = await buildSpecimen(outDir);
-  console.log(`specimen: ${result.elements} elements, Prelum ${result.version}, ${result.files.length} files in ${relative(process.cwd(), outDir) || "."}`);
+  console.log(
+    `specimen: ${result.elements} elements, Prelum ${result.version}, ${result.files.length} files in ${relative(process.cwd(), outDir) || "."}`,
+  );
 }
