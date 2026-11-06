@@ -118,6 +118,7 @@ export async function auditIcons({ origin, fetch: fetcher }) {
     return findings;
   }
   if (!manifest.name) add(manifestUrl, "icon-manifest", "warning", "the manifest has no name");
+  /** @type {Array<{ src?: unknown, sizes?: unknown, purpose?: unknown }>} */
   const icons = Array.isArray(manifest.icons) ? manifest.icons : [];
   const sized = (/** @type {number} */ size) => icons.some((icon) => String(icon.sizes ?? "").split(/\s+/).includes(`${size}x${size}`));
   for (const size of [192, 512]) if (!sized(size)) add(manifestUrl, "icon-manifest", "warning", `the manifest has no ${size}x${size} icon`);

@@ -33,7 +33,7 @@ const LINK_CUES = {
 const CAPSOMER_MEASURE =
   "We build every page from Capsomer, an open-source design system. Its components are checked in a browser for keyboard use, focus, contrast, zoom and reflow, and for forced colors and right-to-left text.";
 
-/** `2026-10-31` as "October 31, 2026", with no locale in the way. */
+/** `2026-10-31` as "October 31, 2026", with no locale in the way. @param {string} day */
 function longDate(day) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
   const month = m ? MONTHS[Number(m[2]) - 1] : undefined;
@@ -41,7 +41,7 @@ function longDate(day) {
   return `${month} ${Number(m[3])}, ${m[1]}`;
 }
 
-/** Text for an HTML element or a double-quoted attribute. */
+/** Text for an HTML element or a double-quoted attribute. @param {unknown} text */
 function esc(text) {
   return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
@@ -69,10 +69,10 @@ export function accessibilityStatement({ siteName, contact, date, capsomer, link
   ];
   const intro = `We want everyone to be able to use ${siteName}, including people who use a screen reader, a keyboard or voice control, or who need larger text or stronger contrast. We aim to meet ${standard}.`;
   const none = "We know of no limitations as of the date below.";
-  const report = (link) =>
+  const report = (/** @type {string} */ link) =>
     `If something on this site is hard or impossible to use, tell us at ${link}. Say which page and what you were trying to do, and we will answer and fix it.`;
   const reviewed = `This statement was last reviewed on ${longDate(date)}.`;
-  const list = (items) => items.map((item) => `- ${item}`).join("\n");
+  const list = (/** @type {string[]} */ items) => items.map((item) => `- ${item}`).join("\n");
   const body = [
     intro,
     `## Conformance status\n\n${status}`,
@@ -81,7 +81,7 @@ export function accessibilityStatement({ siteName, contact, date, capsomer, link
     `## Tell us about a problem\n\n${report(`[${contact.label}](${contact.href})`)}`,
     `## Date\n\n${reviewed}`,
   ].join("\n\n");
-  const ul = (items) => `<ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`;
+  const ul = (/** @type {string[]} */ items) => `<ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`;
   const html = [
     `<p>${esc(intro)}</p>`,
     `<h2>Conformance status</h2><p>${esc(status)}</p>`,
