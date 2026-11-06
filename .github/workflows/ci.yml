@@ -33,6 +33,8 @@ jobs:
         run: npm run typecheck
       - name: Lint
         run: npm run lint
+      - name: Format check
+        run: npm run format:check
       - name: The sites' published output, reproduced byte for byte
         run: npm test
       - name: devkit's no-bloat report against .no-bloat.json (a warning, never a failure)

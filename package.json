@@ -148,6 +148,8 @@
   "scripts": {
     "lint": "oxlint --type-aware --deny-warnings --report-unused-disable-directives-severity=error",
     "typecheck": "tsc -p .",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "test": "node --test \"test/*.test.mjs\"",
     "specimen": "node specimen/build.mjs && node bin/markdown.mjs --dir specimen/dist --origin https://prelum.dustinedwards.info && site-runtime-headers --site prelum --out specimen/dist/_headers --header \"tdm-reservation: 1\"",
     "specimen:diagrams": "node specimen/diagrams.mjs",
@@ -275,7 +277,7 @@
     }
   },
   "devDependencies": {
-    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.23.0",
+    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.24.0",
     "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.82.0",
     "@fontsource-variable/source-serif-4": "5.3.1",
     "@mermaid-js/mermaid-cli": "11.17.0",
@@ -296,6 +298,7 @@
     "linkedom": "0.18.14",
     "mdast-util-gfm": "3.1.0",
     "mdast-util-to-markdown": "2.2.0",
+    "oxfmt": "0.77.0",
     "oxlint": "1.92.0",
     "oxlint-tsgolint": "7.0.2006",
     "parse5": "8.0.1",
