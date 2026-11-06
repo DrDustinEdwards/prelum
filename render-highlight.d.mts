@@ -1,13 +1,15 @@
+/** what the Oniguruma engine loads: a wasm module or an instantiator over one */
+export type Wasm = Parameters<typeof import("shiki/engine/oniguruma").createOnigurumaEngine>[0];
 /**
  * @param {object} [input]
- * @param {() => Promise<any> | any} [input.wasm] Injected: a Worker refuses WebAssembly.instantiate() on bytes, so it passes an
+ * @param {() => Wasm | Promise<Wasm>} [input.wasm] Injected: a Worker refuses WebAssembly.instantiate() on bytes, so it passes an
  *   instantiator over a statically imported module. The engine is the same, so the HTML is byte-identical. Default is shiki's own.
- * @param {Record<string, any>} [input.languages] name to grammar; default is the ten in GRAMMARS
+ * @param {Record<string, import("shiki/core").LanguageInput>} [input.languages] name to grammar; default is the ten in GRAMMARS
  * @returns {import("./render.mjs").HighlightOptions}
  */
 export function createHighlight({ wasm, languages }?: {
-    wasm?: (() => Promise<any> | any) | undefined;
-    languages?: Record<string, any> | undefined;
+    wasm?: (() => Wasm | Promise<Wasm>) | undefined;
+    languages?: Record<string, import("shiki/core").LanguageInput> | undefined;
 }): import("./render.mjs").HighlightOptions;
 export namespace GRAMMARS {
     export { bash };
@@ -36,6 +38,6 @@ import python from "shiki/langs/python.mjs";
 import sql from "shiki/langs/sql.mjs";
 import tsx from "shiki/langs/tsx.mjs";
 import typescript from "shiki/langs/typescript.mjs";
-declare const githubLight: any;
-declare const githubDark: any;
+declare const githubLight: unknown;
+declare const githubDark: unknown;
 export {};

@@ -24,6 +24,9 @@ export function htmlToMarkdown(html: string, options?: {
  * A Worker's fetch handler; `env` and `ctx` (its ExecutionContext) are passed through untouched, so a handler that reads
  * `ctx.exports` or `ctx.passThroughOnException` keeps its own types.
  */
+// `any`, not `unknown` or `never`: a handler's own `env` and `ctx` types pass through, and only `any` as the bound both
+// admits a handler typed `(request, env: Env, ctx: ExecutionContext)` and leaves an inline handler's parameters usable.
+// oxlint-disable-next-line typescript/no-explicit-any -- see above
 export type FetchHandler = (request: Request, env?: any, ctx?: any) => Promise<Response> | Response;
 export type MarkdownCopiesOptions = {
     /** the site's production origin, for the canonical links and the llms-full.txt addresses */

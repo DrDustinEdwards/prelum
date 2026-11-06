@@ -1,6 +1,6 @@
 // The two hast node builders the chart and diagram renderers write their figures with.
 
-/** @param {string} tagName @param {Record<string, any>} properties @param {any[]} children */
+/** @param {string} tagName @param {Record<string, unknown>} properties @param {unknown[]} children */
 export const h = (tagName, properties, children) => ({
   type: "element",
   tagName,

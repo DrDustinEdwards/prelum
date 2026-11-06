@@ -237,7 +237,7 @@ async function shrinkPng(png, size) {
   }
   /** @param {string} type @param {Uint8Array} body */
   const chunk = (type, body) => {
-    const typed = new Uint8Array([...type].map((ch) => ch.charCodeAt(0)).concat([...body]));
+    const typed = new Uint8Array(Array.from(type).map((ch) => ch.charCodeAt(0)).concat([...body]));
     const bytes = new Uint8Array(12 + body.length);
     const frame = new DataView(bytes.buffer);
     frame.setUint32(0, body.length);

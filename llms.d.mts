@@ -99,6 +99,8 @@ export function llmsResponse(input: LlmsContent & import("./robots.mjs").PlainTe
  * `Vary: Accept`, or its HTML when it has none; and every HTML page gains `Vary: Accept` and a
  * `Link: rel="alternate"; type="text/markdown"` naming its copy. A rendered site uses `markdownCopies` instead.
  */
+// `any[]`, not `unknown[]` or `never[]`: the handler's own `env` and `ctx` types pass through (see markdown-copy.d.mts FetchHandler).
+// oxlint-disable-next-line typescript/no-explicit-any -- see above
 export function serveMarkdownCopies<F extends (request: Request, ...rest: any[]) => Promise<Response> | Response>(fetch: F, options: {
     origin: string;
     skip?: (path: string) => boolean;

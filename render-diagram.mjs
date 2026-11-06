@@ -87,7 +87,7 @@ export function buildDiagramModel(attrs, source) {
  *
  * @param {string} assetPrefix the site's asset name prefix
  * @param {Record<string, { width: number, height: number }>} [sizes] each drawing's size, by file name
- * @returns {(model: ReturnType<typeof buildDiagramModel>, captionChildren: any[]) => any[]} the rehype renderer
+ * @returns {(model: ReturnType<typeof buildDiagramModel>, captionChildren: import("hast").ElementContent[]) => import("hast").ElementContent[]} the rehype renderer
  *   `captionChildren` is hast for an author-written caption, may be empty
  */
 export const renderDiagramHast = (assetPrefix, sizes = {}) => (model, captionChildren) => {

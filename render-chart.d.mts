@@ -33,5 +33,5 @@ export function buildChartModel(attrs: Record<string, string>, csv: string, { st
  * @param {any[]} captionChildren hast for an author-written caption, may be empty
  * @param {any} figure the directive's figure node, which becomes the frame
  */
-export function renderChartHast(model: ReturnType<typeof buildChartModel>, captionChildren: any[], figure: any): import("hast").ElementContent[];
+export function renderChartHast(model: ReturnType<typeof buildChartModel>, captionChildren: import("hast").ElementContent[], figure: import("hast").Element): import("hast").ElementContent[];
 export const CHART_TYPES: string[];

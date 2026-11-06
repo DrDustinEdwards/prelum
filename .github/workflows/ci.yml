@@ -29,10 +29,10 @@ jobs:
       - run: npm ci
         env:
           PUPPETEER_SKIP_DOWNLOAD: "true"
-      - name: Lint
-        run: npm run lint
       - name: Typecheck the modules, their declarations and the tests
         run: npm run typecheck
+      - name: Lint
+        run: npm run lint
       - name: The sites' published output, reproduced byte for byte
         run: npm test
       - name: devkit's no-bloat report against .no-bloat.json (a warning, never a failure)

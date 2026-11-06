@@ -216,14 +216,14 @@ export function serveMarkdownCopies(fetch, { origin, skip = () => false }) {
       headers.set("Accept", "text/markdown");
       const copy = await fetch(new Request(new URL(markdownPath(path), url), { method: request.method, headers }), ...rest);
       if (copy.status === 200) {
-        response.body?.cancel();
+        void response.body?.cancel();
         const out = new Response(copy.body, copy);
         out.headers.set("Content-Type", "text/markdown; charset=utf-8");
         out.headers.set("Vary", "Accept");
         out.headers.set("Link", `<${base}${path}>; rel="canonical"`);
         return out;
       }
-      copy.body?.cancel();
+      void copy.body?.cancel();
     }
     const out = new Response(response.body, response);
     out.headers.append("Vary", "Accept");

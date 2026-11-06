@@ -27,15 +27,16 @@ const WIDTHS = ["wide", "full"];
  * The width class a figure, gallery, video or embed asks for: Ghost's regular, wide and full. The site's stylesheet sets the widths.
  *
  * @param {string} file
- * @param {any} node
+ * @param {unknown} node
  * @param {string} name
  * @returns {string[]}
  */
 export function widthClass(file, node, name) {
-  const width = node.attributes?.width;
+  const directive = /** @type {import("mdast-util-directive").Directives} */ (node);
+  const width = directive.attributes?.width;
   if (width === undefined || width === null) return [];
   if (!WIDTHS.includes(width)) {
-    const line = node.position?.start?.line;
+    const line = directive.position?.start?.line;
     throw new ContentError(file, `${name}${line ? ` on line ${line} of the body` : ""} has width=${JSON.stringify(width)}; use width=wide or width=full`);
   }
   return [`width-${width}`];
@@ -122,14 +123,15 @@ export function remarkNumericTextDirectives(source) {
  * Refuses a heading directly inside a container directive, naming the directive and the line.
  *
  * @param {string} file
- * @param {any} node the directive
+ * @param {unknown} node the directive
  * @param {string} why completes the sentence that names the heading
  */
 export function refuseHeading(file, node, why) {
-  const heading = (node.children ?? []).find((/** @type {any} */ child) => child.type === "heading");
+  const directive = /** @type {import("mdast-util-directive").Directives} */ (node);
+  const heading = ("children" in directive ? directive.children : []).find((/** @type {any} */ child) => child.type === "heading");
   if (!heading) return;
   const line = heading.position?.start?.line;
-  throw new ContentError(file, `:::${node.name} holds a heading${line ? ` on line ${line}` : ""}${why}`);
+  throw new ContentError(file, `:::${directive.name} holds a heading${line ? ` on line ${line}` : ""}${why}`);
 }
 
 /**
@@ -219,13 +221,13 @@ export function remarkUnknownDirectives(file, known) {
  *   className: string,
  *   what: string,
  *   lang?: string,
- *   build: (attributes: any, source: string) => any,
+ *   build: (attributes: Record<string, string>, source: string) => unknown,
  * }} kind `what` names the fence's content in the refusal; `lang` is the fence language required, if any
  */
 export function remarkModelDirective(kind) {
   /**
    * @param {string} file
-   * @param {any[]} sink models, indexed by the marker written onto the node
+   * @param {unknown[]} sink models, indexed by the marker written onto the node
    */
   return (file, sink) =>
     (/** @type {import("mdast").Root} */ tree) => {
@@ -272,11 +274,12 @@ export function remarkModelDirective(kind) {
 /**
  * The rehype half: renders each marked figure from its model and drops the marker.
  *
+ * @template Model
  * @param {string} marker
- * @param {(model: any, caption: any[], node: any) => any[]} render
+ * @param {(model: Model, caption: import("hast").ElementContent[], node: import("hast").Element) => import("hast").ElementContent[]} render
  */
 export function rehypeModelMarker(marker, render) {
-  /** @param {any[]} models */
+  /** @param {Model[]} models */
   return (models) =>
     (/** @type {import("hast").Root} */ tree) => {
       visit(tree, "element", (node) => {
