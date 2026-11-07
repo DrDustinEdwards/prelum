@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.40.0 (2026-11-07)
+
+- **Breaking: `enhance()` no longer opens images in a viewer.** The lightbox (`a.image-link` and `img.diagram-image`) and the diagram zoom moved to Capsomer 0.81 (`capsomer/behavior/lightbox`, with `capsomer/lightbox.css`), so every site has one viewer. A site that called `enhance()` for it marks its content `data-cap="lightbox"` and calls Capsomer's `enhance()`. The markup this package writes (`a.image-link`, `img.diagram-image`) is unchanged.
+
 ## 0.39.1 (2026-11-07)
 
 - The `enarratio` peer range is `^0.7.3 || ^0.8.0 || ^0.9.0` again. Renovate had pinned it to the dev version (0.8.0), so a site on Enarratio 0.9 could not install Prelum without an override. Renovate no longer touches peer ranges here (`renovate.json`), and the dev copy is Enarratio 0.9.1.

@@ -7,7 +7,7 @@ export interface EnhanceOptions {
   /** The post body the reading progress bar and the selection link measure (default ".post .prose"). */
   article?: string;
 }
-/** Decorates a rendered post in the browser: progress, scroll-spy, copy buttons, footnote previews, lightbox, selection links, embeds. A second call does nothing. */
+/** Decorates a rendered post in the browser: progress, scroll-spy, copy buttons, footnote previews, selection links, embeds. A second call does nothing. */
 export function enhance(options?: EnhanceOptions): void;
 /** Click-to-play embeds alone: a click on `a.embed-link[data-embed-src]` inside `root` swaps in the player. `enhance` includes it. A second call does nothing. */
 export function enhanceEmbeds(options?: { root?: string }): void;
