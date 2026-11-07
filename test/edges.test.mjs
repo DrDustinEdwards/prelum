@@ -46,6 +46,11 @@ test("xml: absolutizeUrls reads single-quoted attributes and leaves escaped code
     `<a href='https://e.test/x'>&lt;a href="/y"&gt;</a><img src="https://e.test/i.png" srcset='https://e.test/i.png 1x, https://e.test/j.png 2x'>`,
   );
   assert.equal(unescapeXml("a&amp;lt;&quot;&apos;&gt;"), `a&lt;"'>`);
+  // Numeric references decode; one XML 1.0 forbids, or an unfinished one, stays as written.
+  assert.equal(
+    unescapeXml("&#38;&#x26;&#x1F600;&#0;&#xD800;&#x110000;&#38"),
+    "&&\u{1F600}&#0;&#xD800;&#x110000;&#38",
+  );
 });
 
 test("audit: a > inside a quoted attribute does not end the tag", () => {
@@ -156,6 +161,11 @@ test("sitemap: priority and changefreq are validated, images are capped at 1,000
     () => sitemapDocument([{ loc, priority: 1.5 }], { layout: "expanded" }),
     /priority/,
   );
+  assert.throws(
+    () => sitemapDocument([{ loc, priority: 0.25 }], { layout: "expanded" }),
+    /steps of 0.1/,
+  );
+  assert.match(sitemapDocument([{ loc, priority: 0.3 }], { layout: "expanded" }), /<priority>0.3</);
   assert.throws(
     () => sitemapDocument([{ loc, changefreq: "sometimes" }], { layout: "expanded" }),
     /changefreq/,

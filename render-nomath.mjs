@@ -66,10 +66,9 @@ export const DEFAULT_MAX_DEPTH = 100;
 const encoder = new TextEncoder();
 
 /** Most reference-style links (`][`), emphasis delimiters (`*`, `_`) and `[` a source may hold outside code: parsing them is quadratic, so a
- * 300 KB run of `[a][a]` took 46 s. Generous for prose: a 512 KB article holds far fewer. */
-const MAX_REFERENCES = 2000;
-const MAX_EMPHASIS = 8000;
-const MAX_BRACKETS = 10000;
+ * 300 KB run of `[a][a]` took 46 s. Generous for prose: a 512 KB article holds far fewer. A page of
+ * `snake_case` names can hold more (every `*` and `_` counts, in a code span too), and raises them with the `scanLimits` option. */
+export const DEFAULT_SCAN_LIMITS = { references: 2000, emphasis: 8000, brackets: 10000 };
 
 /**
  * A cheap pass over the source before it is parsed, refusing the shapes that exhaust time or the stack under the byte cap: a line with more
@@ -79,8 +78,9 @@ const MAX_BRACKETS = 10000;
  * @param {string} file
  * @param {string} body
  * @param {number} maxDepth
+ * @param {typeof DEFAULT_SCAN_LIMITS} limits
  */
-function assertScan(file, body, maxDepth) {
+function assertScan(file, body, maxDepth, limits) {
   let fence = "";
   let references = 0;
   let emphasis = 0;
@@ -121,10 +121,14 @@ function assertScan(file, body, maxDepth) {
         if (line[i - 1] === "]") references += 1;
       } else if (c === "*" || c === "_") emphasis += 1;
     }
-    if (references > MAX_REFERENCES || emphasis > MAX_EMPHASIS || brackets > MAX_BRACKETS) {
+    if (
+      references > limits.references ||
+      emphasis > limits.emphasis ||
+      brackets > limits.brackets
+    ) {
       throw new ContentError(
         file,
-        `too many links or emphasis marks (limits ${MAX_REFERENCES} reference links, ${MAX_EMPHASIS} emphasis marks, ${MAX_BRACKETS} brackets); first exceeded at line ${lineNo} of the body`,
+        `too many links or emphasis marks (limits ${limits.references} reference links, ${limits.emphasis} emphasis marks, ${limits.brackets} brackets; the scanLimits option raises them); first exceeded at line ${lineNo} of the body`,
       );
     }
   }
@@ -177,6 +181,8 @@ function assertScan(file, body, maxDepth) {
  * @property {HighlightOptions} [highlight] Without it a code block is plain <pre><code class="language-x">.
  * @property {number} [maxBytes] Refuse a source longer than this many UTF-8 bytes. Default 512 KB.
  * @property {number} [maxDepth] Refuse a source nested deeper than this. Default 100.
+ * @property {Partial<typeof DEFAULT_SCAN_LIMITS>} [scanLimits] Most reference links (`][`), emphasis marks (`*`, `_`) and `[` outside fenced
+ *   code. Defaults 2,000, 8,000 and 10,000: parsing them is quadratic, so raise one only for a page that needs it.
  * @property {(slug: string) => Promise<{ url: string, title: string } | null>} [postLink] Resolves `::postlink[slug]` to the post's
  *   current address and title. Without it `::postlink[…]` stays text.
  * @property {import("./render-links.mjs").LinkOptions} [links] The site's origin, the family's sites and the file sizes the link
@@ -1023,7 +1029,7 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   if (size > maxBytes) {
     throw new ContentError(file, `source is ${size} bytes and the limit is ${maxBytes}`);
   }
-  assertScan(file, body, maxDepth);
+  assertScan(file, body, maxDepth, { ...DEFAULT_SCAN_LIMITS, ...options.scanLimits });
 
   const packs = options.packs ?? [];
   const known = [
