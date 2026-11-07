@@ -41,6 +41,8 @@ export type MarkdownCopiesOptions = {
   llmsFull?: number | false;
   /** pages that get no Markdown copy, by path */
   skip?: (path: string) => boolean;
+  /** pages that get a copy but stay out of llms-full.txt, by path: a catalog of records, say, which an agent fetches one at a time */
+  llmsFullSkip?: (path: string) => boolean;
 };
 /**
  * Wraps a Worker's fetch handler so every page has a Markdown copy:
