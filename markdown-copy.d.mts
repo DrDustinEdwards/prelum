@@ -43,6 +43,8 @@ export type MarkdownCopiesOptions = {
   skip?: (path: string) => boolean;
   /** pages that get a copy but stay out of llms-full.txt, by path: a catalog of records, say, which an agent fetches one at a time */
   llmsFullSkip?: (path: string) => boolean;
+  /** whether the site may answer a `.md` path itself (true by default, so it is asked first); false when it answers none, so the copy is made without that first request, which a site that counts its 404s would count */
+  siteMarkdown?: boolean;
 };
 /**
  * Wraps a Worker's fetch handler so every page has a Markdown copy:
