@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 0.40.2 (2026-11-07)
+
+- **An empty header cell is a `td`.** The empty top-left cell of a comparison table (`|  | A | B |`) was a `th` with no name: axe `empty-table-header`, and a screen reader announced the column with nothing. W3C WAI's tables tutorial treats a corner that names nothing as a plain cell, so it renders as `<td>`. The rendered HTML changes for such tables, so `RENDER_VERSION` is 22 and a site re-renders its stored HTML.
 - `renovate.json` no longer carries its own rule against rewriting peer ranges; the shared preset (devkit) applies it to every repository.
 
 ## 0.40.1 (2026-11-07)

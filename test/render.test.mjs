@@ -359,6 +359,11 @@ test("two scroll regions with one name get distinct names (axe landmark-unique),
   assert.match(html, /aria-label="Code: SQL"/);
 });
 
+test("an empty corner header cell is a td, not a nameless th (axe empty-table-header)", async () => {
+  const { html } = await core("|  | A | B |\n| - | - | - |\n| x | 1 | 2 |");
+  assert.match(html, /<thead>\s*<tr>\s*<td><\/td>\s*<th>A<\/th>/);
+});
+
 test("code is plain without a highlighter, and highlighted, labeled and line-marked with one", async () => {
   const plain = await core("```js\nlet a\n```");
   assert.equal(
