@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.35.1 (2026-11-07)
+
+- The `enarratio` peer range is `^0.7.3 || ^0.8.0 || ^0.9.0` (it was exactly 0.7.3), so a site that moves Enarratio no
+  longer fails with ERESOLVE. The dev dependency is 0.8.0. No code change.
+
 ## 0.35.0 (2026-11-07)
 
 - **Removed:** `render/chart-enhance` and its `enhanceCharts`. A chart's redraw spec is now written in Enarratio's own
