@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.39.1 (2026-11-07)
+
+- The `enarratio` peer range is `^0.7.3 || ^0.8.0 || ^0.9.0` again. Renovate had pinned it to the dev version (0.8.0), so a site on Enarratio 0.9 could not install Prelum without an override. Renovate no longer touches peer ranges here (`renovate.json`), and the dev copy is Enarratio 0.9.1.
+
 ## 0.39.0 (2026-11-07)
 
 - `markdownCopies` takes `siteMarkdown: false` for a site that answers no `.md` path itself. The wrapper then makes the copy without first asking the site for it, so a site that counts its 404s no longer counts every `.md` request as one. The default is unchanged.
