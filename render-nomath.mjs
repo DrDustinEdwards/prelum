@@ -329,6 +329,22 @@ function tableName(table) {
   return `Table: ${headers.slice(0, TABLE_NAME_HEADERS).join(", ")}${more}`;
 }
 
+/**
+ * A header cell with no content (the top-left corner of a comparison table, `| | A | B |`) is a table header with no name:
+ * axe `empty-table-header`, and a screen reader announces the column with nothing. W3C WAI's tables tutorial says a corner
+ * that names nothing is a plain cell, so it becomes a `td`.
+ */
+function rehypeEmptyHeaders() {
+  return (/** @type {import("hast").Root} */ tree) => {
+    visit(tree, "element", (node) => {
+      if (node.tagName !== "th" || hastToString(node).trim() !== "") return;
+      if (node.children.some((child) => child.type === "element")) return;
+      node.tagName = "td";
+      delete node.properties?.scope;
+    });
+  };
+}
+
 /** A wrapper, not display: block on the table, which can strip the table role from a screen reader. */
 function rehypeTableScroll() {
   return (/** @type {import("hast").Root} */ tree) => {
@@ -1114,7 +1130,11 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   }
 
   // Option 1 in the header: no allowDangerousHtml, so raw HTML in the source never becomes markup.
-  processor.use(remarkRehype).use(rehypeTableScroll).use(rehypeTaskListLabels);
+  processor
+    .use(remarkRehype)
+    .use(rehypeEmptyHeaders)
+    .use(rehypeTableScroll)
+    .use(rehypeTaskListLabels);
 
   for (const run of runs) {
     for (const [plugin, ...args] of run.rehype) processor.use(plugin, ...args);
