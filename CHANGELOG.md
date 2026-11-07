@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.37.1 (2026-11-07)
+
+- The footnote preview (`enhance`) copies the footnote node by node instead of assigning `innerHTML`, so a page that requires Trusted Types
+  (`require-trusted-types-for 'script'`) takes it and Chrome logs no CSP issue. The preview is the same.
+
 ## 0.37.0 (2026-11-07)
 
 - `markdownCopies` takes `llmsFullSkip(path)`: pages that get a Markdown copy but stay out of the llms-full.txt it builds, such as a

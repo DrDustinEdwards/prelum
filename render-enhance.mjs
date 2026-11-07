@@ -354,8 +354,9 @@ export function enhance(options = {}) {
         // One preview at a time, so its class can double as its id.
         note.id = note.className = "footnote-preview";
         note.setAttribute("role", "note");
-        // A copy of the page's own rendered footnote, so it is as safe as the page.
-        note.innerHTML = target.innerHTML;
+        // A copy of the page's own rendered footnote, made node by node: no markup string reaches an injection sink, so a page
+        // that requires Trusted Types takes it.
+        note.replaceChildren(...Array.from(target.childNodes, (n) => n.cloneNode(true)));
         for (const back of note.querySelectorAll("[data-footnote-backref]")) back.remove();
 
         note.addEventListener("mouseenter", cancelHide);
