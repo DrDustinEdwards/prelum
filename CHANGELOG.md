@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `renovate.json` no longer carries its own rule against rewriting peer ranges; the shared preset (devkit) applies it to every repository.
+
 ## 0.40.0 (2026-11-07)
 
 - **Breaking: `enhance()` no longer opens images in a viewer.** The lightbox (`a.image-link` and `img.diagram-image`) and the diagram zoom moved to Capsomer 0.81 (`capsomer/behavior/lightbox`, with `capsomer/lightbox.css`), so every site has one viewer. A site that called `enhance()` for it marks its content `data-cap="lightbox"` and calls Capsomer's `enhance()`. The markup this package writes (`a.image-link`, `img.diagram-image`) is unchanged.
