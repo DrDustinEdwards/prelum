@@ -12,6 +12,13 @@
   lists a URL robots.txt disallows to Googlebot, matched as RFC 9309 says). `crawlSite` returns `robots` (the file's text, null
   when it did not load as text) and `auditPages` takes it; left out, the robots checks are skipped. The four live sites
   checked (dustinedwards.info, Foxing, julieedwards.info, the specimen) have no new findings.
+- More audit checks, from Bing's and Google's guidance: `sitemap-lastmod-missing` and `sitemap-lastmod-uniform` (Bing calls an
+  accurate lastmod a top recrawl signal; one shared date reads as the build date; `crawlSite` returns `lastmods`, which
+  `auditPages` takes); and for images `image-size-missing` (no width and height, so the layout jumps:
+  https://web.dev/articles/optimize-cls), `image-filename-generic` (`IMG_0042.jpg`), `image-alt-generic` (alt "image" or
+  "photo") and `image-lazy-missing` (four or more images, none lazy). `link-redirect` is now an **error**: an internal link
+  points at the final URL, so a link that redirects is a link to fix. The live sites checked have no such link except
+  Capsomer's, fixed in its site.
 - `sitemapDocument` throws past 50,000 URLs or 50 MiB, the limit a crawler reads one file to
   (https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap), and says to split; new
   `sitemapIndexDocument(sitemaps)` writes the index that lists the files, and `SITEMAP_MAX_URLS` and `SITEMAP_MAX_BYTES` are exported.

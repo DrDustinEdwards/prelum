@@ -37,13 +37,14 @@ const MAX_HOPS = 5;
  * writes and the links in the page, so it needs no HTML parser. Pure: it fetches nothing.
  *
  * @param {AuditPage[]} pages
- * @param {{ origin: string, sitemap?: string[], robots?: string | null }} site `origin` is the production origin every canonical
+ * @param {{ origin: string, sitemap?: string[], robots?: string | null, lastmods?: Record<string, string | null> }} site `origin` is the production origin every canonical
  *   must be on; `sitemap` the URLs the sitemap lists (a page's own `inSitemap` counts too), and an empty list is itself a
  *   finding; `robots` the text of `/robots.txt` (`crawlSite` returns it, null when it did not load), left out to skip the
- *   robots checks
+ *   robots checks; `lastmods` the sitemap's `lastmod` per URL (null for none), which `crawlSite` returns, left out to skip the
+ *   lastmod checks
  * @returns {AuditReport}
  */
-export function auditPages(pages, { origin, sitemap, robots: robotsText }) {
+export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmods }) {
   /** @type {AuditFinding[]} */
   const findings = [];
   const add = (
@@ -70,6 +71,28 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText }) {
 
   if (sitemap && sitemap.length === 0)
     add(origin, "sitemap-empty", "error", "the sitemap lists no pages, or did not load");
+
+  if (lastmods) {
+    const urls = Object.keys(lastmods);
+    const dated = urls.filter((url) => lastmods[url]);
+    // Bing calls an accurate lastmod a top signal for what to recrawl, and Google uses it only where it has been
+    // consistently accurate (https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap): a page
+    // without one cannot say it changed, and one date on every page says the sitemap was built, not that the pages changed.
+    if (urls.length > 0 && dated.length < urls.length)
+      add(
+        `${origin}/sitemap.xml`,
+        "sitemap-lastmod-missing",
+        "warning",
+        `${urls.length - dated.length} of ${urls.length} sitemap URLs have no lastmod, e.g. ${urls.find((url) => !lastmods[url])}`,
+      );
+    if (dated.length >= 10 && new Set(dated.map((url) => lastmods[url])).size === 1)
+      add(
+        `${origin}/sitemap.xml`,
+        "sitemap-lastmod-uniform",
+        "warning",
+        `all ${dated.length} dated URLs share the lastmod ${lastmods[dated[0]]}, which reads as the build date`,
+      );
+  }
 
   /** @type {Group | null} */
   let googlebot = null;
@@ -245,9 +268,41 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText }) {
       }
       for (const problem of jsonLdProblems(data)) add(url, "jsonld-incomplete", "warning", problem);
     }
-    for (const img of tags(html, "img")) {
+    const images = tags(html, "img");
+    for (const img of images) {
+      const src = img.src ?? "an image";
+      // Without width and height the browser cannot hold the space before the file arrives, and the layout jumps
+      // (https://web.dev/articles/optimize-cls#images-without-dimensions). A data: URI is inline and has no wait.
+      if (img.src && !img.src.startsWith("data:") && (!img.width || !img.height))
+        add(url, "image-size-missing", "warning", `${src} has no width and height attributes`);
+      // Google asks for descriptive file names (https://developers.google.com/search/docs/appearance/google-images).
+      const file = (img.src ?? "").split(/[?#]/)[0].split("/").pop() ?? "";
+      if (
+        /^(img|dsc|dscn|dscf|pxl|image|photo|screenshot|untitled|download)[-_ ]?\d*\.[a-z0-9]+$/i.test(
+          file,
+        ) ||
+        /^\d+\.[a-z0-9]+$/.test(file)
+      )
+        add(
+          url,
+          "image-filename-generic",
+          "warning",
+          `${src} is named ${file}, which says nothing about the picture`,
+        );
       // alt="" is a decorative image, and right; a file name for alt is read aloud as one.
-      if (img.alt === undefined)
+      if (
+        img.alt !== undefined &&
+        /^(image|photo|picture|img|graphic|logo|screenshot|thumbnail|banner)s?$/i.test(
+          img.alt.trim(),
+        )
+      )
+        add(
+          url,
+          "image-alt-generic",
+          "warning",
+          `the alt on ${src} is "${img.alt}", which does not say what the picture shows`,
+        );
+      else if (img.alt === undefined)
         add(url, "image-alt-missing", "warning", `no alt on ${img.src ?? "an image"}`);
       else if (isFileName(img.alt, img.src))
         add(
@@ -257,6 +312,14 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText }) {
           `the alt on ${img.src ?? "an image"} is a file name, "${img.alt}"`,
         );
     }
+    // The first picture may be the page's largest, so it loads at once; with several below it, none lazy is wasted bytes.
+    if (images.length >= 4 && !images.some((img) => img.loading === "lazy"))
+      add(
+        url,
+        "image-lazy-missing",
+        "warning",
+        `${images.length} images and none has loading="lazy"`,
+      );
     for (const target of new Set(internalLinks(html, url, origin).map(normalize))) {
       const linked = byUrl.get(target);
       if (!linked) continue;
@@ -266,7 +329,7 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText }) {
         add(
           url,
           "link-redirect",
-          "warning",
+          "error",
           `links to ${linked.url}, which redirects to ${linked.location ?? "somewhere"}`,
         );
     }
@@ -307,8 +370,9 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText }) {
  * page with status 0 and its error. A browser's fetch hides a manual redirect's status, so run it in a Worker or Node.
  *
  * @param {CrawlInput} input
- * @returns {Promise<{ pages: AuditPage[], sitemap: string[], robots: string | null }>} `robots` is `/robots.txt`'s text, null when it
- *   did not load as text; pass it to `auditPages`
+ * @returns {Promise<{ pages: AuditPage[], sitemap: string[], robots: string | null, lastmods: Record<string, string | null> }>}
+ *   `robots` is `/robots.txt`'s text, null when it did not load as text; `lastmods` each sitemap URL's `lastmod` (null for
+ *   none); pass both to `auditPages`
  */
 export async function crawlSite({
   origin,
@@ -316,9 +380,11 @@ export async function crawlSite({
   maxPages = 200,
   sitemapPath = "/sitemap.xml",
 }) {
-  const sitemap = [
-    ...new Set(await readSitemap(fetcher, new URL(sitemapPath, origin).href, origin, true)),
-  ];
+  const entries = await readSitemap(fetcher, new URL(sitemapPath, origin).href, origin, true);
+  const sitemap = [...new Set(entries.map((entry) => entry.loc))];
+  /** @type {Record<string, string | null>} */
+  const lastmods = {};
+  for (const entry of entries) lastmods[entry.loc] ??= entry.lastmod;
   const robots = await readRobots(fetcher, origin);
   /** @type {AuditPage[]} */
   const pages = [];
@@ -345,7 +411,7 @@ export async function crawlSite({
 
   for (const page of pages.filter((each) => each.html !== undefined)) {
     for (const url of internalLinks(/** @type {string} */ (page.html), page.url, origin)) {
-      if (pages.length >= maxPages) return { pages, sitemap, robots };
+      if (pages.length >= maxPages) return { pages, sitemap, robots, lastmods };
       if (seen.has(normalize(url))) continue;
       seen.add(normalize(url));
       const head = await fetchPage(fetcher, url, "HEAD", false);
@@ -356,7 +422,7 @@ export async function crawlSite({
       );
     }
   }
-  return { pages, sitemap, robots };
+  return { pages, sitemap, robots, lastmods };
 }
 
 /** @param {typeof fetch} fetcher @param {string} origin @returns {Promise<string | null>} */
@@ -373,7 +439,7 @@ async function readRobots(fetcher, origin) {
   }
 }
 
-/** @param {typeof fetch} fetcher @param {string} url @param {string} origin @param {boolean} index @returns {Promise<string[]>} */
+/** @param {typeof fetch} fetcher @param {string} url @param {string} origin @param {boolean} index @returns {Promise<Array<{ loc: string, lastmod: string | null }>>} */
 async function readSitemap(fetcher, url, origin, index) {
   let xml;
   try {
@@ -386,13 +452,17 @@ async function readSitemap(fetcher, url, origin, index) {
   } catch {
     return [];
   }
-  const locs = [...xml.matchAll(/<loc>\s*([^<]*?)\s*<\/loc>/gi)]
-    .map((match) => decodeEntities(match[1]))
-    .filter((loc) => sameOrigin(loc, origin));
-  if (!/<sitemapindex\b/i.test(xml)) return locs;
+  const isIndex = /<sitemapindex\b/i.test(xml);
+  const entries = [...xml.matchAll(/<(?:url|sitemap)\b[^>]*>([\s\S]*?)<\/(?:url|sitemap)>/gi)]
+    .map((match) => ({
+      loc: decodeEntities(/<loc>\s*([^<]*?)\s*<\/loc>/i.exec(match[1])?.[1] ?? ""),
+      lastmod: /<lastmod>\s*([^<]*?)\s*<\/lastmod>/i.exec(match[1])?.[1] ?? null,
+    }))
+    .filter((entry) => entry.loc !== "" && sameOrigin(entry.loc, origin));
+  if (!isIndex) return entries;
   if (!index) return [];
   const urls = [];
-  for (const loc of locs) urls.push(...(await readSitemap(fetcher, loc, origin, false)));
+  for (const entry of entries) urls.push(...(await readSitemap(fetcher, entry.loc, origin, false)));
   return urls;
 }
 

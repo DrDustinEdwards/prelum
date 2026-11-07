@@ -283,7 +283,7 @@ test("the audit finds a broken link through a trailing slash, a redirect chain o
       {
         url: `${ORIGIN}/b`,
         status: 200,
-        html: `${page("/b", "Same", "two")}<img src="/i/IMG_0042.JPG" alt="IMG_0042"><img src="/rule.svg" alt=""></body></html>`,
+        html: `${page("/b", "Same", "two")}<img src="/i/IMG_0042.JPG" alt="IMG_0042" width="9" height="9"><img src="/rule.svg" alt="" width="9" height="9"></body></html>`,
         inSitemap: true,
       },
       {
@@ -302,6 +302,7 @@ test("the audit finds a broken link through a trailing slash, a redirect chain o
   assert.deepEqual(checks, [
     `card-incomplete ${ORIGIN}/bare`,
     `image-alt-filename ${ORIGIN}/b`,
+    `image-filename-generic ${ORIGIN}/b`,
     `link-broken ${ORIGIN}/`,
     `link-redirect ${ORIGIN}/`,
     `redirect-chain ${ORIGIN}/old`,
