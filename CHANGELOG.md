@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.34.0 (2026-11-07)
+
+- New in the library, so the sites stop carrying their own copies: `htmlToText(html)` (`./text`: scripts, styles, tags and
+  Prelum's `#` heading anchors dropped, entities decoded, white space collapsed; `metaText` is now this plus the cut),
+  `isoDuration(seconds)` (`./text`), `shareCard(url, alt)` and `SHARE_CARD_SIZE` (`./head`, the 1200 by 630 card), and
+  `itemList` items take an optional `description`. No behavior change to anything that existed.
+- `frontmatter` is this module's alone: site-api drops its re-export of the mechanics (`splitSource`, `joinSource`,
+  `readKey`, `readList`, `setBlock`, `setRawKey`) in 0.27.0 and keeps only the Carrel field names built on them. The six
+  exports and their signatures are unchanged.
 - The specimen's Worker (site-runtime 0.87.0) answers the shared 503 maintenance page while its `MAINTENANCE` var is on, and its `/404` answers 404, not 200. Not in the library.
 - CI: one check job per pull request (devkit v0.26.1 pr.yml in `checks.yml`, reported as `checks / Repo checks`) runs the
   trailer, shared-code, OSV-Scanner, workflow audit and reviewer checks; `review.yml` and `workflow-audit.yml` are gone.

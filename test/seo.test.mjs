@@ -23,7 +23,15 @@ import {
 import { auditIcons, icoFile, iconLinks, webManifest } from "../icons.mjs";
 import { llmsResponse } from "../llms.mjs";
 import { aiTxt, DENIED_BOTS, robotsDocument, robotsResponse } from "../robots.mjs";
-import { article, articleImageSet, imageObject, jsonLd, videoObject } from "../schema.mjs";
+import {
+  article,
+  articleImageSet,
+  imageObject,
+  itemList,
+  jsonLd,
+  videoObject,
+} from "../schema.mjs";
+import { htmlToText, isoDuration } from "../text.mjs";
 
 const ORIGIN = "https://example.com";
 
@@ -560,5 +568,24 @@ test("auditIcons passes the files prelum-icons writes and names a favicon that i
       ["icon-missing", "/favicon.ico"],
       ["icon-broken", "/icon-maskable-512.png"],
     ],
+  );
+});
+
+test("htmlToText drops Prelum's heading anchors, a described list item keeps its text, and a duration is ISO 8601", () => {
+  assert.equal(
+    htmlToText(
+      '<h2 id="a">Setup<a class="heading-anchor" href="#a">#</a></h2><p>Tom &amp; Jerry</p>',
+    ),
+    "Setup Tom & Jerry",
+  );
+  assert.equal(isoDuration(3723), "PT1H2M3S");
+  assert.equal(isoDuration(0), undefined);
+  const list = itemList("https://example.com", "Guides", [
+    { name: "Start", path: "/start", description: "First steps" },
+    { name: "Next", path: "/next" },
+  ]);
+  assert.deepEqual(
+    /** @type {Array<{ description?: string }>} */ (list.itemListElement).map((i) => i.description),
+    ["First steps", undefined],
   );
 });

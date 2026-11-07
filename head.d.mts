@@ -67,6 +67,10 @@ export function articleDates(article: ArticleFacts): {
  * @param {string} origin
  * @param {string} path
  */
+/** The size every share card is drawn at, the one Facebook, X and LinkedIn all show without cropping. */
+export const SHARE_CARD_SIZE: Readonly<{ width: 1200; height: 630 }>;
+/** A drawn share card as `defineHead` reads it, so og:image carries its size and alt text. */
+export function shareCard(url: string, alt: string): HeadImage;
 export function absoluteUrl(origin: string, path: string): string;
 /**
  * The tags as HTML, for a page built without React Router (a static build). Attribute values are escaped, and `<` inside

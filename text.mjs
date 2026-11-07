@@ -44,3 +44,63 @@ export function excerpt(text, max = 160) {
   const space = cut.lastIndexOf(" ");
   return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,;:.]+$/, "")}…`;
 }
+
+/** @type {Record<string, string>} */
+const NAMED_ENTITIES = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: " ",
+  ndash: "–",
+  mdash: "—",
+  hellip: "…",
+  lsquo: "‘",
+  rsquo: "’",
+  ldquo: "“",
+  rdquo: "”",
+  copy: "©",
+  reg: "®",
+  trade: "™",
+  middot: "·",
+  bull: "•",
+};
+
+/**
+ * The text of an HTML fragment (a rendered body, an abstract title): scripts and styles dropped, then tags, Prelum's own `#` heading
+ * anchor links (navigation, not words), entities decoded and white space collapsed. An entity it does not know is kept as written.
+ * The result is text, so it is escaped where it is written, as every tag is.
+ *
+ * @param {string} html
+ * @returns {string}
+ */
+export function htmlToText(html) {
+  return html
+    .replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, " ")
+    .replace(/<a\b[^>]*\bclass="heading-anchor"[^>]*>[\s\S]*?<\/a\s*>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&(?:#(\d+)|#x([\da-f]+)|([a-z]+));/gi, (entity, decimal, hex, name) => {
+      if (name) return NAMED_ENTITIES[name.toLowerCase()] ?? entity;
+      const code = decimal ? Number(decimal) : Number.parseInt(hex, 16);
+      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : entity;
+    })
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Seconds as an ISO 8601 duration (`PT1H2M3S`), the form schema.org's `duration` and `timeRequired` and a feed's `itunes:duration`
+ * read; undefined for zero, negative or missing seconds, which would claim a length the media does not have.
+ *
+ * @param {number | null | undefined} totalSeconds
+ * @returns {string | undefined}
+ */
+export function isoDuration(totalSeconds) {
+  if (!totalSeconds || totalSeconds <= 0) return undefined;
+  const whole = Math.round(totalSeconds);
+  const h = Math.floor(whole / 3600);
+  const m = Math.floor((whole % 3600) / 60);
+  const s = whole % 60;
+  return `PT${h ? `${h}H` : ""}${m ? `${m}M` : ""}${s ? `${s}S` : ""}`;
+}

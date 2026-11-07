@@ -278,9 +278,11 @@ export function breadcrumbs(origin, trail) {
 }
 
 /**
+ * An ItemList of pages. An item's `description` is written when it has one, so a hub's list carries what each guide is for.
+ *
  * @param {string} origin
  * @param {string} name
- * @param {Array<{ name: string, path: string }>} items
+ * @param {Array<{ name: string, path: string, description?: string }>} items
  */
 export function itemList(origin, name, items) {
   return thing("ItemList", {
@@ -290,6 +292,7 @@ export function itemList(origin, name, items) {
       "@type": "ListItem",
       position: i + 1,
       name: item.name,
+      description: item.description,
       url: absoluteUrl(origin, item.path),
     })),
   });
