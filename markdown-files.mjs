@@ -6,6 +6,7 @@
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 
+import { pageDates, readPageRecord } from "./lastmod.mjs";
 import { llmsFullDocument, markdownPage, markdownPath } from "./llms.mjs";
 import { htmlToMarkdown, llmsHeaderOf, sitemapLocs } from "./markdown-copy.mjs";
 
@@ -63,4 +64,40 @@ export async function writeMarkdownCopies({ dir, origin, skip = () => false }) {
   );
   await writeFile(join(dir, "llms-full.txt"), llmsFullDocument({ ...header, pages: list }));
   return ordered;
+}
+
+/**
+ * A static site's sitemap `lastmod`, per page, written after `writeMarkdownCopies`: each URL in `dir`'s sitemap.xml gets the
+ * day its Markdown copy (the page's text, so a new CSS or script hash changes nothing) last changed, from `pageDates` against the
+ * live build's `build.json`, and `build.json` is written beside the sitemap for the next build to read. A URL with no copy (a
+ * page left out, or noindex) keeps no `lastmod`, and any `lastmod` the sitemap had is replaced. Returns the record.
+ *
+ * @param {{ dir: string, origin: string, previous?: string, today?: string }} options `previous` is the live record's address
+ *   (default `<origin>/build.json`); `today` is `YYYY-MM-DD` (default the UTC day)
+ * @returns {Promise<import("./lastmod.mjs").PageRecord>}
+ */
+export async function writeSitemapLastmod({ dir, origin, previous, today }) {
+  const base = origin.replace(/\/$/, "");
+  const day = today ?? new Date().toISOString().slice(0, 10);
+  const sitemap = await readFile(join(dir, "sitemap.xml"), "utf8");
+  /** @type {Array<[string, string]>} */
+  const pages = [];
+  for (const loc of sitemapLocs(sitemap)) {
+    const path = new URL(loc, base).pathname;
+    const copy = await readFile(join(dir, markdownPath(path).slice(1)), "utf8").catch(() => null);
+    if (copy !== null) pages.push([path, copy]);
+  }
+  const record = pageDates(pages, await readPageRecord(previous ?? `${base}/build.json`), day);
+  const written = sitemap.replace(/<url>[\s\S]*?<\/url>/g, (block) => {
+    const loc = /<loc>([^<]*)<\/loc>/.exec(block)?.[1];
+    if (loc === undefined) return block;
+    const entry = record[new URL(loc.replaceAll("&amp;", "&"), base).pathname];
+    const bare = block.replace(/\s*<lastmod>[^<]*<\/lastmod>/, "");
+    return entry
+      ? bare.replace(/(<loc>[^<]*<\/loc>)(\s*)/, `$1$2<lastmod>${entry.lastmod}</lastmod>$2`)
+      : bare;
+  });
+  await writeFile(join(dir, "sitemap.xml"), written);
+  await writeFile(join(dir, "build.json"), `${JSON.stringify({ pages: record }, null, 2)}\n`);
+  return record;
 }

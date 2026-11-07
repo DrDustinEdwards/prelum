@@ -1,3 +1,4 @@
+import type { PageRecord } from "./lastmod.mjs";
 /**
  * A static site's Markdown copies, written at build time beside its pages: for each `.html` file in `dir` (the 404 page and
  * noindex pages left out), the page's copy at `markdownPath` of its address (`index.html` is `/index.md`, `about.html` and
@@ -10,3 +11,9 @@ export function writeMarkdownCopies(options: {
   origin: string;
   skip?: (path: string) => boolean;
 }): Promise<string[]>;
+export function writeSitemapLastmod(options: {
+  dir: string;
+  origin: string;
+  previous?: string;
+  today?: string;
+}): Promise<PageRecord>;

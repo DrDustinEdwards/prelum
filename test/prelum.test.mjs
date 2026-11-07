@@ -327,3 +327,119 @@ test("search: the fusion constant is the argument's, not a baked-in one", () => 
   const [only] = fuse([[{ uid: "a" }]], 10);
   assert.equal(only.score, 1 / 11);
 });
+
+test("lastmod: an unchanged page keeps the live date, a changed or new one gets today's", async () => {
+  const { pageDates } = await import("../lastmod.mjs");
+  const before = pageDates(
+    [
+      ["/a", "one"],
+      ["/b", "two"],
+    ],
+    undefined,
+    "2026-01-01",
+  );
+  assert.deepEqual(
+    Object.values(before).map((p) => p.lastmod),
+    ["2026-01-01", "2026-01-01"],
+  );
+  const after = pageDates(
+    [
+      ["/a", "one"],
+      ["/b", "changed"],
+      ["/c", "new"],
+    ],
+    before,
+    "2026-02-02",
+  );
+  assert.deepEqual(Object.fromEntries(Object.entries(after).map(([k, v]) => [k, v.lastmod])), {
+    "/a": "2026-01-01",
+    "/b": "2026-02-02",
+    "/c": "2026-02-02",
+  });
+  const first = pageDates([["/a", "one 2026-01-01"]], undefined, "2026-01-01", {
+    ignore: ["2026-01-01"],
+  });
+  const stamped = pageDates([["/a", "one 2026-02-02"]], first, "2026-02-02", {
+    ignore: ["2026-02-02"],
+  });
+  assert.equal(stamped["/a"].lastmod, "2026-01-01");
+});
+
+test("lastmod: writeSitemapLastmod dates each sitemap URL from its Markdown copy and keeps a page's date while its text is the same", async () => {
+  const { mkdtempSync, writeFileSync, readFileSync, mkdirSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { writeSitemapLastmod } = await import("../markdown-files.mjs");
+  const dir = mkdtempSync(join(tmpdir(), "lastmod-"));
+  mkdirSync(join(dir, "docs"));
+  writeFileSync(join(dir, "index.md"), "home");
+  writeFileSync(join(dir, "docs.md"), "docs one");
+  writeFileSync(
+    join(dir, "sitemap.xml"),
+    '<?xml version="1.0"?><urlset><url><loc>https://example.com/</loc></url><url><loc>https://example.com/docs</loc><lastmod>2020-01-01</lastmod></url></urlset>',
+  );
+  await writeSitemapLastmod({
+    dir,
+    origin: "https://example.com",
+    previous: join(dir, "none.json"),
+    today: "2026-01-01",
+  });
+  assert.match(
+    readFileSync(join(dir, "sitemap.xml"), "utf8"),
+    /<loc>https:\/\/example.com\/<\/loc><lastmod>2026-01-01<\/lastmod>/,
+  );
+  writeFileSync(join(dir, "docs.md"), "docs two");
+  await writeSitemapLastmod({
+    dir,
+    origin: "https://example.com",
+    previous: join(dir, "build.json"),
+    today: "2026-02-02",
+  });
+  const xml = readFileSync(join(dir, "sitemap.xml"), "utf8");
+  assert.match(xml, /<loc>https:\/\/example.com\/<\/loc><lastmod>2026-01-01<\/lastmod>/);
+  assert.match(xml, /<loc>https:\/\/example.com\/docs<\/loc><lastmod>2026-02-02<\/lastmod>/);
+  assert.equal((xml.match(/<lastmod>/g) ?? []).length, 2);
+});
+
+test("lastmod: trackPageDates dates a page when its text changes and keeps the entry of a page it cannot read", async () => {
+  const { trackPageDates, kvPageRecord } = await import("../lastmod.mjs");
+  /** @type {Map<string, string>} */
+  const store = new Map();
+  const kv = {
+    get: async (/** @type {string} */ k) => store.get(k) ?? null,
+    put: async (/** @type {string} */ k, /** @type {string} */ v) => void store.set(k, v),
+  };
+  const { load, save } = kvPageRecord(kv, "dates");
+  /** @type {Record<string, string>} */
+  const pages = { "/a": "one", "/b": "two" };
+  const read = async (/** @type {string} */ path) => pages[path] ?? null;
+  const first = await trackPageDates({
+    paths: ["/a", "/b"],
+    read,
+    load,
+    save,
+    today: "2026-01-01",
+  });
+  assert.equal(first.changed, true);
+  pages["/a"] = "one, edited";
+  delete pages["/b"];
+  const second = await trackPageDates({
+    paths: ["/a", "/b"],
+    read,
+    load,
+    save,
+    today: "2026-02-02",
+  });
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(second.record).map(([k, v]) => [k, v.lastmod])),
+    { "/a": "2026-02-02", "/b": "2026-01-01" },
+  );
+  const third = await trackPageDates({
+    paths: ["/a", "/b"],
+    read,
+    load,
+    save,
+    today: "2026-03-03",
+  });
+  assert.equal(third.changed, false);
+});
