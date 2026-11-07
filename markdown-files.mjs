@@ -6,6 +6,7 @@
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 
+import { unescapeXml } from "./xml.mjs";
 import { pageDates, readPageRecord } from "./lastmod.mjs";
 import { llmsFullDocument, markdownPage, markdownPath } from "./llms.mjs";
 import { htmlToMarkdown, llmsHeaderOf, sitemapLocs } from "./markdown-copy.mjs";
@@ -91,7 +92,7 @@ export async function writeSitemapLastmod({ dir, origin, previous, today }) {
   const written = sitemap.replace(/<url>[\s\S]*?<\/url>/g, (block) => {
     const loc = /<loc>([^<]*)<\/loc>/.exec(block)?.[1];
     if (loc === undefined) return block;
-    const entry = record[new URL(loc.replaceAll("&amp;", "&"), base).pathname];
+    const entry = record[new URL(unescapeXml(loc), base).pathname];
     const bare = block.replace(/\s*<lastmod>[^<]*<\/lastmod>/, "");
     return entry
       ? bare.replace(/(<loc>[^<]*<\/loc>)(\s*)/, `$1$2<lastmod>${entry.lastmod}</lastmod>$2`)

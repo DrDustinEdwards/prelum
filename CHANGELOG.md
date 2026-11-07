@@ -4,6 +4,37 @@
 
 - `renovate.json` no longer carries its own rule against rewriting peer ranges; the shared preset (devkit) applies it to every repository.
 
+## 0.40.1 (2026-11-07)
+
+- **Two code blocks or tables with one name no longer share a landmark name.** Each scrollable region is a `role="region"` named "Code: Bash" or "Table: …"; a page with two of the same name failed axe `landmark-unique` and gave a screen reader two identical landmarks. A name used more than once now ends " (1 of 2)", " (2 of 2)"; a name used once is unchanged. The rendered HTML changes for such pages, so `RENDER_VERSION` is 20 and a site re-renders its stored HTML.
+- **Hardening, and `RENDER_VERSION` is 21.** The output changes only where a page hit one of these: a heading id that duplicated another (below), a pull-quote page's `words` and `excerpt`, and a URL attribute that is now dropped.
+- A source under the byte cap that exhausted time or the stack is refused fast with a `ContentError` (`[a][a]` x 300 KB took 46 s; `_a`, `>` and `> ` runs threw a raw `RangeError`). A pre-parse scan refuses more than `maxDepth` block-quote or list markers in a row, a list indented past `maxDepth` levels, and, outside fenced code, more than 2,000 reference links (`][`), 8,000 `*`/`_` marks or 10,000 `[`. Any `RangeError` from parsing is a `ContentError` too.
+- `fitLinkIcon` returns `null` for a PNG that declares more than 2048 x 2048 pixels or inflates past its declared size, before allocating (an 8000 x 8000 gray PNG of 62 KB took 7 s and 440 MB). Its type is now `... | null`.
+- `assertSafe: true` accepts ordinary KaTeX output (`\mathbb{R}`, `\hat{x}`, `\sqrt[3]{x}`, `\binom{n}{k}`, `\boxed{x}`, `\xrightarrow{f}` and the rest): `menclose`, `mover`, `mpadded`, `mphantom`, `mroot`, `mspace`, `munder` and their attributes, regenerated from the corpus, which now holds them. Script and foreign content stay blocked.
+- An SVG icon with a prefixed element (`<svg:script>`), a CSS escape or a `&#` reference is refused. Icon fetches follow redirects by hand (at most 3), checking each hop before requesting it, and refuse IP-literal hosts and `.nip.io`, `.sslip.io`, `.localtest.me`, `.lan`, `.corp` (with `.localdomain`, `.intranet`, `.private`) names.
+- Whitespace-only text no longer counts as present: `:::figure` `alt`, `:::details` `summary`, `:::video` and `::embed` `title`, `:abbr` `title`. A `silent` video needs a description as its content (WCAG 1.2.1: video-only has no other text alternative).
+- A heading never takes an id already used by a sidenote (`sn-1`) or the footnotes heading (`footnote-label`): the heading becomes `sn-1-1`, `footnote-label-1`.
+- The pull quote's aria-hidden copy no longer counts in `words`, and is not taken as the `excerpt`.
+- The URL protocol guard covers every URL attribute on every element (`poster`, `srcset`, `action`, `formaction`, `data`, `cite`, `xlink:href`, ...), not only `a href` and `img src`; a blocked one is dropped and listed in `blockedUrls`.
+- `::bookmark` with an unparseable URL is a `ContentError`, not a `TypeError`.
+- `enhanceEmbeds` gives the player iframe `sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation"`, and the heading-link copy handler leaves a modified or non-primary click to the browser.
+- Chart CSV reads a quoted field that holds a line break and drops a leading byte order mark. A chart `src` with a `..` segment, a backslash, a control character or a scheme but http(s) is refused before the site's `chartData` loader; the loader still receives the author's text and must validate the rest (README, Charts in posts).
+- `LICENSE` (MIT, as `package.json` already said) and `SECURITY.md` are in the repository. Without a license file GitHub showed none and the MIT grant was not in the source.
+- `escapeXml` and `cdata` drop the characters XML 1.0 forbids (U+0000-0008, 000B, 000C, 000E-001F, FFFE, FFFF), which made a feed or sitemap unreadable. `unescapeXml` is new: the five entities back to characters.
+- A date string with a `T` and no zone is UTC on any machine, and one with an offset but no `T` (`2026-06-21 09:30:00+02:00`) parses instead of being invalid.
+- `absolutizeUrls` rewrites single-quoted attributes too, and only inside real tags, not in escaped code samples or comments.
+- The audit reads a quoted attribute value whole when it holds a `>` (`content="Fish > chips"`).
+- `submitIndexNow` sends at most 10,000 URLs a POST and accepts an origin with a trailing slash; `recentSitemapUrls` decodes all five XML entities.
+- `sitemapLocs`, `writeMarkdownCopies` and `writeSitemapLastmod` decode XML entities in sitemap addresses, so a URL with `&` matches its page. A Markdown copy keeps blank lines inside fenced code, and a malformed canonical link is ignored instead of throwing.
+- `htmlToText` no longer puts a space where an inline tag was (`<b>world</b>.` reads `world.`); block tags and `<br>` still separate words. `isoDuration(0.4)` is undefined, not `PT`.
+- `toMatchExpression` drops terms with no letter or digit and strips NUL from terms.
+- Frontmatter reads an empty header (`---` then `---`), a leading byte order mark, quoted commas in a flow list (`["a, b", c]`) and drops a trailing YAML comment (`draft: true # wip`).
+- `llmsHeaderOf` neither repeats the title as intro nor leaves an empty `> ` line when the file has no summary; `llmsDocument` and `llmsFullDocument` flatten newlines in the title and summary and write no `>` line for an empty summary; `llmsLink` percent-encodes spaces and parentheses in the URL.
+- JSON Feed items use `guid` as `id` when given, as RSS and Atom do, and `feedItem`'s types mark `summary`, `date_published`, `date_modified`, `tags` and `image` optional.
+- `slugify` with `max` cuts at a whole word, and transliterates ß, ø, æ, œ, đ and ł.
+- `sitemapDocument` throws on a `priority` outside 0 to 1 or a `changefreq` outside the sitemaps.org values, and writes at most 1,000 images a URL. `priority` is still written with one decimal.
+- `absoluteUrl` turns a protocol-relative `//cdn.example/i.png` into `https://cdn.example/i.png`.
+
 ## 0.40.0 (2026-11-07)
 
 - **Breaking: `enhance()` no longer opens images in a viewer.** The lightbox (`a.image-link` and `img.diagram-image`) and the diagram zoom moved to Capsomer 0.81 (`capsomer/behavior/lightbox`, with `capsomer/lightbox.css`), so every site has one viewer. A site that called `enhance()` for it marks its content `data-cap="lightbox"` and calls Capsomer's `enhance()`. The markup this package writes (`a.image-link`, `img.diagram-image`) is unchanged.

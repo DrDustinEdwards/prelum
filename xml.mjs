@@ -3,6 +3,34 @@
  * (dustinedwards-info's rss-feed.mjs). Pure, no dependencies, Web-standard only: it runs unchanged in a Worker and in Node.
  */
 
+// XML 1.0 section 2.2 forbids these even as character references: C0 controls other than tab, newline and carriage return,
+// and U+FFFE and U+FFFF.
+const INVALID_XML = /[\p{Cc}\uFFFE\uFFFF]/gu;
+
+/** @param {string} text */
+function stripInvalidXml(text) {
+  // \p{Cc} is U+0000-001F and U+007F-009F; tab, newline, carriage return and the C1 range are valid XML 1.0.
+  return text.replace(INVALID_XML, (char) => {
+    const code = char.charCodeAt(0);
+    return code === 9 || code === 10 || code === 13 || (code >= 0x7f && code <= 0x9f) ? char : "";
+  });
+}
+
+const XML_ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+
+/**
+ * The inverse of `escapeXml`: all five entities back to their characters, in one pass so `&amp;lt;` becomes `&lt;`.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function unescapeXml(text) {
+  return String(text).replace(
+    /&(amp|lt|gt|quot|apos);/g,
+    (_whole, name) => XML_ENTITIES[/** @type {keyof typeof XML_ENTITIES} */ (name)],
+  );
+}
+
 /**
  * All five entities. Attribute values and element text both take this one, since it is safe in either.
  *
@@ -10,7 +38,7 @@
  * @returns {string}
  */
 export function escapeXml(value) {
-  return String(value)
+  return stripInvalidXml(String(value))
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -26,7 +54,7 @@ export function escapeXml(value) {
  * @returns {string}
  */
 export function cdata(content) {
-  return `<![CDATA[${String(content).replace(/\]\]>/g, "]]]]><![CDATA[>")}]]>`;
+  return `<![CDATA[${stripInvalidXml(String(content)).replace(/\]\]>/g, "]]]]><![CDATA[>")}]]>`;
 }
 
 /**
@@ -66,14 +94,18 @@ export function toDate(value, fallback = new Date(0)) {
     return Number.isNaN(value.getTime()) ? (fallback ?? new Date(NaN)) : value;
   if (typeof value === "number") return new Date(value);
   if (typeof value === "string" && value !== "") {
-    const date = new Date(value.includes("T") ? value : `${value.replace(" ", "T")}Z`);
+    // No zone means UTC, wherever the build runs; an offset is honored with or without the `T`.
+    const iso = value.replace(" ", "T");
+    const time = iso.slice(iso.indexOf("T") + 1);
+    const zoned = iso.includes("T") && /(?:Z|[+-]\d{2}(?::?\d{2})?)$/i.test(time);
+    const date = new Date(zoned ? iso : `${iso}Z`);
     if (!Number.isNaN(date.getTime())) return date;
   }
   return fallback ?? new Date(NaN);
 }
 
 /**
- * Not an HTML parser: only `href`, `src` and `srcset` values beginning with a single `/` are rewritten. A `//` value is
+ * Not an HTML parser: only, in real tags (not in escaped text such as a code sample, nor in a comment), `href`, `src` and `srcset` values, double or single quoted, beginning with a single `/` are rewritten. A `//` value is
  * protocol-relative and already absolute. A feed item is read on someone else's origin, where a root-relative path resolves
  * against THEIR host.
  *
@@ -81,16 +113,30 @@ export function toDate(value, fallback = new Date(0)) {
  * @param {string} origin no trailing slash
  */
 export function absolutizeUrls(html, origin) {
-  return String(html)
-    .replace(/\b(href|src)="\/(?!\/)/g, `$1="${origin}/`)
-    .replace(
-      /\bsrcset="([^"]*)"/g,
-      (_whole, list) =>
-        `srcset="${String(list)
-          .split(",")
-          .map((candidate) => candidate.replace(/^(\s*)\/(?!\/)/, `$1${origin}/`))
-          .join(",")}"`,
-    );
+  const rootRelative = (/** @type {string} */ url) => url.replace(/^(\s*)\/(?!\/)/, `$1${origin}/`);
+  return String(html).replace(
+    // Comments and real tags only: `&lt;a href="/x"&gt;` in a code sample is text, and is left as written.
+    /<!--[\s\S]*?-->|<[a-z][^\s>/]*(?:"[^"]*"|'[^']*'|[^>"'])*>/gi,
+    (tag) =>
+      tag.startsWith("<!--")
+        ? tag
+        : tag.replace(
+            /([^\s"'<>=/]+)(\s*=\s*)(?:"([^"]*)"|'([^']*)')/g,
+            (whole, name, equals, double, single) => {
+              const lower = String(name)
+                .toLowerCase()
+                .replace(/^data-/, "");
+              if (lower !== "href" && lower !== "src" && lower !== "srcset") return whole;
+              const quote = double === undefined ? "'" : '"';
+              const value = String(double ?? single);
+              const rewritten =
+                lower === "srcset"
+                  ? value.split(",").map(rootRelative).join(",")
+                  : rootRelative(value);
+              return `${name}${equals}${quote}${rewritten}${quote}`;
+            },
+          ),
+  );
 }
 
 // Built from strings: a literal U+2028 is invisible and does not survive a copy.

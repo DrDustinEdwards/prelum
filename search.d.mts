@@ -12,7 +12,7 @@ export function ftsLiteral(token: string): string;
  * @param {{ terms: string[], phrases?: string[] }} parsed
  * @param {boolean} [prefix] when true the LAST term also matches as a prefix, so "cloudf" finds "cloudflare" while someone is
  *   still typing. Only the last term, because the earlier ones are complete words the moment a space follows them.
- * @returns {string | null} null when there is nothing to match on
+ * @returns {string | null} null when there is nothing to match on (a term with no letter or digit counts as nothing)
  */
 export function toMatchExpression(
   parsed: {

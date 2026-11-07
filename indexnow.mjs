@@ -1,4 +1,8 @@
+import { unescapeXml } from "./xml.mjs";
+
 const ENDPOINT = "https://api.indexnow.org/indexnow";
+// The protocol takes at most 10,000 URLs in one POST.
+const MAX_URLS = 10_000;
 
 /**
  * @typedef {object} IndexNowInput
@@ -20,7 +24,7 @@ const ENDPOINT = "https://api.indexnow.org/indexnow";
  * @returns {Promise<boolean>}
  */
 export async function submitIndexNow({
-  origin,
+  origin: givenOrigin,
   key,
   urls,
   keyLocation,
@@ -28,20 +32,25 @@ export async function submitIndexNow({
   fetch: fetcher = fetch,
 }) {
   try {
+    const origin = givenOrigin.replace(/\/+$/, "");
     if (from !== undefined && new URL(from).origin !== origin) return false;
     const urlList = urls.filter((url) => url.startsWith(`${origin}/`));
     if (urlList.length === 0) return false;
-    const response = await fetcher(ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify({
-        host: new URL(origin).host,
-        key,
-        keyLocation: keyLocation ?? `${origin}/${key}.txt`,
-        urlList,
-      }),
-    });
-    return response.ok;
+    let ok = true;
+    for (let i = 0; i < urlList.length; i += MAX_URLS) {
+      const response = await fetcher(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify({
+          host: new URL(origin).host,
+          key,
+          keyLocation: keyLocation ?? `${origin}/${key}.txt`,
+          urlList: urlList.slice(i, i + MAX_URLS),
+        }),
+      });
+      ok = response.ok && ok;
+    }
+    return ok;
   } catch {
     return false;
   }
@@ -72,7 +81,7 @@ export function keyFileResponse(key, headers) {
  */
 export function recentSitemapUrls(xml, { days = 2, now = new Date() } = {}) {
   const entries = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)].map(([, body]) => ({
-    loc: /<loc>\s*([^<]+?)\s*<\/loc>/.exec(body)?.[1]?.replace(/&amp;/g, "&"),
+    loc: unescapeXml(/<loc>\s*([^<]+?)\s*<\/loc>/.exec(body)?.[1] ?? ""),
     lastmod: /<lastmod>\s*([^<]+?)\s*<\/lastmod>/.exec(body)?.[1],
   }));
   const dated = entries.some((entry) => entry.lastmod);

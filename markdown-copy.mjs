@@ -21,6 +21,7 @@ import {
   prefersMarkdown,
 } from "./llms.mjs";
 import { plainTextResponse } from "./robots.mjs";
+import { unescapeXml } from "./xml.mjs";
 
 /** Elements that carry no reading text: scripts, styles, controls, the site's own navigation, players and drawings. */
 const DROPPED = new Set([
@@ -163,7 +164,7 @@ export function htmlToMarkdown(html, { base } = {}) {
         (prop(element, "rel") ?? "").split(/\s+/).includes("canonical"),
     );
   const href = canonicalElement && prop(canonicalElement, "href");
-  const canonical = href && base ? new URL(href, base).href : href;
+  const canonical = href && base ? absoluteHref(href, base) : href;
   const robots =
     prop(
       meta("name", "robots") ?? { type: "element", tagName: "meta", properties: {}, children: [] },
@@ -197,14 +198,14 @@ export function htmlToMarkdown(html, { base } = {}) {
   const description = meta("name", "description");
   const mdast = toMdast(main);
   settle(mdast, canonical ?? base ?? "https://invalid.example/");
-  const markdown = toMarkdown(mdast, {
-    extensions: [gfmToMarkdown()],
-    bullet: "-",
-    emphasis: "_",
-    rule: "-",
-  })
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  const markdown = collapseBlankLines(
+    toMarkdown(mdast, {
+      extensions: [gfmToMarkdown()],
+      bullet: "-",
+      emphasis: "_",
+      rule: "-",
+    }),
+  ).trim();
   return {
     title: title.replace(/\s+/g, " ").trim(),
     description: ((description && prop(description, "content")) ?? "").replace(/\s+/g, " ").trim(),
@@ -234,8 +235,9 @@ export function llmsHeaderOf(text, origin) {
     .join(" ");
   const firstSection = lines.findIndex((line) => line.startsWith("## "));
   const lastQuote = lines.findLastIndex((line) => line.startsWith("> "));
+  const titleLine = lines.findIndex((line) => line.startsWith("# "));
   const intro = lines
-    .slice(lastQuote + 1, firstSection < 0 ? lines.length : firstSection)
+    .slice(Math.max(lastQuote, titleLine) + 1, firstSection < 0 ? lines.length : firstSection)
     .join("\n")
     .split(/\n{2,}/)
     .map((block) => block.trim())
@@ -245,7 +247,42 @@ export function llmsHeaderOf(text, origin) {
 
 /** The `<loc>` addresses of a sitemap or sitemap index, in order. @param {string} xml */
 export const sitemapLocs = (xml) =>
-  [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((match) => match[1] ?? "");
+  [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((match) => unescapeXml(match[1] ?? ""));
+
+/**
+ * Runs of blank lines become one, except inside a fenced code block, where they are the code's own.
+ *
+ * @param {string} markdown
+ */
+function collapseBlankLines(markdown) {
+  /** @type {string[]} */
+  const out = [];
+  let fence = "";
+  let blanks = 0;
+  for (const line of markdown.split("\n")) {
+    const marker = /^ {0,3}(`{3,}|~{3,})/.exec(line)?.[1];
+    if (fence) {
+      if (marker && marker[0] === fence[0] && marker.length >= fence.length) fence = "";
+    } else if (marker) {
+      fence = marker;
+    }
+    blanks = !fence && line.trim() === "" ? blanks + 1 : 0;
+    if (blanks <= 1 || fence) out.push(line);
+  }
+  return out.join("\n");
+}
+
+/**
+ * @param {string} href @param {string} base
+ * @returns {string | undefined} undefined when either is not a URL, so a malformed canonical is ignored
+ */
+function absoluteHref(href, base) {
+  try {
+    return new URL(href, base).href;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * @typedef {(request: Request, env?: any, ctx?: any) => Promise<Response> | Response} FetchHandler

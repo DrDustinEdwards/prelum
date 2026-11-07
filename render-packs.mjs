@@ -241,8 +241,38 @@ export function remarkPullQuote(file) {
 }
 
 /**
+ * A basic guard on a chart `src` before it reaches the site's loader: no `..` segment (plain or percent-encoded), no backslash, no
+ * control character and no scheme but http(s). It is not validation: the loader is handed the author's text and must itself allow only
+ * what the site means to serve (its own media paths, its own hosts).
+ *
+ * @param {string} src
+ * @returns {string | null} why it is refused, or null
+ */
+function chartSrcRefusal(src) {
+  if (src.includes("\\")) return "holds a backslash";
+  for (let i = 0; i < src.length; i += 1) {
+    const code = src.charCodeAt(i);
+    if (code < 0x20 || code === 0x7f) return "holds a control character";
+  }
+  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(src)?.[1]?.toLowerCase();
+  if (scheme && scheme !== "http" && scheme !== "https")
+    return `uses the ${scheme}: scheme; only http(s) or a path is read`;
+  let decoded = src;
+  try {
+    decoded = decodeURIComponent(src);
+  } catch {
+    // Left as written: a malformed escape is the loader's to refuse.
+  }
+  const path = decoded.split(/[?#]/)[0] ?? "";
+  if (decoded.includes("\\")) return "holds a backslash";
+  if (path.split("/").includes("..")) return "has a .. segment";
+  return null;
+}
+
+/**
  * `:::chart{src="..."}` (E3): the CSV comes from the site's `chartData(src, { file })`, called at render time, in place of the
- * fenced block. Prelum fetches nothing itself, so without the hook a `src` is refused; with it, the text it returns is the block.
+ * fenced block. Prelum fetches nothing itself, so without the hook a `src` is refused; with it, the text it returns is the block. The
+ * `src` is the author's text and reaches the loader after only a basic guard (chartSrcRefusal): the loader must validate it itself.
  *
  * @param {string} file
  * @param {((src: string, context: { file: string }) => string | Promise<string>) | undefined} chartData
@@ -269,6 +299,8 @@ export function remarkChartSource(file, chartData) {
           `${name} cites src="${src}" and holds a CSV block; give the data one way`,
         );
       }
+      const refusal = chartSrcRefusal(src);
+      if (refusal) throw new ContentError(file, `${name} cites src="${src}", which ${refusal}`);
       if (!chartData) {
         throw new ContentError(
           file,

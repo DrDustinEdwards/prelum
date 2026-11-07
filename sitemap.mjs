@@ -4,6 +4,9 @@ import { escapeXml, isoDay, toDate } from "./xml.mjs";
 export const SITEMAP_MAX_URLS = 50_000;
 export const SITEMAP_MAX_BYTES = 50 * 1024 * 1024;
 
+const CHANGEFREQS = ["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"];
+const MAX_IMAGES = 1000;
+
 const IMAGE_NAMESPACE = "http://www.google.com/schemas/sitemap-image/1.1";
 
 /**
@@ -30,7 +33,7 @@ const IMAGE_NAMESPACE = "http://www.google.com/schemas/sitemap-image/1.1";
  *
  * An entry's `images` become `<image:image>` elements (https://developers.google.com/search/docs/crawling-indexing/sitemaps/image-sitemaps),
  * and the image namespace is declared only when some entry has one, so a sitemap without images is unchanged. A URL listed twice
- * is written once, the first time. `changefreq` and `priority` are refused in the compact layout, which has no place for them,
+ * is written once, the first time. A `priority` outside 0 to 1 or a `changefreq` outside the sitemaps.org set throws, and an entry's images past 1,000 are dropped. `changefreq` and `priority` are refused in the compact layout, which has no place for them,
  * rather than dropped without a word. A sitemap past `SITEMAP_MAX_URLS` URLs or `SITEMAP_MAX_BYTES` bytes throws, since a crawler
  * reads none of an oversize file: split the entries across files and list them with `sitemapIndexDocument`.
  *
@@ -46,14 +49,23 @@ export function sitemapDocument(entries, options = {}) {
   };
 
   const imagesOf = (/** @type {SitemapEntry} */ entry) =>
-    (entry.images ?? []).map(
-      (image) => `<image:image><image:loc>${escapeXml(image)}</image:loc></image:image>`,
-    );
+    (entry.images ?? [])
+      .slice(0, MAX_IMAGES)
+      .map((image) => `<image:image><image:loc>${escapeXml(image)}</image:loc></image:image>`);
   const seen = new Set();
   const unique = entries.filter((entry) => !seen.has(entry.loc) && seen.add(entry.loc));
   const hasImages = unique.some((entry) => (entry.images ?? []).length > 0);
 
   const rows = unique.map((entry) => {
+    if (
+      entry.priority !== undefined &&
+      !(Number.isFinite(entry.priority) && entry.priority >= 0 && entry.priority <= 1)
+    )
+      throw new Error(`sitemap: ${entry.loc} has priority ${entry.priority}, which must be 0 to 1`);
+    if (entry.changefreq !== undefined && !CHANGEFREQS.includes(entry.changefreq))
+      throw new Error(
+        `sitemap: ${entry.loc} has changefreq "${entry.changefreq}", which must be one of ${CHANGEFREQS.join(", ")}`,
+      );
     const lastmod = lastmodOf(entry);
     const images = imagesOf(entry);
     if (layout === "compact") {

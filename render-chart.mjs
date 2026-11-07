@@ -22,47 +22,58 @@ const STRICT_CHART_ISSUES = ["title-missing", "too-many-series"];
  * @returns {{ columns: string[], rows: string[][] }}
  */
 function parseChartCsv(text) {
-  const lines = text
-    .split("\n")
-    .map((line) => line.replace(/\r$/, ""))
-    .filter((line) => line.trim() !== "");
+  // A byte order mark (Excel's "CSV UTF-8") would otherwise be part of the first column's name.
+  const source = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
 
-  const header = lines[0];
-  if (header === undefined) throw new Error("chart data is empty");
-
-  const parseLine = (/** @type {string} */ line) => {
-    /** @type {string[]} */
-    const out = [];
-    let field = "";
-    let quoted = false;
-    for (let i = 0; i < line.length; i += 1) {
-      const ch = line[i];
-      if (quoted) {
-        if (ch === '"') {
-          if (line[i + 1] === '"') {
-            field += '"';
-            i += 1;
-          } else {
-            quoted = false;
-          }
+  // One pass, so a quoted field may hold a comma, a doubled quote or a line break; blank lines between records are skipped.
+  /** @type {string[][]} */
+  const records = [];
+  /** @type {string[]} */
+  let out = [];
+  let field = "";
+  let quoted = false;
+  let blank = true;
+  const endRecord = () => {
+    out.push(field.trim());
+    if (!blank) records.push(out);
+    out = [];
+    field = "";
+    blank = true;
+  };
+  for (let i = 0; i < source.length; i += 1) {
+    const ch = source[i];
+    if (quoted) {
+      if (ch === '"') {
+        if (source[i + 1] === '"') {
+          field += '"';
+          i += 1;
         } else {
-          field += ch;
+          quoted = false;
         }
-      } else if (ch === '"') {
-        quoted = true;
-      } else if (ch === ",") {
-        out.push(field.trim());
-        field = "";
       } else {
         field += ch;
       }
+    } else if (ch === '"') {
+      quoted = true;
+      blank = false;
+    } else if (ch === ",") {
+      blank = false;
+      out.push(field.trim());
+      field = "";
+    } else if (ch === "\n") {
+      endRecord();
+    } else {
+      if (ch !== " " && ch !== "\t") blank = false;
+      field += ch;
     }
-    out.push(field.trim());
-    return out;
-  };
+  }
+  endRecord();
 
-  const columns = parseLine(header);
-  const rows = lines.slice(1).map(parseLine);
+  const header = records[0];
+  if (header === undefined) throw new Error("chart data is empty");
+
+  const columns = header;
+  const rows = records.slice(1);
 
   if (rows.length === 0) throw new Error("chart data has a header but no rows");
 
