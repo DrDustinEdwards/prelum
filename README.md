@@ -84,7 +84,7 @@ What they hold every site to:
 `audit` runs the checks a site audit leads with over pages a crawl already fetched (`crawlSite`, Cloudflare Browser Run's
 `/crawl`, or a site's own test): missing, long or duplicate titles and descriptions; a missing canonical, one off the production
 origin, or one that points away from a page the sitemap lists; a sitemap URL that redirects, is broken or is noindex (by meta tag
-or `X-Robots-Tag`); redirect chains; links to broken pages or to redirects; JSON-LD that does not parse; images with no `alt`
+or `X-Robots-Tag`); redirect chains; links to broken pages or to redirects; JSON-LD that does not parse, or a BreadcrumbList, VideoObject or FAQPage missing what Google requires; a page with no `lang`, viewport or `<h1>`, two different canonicals, or an `og:url` that is not the canonical; `robots.txt` that is missing, blocks the home page to Googlebot, names no sitemap, or disallows a URL the sitemap lists (read as RFC 9309 does); sitemap URLs with no `lastmod` or all the same one; images with no width and height, a camera file name, a generic `alt`, or four or more with none lazy; images with no `alt`
 (`alt=""` is a decorative image, and right) or a file name for one; and pages with no `og:title` or card image, or a card without
 an https URL, type, size or alt. `auditPages` is pure and returns `{ findings, pages, summary }`, `summary` counting
 findings by check.
@@ -92,7 +92,7 @@ findings by check.
 `crawlSite` is the crawl, with its `fetch` passed in so a scheduled job (Capsid's, against each live site) runs it as it is and
 a test fakes it. It reads the sitemap (a sitemap index one level down), fetches each URL with `redirect: "manual"` and follows up
 to five hops itself so a chain is seen, then checks the status of every same-origin link target the sitemap left out (HEAD, or
-GET where HEAD is refused), at most `maxPages` (200) fetches in all. A failed fetch is a page with status 0, never a throw. It
+GET where HEAD is refused), and reads `/robots.txt` (its text is `robots`, which `auditPages` takes), at most `maxPages` (200) fetches in all. A failed fetch is a page with status 0, never a throw. It
 runs in a Worker or Node; a browser's fetch hides a manual redirect's status.
 
 ```js

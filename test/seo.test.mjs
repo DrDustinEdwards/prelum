@@ -31,6 +31,7 @@ import {
   jsonLd,
   videoObject,
 } from "../schema.mjs";
+import { SITEMAP_MAX_URLS, sitemapDocument, sitemapIndexDocument } from "../sitemap.mjs";
 import { htmlToText, isoDuration } from "../text.mjs";
 
 const ORIGIN = "https://example.com";
@@ -269,7 +270,7 @@ const page = (
   /** @type {string} */ description,
   canonical = `${ORIGIN}${path}`,
 ) =>
-  `<html><head><title>${title}</title><meta name="description" content="${description}"><link rel="canonical" href="${canonical}"><meta property="og:title" content="${title}">${CARD}</head>`;
+  `<html lang="en"><head><title>${title}</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="${description}"><link rel="canonical" href="${canonical}"><meta property="og:title" content="${title}">${CARD}</head><body><h1>${title}</h1>`;
 
 test("the audit finds a broken link through a trailing slash, a redirect chain once, a link to a redirect and a duplicate title", () => {
   const { findings, pages, summary } = auditPages(
@@ -277,12 +278,12 @@ test("the audit finds a broken link through a trailing slash, a redirect chain o
       {
         url: `${ORIGIN}/`,
         status: 200,
-        html: `${page("/", "Same", "one")}<body><a href="/gone/#top">x</a><a href="/older">o</a><a href="https://other.example/">y</a></body></html>`,
+        html: `${page("/", "Same", "one")}<a href="/gone/#top">x</a><a href="/older">o</a><a href="https://other.example/">y</a></body></html>`,
       },
       {
         url: `${ORIGIN}/b`,
         status: 200,
-        html: `${page("/b", "Same", "two")}<body><img src="/i/IMG_0042.JPG" alt="IMG_0042"><img src="/rule.svg" alt=""></body></html>`,
+        html: `${page("/b", "Same", "two")}<img src="/i/IMG_0042.JPG" alt="IMG_0042" width="9" height="9"><img src="/rule.svg" alt="" width="9" height="9"></body></html>`,
         inSitemap: true,
       },
       {
@@ -301,6 +302,7 @@ test("the audit finds a broken link through a trailing slash, a redirect chain o
   assert.deepEqual(checks, [
     `card-incomplete ${ORIGIN}/bare`,
     `image-alt-filename ${ORIGIN}/b`,
+    `image-filename-generic ${ORIGIN}/b`,
     `link-broken ${ORIGIN}/`,
     `link-redirect ${ORIGIN}/`,
     `redirect-chain ${ORIGIN}/old`,
@@ -325,10 +327,18 @@ test("a canonical must be on the production origin, and a sitemap page's canonic
       {
         url: `${ORIGIN}/a`,
         status: 200,
-        html: page("/a", "A", "a", "https://sample.workers.dev/a"),
+        html: `${page("/a", "A", "a", "https://sample.workers.dev/a")}</body></html>`,
       },
-      { url: `${ORIGIN}/b`, status: 200, html: page("/b", "B", "b", `${ORIGIN}/a`) },
-      { url: `${ORIGIN}/c/`, status: 200, html: page("/c/", "C", "c", `${ORIGIN}/c`) },
+      {
+        url: `${ORIGIN}/b`,
+        status: 200,
+        html: `${page("/b", "B", "b", `${ORIGIN}/a`)}</body></html>`,
+      },
+      {
+        url: `${ORIGIN}/c/`,
+        status: 200,
+        html: `${page("/c/", "C", "c", `${ORIGIN}/c`)}</body></html>`,
+      },
     ],
     { origin: ORIGIN, sitemap: [`${ORIGIN}/b`, `${ORIGIN}/c/`] },
   );
@@ -351,7 +361,7 @@ test("the crawl follows a sitemap index and each redirect hop, checks unlisted l
       ),
     "/": () =>
       new Response(
-        `${page("/", "Home", "home")}<body><a href="/missing">m</a><a href="/moved">v</a><a href="/admin" rel="nofollow">a</a></body></html>`,
+        `${page("/", "Home", "home")}<a href="/missing">m</a><a href="/moved">v</a><a href="/admin" rel="nofollow">a</a></body></html>`,
         { headers: { "content-type": "text/html" } },
       ),
     "/old": () => new Response(null, { status: 301, headers: { location: "/older" } }),
@@ -403,7 +413,7 @@ test("a title is measured as Google draws it, in pixels: a cut fits with its ell
   assert.equal(searchTitle(long, " | Sample"), cut);
   const longOf = (/** @type {string} */ title) =>
     auditPages(
-      [{ url: `${ORIGIN}/`, status: 200, html: `${page("/", title, "one")}<body></body></html>` }],
+      [{ url: `${ORIGIN}/`, status: 200, html: `${page("/", title, "one")}</body></html>` }],
       { origin: ORIGIN },
     ).findings.filter((f) => f.check === "title-long").length;
   // 65 characters of ordinary text fit the 600 px a result shows; 50 wide capitals do not, whatever their count.
@@ -587,5 +597,65 @@ test("htmlToText drops Prelum's heading anchors, a described list item keeps its
   assert.deepEqual(
     /** @type {Array<{ description?: string }>} */ (list.itemListElement).map((i) => i.description),
     ["First steps", undefined],
+  );
+});
+
+test("the audit reads robots.txt as Googlebot does and flags a head a mobile or rich-result crawler cannot use", () => {
+  const bare = `<html><head><title>T</title><meta name="description" content="d"><link rel="canonical" href="${ORIGIN}/a"><link rel="canonical" href="${ORIGIN}/b"><meta property="og:title" content="T"><meta property="og:url" content="${ORIGIN}/other">${CARD}<script type="application/ld+json">${JSON.stringify(
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home" },
+            { "@type": "ListItem", position: 2, name: "A" },
+          ],
+        },
+        { "@type": "VideoObject", name: "V" },
+      ],
+    },
+  )}</script></head><body></body></html>`;
+  const checks = (/** @type {string} */ robots) =>
+    auditPages([{ url: `${ORIGIN}/a`, status: 200, html: bare }], {
+      origin: ORIGIN,
+      sitemap: [`${ORIGIN}/a`],
+      robots,
+    }).findings.map((finding) => finding.check);
+  const open =
+    "User-agent: *\nAllow: /\nDisallow: /admin\n\nUser-agent: Googlebot\nDisallow: /a$\nAllow: /a/b\n\nSitemap: https://sample.example.com/sitemap.xml\n";
+  assert.deepEqual(checks(open).sort(), [
+    "canonical-multiple",
+    "h1-missing",
+    "html-lang-missing",
+    "jsonld-incomplete",
+    "jsonld-incomplete",
+    "og-url-mismatch",
+    "sitemap-blocked",
+    "viewport-missing",
+  ]);
+  // A named group replaces `*` (RFC 9309), so Googlebot is not bound by the wildcard's `Disallow: /admin`, and `$` anchors.
+  assert.ok(
+    !checks(
+      "User-agent: *\nDisallow: /a\n\nUser-agent: Googlebot\nAllow: /\nSitemap: x\n",
+    ).includes("sitemap-blocked"),
+  );
+  assert.ok(checks("User-agent: *\nDisallow: /\nSitemap: x\n").includes("robots-blocks-all"));
+  assert.ok(checks("User-agent: *\nAllow: /\n").includes("robots-no-sitemap"));
+  assert.ok(checks(/** @type {never} */ (null)).includes("robots-missing"));
+});
+
+test("a sitemap file past Google's limits throws and a sitemap index lists the files", () => {
+  const entries = Array.from({ length: SITEMAP_MAX_URLS + 1 }, (_, index) => ({
+    loc: `https://x.test/${index}`,
+  }));
+  assert.throws(() => sitemapDocument(entries), /sitemapIndexDocument/);
+  assert.doesNotThrow(() => sitemapDocument(entries.slice(0, SITEMAP_MAX_URLS)));
+  assert.equal(
+    sitemapIndexDocument([
+      { loc: "https://x.test/sitemap-1.xml", lastmod: "2026-11-07T10:00:00Z" },
+      { loc: "https://x.test/a&b.xml" },
+    ]),
+    `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <sitemap><loc>https://x.test/sitemap-1.xml</loc><lastmod>2026-11-07</lastmod></sitemap>\n  <sitemap><loc>https://x.test/a&amp;b.xml</loc></sitemap>\n</sitemapindex>\n`,
   );
 });

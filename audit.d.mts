@@ -11,9 +11,18 @@ export function auditPages(
   {
     origin,
     sitemap,
+    robots,
   }: {
     origin: string;
     sitemap?: string[] | undefined;
+    /**
+     * the text of `/robots.txt` (`crawlSite` returns it, null when it did not load); left out to skip the robots checks
+     */
+    robots?: string | null | undefined;
+    /**
+     * the sitemap's `lastmod` per URL (null for none), which `crawlSite` returns; left out to skip the lastmod checks
+     */
+    lastmods?: Record<string, string | null> | undefined;
   },
 ): AuditReport;
 /**
@@ -25,6 +34,14 @@ export function auditPages(
 export function crawlSite(input: CrawlInput): Promise<{
   pages: AuditPage[];
   sitemap: string[];
+  /**
+   * `/robots.txt`'s text, null when it did not load as text
+   */
+  robots: string | null;
+  /**
+   * each sitemap URL's `lastmod`, null for none
+   */
+  lastmods: Record<string, string | null>;
 }>;
 export type AuditPage = {
   /**
