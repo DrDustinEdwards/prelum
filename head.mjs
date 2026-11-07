@@ -1,3 +1,4 @@
+import { htmlToText } from "./text.mjs";
 import { escapeXml, jsonLdText, toDate } from "./xml.mjs";
 
 /**
@@ -374,6 +375,20 @@ function withoutTrailingSlash(path) {
   return bare === "" || /^[?#]/.test(bare) ? `/${bare}` : bare;
 }
 
+/** The size every share card is drawn at, the one Facebook, X and LinkedIn all show without cropping. */
+export const SHARE_CARD_SIZE = Object.freeze({ width: 1200, height: 630 });
+
+/**
+ * A drawn share card as `defineHead` reads it, so og:image carries its size and alt text.
+ *
+ * @param {string} url absolute https, or a path on `origin`
+ * @param {string} alt
+ * @returns {HeadImage}
+ */
+export function shareCard(url, alt) {
+  return { url, ...SHARE_CARD_SIZE, alt };
+}
+
 /**
  * A path on `origin` made absolute; an absolute URL is kept as it is.
  *
@@ -571,28 +586,6 @@ function sectionTrail(site, path, title, keepSlash) {
   ];
 }
 
-/** @type {Record<string, string>} */
-const NAMED_ENTITIES = {
-  amp: "&",
-  lt: "<",
-  gt: ">",
-  quot: '"',
-  apos: "'",
-  nbsp: " ",
-  ndash: "–",
-  mdash: "—",
-  hellip: "…",
-  lsquo: "‘",
-  rsquo: "’",
-  ldquo: "“",
-  rdquo: "”",
-  copy: "©",
-  reg: "®",
-  trade: "™",
-  middot: "·",
-  bull: "•",
-};
-
 /**
  * A meta tag's text from HTML (an excerpt, an abstract title): scripts, styles and tags dropped, entities decoded, white
  * space collapsed, then cut at a word to `limit` (by default `SERP_DESCRIPTION`'s width; a number is characters, and
@@ -603,15 +596,5 @@ const NAMED_ENTITIES = {
  * @param {number | { px: number, font: number }} [limit]
  */
 export function metaText(html, limit = SERP_DESCRIPTION) {
-  const text = html
-    .replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, " ")
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&(?:#(\d+)|#x([\da-f]+)|([a-z]+));/gi, (entity, decimal, hex, name) => {
-      if (name) return NAMED_ENTITIES[name.toLowerCase()] ?? entity;
-      const code = decimal ? Number(decimal) : Number.parseInt(hex, 16);
-      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : entity;
-    })
-    .replace(/\s+/g, " ")
-    .trim();
-  return truncateForSerp(text, limit);
+  return truncateForSerp(htmlToText(html), limit);
 }

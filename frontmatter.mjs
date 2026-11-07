@@ -5,8 +5,8 @@
  * A write replaces only the block it names, so every other block, comment and unknown key comes back byte for byte.
  *
  * One reader for every site and package: `frontmatter` for a file read whole (Capsomer's doc pages, the specimen), the
- * block reader and writer for an editor that changes one field (site-api's post fields, Carrel's field boxes). Moved here
- * from site-api 0.17.0, which re-exports it.
+ * block reader and writer for an editor that changes one field (site-api's post fields, Carrel's field boxes). This module is
+ * the only owner of these mechanics; site-api keeps just the Carrel field names (search fields, post fields, tags) built on them.
  */
 
 const FENCE = /^(---[ \t]*\r?\n)([\s\S]*?)(\r?\n---[ \t]*(?:\r?\n(?:[ \t]*\r?\n)*|$))/;

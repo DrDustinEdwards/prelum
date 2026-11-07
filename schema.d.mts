@@ -156,7 +156,7 @@ export function breadcrumbs(
 /**
  * @param {string} origin
  * @param {string} name
- * @param {Array<{ name: string, path: string }>} items
+ * @param {Array<{ name: string, path: string, description?: string }>} items
  */
 export function itemList(
   origin: string,
@@ -164,6 +164,7 @@ export function itemList(
   items: Array<{
     name: string;
     path: string;
+    description?: string;
   }>,
 ): Record<string, unknown>;
 /** @param {Array<{ question: string, answer: string }>} faqs */
