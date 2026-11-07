@@ -1,4 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["local>DrDustinEdwards/devkit"]
+  "extends": ["local>DrDustinEdwards/devkit"],
+  "packageRules": [
+    {
+      "description": "A peer range says which versions Prelum works with. The shared rangeStrategy pin rewrote enarratio's range to the dev version and locked sites on Enarratio 0.9 out (0.39.1), so peer ranges change by hand.",
+      "matchDepTypes": ["peerDependencies"],
+      "enabled": false
+    }
+  ]
 }
