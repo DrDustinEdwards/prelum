@@ -45,7 +45,8 @@ export function llmsDocument(doc) {
 
 /** The title, summary and intro llms.txt and llms-full.txt both open with. @param {{ title: string, summary: string, intro?: string[] }} doc */
 function llmsHeader(doc) {
-  return [`# ${doc.title}`, `> ${doc.summary}`, ...(doc.intro ?? [])];
+  const summary = oneLine(doc.summary).trim();
+  return [`# ${oneLine(doc.title)}`, ...(summary ? [`> ${summary}`] : []), ...(doc.intro ?? [])];
 }
 
 /** A line break becomes a space. @param {string} text */
@@ -55,7 +56,7 @@ const oneLine = (text) => text.replace(/\s*[\r\n]+\s*/g, " ");
 export function llmsLink(link) {
   // One line per link: a newline in the title or description would end the list item, and a ")" in the URL would end the link.
   const title = oneLine(link.title).replace(/[[\]]/g, (bracket) => "\\" + bracket);
-  const url = link.url.replace(/\)/g, "%29");
+  const url = link.url.replace(/ /g, "%20").replace(/\(/g, "%28").replace(/\)/g, "%29");
   return `- [${title}](${url})${link.description ? `: ${oneLine(link.description)}` : ""}`;
 }
 

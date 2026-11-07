@@ -9,7 +9,11 @@
  * the only owner of these mechanics; site-api keeps just the Carrel field names (search fields, post fields, tags) built on them.
  */
 
-const FENCE = /^(---[ \t]*\r?\n)([\s\S]*?)(\r?\n---[ \t]*(?:\r?\n(?:[ \t]*\r?\n)*|$))/;
+// A leading byte order mark belongs to the opening fence, so `open + front + close + body` is still the source. The first form is
+// the empty header (`---` then `---`), which has no line break between the fences.
+const CLOSE = String.raw`---[ \t]*(?:\r?\n(?:[ \t]*\r?\n)*|$)`;
+const EMPTY_FENCE = new RegExp(String.raw`^(\uFEFF?---[ \t]*\r?\n)()(${CLOSE})`);
+const FENCE = new RegExp(String.raw`^(\uFEFF?---[ \t]*\r?\n)([\s\S]*?)(\r?\n${CLOSE})`);
 const KEY = /^([A-Za-z_][\w-]*):(.*)$/;
 
 /**
@@ -19,7 +23,7 @@ const KEY = /^([A-Za-z_][\w-]*):(.*)$/;
  * @returns {import("./frontmatter.d.mts").Split}
  */
 export function splitSource(source) {
-  const m = FENCE.exec(source);
+  const m = EMPTY_FENCE.exec(source) ?? FENCE.exec(source);
   if (!m) return { front: null, body: source, open: "", close: "" };
   return {
     front: m[2] ?? "",
@@ -72,8 +76,52 @@ function unquote(raw) {
   return v;
 }
 
+/**
+ * A value without its trailing YAML comment: a `#` after white space, outside quotes. Quotes count only where YAML starts one,
+ * at the start of a value or inside a flow list, so an apostrophe in `don't # note` is just a letter.
+ * @param {string} raw
+ */
+function withoutComment(raw) {
+  const v = raw.trim();
+  const quoting = /^["'[]/.test(v);
+  let quote = "";
+  for (let i = 0; i < v.length; i += 1) {
+    const c = v[i];
+    if (quote) {
+      if (quote === '"' && c === "\\") i += 1;
+      else if (c === quote) quote = "";
+    } else if (quoting && (c === '"' || c === "'")) quote = c;
+    else if (c === "#" && (i === 0 || /\s/.test(v[i - 1] ?? ""))) return v.slice(0, i).trimEnd();
+  }
+  return v;
+}
+
 /** @param {Block} block */
-const valueOf = (block) => KEY.exec(block.lines[0] ?? "")?.[2]?.trim() ?? "";
+const valueOf = (block) => withoutComment(KEY.exec(block.lines[0] ?? "")?.[2] ?? "");
+
+/**
+ * The items of a flow list's inside, split at the commas outside quotes.
+ * @param {string} inside
+ */
+function splitFlow(inside) {
+  /** @type {string[]} */
+  const items = [];
+  let quote = "";
+  let start = 0;
+  for (let i = 0; i < inside.length; i += 1) {
+    const c = inside[i];
+    if (quote) {
+      if (quote === '"' && c === "\\") i += 1;
+      else if (c === quote) quote = "";
+    } else if (c === '"' || c === "'") quote = c;
+    else if (c === ",") {
+      items.push(inside.slice(start, i));
+      start = i + 1;
+    }
+  }
+  items.push(inside.slice(start));
+  return items;
+}
 
 /**
  * @param {Block} block
@@ -82,7 +130,7 @@ const valueOf = (block) => KEY.exec(block.lines[0] ?? "")?.[2]?.trim() ?? "";
 function listOf(block) {
   const first = valueOf(block);
   if (first.startsWith("[") && first.endsWith("]")) {
-    return first.slice(1, -1).split(",").map(unquote).filter(Boolean);
+    return splitFlow(first.slice(1, -1)).map(unquote).filter(Boolean);
   }
   return block.lines
     .slice(1)

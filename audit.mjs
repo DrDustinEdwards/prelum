@@ -613,16 +613,18 @@ function jsonLdBlocks(html) {
  * @returns {Array<Record<string, string>>}
  */
 function tags(html, name) {
-  return [...html.matchAll(new RegExp(`<${name}\\b([^>]*)>`, "gi"))].map((match) => {
-    /** @type {Record<string, string>} */
-    const attrs = {};
-    for (const attr of match[1].matchAll(
-      /([^\s=/"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g,
-    )) {
-      attrs[attr[1].toLowerCase()] = decodeEntities(attr[2] ?? attr[3] ?? attr[4] ?? "");
-    }
-    return attrs;
-  });
+  return [...html.matchAll(new RegExp(`<${name}\\b((?:[^>"']|"[^"]*"|'[^']*')*)>`, "gi"))].map(
+    (match) => {
+      /** @type {Record<string, string>} */
+      const attrs = {};
+      for (const attr of match[1].matchAll(
+        /([^\s=/"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g,
+      )) {
+        attrs[attr[1].toLowerCase()] = decodeEntities(attr[2] ?? attr[3] ?? attr[4] ?? "");
+      }
+      return attrs;
+    },
+  );
 }
 
 /** @param {string} text */

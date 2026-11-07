@@ -95,6 +95,12 @@ export function enhanceEmbeds({ root = ".prose" } = {}) {
     frame.title = link.dataset.embedTitle ?? link.textContent ?? "";
     frame.allow = "autoplay; encrypted-media; fullscreen; picture-in-picture";
     frame.allowFullscreen = true;
+    // The providers are third parties: they run, and keep their own storage, but cannot navigate the page, submit forms or open the top
+    // window. A page they open (the post, the track) is an ordinary tab, so it is not sandboxed too.
+    frame.setAttribute(
+      "sandbox",
+      "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation",
+    );
     frame.loading = "lazy";
     frame.referrerPolicy = "strict-origin-when-cross-origin";
     link.replaceWith(frame);
@@ -267,8 +273,12 @@ export function enhance(options = {}) {
 
   function headingLinks() {
     for (const anchor of document.querySelectorAll(`${root} .heading-anchor`)) {
-      anchor.addEventListener("click", (event) => {
+      anchor.addEventListener("click", (click) => {
+        const event = /** @type {MouseEvent} */ (click);
         if (!navigator.clipboard) return;
+        // A new tab, window or download is the link working as a link.
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+          return;
         event.preventDefault();
         const url = new URL(anchor.getAttribute("href") ?? "", location.href);
         const heading = anchor.closest("h2, h3, h4") ?? document.getElementById(url.hash.slice(1));

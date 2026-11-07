@@ -10,6 +10,13 @@
  */
 export function escapeXml(value: unknown): string;
 /**
+ * The inverse of `escapeXml`: all five entities back to their characters, in one pass so `&amp;lt;` becomes `&lt;`.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function unescapeXml(text: string): string;
+/**
  * A CDATA section ends at the first `]]>`, so it is closed and reopened around one; the two sections concatenate
  * transparently. A hand-written `<![CDATA[${text}]]>` loses the rest of the text, and the document, at that point.
  *
@@ -39,7 +46,7 @@ export function toDate(
   fallback?: Date | null,
 ): Date;
 /**
- * Not an HTML parser: only `href`, `src` and `srcset` values beginning with a single `/` are rewritten. A `//` value is
+ * Not an HTML parser: only, in real tags (not in escaped text such as a code sample, nor in a comment), `href`, `src` and `srcset` values, double or single quoted, beginning with a single `/` are rewritten. A `//` value is
  * protocol-relative and already absolute. A feed item is read on someone else's origin, where a root-relative path resolves
  * against THEIR host.
  *

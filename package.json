@@ -1,6 +1,6 @@
 {
   "name": "@drdustinedwards/site-helpers",
-  "version": "0.40.0",
+  "version": "0.40.1",
   "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt and llms-full.txt, Markdown copy, frontmatter, head tag, JSON-LD, robots.txt, IndexNow, site audit and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, and the markdown pipeline they all render with, once.",
   "license": "MIT",
   "bin": {
@@ -185,6 +185,7 @@
     "hast-util-to-string": "3.0.1",
     "katex": "0.16.47",
     "linkedom": "0.18.14",
+    "mdast-util-directive": "3.1.1",
     "mdast-util-gfm": "3.1.0",
     "mdast-util-to-markdown": "2.2.0",
     "oxfmt": "0.77.0",
@@ -221,6 +222,7 @@
     "hast-util-to-string": "3.0.1",
     "katex": "0.16.47",
     "linkedom": "0.18.14",
+    "mdast-util-directive": "3.1.1",
     "mdast-util-gfm": "3.1.0",
     "mdast-util-to-markdown": "2.2.0",
     "parse5": "8.0.1",
@@ -272,6 +274,9 @@
       "optional": true
     },
     "linkedom": {
+      "optional": true
+    },
+    "mdast-util-directive": {
       "optional": true
     },
     "mdast-util-gfm": {

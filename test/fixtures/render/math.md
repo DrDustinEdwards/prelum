@@ -8,3 +8,7 @@ $$
 \begin{pmatrix} a & b \\ c & d \end{pmatrix}
 \int_0^1 x\,dx
 $$
+
+The marks KaTeX writes for ordinary notation: $f'$, $\mathbb{R}$, $\mathrm{d}x$, $\operatorname{sin}x$, $\hat{x}$, $\vec{x}$, $\overline{AB}$,
+$\dot{x}$, $\tilde{x}$, $\underline{x}$, $\sqrt[3]{x}$, $\binom{n}{k}$, $\boxed{x}$, $\cancel{x}$, $\xrightarrow{f}$, $\phantom{x}$, $\hspace{1em}$,
+$\left(\frac{a}{b}\right)$, $f(x, y)$, $\sum_{i}^{n}$ and $\underbrace{x + y}_{2}$.

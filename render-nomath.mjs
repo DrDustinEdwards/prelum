@@ -12,7 +12,7 @@
 // Safe by construction, and the three options that keep it so are the ones a single edit could flip. Each is named at its use, and
 // test/render-safe.test.mjs plants each one and sees the hostile corpus go red:
 //   1. remark-rehype is used WITHOUT allowDangerousHtml, so raw HTML in the source is dropped before it becomes markup.
-//   2. rehypeUrlProtocols runs LAST, so it sees every href and src any plugin emits.
+//   2. rehypeUrlProtocols runs LAST, so it sees every URL attribute (href, src, poster, srcset, action, ...) any plugin emits.
 //   3. KaTeX runs with its default `trust` off, so \href{javascript:...} and \url do not become links (render.mjs).
 
 import { toString as hastToString } from "hast-util-to-string";
@@ -64,6 +64,71 @@ export const DEFAULT_MAX_BYTES = 512 * 1024;
 export const DEFAULT_MAX_DEPTH = 100;
 
 const encoder = new TextEncoder();
+
+/** Most reference-style links (`][`), emphasis delimiters (`*`, `_`) and `[` a source may hold outside code: parsing them is quadratic, so a
+ * 300 KB run of `[a][a]` took 46 s. Generous for prose: a 512 KB article holds far fewer. */
+const MAX_REFERENCES = 2000;
+const MAX_EMPHASIS = 8000;
+const MAX_BRACKETS = 10000;
+
+/**
+ * A cheap pass over the source before it is parsed, refusing the shapes that exhaust time or the stack under the byte cap: a line with more
+ * than maxDepth block-quote markers in a row, a list indented deeper than maxDepth levels, and runs of reference links or emphasis
+ * delimiters. Fenced code is skipped. Linear in the source.
+ *
+ * @param {string} file
+ * @param {string} body
+ * @param {number} maxDepth
+ */
+function assertScan(file, body, maxDepth) {
+  let fence = "";
+  let references = 0;
+  let emphasis = 0;
+  let brackets = 0;
+  let lineNo = 0;
+  for (const line of body.split("\n")) {
+    lineNo += 1;
+    const open = /^ {0,3}(`{3,}|~{3,})/.exec(line)?.[1];
+    if (fence) {
+      if (open && open[0] === fence[0] && open.length >= fence.length) fence = "";
+      continue;
+    }
+    if (open) {
+      fence = open;
+      continue;
+    }
+    const quote = /^(?:[ \t]*>)+/.exec(line)?.[0];
+    if (quote && quote.replace(/[ \t]/g, "").length > maxDepth) {
+      throw new ContentError(
+        file,
+        `markdown is nested more than ${maxDepth} levels deep at line ${lineNo} of the body`,
+      );
+    }
+    const indent = /^[ \t]*(?=(?:[-*+]|\d{1,9}[.)])[ \t])/.exec(line)?.[0];
+    const chained = new RegExp(`^[ \\t]*(?:(?:[-*+]|\\d{1,9}[.)])[ \\t]+){${maxDepth + 1}}`).test(
+      line,
+    );
+    if (chained || (indent && indent.replace(/\t/g, "    ").length > maxDepth * 4)) {
+      throw new ContentError(
+        file,
+        `markdown is nested more than ${maxDepth} levels deep at line ${lineNo} of the body`,
+      );
+    }
+    for (let i = 0; i < line.length; i += 1) {
+      const c = line[i];
+      if (c === "[") {
+        brackets += 1;
+        if (line[i - 1] === "]") references += 1;
+      } else if (c === "*" || c === "_") emphasis += 1;
+    }
+    if (references > MAX_REFERENCES || emphasis > MAX_EMPHASIS || brackets > MAX_BRACKETS) {
+      throw new ContentError(
+        file,
+        `too many links or emphasis marks (limits ${MAX_REFERENCES} reference links, ${MAX_EMPHASIS} emphasis marks, ${MAX_BRACKETS} brackets); first exceeded at line ${lineNo} of the body`,
+      );
+    }
+  }
+}
 
 /**
  * @typedef {import("./render-packs.mjs").RenderPack} RenderPack
@@ -231,7 +296,11 @@ function remarkCollectMedia(sink, keyOf) {
  */
 function scrollRegion(node, name) {
   node.properties = { ...node.properties, tabIndex: 0, role: "region", ariaLabel: name };
+  scrollRegions.add(node);
 }
+
+/** Every region scrollRegion made, so rehypeCodeRegions can tell two with one name apart. */
+const scrollRegions = new WeakSet();
 
 /** The first four header names, so a wide table's name stays short. Read when the table is wrapped, before KaTeX writes a formula twice. */
 const TABLE_NAME_HEADERS = 4;
@@ -316,6 +385,31 @@ function codeRegion(pre, name) {
 }
 
 /**
+ * Two regions with one name are one landmark name twice (axe landmark-unique, ARIA Authoring Practices: landmarks of one role
+ * need distinct names), so a name used more than once on a page gets " (n of N)". A name used once is left as it is.
+ * @param {import("hast").Root} tree
+ */
+function uniqueRegionNames(tree) {
+  /** @type {import("hast").Element[]} */
+  const regions = [];
+  visit(tree, "element", (node) => {
+    if (scrollRegions.has(node)) regions.push(node);
+  });
+  /** @type {Map<string, import("hast").Element[]>} */
+  const byName = new Map();
+  for (const node of regions) {
+    const name = String(node.properties?.ariaLabel ?? "");
+    byName.set(name, [...(byName.get(name) ?? []), node]);
+  }
+  for (const [name, nodes] of byName) {
+    if (nodes.length < 2) continue;
+    nodes.forEach((node, i) => {
+      node.properties = { ...node.properties, ariaLabel: `${name} (${i + 1} of ${nodes.length})` };
+    });
+  }
+}
+
+/**
  * After the highlighter, so its output is named too. shiki swaps each pre for a root holding the new one, so a framed block's pre is
  * found under its figure, not as the figure's child.
  */
@@ -342,6 +436,7 @@ function rehypeCodeRegions() {
     visit(tree, "element", (pre) => {
       if (pre.tagName === "pre" && !framed.has(pre)) codeRegion(pre, codeLanguageName(pre));
     });
+    uniqueRegionNames(tree);
   };
 }
 
@@ -420,28 +515,65 @@ function rehypeUrlProtocols(file, sink) {
     visit(tree, "element", (node, index, parent) => {
       const isLink = node.tagName === "a";
       const isImage = node.tagName === "img";
-      if (!isLink && !isImage) return;
+      const properties = /** @type {Record<string, unknown>} */ (node.properties ?? {});
 
-      const attribute = isLink ? "href" : "src";
-      const raw = node.properties?.[attribute];
-      if (raw === undefined || raw === null) return;
+      if (isLink || isImage) {
+        const attribute = isLink ? "href" : "src";
+        const raw = properties[attribute];
+        if (raw !== undefined && raw !== null) {
+          const url = String(raw);
+          if (
+            !isAllowedUrl(url) &&
+            !(isLink && properties.download !== undefined && isCsvDownload(url))
+          ) {
+            sink.push({ file, tag: node.tagName, url });
 
-      const url = String(raw);
-      if (isAllowedUrl(url)) return;
-      if (isLink && node.properties?.download !== undefined && isCsvDownload(url)) return;
+            const text = isLink
+              ? `[${hastToString(node)}](${url})`
+              : `![${String(properties.alt ?? "")}](${url})`;
 
-      sink.push({ file, tag: node.tagName, url });
+            if (parent && typeof index === "number") {
+              parent.children[index] = { type: "text", value: text };
+            }
+            return;
+          }
+        }
+      }
 
-      const text = isLink
-        ? `[${hastToString(node)}](${url})`
-        : `![${String(node.properties?.alt ?? "")}](${url})`;
-
-      if (parent && typeof index === "number") {
-        parent.children[index] = { type: "text", value: text };
+      // Every other attribute a browser loads or navigates to: a plugin that wrote one is held to the same list. The attribute goes, the
+      // element stays.
+      for (const name of Object.keys(properties)) {
+        if (!URL_ATTRIBUTES.has(name.toLowerCase())) continue;
+        if ((isLink && name === "href") || (isImage && name === "src")) continue;
+        const raw = properties[name];
+        if (raw === undefined || raw === null || raw === false || raw === true) continue;
+        const value = Array.isArray(raw) ? raw.join(", ") : String(raw);
+        const urls = name.toLowerCase() === "srcset" ? srcsetUrls(value) : [value];
+        const bad = urls.find((url) => !isAllowedUrl(url));
+        if (bad === undefined) continue;
+        sink.push({ file, tag: node.tagName, url: bad });
+        delete properties[name];
       }
     });
   };
 }
+
+/** Attributes that hold a URL the browser loads or navigates to, as hast names them and as a plugin may write them, lower-cased. */
+const URL_ATTRIBUTES = new Set([
+  "href",
+  "src",
+  "poster",
+  "srcset",
+  "action",
+  "formaction",
+  "data",
+  "cite",
+  "xlinkhref",
+  "xlink:href",
+  "longdesc",
+  "ping",
+  "background",
+]);
 
 /** Under this media query a site's sources are an animation's first frame (site-runtime's ./image writes them for a GIF). */
 const REDUCED_MOTION = /prefers-reduced-motion:\s*reduce/;
@@ -791,6 +923,39 @@ function rehypeCollectToc(sink) {
 }
 
 /**
+ * rehype-slug, then every id it wrote made unique against every other id in the tree: a sidenote's `sn-1`, the footnotes heading's
+ * `footnote-label`, any id a plugin wrote. rehype-slug alone only avoids the headings it slugged, so an author's heading "Sn 1" or
+ * "Footnote label" shared an id with those (a duplicate id breaks #links, aria-labelledby and axe `duplicate-id`). The author's heading
+ * gives way: it becomes `sn-1-1`.
+ */
+function rehypeUniqueSlug() {
+  const slug = rehypeSlug();
+  return (/** @type {import("hast").Root} */ tree) => {
+    /** @type {Array<import("hast").Element>} */
+    const slugged = [];
+    visit(tree, "element", (node) => {
+      if (/^h[1-6]$/.test(node.tagName) && !node.properties?.id) slugged.push(node);
+    });
+    slug(tree);
+    const mine = new Set(slugged);
+    const taken = new Set();
+    visit(tree, "element", (node) => {
+      const id = node.properties?.id;
+      if (typeof id === "string" && !mine.has(node)) taken.add(id);
+    });
+    const wanted = new Set(slugged.map((node) => String(node.properties?.id)));
+    for (const node of slugged) {
+      const base = String(node.properties?.id);
+      let id = base;
+      for (let n = 1; taken.has(id) || (id !== base && wanted.has(id)); n += 1) id = `${base}-${n}`;
+      node.properties.id = id;
+      taken.add(id);
+      wanted.add(id);
+    }
+  };
+}
+
+/**
  * The reading facts, counted from the rendered tree so they are the words a reader sees: no markdown syntax, no directive attributes.
  * Runs before the autolinks append their "#" and before KaTeX doubles each expression.
  *
@@ -806,6 +971,9 @@ function rehypeCollectText(sink) {
       if (node.type !== "element" && node.type !== "root") return;
       const classes = node.properties?.className ?? [];
       if (Array.isArray(classes) && classes.includes("sr-only")) return;
+      // The pull quote's raised copy is the sentence again, for the eye only: it is not text a reader reads twice or a word counted twice.
+      if (node.properties?.["aria-hidden"] === "true" || node.properties?.ariaHidden === "true")
+        return;
       if (node.tagName === "img" && !classes.includes?.("figure-dark")) sink.images += 1;
       for (const child of node.children ?? []) {
         walk(child);
@@ -814,7 +982,13 @@ function rehypeCollectText(sink) {
     };
     walk(tree);
     sink.words = wordCount(parts.join(""));
-    const lead = tree.children.find((child) => child.type === "element" && child.tagName === "p");
+    const lead = tree.children.find(
+      (child) =>
+        child.type === "element" &&
+        child.tagName === "p" &&
+        child.properties?.["aria-hidden"] !== "true" &&
+        child.properties?.ariaHidden !== "true",
+    );
     sink.excerpt = lead ? excerpt(hastToString(lead), 300) : "";
   };
 }
@@ -849,6 +1023,7 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   if (size > maxBytes) {
     throw new ContentError(file, `source is ${size} bytes and the limit is ${maxBytes}`);
   }
+  assertScan(file, body, maxDepth);
 
   const packs = options.packs ?? [];
   const known = [
@@ -940,7 +1115,7 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   }
 
   processor
-    .use(rehypeSlug)
+    .use(rehypeUniqueSlug)
     .use(rehypeCollectToc, toc)
     .use(rehypeCollectText, reading)
     .use(rehypeAutolinkHeadings, {
@@ -967,14 +1142,23 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
 
   processor.use(rehypeCodeRegions);
 
-  // LAST (option 2 in the header), so it sees every href and src any plugin emits.
+  // LAST (option 2 in the header), so it sees every URL attribute any plugin emits (href, src, poster, srcset, action, formaction, data, cite, xlink:href).
   processor.use(rehypeUrlProtocols, file, blockedUrls).use(rehypeStringify);
 
-  const tree = processor.parse(body);
-  const transformed = await processor.run(tree);
-  await Promise.all(pending);
-  for (const step of media.after) step();
-  const html = processor.stringify(transformed);
+  /** @type {string} */
+  let html;
+  try {
+    const tree = processor.parse(body);
+    const transformed = await processor.run(tree);
+    await Promise.all(pending);
+    for (const step of media.after) step();
+    html = processor.stringify(transformed);
+  } catch (error) {
+    // A nesting the scan does not foresee still ends as a content error, not a raw stack overflow.
+    if (error instanceof RangeError)
+      throw new ContentError(file, "markdown is too deeply nested to render");
+    throw error;
+  }
 
   if (options.assertSafe) {
     assertSafe(html, options.assertSafe === true ? undefined : options.assertSafe);

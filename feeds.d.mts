@@ -130,7 +130,8 @@ export function atomDocument(feed: {
  *   updatedAt: unknown,
  *   coverImage: string | null,
  *   tags: string[],
- * }} post one row of `listBlogPostsFullText`
+ *   guid?: string,
+ * }} post one row of `listBlogPostsFullText`; `guid` is the permanent id RSS and Atom use, and the item's `id` when given
  * @param {string} origin the site origin, no trailing slash
  * @param {string} [itemPath]
  */
@@ -144,6 +145,7 @@ export function feedItem(
     updatedAt: unknown;
     coverImage: string | null;
     tags: string[];
+    guid?: string;
   },
   origin: string,
   itemPath?: string,
@@ -152,11 +154,11 @@ export function feedItem(
   url: string;
   title: string;
   content_text: string;
-  summary: string;
-  date_published: string;
-  date_modified: string;
-  tags: string[];
-  image: string;
+  summary?: string;
+  date_published?: string;
+  date_modified?: string;
+  tags?: string[];
+  image?: string;
 };
 /**
  * @param {{

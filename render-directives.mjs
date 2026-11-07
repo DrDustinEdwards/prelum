@@ -57,7 +57,7 @@ export function remarkFigure(file) {
       if (!attrs.src) {
         throw new ContentError(file, ":::figure requires a src attribute");
       }
-      if (!attrs.alt) {
+      if (!attrs.alt?.trim()) {
         // A figcaption is announced separately, so it is no substitute for alt.
         throw new ContentError(file, `:::figure ${attrs.src} requires an alt attribute`);
       }
@@ -166,7 +166,7 @@ export function remarkDetails(file) {
       if (node.type !== "containerDirective" || node.name !== "details") return;
 
       const summary = (node.attributes ?? {}).summary;
-      if (!summary) {
+      if (!summary?.trim()) {
         throw new ContentError(file, ":::details requires a summary attribute");
       }
 

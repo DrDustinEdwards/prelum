@@ -205,13 +205,14 @@ ${entries}
  *   updatedAt: unknown,
  *   coverImage: string | null,
  *   tags: string[],
- * }} post one row of `listBlogPostsFullText`
+ *   guid?: string,
+ * }} post one row of `listBlogPostsFullText`; `guid` is the permanent id RSS and Atom use, and the item's `id` when given
  * @param {string} origin the site origin, no trailing slash
  * @param {string} [itemPath]
  */
 export function feedItem(post, origin, itemPath = DEFAULT_ITEM_PATH) {
   return {
-    id: `${origin}${itemPath}/${post.slug}`,
+    id: post.guid ?? `${origin}${itemPath}/${post.slug}`,
     url: `${origin}${itemPath}/${post.slug}`,
     title: post.title,
     // JSON Feed 1.1 requires content_html or content_text on every item.

@@ -9,7 +9,7 @@ export const RRF_K = 60;
  * @returns {string}
  */
 export function ftsLiteral(token) {
-  return `"${token.replace(/"/g, '""')}"`;
+  return `"${token.replace(/\0/g, "").replace(/"/g, '""')}"`;
 }
 
 /**
@@ -18,14 +18,18 @@ export function ftsLiteral(token) {
  * @param {{ terms: string[], phrases?: string[] }} parsed
  * @param {boolean} [prefix] when true the LAST term also matches as a prefix, so "cloudf" finds "cloudflare" while someone is
  *   still typing. Only the last term, because the earlier ones are complete words the moment a space follows them.
- * @returns {string | null} null when there is nothing to match on
+ * @returns {string | null} null when there is nothing to match on (a term with no letter or digit counts as nothing)
  */
 export function toMatchExpression(parsed, prefix = false) {
+  // A term of only punctuation tokenizes to nothing in FTS5 and would match no row, so it is dropped; NUL ends a SQL string.
+  const clean = (/** @type {string[]} */ list) =>
+    list.map((text) => text.replace(/\0/g, "")).filter((text) => /[\p{L}\p{N}]/u.test(text));
   /** @type {string[]} */
   const parts = [];
-  for (const phrase of parsed.phrases ?? []) parts.push(ftsLiteral(phrase));
-  parsed.terms.forEach((term, i) => {
-    const isLast = i === parsed.terms.length - 1;
+  for (const phrase of clean(parsed.phrases ?? [])) parts.push(ftsLiteral(phrase));
+  const terms = clean(parsed.terms);
+  terms.forEach((term, i) => {
+    const isLast = i === terms.length - 1;
     parts.push(prefix && isLast ? `${ftsLiteral(term)}*` : ftsLiteral(term));
   });
   if (parts.length === 0) return null;

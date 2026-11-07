@@ -67,6 +67,10 @@ const NAMED_ENTITIES = {
   bull: "•",
 };
 
+// Block-level tags and `<br>` separate words; inline tags (`<b>`, `<a>`, `<code>`) sit inside them and add no space.
+const BLOCK_TAG =
+  /<\/?(?:address|article|aside|blockquote|br|dd|details|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|li|main|nav|ol|p|pre|section|summary|table|tbody|td|tfoot|th|thead|tr|ul)\b[^>]*>/gi;
+
 /**
  * The text of an HTML fragment (a rendered body, an abstract title): scripts and styles dropped, then tags, Prelum's own `#` heading
  * anchor links (navigation, not words), entities decoded and white space collapsed. An entity it does not know is kept as written.
@@ -79,7 +83,8 @@ export function htmlToText(html) {
   return html
     .replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, " ")
     .replace(/<a\b[^>]*\bclass="heading-anchor"[^>]*>[\s\S]*?<\/a\s*>/gi, " ")
-    .replace(/<[^>]*>/g, " ")
+    .replace(BLOCK_TAG, " ")
+    .replace(/<[^>]*>/g, "")
     .replace(/&(?:#(\d+)|#x([\da-f]+)|([a-z]+));/gi, (entity, decimal, hex, name) => {
       if (name) return NAMED_ENTITIES[name.toLowerCase()] ?? entity;
       const code = decimal ? Number(decimal) : Number.parseInt(hex, 16);
@@ -99,6 +104,7 @@ export function htmlToText(html) {
 export function isoDuration(totalSeconds) {
   if (!totalSeconds || totalSeconds <= 0) return undefined;
   const whole = Math.round(totalSeconds);
+  if (whole === 0) return undefined;
   const h = Math.floor(whole / 3600);
   const m = Math.floor((whole % 3600) / 60);
   const s = whole % 60;

@@ -51,8 +51,12 @@ const TYPES = new Map([...EXTENSIONS].map(([type, ext]) => [ext, type]));
 /** A name a public site could have. @param {string} host */
 const publicHost = (host) =>
   /^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(host) &&
-  !/^[\d.]+$/.test(host) &&
-  !/(?:^|\.)(?:localhost|local|internal|home\.arpa|invalid)$/.test(host);
+  // Not an IP literal in any form (decimal, 0x7f.1): a real top-level domain has a letter, and IPv6 never matches the pattern above.
+  /\.[a-z][a-z0-9-]*$/.test(host) &&
+  // Names that resolve to a private address (an IP in the name, a LAN suffix) are not public sites.
+  !/(?:^|\.)(?:localhost|local|internal|home\.arpa|invalid|nip\.io|sslip\.io|localtest\.me|lan|corp|localdomain|intranet|private)$/.test(
+    host,
+  );
 
 /**
  * The type the bytes are, by their signature, whatever the header said. An SVG is text that starts with `<svg` or an XML
@@ -79,20 +83,21 @@ export function linkIconType(bytes) {
     )
   )
     return null;
+  // A prefixed element (<svg:script>) is the same tag under another name; a CSS escape or a character reference spells a blocked word
+  // (j\61vascript:, &#106;avascript:) past the checks above.
+  if (/<\/?[\w.-]+:/.test(text) || /\\[0-9a-f]/i.test(text) || /&#/.test(text)) return null;
   if (/\b(?:xlink:)?href\s*=\s*["']?(?!#)/i.test(text) || /url\(\s*["']?(?!#)/i.test(text))
     return null;
   return "image/svg+xml";
 }
 
 /**
- * The body, or null once it passes `max`: the declared length is not trusted, so the stream is counted as it is read.
+ * The bytes of `reader`, or null once they pass `max`.
  *
- * @param {Response} response
+ * @param {ReadableStreamDefaultReader<Uint8Array>} reader
  * @param {number} max
  */
-async function bodyUpTo(response, max) {
-  if (Number(response.headers.get("Content-Length") ?? 0) > max || !response.body) return null;
-  const reader = response.body.getReader();
+async function readUpTo(reader, max) {
   /** @type {Uint8Array[]} */
   const parts = [];
   let total = 0;
@@ -116,6 +121,20 @@ async function bodyUpTo(response, max) {
 }
 
 /**
+ * The body, or null once it passes `max`: the declared length is not trusted, so the stream is counted as it is read.
+ *
+ * @param {Response} response
+ * @param {number} max
+ */
+async function bodyUpTo(response, max) {
+  if (Number(response.headers.get("Content-Length") ?? 0) > max || !response.body) return null;
+  const reader = response.body.getReader();
+  return readUpTo(reader, max);
+}
+
+const MAX_REDIRECTS = 3;
+
+/**
  * One request, https only to a public host and after every redirect, capped in time and bytes. Never throws.
  *
  * @param {string} url
@@ -124,16 +143,24 @@ async function bodyUpTo(response, max) {
  */
 async function fetchCapped(url, max, { fetch, timeoutMs }) {
   try {
-    const target = new URL(url);
-    if (target.protocol !== "https:" || !publicHost(target.hostname)) return null;
-    const response = await fetch(target, {
-      redirect: "follow",
-      signal: AbortSignal.timeout(timeoutMs),
-    });
-    const final = response.url ? new URL(response.url) : target;
-    if (!response.ok || final.protocol !== "https:" || !publicHost(final.hostname)) return null;
-    const bytes = await bodyUpTo(response, max);
-    return bytes ? { bytes, url: final.href } : null;
+    // Redirects are followed by hand, so each hop is checked before it is requested, not after the fetch has already gone there.
+    let target = new URL(url);
+    for (let hop = 0; ; hop += 1) {
+      if (target.protocol !== "https:" || !publicHost(target.hostname)) return null;
+      const response = await fetch(target, {
+        redirect: "manual",
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get("Location");
+        if (!location || hop >= MAX_REDIRECTS) return null;
+        target = new URL(location, target);
+        continue;
+      }
+      if (!response.ok) return null;
+      const bytes = await bodyUpTo(response, max);
+      return bytes ? { bytes, url: target.href } : null;
+    }
   } catch {
     return null;
   }
@@ -155,28 +182,45 @@ const crc32 = (bytes) => {
   return (c ^ 0xffffffff) >>> 0;
 };
 
-/** @param {Uint8Array} bytes @param {"compress" | "decompress"} way */
-const zlib = async (bytes, way) => {
+/** @param {Uint8Array} bytes */
+const deflate = async (bytes) => {
   const stream = new Blob([/** @type {BlobPart} */ (bytes)])
     .stream()
-    .pipeThrough(
-      way === "compress" ? new CompressionStream("deflate") : new DecompressionStream("deflate"),
-    );
+    .pipeThrough(new CompressionStream("deflate"));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 };
 
 /**
+ * Inflated, or null once the output passes `max`: a few KB of zlib can inflate to gigabytes, so the stream is counted as it is read.
+ *
+ * @param {Uint8Array} bytes
+ * @param {number} max
+ */
+const inflate = async (bytes, max) => {
+  const reader = new Blob([/** @type {BlobPart} */ (bytes)])
+    .stream()
+    .pipeThrough(new DecompressionStream("deflate"))
+    .getReader();
+  return readUpTo(reader, max);
+};
+
+/** A PNG icon with more pixels than this (2048 x 2048) is refused unread: decoding allocates four bytes a pixel. */
+const MAX_ICON_PIXELS = 2048 * 2048;
+
+/**
  * A PNG shrunk to `size` pixels a side by averaging, with alpha weighted so a transparent edge does not darken, as an 8-bit RGBA PNG.
  * Only the forms favicons use are read (8-bit gray, RGB, RGBA and gray-alpha, and palettes of 1 to 8 bits, not interlaced); any other,
- * or one already small enough, comes back as it was.
+ * or one already small enough, comes back as it was. Null when it declares more than MAX_ICON_PIXELS or inflates past its declared size.
  *
  * @param {Uint8Array} png
  * @param {number} size
+ * @returns {Promise<Uint8Array | null>}
  */
 async function shrinkPng(png, size) {
   const view = new DataView(png.buffer, png.byteOffset, png.byteLength);
   const width = view.getUint32(16);
   const height = view.getUint32(20);
+  if (png.length < 29 || width * height > MAX_ICON_PIXELS) return null;
   const [depth, color, , , interlace] = png.slice(24, 29);
   const channels = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 }[color ?? -1];
   if (
@@ -200,12 +244,13 @@ async function shrinkPng(png, size) {
     if (type === "tRNS") alphas = body;
     at += 12 + length;
   }
-  const raw = await zlib(
-    new Uint8Array(await new Blob(/** @type {BlobPart[]} */ (data)).arrayBuffer()),
-    "decompress",
-  );
   const bpp = Math.max(1, ((depth ?? 8) * channels) >> 3);
   const stride = Math.ceil((width * channels * (depth ?? 8)) / 8);
+  const raw = await inflate(
+    new Uint8Array(await new Blob(/** @type {BlobPart[]} */ (data)).arrayBuffer()),
+    (stride + 1) * height,
+  );
+  if (!raw) return null;
   const rgba = new Uint8Array(width * height * 4);
   let previous = new Uint8Array(stride);
   for (let y = 0; y < height; y += 1) {
@@ -309,7 +354,7 @@ async function shrinkPng(png, size) {
   const parts = [
     png.slice(0, 8),
     chunk("IHDR", header),
-    chunk("IDAT", await zlib(out, "compress")),
+    chunk("IDAT", await deflate(out)),
     chunk("IEND", new Uint8Array(0)),
   ];
   return new Uint8Array(await new Blob(/** @type {BlobPart[]} */ (parts)).arrayBuffer());
@@ -318,15 +363,18 @@ async function shrinkPng(png, size) {
 /**
  * An icon no bigger than it is shown needs to be. A favicon.ico holds several sizes: the smallest that covers LINK_ICON_SIZE is
  * kept, alone, and one that is a PNG is shrunk like any PNG. Other types (an SVG scales; a GIF, JPEG or WebP favicon is rare) are
- * kept as they are, as is anything this cannot read.
+ * kept as they are, as is anything this cannot read. A PNG that is absurdly large (see MAX_ICON_PIXELS) or inflates past its
+ * declared size is refused: null.
  *
  * @param {{ bytes: Uint8Array, type: string }} icon
- * @returns {Promise<{ bytes: Uint8Array, type: string }>}
+ * @returns {Promise<{ bytes: Uint8Array, type: string } | null>}
  */
 export async function fitLinkIcon(icon) {
   try {
-    if (icon.type === "image/png")
-      return { bytes: await shrinkPng(icon.bytes, LINK_ICON_SIZE), type: icon.type };
+    if (icon.type === "image/png") {
+      const bytes = await shrinkPng(icon.bytes, LINK_ICON_SIZE);
+      return bytes && { bytes, type: icon.type };
+    }
     if (icon.type !== "image/x-icon") return icon;
     const view = new DataView(icon.bytes.buffer, icon.bytes.byteOffset, icon.bytes.byteLength);
     const entries = Array.from({ length: view.getUint16(4, true) }, (_, i) => {
@@ -345,8 +393,10 @@ export async function fitLinkIcon(icon) {
     if (!best) return icon;
     const image = icon.bytes.slice(best.offset, best.offset + best.length);
     // A PNG inside is served as the PNG it is, shrunk; a bitmap stays in an ICO of its own.
-    if (linkIconType(image) === "image/png")
-      return { bytes: await shrinkPng(image, LINK_ICON_SIZE), type: "image/png" };
+    if (linkIconType(image) === "image/png") {
+      const bytes = await shrinkPng(image, LINK_ICON_SIZE);
+      return bytes && { bytes, type: "image/png" };
+    }
     const one = new Uint8Array(22 + image.length);
     one.set([0, 0, 1, 0, 1, 0]);
     one.set(best.entry, 6);

@@ -111,7 +111,7 @@ export function remarkInlineMarks(file) {
       /** @type {Record<string, string>} */
       const properties = {};
       if (node.name === "abbr") {
-        const title = attrsOf(node).title;
+        const title = attrsOf(node).title?.trim();
         if (!title)
           throw new ContentError(
             file,
@@ -125,8 +125,8 @@ export function remarkInlineMarks(file) {
 }
 
 /**
- * :::video and :::audio, with the caption as the directive's content. Video requires captions (WCAG 1.2.2) unless it is marked silent,
- * and a poster, which is what a reader sees before playing and whose size the renderer gives the player so nothing shifts; audio requires
+ * :::video and :::audio, with the caption as the directive's content. Video requires captions (WCAG 1.2.2) unless it is marked silent, in
+ * which case the content must describe it (WCAG 1.2.1: video-only needs a text alternative), and a poster, which is what a reader sees before playing and whose size the renderer gives the player so nothing shifts; audio requires
  * a transcript (WCAG 1.2.1). A video preloads metadata and audio nothing, and neither autoplays. A media file written as an image is
  * refused here, before it becomes a broken <img>.
  *
@@ -164,7 +164,7 @@ export function remarkMedia(file) {
       const name = `:::${node.name}`;
       const attrs = attrsOf(node);
       const src = urlAttribute(file, node, name, "src");
-      const title = attrs.title;
+      const title = attrs.title?.trim();
       if (!title)
         throw new ContentError(
           file,
@@ -179,6 +179,12 @@ export function remarkMedia(file) {
       if (node.name === "video") {
         const captions = urlAttribute(file, node, name, "captions", !("silent" in attrs));
         const poster = urlAttribute(file, node, name, "poster");
+        // A silent video has no audio to caption, but its pictures still need a text alternative (WCAG 1.2.1): the content is it.
+        if ("silent" in attrs && !textOf({ children }).trim())
+          throw new ContentError(
+            file,
+            `${where(node, name)} is silent, so it needs a description as its content (:::video{…} then text, then :::), the text alternative to its pictures`,
+          );
         const track = captions
           ? [
               element("track", {
@@ -248,7 +254,7 @@ export function remarkEmbeds(file) {
         return;
       const url = attrsOf(node).url ?? "";
       const title =
-        (node.type === "leafDirective" ? textOf(node).trim() : "") || attrsOf(node).title;
+        (node.type === "leafDirective" ? textOf(node).trim() : "") || attrsOf(node).title?.trim();
       for (const provider of EMBED_PROVIDERS) {
         const match = provider.pattern.exec(url);
         if (!match) continue;
@@ -411,7 +417,18 @@ export function remarkLinkBlocks(file) {
             { type: "text", value: description },
           ]),
         );
-      const host = /^https?:\/\//.test(url) ? new URL(url).host.replace(/^www\./, "") : "";
+      /** @type {string} */
+      let host = "";
+      if (/^https?:\/\//.test(url)) {
+        try {
+          host = new URL(url).host.replace(/^www\./, "");
+        } catch {
+          throw new ContentError(
+            file,
+            `${where(node, "::bookmark")} has a url that is not a valid address: ${url}`,
+          );
+        }
+      }
       if (host)
         parts.push(
           element("span", { className: ["bookmark-host"] }, [{ type: "text", value: host }]),

@@ -371,6 +371,7 @@ function iso(value) {
 /** `/about/` is `/about`; `/` and an absolute URL are kept. @param {string} path */
 function withoutTrailingSlash(path) {
   if (/^https?:\/\//.test(path)) return path;
+  if (path.startsWith("//")) return `https:${path}`;
   const bare = path.replace(/\/+(?=$|[?#])/, "");
   return bare === "" || /^[?#]/.test(bare) ? `/${bare}` : bare;
 }
@@ -397,6 +398,7 @@ export function shareCard(url, alt) {
  */
 export function absoluteUrl(origin, path) {
   if (/^https?:\/\//.test(path)) return path;
+  if (path.startsWith("//")) return `https:${path}`;
   return `${origin.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
 }
 

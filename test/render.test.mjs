@@ -352,6 +352,13 @@ test("every way a page can cite media is collected, figure directives included",
   });
 });
 
+test("two scroll regions with one name get distinct names (axe landmark-unique), one alone keeps its own", async () => {
+  const { html } = await core("```js\na\n```\n\n```js\nb\n```\n\n```sql\nc\n```");
+  assert.match(html, /aria-label="Code: JavaScript \(1 of 2\)"/);
+  assert.match(html, /aria-label="Code: JavaScript \(2 of 2\)"/);
+  assert.match(html, /aria-label="Code: SQL"/);
+});
+
 test("code is plain without a highlighter, and highlighted, labeled and line-marked with one", async () => {
   const plain = await core("```js\nlet a\n```");
   assert.equal(
