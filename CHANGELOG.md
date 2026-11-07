@@ -5,6 +5,7 @@
 ## 0.41.1 (2026-11-07)
 
 - **An empty header cell is a `td`.** The empty top-left cell of a comparison table (`|  | A | B |`) was a `th` with no name: axe `empty-table-header`, and a screen reader announced the column with nothing. W3C WAI's tables tutorial treats a corner that names nothing as a plain cell, so it renders as `<td>`. The rendered HTML changes for such tables, so `RENDER_VERSION` is 22 and a site re-renders its stored HTML.
+
 ## 0.41.0 (2026-11-07)
 
 - **`scanLimits`** (`render` option, `DEFAULT_SCAN_LIMITS` export) sets the pre-parse limits on reference links (2,000), emphasis marks (8,000) and `[` (10,000). They were fixed, and a reference page of `snake_case` names could exceed the emphasis one: every `*` and `_` counts, in an inline code span too (fenced code is skipped). The error names the option. A limit you raise is the quadratic cost you accept.
