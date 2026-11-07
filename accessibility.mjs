@@ -11,9 +11,9 @@ export const ACCESSIBILITY_PATH = "/accessibility";
 /** The standard the network holds its sites to. */
 export const ACCESSIBILITY_STANDARD = "WCAG 2.2 level AA";
 
-/** What no automatic check can settle, true of every site until its hand checks pass. */
+/** What the checks leave open, true of every site: no screen reader has been run, and signed-in pages are not scanned. */
 export const HAND_CHECK_LIMITATIONS = [
-  "We have not yet finished testing the key pages by hand with the NVDA and VoiceOver screen readers.",
+  "We have not tested with a screen reader such as NVDA or VoiceOver. We scan every page with automated tools and review each page's structure and keyboard use.",
   "Pages you reach only after signing in are checked by hand, not yet by the automatic scan.",
 ];
 
