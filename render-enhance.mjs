@@ -1,6 +1,6 @@
 // The reader enhancements for a rendered post, in the browser: reading progress, the table of contents' current section, code copy
-// buttons, heading link copy, footnote previews, the image lightbox, Markdown copy, a link to the selected text and click-to-load
-// embeds. It is dustinedwards-info's app/enhance/blog.ts moved here, so every site that renders with this pipeline decorates the same
+// buttons, heading link copy, footnote previews, Markdown copy, a link to the selected text and click-to-load
+// embeds. The image viewer is Capsomer's lightbox (capsomer/behavior/lightbox), not here. It is dustinedwards-info's app/enhance/blog.ts moved here, so every site that renders with this pipeline decorates the same
 // markup the same way. Every one is an addition: without script the page reads, links and opens images as plain HTML.
 //
 // Browser-only; its one import (render-embeds.mjs) is dependency-free too. Nothing runs on import; a site calls `enhance()` once the
@@ -15,9 +15,6 @@ const FRAGMENT_EDGE_WORDS = 6;
 
 // Two viewports, not one: at one the bar describes a few pixels of scroll and jumps from empty to full.
 const PROGRESS_MIN_VIEWPORTS = 2;
-
-/** One name, moved from the figure to the full image and back, so the browser morphs one into the other. */
-const GROW_NAME = "lightbox-figure";
 
 const SELECTION_LABEL = "Copy link to selection";
 
@@ -121,8 +118,6 @@ export function enhance(options = {}) {
     toc: tocSelector = ".post-toc",
     article: articleSelector = ".post .prose",
   } = options;
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-
   /** @param {() => void} fn */
   const onIdle = (fn) => {
     // Safari has no requestIdleCallback.
@@ -392,131 +387,6 @@ export function enhance(options = {}) {
     });
   }
 
-  /**
-   * The figure grows into the viewer and shrinks back, as a same-document View Transition. It carries no type, so a site's
-   * cross-document page fade does not restyle it. Skipped under reduced motion, which a stylesheet's rule cannot reach from script, and
-   * where the API is missing: then the change simply happens.
-   *
-   * @param {HTMLElement | undefined} from
-   * @param {HTMLElement} to
-   * @param {() => void} change
-   */
-  function grow(from, to, change) {
-    if (!from || !("startViewTransition" in document) || reduceMotion.matches) {
-      change();
-      return;
-    }
-    from.style.viewTransitionName = GROW_NAME;
-    const transition = document.startViewTransition(() => {
-      from.style.viewTransitionName = "";
-      to.style.viewTransitionName = GROW_NAME;
-      change();
-    });
-    // A skipped transition rejects `ready` with an InvalidStateError: the tab went hidden, or another transition started first. The
-    // update callback still ran, so the change happened and only the animation was dropped. Anything else is a real failure and is
-    // rethrown to where it can be seen.
-    void transition.ready.catch((/** @type {unknown} */ error) => {
-      if (error instanceof DOMException && error.name === "InvalidStateError") return;
-      throw error;
-    });
-    // The name is cleared once the morph ends, so no later transition picks up a stale pair.
-    void transition.finished.finally(() => {
-      to.style.viewTransitionName = "";
-    });
-  }
-
-  /**
-   * `src` is passed in rather than read from `currentSrc`, which is whichever `srcset` rung the browser downloaded: a resized copy shown
-   * as full size. `restoreFocus` is passed because the opener is not always the element focus should land on.
-   *
-   * @param {string} src
-   * @param {string} alt
-   * @param {() => void} restoreFocus
-   * @param {string | undefined} label
-   * @param {HTMLElement | undefined} source
-   */
-  function openOverlay(src, alt, restoreFocus, label, source) {
-    const dialog = document.createElement("dialog");
-    dialog.className = "lightbox";
-    // Empty alt means decorative, so the dialog gets a generic label rather than an empty one. A diagram passes its own short label: its
-    // alt describes every node and is too long for a name.
-    dialog.setAttribute("aria-label", label ?? (alt || "Full size image"));
-    if (reduceMotion.matches) dialog.dataset.reduced = "true";
-
-    const full = document.createElement("img");
-    full.src = src;
-    full.alt = alt;
-    dialog.appendChild(full);
-
-    const close = document.createElement("button");
-    close.type = "button";
-    close.className = "lightbox-close";
-    close.textContent = "Close";
-    dialog.appendChild(close);
-
-    // The full image shrinks back into the figure it came from. Escape closes natively, without it.
-    const dismiss = () => grow(full, source ?? full, () => dialog.close());
-    close.addEventListener("click", dismiss);
-
-    // On a `<dialog>` the element itself is the click target for its backdrop.
-    dialog.addEventListener("click", (event) => {
-      if (event.target === dialog) dismiss();
-    });
-
-    dialog.addEventListener("close", () => {
-      dialog.remove();
-      restoreFocus();
-    });
-
-    grow(source, full, () => {
-      document.body.appendChild(dialog);
-      dialog.showModal();
-    });
-  }
-
-  function lightbox() {
-    for (const link of document.querySelectorAll(`${root} a.image-link`)) {
-      if (!(link instanceof HTMLAnchorElement)) continue;
-      link.addEventListener("click", (event) => {
-        const href = link.getAttribute("href");
-        if (!href) return;
-        event.preventDefault();
-        const image = link.querySelector("img");
-        openOverlay(
-          href,
-          image?.alt ?? "",
-          () => link.focus({ preventScroll: true }),
-          undefined,
-          image ?? undefined,
-        );
-      });
-    }
-
-    // Diagram images are not wrapped in an anchor, and carry no `srcset`, so their `src` is the original.
-    for (const image of document.querySelectorAll(`${root} img.diagram-image`)) {
-      if (!(image instanceof HTMLImageElement)) continue;
-      image.classList.add("zoomable");
-      // A button to assistive technology and the keyboard too, not only to a pointer.
-      image.tabIndex = 0;
-      image.setAttribute("role", "button");
-      image.setAttribute("aria-label", `Enlarge diagram: ${image.alt}`);
-      const open = () =>
-        openOverlay(
-          image.src,
-          image.alt,
-          () => image.focus({ preventScroll: true }),
-          "Diagram, full size",
-          image,
-        );
-      image.addEventListener("click", open);
-      image.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        open();
-      });
-    }
-  }
-
   function copyMarkdown() {
     const trigger = document.querySelector("[data-copy-markdown]");
     if (!(trigger instanceof HTMLElement) || !navigator.clipboard) return;
@@ -637,7 +507,6 @@ export function enhance(options = {}) {
   enhanceEmbeds({ root });
   onIdle(() => {
     footnotePreviews();
-    lightbox();
     copyMarkdown();
     selectionLink();
   });
