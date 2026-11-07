@@ -1130,7 +1130,11 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   }
 
   // Option 1 in the header: no allowDangerousHtml, so raw HTML in the source never becomes markup.
-  processor.use(remarkRehype).use(rehypeEmptyHeaders).use(rehypeTableScroll).use(rehypeTaskListLabels);
+  processor
+    .use(remarkRehype)
+    .use(rehypeEmptyHeaders)
+    .use(rehypeTableScroll)
+    .use(rehypeTaskListLabels);
 
   for (const run of runs) {
     for (const [plugin, ...args] of run.rehype) processor.use(plugin, ...args);
