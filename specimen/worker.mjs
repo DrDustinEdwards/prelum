@@ -27,6 +27,7 @@ export const PAGE_PRELOADS = preloads([
 
 const site = staticSite({
   site: prelum,
+  siteName: "Prelum",
   headers: TDM_RESERVATION_HEADERS,
   preload: PAGE_PRELOADS.header,
 });
