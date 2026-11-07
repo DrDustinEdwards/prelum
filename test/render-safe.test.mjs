@@ -9,7 +9,7 @@ import { writeFileSync } from "node:fs";
 import test from "node:test";
 
 import { DEFAULT_ALLOWLIST } from "../render-allowlist.mjs";
-import { HOSTILE_INPUTS, runConformance } from "../render-conformance.mjs";
+import { HOSTILE_INPUTS, runRenderConformance } from "../render-conformance.mjs";
 import { ContentError, render } from "../render.mjs";
 import { assertSafe, inventory, scanHtml } from "../render-safe.mjs";
 import { FIXTURES, fixture, resolveImage, siteOptions } from "./render-config.mjs";
@@ -21,7 +21,7 @@ const renderSite = (body) => render({ file: "test.md", body, resolveImage, optio
 const kinds = (html) => scanHtml(html).violations.map((v) => v.kind);
 
 test("the hostile corpus renders nothing unsafe, and says how much it read", async () => {
-  const result = await runConformance(renderSite);
+  const result = await runRenderConformance(renderSite);
 
   assert.equal(result.inputs, HOSTILE_INPUTS.length);
   assert.equal(
@@ -38,12 +38,12 @@ test("the hostile corpus renders nothing unsafe, and says how much it read", asy
 
 test("a renderer that crashes is a failure of the check, not a refusal", async () => {
   await assert.rejects(
-    runConformance(async () => {
+    runRenderConformance(async () => {
       throw new TypeError("missing peer dependency");
     }),
     TypeError,
   );
-  const refusing = await runConformance(async () => {
+  const refusing = await runRenderConformance(async () => {
     throw new ContentError("x.md", "refused");
   });
   assert.equal(refusing.refused.length, HOSTILE_INPUTS.length);

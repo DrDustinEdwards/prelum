@@ -125,7 +125,7 @@ export const DEFAULT_ALLOWLIST = {
     "div aria-label",
     "div class",
     "div data-enarratio-pending",
-    "div data-prelum-chart",
+    "div data-enarratio-redraw",
     "div inert",
     "div role",
     "div tabindex",

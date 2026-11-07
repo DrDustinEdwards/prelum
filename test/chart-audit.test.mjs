@@ -1,7 +1,7 @@
 // prelum-chart-audit against a local site with one clean page and one page of planted mistakes, in a real browser: a check
 // that misses a chart without its table, an unnamed SVG, text that fails only in dark, another chart library, a chart
 // drawn only by script, one that scrolls at 320 px or a page behind a sign-in wall calls a site clean that is not; one that flags the clean page fails every
-// site that does it right. The clean page is a :::chart Prelum rendered, with render/chart-enhance redrawing it at 320 px, a
+// site that does it right. The clean page is a :::chart Prelum rendered, with Enarratio's redrawCharts redrawing it at 320 px, a
 // textured series, an enhanced chart's role and inline primitives, so the check's exceptions and the redraw are proven together.
 
 import assert from "node:assert/strict";
@@ -10,6 +10,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import { rolldown } from "rolldown";
@@ -53,7 +54,7 @@ const post = await render({
 const entry = join(mkdtempSync(join(tmpdir(), "chart-audit-")), "charts.mjs");
 writeFileSync(
   entry,
-  `import { enhanceCharts } from ${JSON.stringify(new URL("../render-chart-enhance.mjs", import.meta.url).pathname)};\nenhanceCharts();\n`,
+  `import { redrawCharts } from ${JSON.stringify(fileURLToPath(import.meta.resolve("enarratio/redraw")))};\nredrawCharts();\n`,
 );
 const bundle = await rolldown({ input: entry, platform: "browser", logLevel: "silent" });
 const chartsJs = (await bundle.generate({ format: "esm" })).output[0].code;

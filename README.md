@@ -32,10 +32,9 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `search`                                 | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` (D1's FTS5); `staticSearchIndex(pages)` at build and `staticSearch(index, query)` in the browser, `searchWords`, for a site with no database                                                                                                                                                                                                                                          |
 | `render`, `render/nomath`                | `render`, `RENDER_VERSION`, `ContentError`, `DEFAULT_MAX_BYTES`, `DEFAULT_MAX_DEPTH`, `isAllowedUrl`                                                                                                                                                                                                                                                                                                                                     |
 | `render/packs`                           | `editorialPack`, the `RenderPack` shape a site's own directives take                                                                                                                                                                                                                                                                                                                                                                     |
-| `render/chart-enhance` (browser)         | `enhanceCharts(root?, options?)`: Enarratio's enhancement and the narrow-screen redraw for every `:::chart`                                                                                                                                                                                                                                                                                                                              |
 | `render/highlight`                       | `createHighlight`, `LANGUAGES`, `SHIKI_THEMES`                                                                                                                                                                                                                                                                                                                                                                                           |
 | `render/safe`                            | `assertSafe`, `scanHtml`, `inventory`                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `render/conformance`                     | `HOSTILE_INPUTS`, `runConformance`                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `render/conformance`                     | `HOSTILE_INPUTS`, `runRenderConformance`                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `render/math`, `render/url`              | `htmlHasMath`, `KATEX_OPTIONS`; `isAllowedUrl`                                                                                                                                                                                                                                                                                                                                                                                           |
 | `render/link-icons`                      | `linkIconResponse` (the icon route), `lookupLinkIcon`, `linkIconType`, `linkIconSrc`, `fitLinkIcon` (a fetched icon cut to `LINK_ICON_SIZE`, 32 px, for its 16 px display), `LINK_ICON_PATH`, `LINK_ICON_MAX_BYTES`, `LINK_ICON_TIMEOUT_MS`                                                                                                                                                                                              |
 | `render/diagram`                         | `DIAGRAM_ASSET_DIR`, `DIAGRAM_THEMES`, `diagramAssetPath`: where a `:::diagram`'s drawings live; `DIAGRAM_SIZES_FILE`, `diagramSize`: their sizes                                                                                                                                                                                                                                                                                        |
@@ -122,15 +121,15 @@ so a `src` on a site without the loader is refused. A chart with no title or too
 renders with a warning; `editorialPack({ strictCharts: true })` refuses it instead, so an editor can block a publish on it.
 
 The chart is drawn on the server at 700 px, so it reads with scripts off. On a narrower screen Enarratio's frame would keep it
-30rem wide and scroll it sideways; `render/chart-enhance` redraws it to the frame's width instead, and adds Enarratio's
+30rem wide and scroll it sideways; Enarratio's `redrawCharts` (`enarratio/redraw`) redraws it to the frame's width instead, and adds Enarratio's
 enhancement layer (`enarratio/enhance`: keyboard walk between points, focus announcements, tooltips, legend filters, a sortable
-table). It reads the `data-prelum-chart` attribute on each frame: bar, line and area charts are drawn again by `enarratio/lite`
+table). It reads the `data-enarratio-redraw` attribute Prelum writes on each frame: bar, line and area charts are drawn again by `enarratio/lite`
 (the same SVG as the server's), and a dot chart swaps in a 240 px drawing the server wrote. What a site adds is one import in
 the script it already bundles, which keeps it a same-origin module with no inline script, so a hash CSP holds:
 
 ```js
-import { enhanceCharts } from "@drdustinedwards/site-helpers/render/chart-enhance";
-enhanceCharts(); // once the document is parsed; options go to Enarratio's enhance()
+import { redrawCharts } from "enarratio/redraw";
+redrawCharts(); // once the document is parsed; options go to Enarratio's enhance()
 ```
 
 A site with no bundle of its own bundles that file into one (`rolldown`, `esbuild`) and loads it with
@@ -383,8 +382,8 @@ KaTeX runs with `trust` off. Those are three options one edit could flip, so `re
 (parse5) against an allowlist, and `render/conformance` holds 54 hostile inputs every site runs against its own configured renderer:
 
 ```js
-import { runConformance } from "@drdustinedwards/site-helpers/render/conformance";
-const result = await runConformance((source) =>
+import { runRenderConformance } from "@drdustinedwards/site-helpers/render/conformance";
+const result = await runRenderConformance((source) =>
   render({ file: "x.md", body: source, resolveImage, options }),
 );
 // result.violations must be empty; result.elements and result.attributes say how much was read.

@@ -116,7 +116,7 @@ export const HOSTILE_INPUTS = [
  *   violations: Array<{ input: string, kind: string, tag: string, attribute?: string }>,
  * }>}
  */
-export async function runConformance(renderSource, allowlist) {
+export async function runRenderConformance(renderSource, allowlist) {
   let rendered = 0;
   let elements = 0;
   let attributes = 0;

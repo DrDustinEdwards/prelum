@@ -155,7 +155,7 @@ function figureWords(attrs) {
  * "value"; the author's column names go back on as the axis labels. Enarratio throws for anything it
  * cannot draw (too many series, a log of zero), and that reaches the build as a ContentError.
  *
- * Returns the figure's HTML and what `render/chart-enhance` redraws it from in the browser: for bar, line
+ * Returns the figure's HTML and what ``enarratio/redraw` redraws it from in the browser: for bar, line
  * and area, the chart and its options, which `enarratio/lite` draws to the same SVG at any width; for dot
  * (a scatter plot, which only `enarratio/plot` draws), the drawing at 240 px, put in when the frame is narrower than 30rem.
  *
@@ -331,8 +331,11 @@ export function renderChartHast(model, captionChildren, figure) {
   const classes = [...(figure.properties.className ?? []), ...(drawn.properties.className ?? [])];
   const inner = h("figure", { ...drawn.properties, className: classes }, []);
   figure.tagName = "div";
-  // What render/chart-enhance redraws the chart from at the frame's width; without that script the drawing is the server's.
-  figure.properties = { className: ["cap-chart"], dataPrelumChart: JSON.stringify(model.redraw) };
+  // What Enarratio's `redrawCharts` redraws the chart from at the frame's width (its own `data-enarratio-redraw`); without that script the drawing is the server's.
+  figure.properties = {
+    className: ["cap-chart"],
+    dataEnarratioRedraw: JSON.stringify(model.redraw),
+  };
 
   const isCaption = (/** @type {any} */ n) =>
     n.type === "element" &&
