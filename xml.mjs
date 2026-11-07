@@ -18,16 +18,31 @@ function stripInvalidXml(text) {
 
 const XML_ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
 
+/** A code point XML 1.0 allows in a document (section 2.2). */
+const isXmlChar = (/** @type {number} */ code) =>
+  code === 9 ||
+  code === 10 ||
+  code === 13 ||
+  (code >= 0x20 && code <= 0xd7ff) ||
+  (code >= 0xe000 && code <= 0xfffd) ||
+  (code >= 0x10000 && code <= 0x10ffff);
+
 /**
- * The inverse of `escapeXml`: all five entities back to their characters, in one pass so `&amp;lt;` becomes `&lt;`.
+ * The inverse of `escapeXml`: the five entities and numeric character references (`&#38;`, `&#x26;`, which other
+ * generators write) back to their characters, in one pass so `&amp;lt;` becomes `&lt;`. A reference to a character XML 1.0
+ * forbids (`&#0;`, a surrogate, past U+10FFFF) is left as written.
  *
  * @param {string} text
  * @returns {string}
  */
 export function unescapeXml(text) {
   return String(text).replace(
-    /&(amp|lt|gt|quot|apos);/g,
-    (_whole, name) => XML_ENTITIES[/** @type {keyof typeof XML_ENTITIES} */ (name)],
+    /&(?:(amp|lt|gt|quot|apos)|#(?:(\d{1,7})|x([0-9a-fA-F]{1,6})));/g,
+    (whole, name, decimal, hex) => {
+      if (name) return XML_ENTITIES[/** @type {keyof typeof XML_ENTITIES} */ (name)];
+      const code = decimal ? Number(decimal) : parseInt(hex, 16);
+      return isXmlChar(code) ? String.fromCodePoint(code) : whole;
+    },
   );
 }
 

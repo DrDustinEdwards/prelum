@@ -35,6 +35,16 @@ test("pathological input under the byte cap is refused in a blink, as a ContentE
   await core("```\n" + "_a".repeat(20_000) + "\n```\n\n- [a][1]\n- [b][2]\n\n[1]: /a\n[2]: /b");
 });
 
+test("scanLimits raises one limit for a page that needs it, and the others still hold", async () => {
+  const names = "`a_b_c` ".repeat(5000);
+  await refuses(core(names), /scanLimits option raises them/);
+  await core(names, { scanLimits: { emphasis: 20_000 } });
+  await refuses(
+    core("[a][a]".repeat(5000), { scanLimits: { emphasis: 20_000 } }),
+    /too many links/,
+  );
+});
+
 /** @param {number} width @param {number} height */
 function grayPng(width, height) {
   const crc = (/** @type {Buffer} */ bytes) => {

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.41.0 (2026-11-07)
+
+- **`scanLimits`** (`render` option, `DEFAULT_SCAN_LIMITS` export) sets the pre-parse limits on reference links (2,000), emphasis marks (8,000) and `[` (10,000). They were fixed, and a reference page of `snake_case` names could exceed the emphasis one: every `*` and `_` counts, in an inline code span too (fenced code is skipped). The error names the option. A limit you raise is the quadratic cost you accept.
+- **A sitemap `priority` finer than 0.1 throws** (0.25 was silently written as 0.3). Prelum already throws on a priority outside 0 to 1 rather than fix it up, and the sitemaps.org protocol says one decimal.
+- **`unescapeXml` decodes numeric character references** (`&#38;`, `&#x26;`), which other sitemap and feed generators write. One XML 1.0 forbids (`&#0;`, a surrogate, past U+10FFFF) or an unfinished one stays as written.
+- The 2048 x 2048 pixel limit on a PNG link icon (0.40.1) stays fixed: favicons and touch icons are far smaller, and a larger one is what the limit exists to refuse.
 - `renovate.json` no longer carries its own rule against rewriting peer ranges; the shared preset (devkit) applies it to every repository.
 
 ## 0.40.1 (2026-11-07)

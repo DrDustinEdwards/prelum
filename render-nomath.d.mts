@@ -25,6 +25,7 @@ export function renderWith(
 export const DEFAULT_MAX_BYTES: number;
 /** The deepest nesting of markdown nodes allowed (lists in quotes in lists), so a hostile source cannot recurse the stack. */
 export const DEFAULT_MAX_DEPTH: 100;
+export const DEFAULT_SCAN_LIMITS: { references: number; emphasis: number; brackets: number };
 export type RenderPack = import("./render-packs.mjs").RenderPack;
 /**
  * What a site decides about its images; the core knows none of it.
@@ -112,6 +113,10 @@ export type RenderOptions = {
    * Refuse a source nested deeper than this. Default 100.
    */
   maxDepth?: number;
+  /**
+   * Most reference links (`][`), emphasis marks (`*`, `_`) and `[` outside fenced code. Defaults 2,000, 8,000 and 10,000: parsing them is quadratic, so raise one only for a page that needs it.
+   */
+  scanLimits?: Partial<{ references: number; emphasis: number; brackets: number }>;
   /**
    * Resolves `::postlink[slug]` to the post's current address and title. Without it `::postlink[…]` stays text.
    */

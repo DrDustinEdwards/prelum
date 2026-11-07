@@ -10,7 +10,9 @@
  */
 export function escapeXml(value: unknown): string;
 /**
- * The inverse of `escapeXml`: all five entities back to their characters, in one pass so `&amp;lt;` becomes `&lt;`.
+ * The inverse of `escapeXml`: the five entities and numeric character references (`&#38;`, `&#x26;`, which other
+ * generators write) back to their characters, in one pass so `&amp;lt;` becomes `&lt;`. A reference to a character XML 1.0
+ * forbids (`&#0;`, a surrogate, past U+10FFFF) is left as written.
  *
  * @param {string} text
  * @returns {string}
