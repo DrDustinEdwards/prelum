@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- The specimen's Worker (site-runtime 0.87.0) answers the shared 503 maintenance page while its `MAINTENANCE` var is on, and its `/404` answers 404, not 200. Not in the library.
+- CI: one check job per pull request (devkit v0.26.1 pr.yml in `checks.yml`, reported as `checks / Repo checks`) runs the
+  trailer, shared-code, OSV-Scanner, workflow audit and reviewer checks; `review.yml` and `workflow-audit.yml` are gone.
+  The dependency scan runs daily only, and the code map and Scorecard nightly instead of on every push. ci.yml still runs
+  on a push to main, for the specimen deploy.
 - Formatting is the network's shared Oxfmt config (`oxfmt.config.ts` spreads devkit's `./oxfmt`; `npm run format`, and
   `npm run format:check` in CI). The whole tree was reformatted in one formatting-only commit, listed in
   `.git-blame-ignore-revs`; the golden render fixtures, the specimen's inputs and its expected output are ignored, so they
