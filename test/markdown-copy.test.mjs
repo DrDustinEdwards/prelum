@@ -113,6 +113,22 @@ test("llmsFullSkip keeps a page's copy but leaves it out of llms-full.txt", asyn
   assert.match(await (await skipping(new Request(`${ORIGIN}/about.md`))).text(), /^# About\n/);
 });
 
+test("siteMarkdown: false makes the copy without asking the site for the .md path", async () => {
+  /** @type {string[]} */
+  const asked = [];
+  const quiet = markdownCopies(
+    /** @param {Request} request */
+    (request) => {
+      asked.push(new URL(request.url).pathname);
+      return site(request);
+    },
+    { origin: ORIGIN, siteMarkdown: false },
+  );
+  const made = await quiet(new Request(`${ORIGIN}/about.md`));
+  assert.match(await made.text(), /^# About\n/);
+  assert.deepEqual(asked, ["/about"]);
+});
+
 test("a static site's copies are written at build and served as files, with no parser in the Worker", async () => {
   const { mkdtemp, readFile, writeFile, mkdir } = await import("node:fs/promises");
   const { join } = await import("node:path");

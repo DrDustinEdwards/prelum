@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.39.0 (2026-11-07)
+
+- `markdownCopies` takes `siteMarkdown: false` for a site that answers no `.md` path itself. The wrapper then makes the copy without first asking the site for it, so a site that counts its 404s no longer counts every `.md` request as one. The default is unchanged.
+
 ## 0.38.0 (2026-11-07)
 
 - `pageDates` and `readPageRecord` (`/lastmod`) give a static build's sitemap an accurate `lastmod` for every page: a page whose text matches the live

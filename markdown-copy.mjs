@@ -261,6 +261,8 @@ export const sitemapLocs = (xml) =>
  * @property {(path: string) => boolean} [skip] pages that get no Markdown copy, by path
  * @property {(path: string) => boolean} [llmsFullSkip] pages that get a copy but stay out of llms-full.txt, by path: a
  *   catalog of records, say, which an agent fetches one at a time
+ * @property {boolean} [siteMarkdown] whether the site may answer a `.md` path itself (true by default, so it is asked first);
+ *   false when it answers none, so the copy is made without that first request, which a site that counts its 404s would count
  */
 
 /** A response's headers, carried to its Markdown copy without the ones that describe the HTML body. */
@@ -318,6 +320,7 @@ export function markdownCopies(fetch, options) {
   const maxPages = options.llmsFull === false ? 0 : (options.llmsFull ?? 200);
   const skip = options.skip ?? (() => false);
   const leaveOut = options.llmsFullSkip ?? (() => false);
+  const siteMarkdown = options.siteMarkdown ?? true;
 
   /**
    * The page at `path` as the site renders it, following its redirects.
@@ -446,9 +449,15 @@ export function markdownCopies(fetch, options) {
     }
 
     if (path.endsWith(".md")) {
+      const pagePath = path === "/index.md" ? "/" : path.slice(0, -3);
+      if (!siteMarkdown) {
+        const made = skip(pagePath)
+          ? null
+          : await copy(request, await page(request, pagePath, env, ctx), pagePath, false);
+        return made ?? fetch(request, env, ctx);
+      }
       const own = await fetch(request, env, ctx);
       if (own.status !== 404) return own;
-      const pagePath = path === "/index.md" ? "/" : path.slice(0, -3);
       if (skip(pagePath)) return own;
       const made = await copy(request, await page(request, pagePath, env, ctx), pagePath, false);
       if (!made) return own;
