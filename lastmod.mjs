@@ -56,3 +56,51 @@ export async function readPageRecord(source) {
   const pages = JSON.parse(text)?.pages;
   return pages && typeof pages === "object" ? pages : undefined;
 }
+
+/**
+ * A rendered site's pages that no database row dates (its code-backed marketing, docs and hub pages), tracked by what they say:
+ * run it from a cron job. Each path is read as Markdown (`read`, such as the site's own handler answering `<path>.md`), hashed
+ * and compared with the record `load` returns, and `pageDates` keeps the date of every page whose text is unchanged. A path
+ * `read` cannot read (it returns null) keeps the record's entry, so a page that fails to render one night is not dated today.
+ * `save` is called only when the record changed.
+ *
+ * @param {{ paths: string[], read: (path: string) => Promise<string | null>, load: () => Promise<PageRecord | undefined>, save: (record: PageRecord) => Promise<void>, today?: string }} options
+ * @returns {Promise<{ record: PageRecord, changed: boolean }>}
+ */
+export async function trackPageDates({ paths, read, load, save, today }) {
+  const day = today ?? new Date().toISOString().slice(0, 10);
+  const previous = await load();
+  /** @type {Array<[string, string]>} */
+  const pages = [];
+  /** @type {PageRecord} */
+  const kept = {};
+  for (const path of paths) {
+    const text = await read(path);
+    if (text !== null) pages.push([path, text]);
+    else if (previous?.[path]) kept[path] = previous[path];
+  }
+  const record = { ...kept, ...pageDates(pages, previous, day) };
+  const changed = JSON.stringify(record) !== JSON.stringify(previous);
+  if (changed) await save(record);
+  return { record, changed };
+}
+
+/**
+ * A page record in one KV key, as `trackPageDates` loads and saves it.
+ *
+ * @param {{ get(key: string): Promise<string | null>, put(key: string, value: string): Promise<unknown> }} kv
+ * @param {string} key
+ */
+export function kvPageRecord(kv, key) {
+  return {
+    /** @returns {Promise<PageRecord | undefined>} */
+    async load() {
+      const text = await kv.get(key);
+      return text ? JSON.parse(text) : undefined;
+    },
+    /** @param {PageRecord} record */
+    async save(record) {
+      await kv.put(key, JSON.stringify(record));
+    },
+  };
+}

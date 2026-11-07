@@ -400,3 +400,41 @@ test("lastmod: writeSitemapLastmod dates each sitemap URL from its Markdown copy
   assert.match(xml, /<loc>https:\/\/example.com\/docs<\/loc><lastmod>2026-02-02<\/lastmod>/);
   assert.equal((xml.match(/<lastmod>/g) ?? []).length, 2);
 });
+
+test("lastmod: trackPageDates dates a page when its text changes and keeps the entry of a page it cannot read", async () => {
+  const { trackPageDates, kvPageRecord } = await import("../lastmod.mjs");
+  const store = new Map();
+  const kv = { get: async (k) => store.get(k) ?? null, put: async (k, v) => void store.set(k, v) };
+  const { load, save } = kvPageRecord(kv, "dates");
+  const pages = { "/a": "one", "/b": "two" };
+  const read = async (path) => pages[path] ?? null;
+  const first = await trackPageDates({
+    paths: ["/a", "/b"],
+    read,
+    load,
+    save,
+    today: "2026-01-01",
+  });
+  assert.equal(first.changed, true);
+  pages["/a"] = "one, edited";
+  delete pages["/b"];
+  const second = await trackPageDates({
+    paths: ["/a", "/b"],
+    read,
+    load,
+    save,
+    today: "2026-02-02",
+  });
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(second.record).map(([k, v]) => [k, v.lastmod])),
+    { "/a": "2026-02-02", "/b": "2026-01-01" },
+  );
+  const third = await trackPageDates({
+    paths: ["/a", "/b"],
+    read,
+    load,
+    save,
+    today: "2026-03-03",
+  });
+  assert.equal(third.changed, false);
+});
