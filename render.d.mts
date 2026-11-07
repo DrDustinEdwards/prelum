@@ -10,6 +10,7 @@ export {
   ContentError,
   DEFAULT_MAX_BYTES,
   DEFAULT_MAX_DEPTH,
+  DEFAULT_SCAN_LIMITS,
   RENDER_VERSION,
   isAllowedUrl,
 } from "./render-nomath.mjs";
