@@ -9,6 +9,7 @@
     "prelum-content": "./bin/content.mjs",
     "prelum-icons": "./bin/icons.mjs",
     "prelum-indexnow": "./bin/indexnow.mjs",
+    "prelum-lastmod": "./bin/lastmod.mjs",
     "prelum-markdown": "./bin/markdown.mjs"
   },
   "files": [

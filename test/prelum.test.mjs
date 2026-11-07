@@ -364,3 +364,39 @@ test("lastmod: an unchanged page keeps the live date, a changed or new one gets 
   });
   assert.equal(stamped["/a"].lastmod, "2026-01-01");
 });
+
+test("lastmod: writeSitemapLastmod dates each sitemap URL from its Markdown copy and keeps a page's date while its text is the same", async () => {
+  const { mkdtempSync, writeFileSync, readFileSync, mkdirSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { writeSitemapLastmod } = await import("../markdown-files.mjs");
+  const dir = mkdtempSync(join(tmpdir(), "lastmod-"));
+  mkdirSync(join(dir, "docs"));
+  writeFileSync(join(dir, "index.md"), "home");
+  writeFileSync(join(dir, "docs.md"), "docs one");
+  writeFileSync(
+    join(dir, "sitemap.xml"),
+    '<?xml version="1.0"?><urlset><url><loc>https://example.com/</loc></url><url><loc>https://example.com/docs</loc><lastmod>2020-01-01</lastmod></url></urlset>',
+  );
+  await writeSitemapLastmod({
+    dir,
+    origin: "https://example.com",
+    previous: join(dir, "none.json"),
+    today: "2026-01-01",
+  });
+  assert.match(
+    readFileSync(join(dir, "sitemap.xml"), "utf8"),
+    /<loc>https:\/\/example.com\/<\/loc><lastmod>2026-01-01<\/lastmod>/,
+  );
+  writeFileSync(join(dir, "docs.md"), "docs two");
+  await writeSitemapLastmod({
+    dir,
+    origin: "https://example.com",
+    previous: join(dir, "build.json"),
+    today: "2026-02-02",
+  });
+  const xml = readFileSync(join(dir, "sitemap.xml"), "utf8");
+  assert.match(xml, /<loc>https:\/\/example.com\/<\/loc><lastmod>2026-01-01<\/lastmod>/);
+  assert.match(xml, /<loc>https:\/\/example.com\/docs<\/loc><lastmod>2026-02-02<\/lastmod>/);
+  assert.equal((xml.match(/<lastmod>/g) ?? []).length, 2);
+});

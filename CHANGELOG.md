@@ -6,6 +6,7 @@
 
 - `pageDates` and `readPageRecord` (`/lastmod`) give a static build's sitemap an accurate `lastmod` for every page: a page whose text matches the live
   build's record keeps that record's date, and a changed or new page gets today's. Capsid's explorer had this as a local copy.
+- `prelum-lastmod` (`writeSitemapLastmod` from `/markdown-files`) runs it over a static site after `prelum-markdown`: each sitemap URL gets the day its Markdown copy last changed, and `build.json` carries the record to the next build.
 
 ## 0.37.1 (2026-11-07)
 
