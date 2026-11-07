@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.36.0 (2026-11-07)
+
 - `prelum-audit` and `auditPages` check more of what Google and Bing document: `html-lang-missing`, `viewport-missing` and
   `h1-missing` (warnings); `canonical-multiple` (error: two different canonicals and Google ignores both) and
   `og-url-mismatch` (warning); `jsonld-incomplete` (warning: a BreadcrumbList item without a position, name or, but the last,
