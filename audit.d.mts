@@ -11,9 +11,14 @@ export function auditPages(
   {
     origin,
     sitemap,
+    robots,
   }: {
     origin: string;
     sitemap?: string[] | undefined;
+    /**
+     * the text of `/robots.txt` (`crawlSite` returns it, null when it did not load); left out to skip the robots checks
+     */
+    robots?: string | null | undefined;
   },
 ): AuditReport;
 /**
@@ -25,6 +30,10 @@ export function auditPages(
 export function crawlSite(input: CrawlInput): Promise<{
   pages: AuditPage[];
   sitemap: string[];
+  /**
+   * `/robots.txt`'s text, null when it did not load as text
+   */
+  robots: string | null;
 }>;
 export type AuditPage = {
   /**

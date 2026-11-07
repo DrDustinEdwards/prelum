@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- `prelum-audit` and `auditPages` check more of what Google and Bing document: `html-lang-missing`, `viewport-missing` and
+  `h1-missing` (warnings); `canonical-multiple` (error: two different canonicals and Google ignores both) and
+  `og-url-mismatch` (warning); `jsonld-incomplete` (warning: a BreadcrumbList item without a position, name or, but the last,
+  an item URL; a VideoObject without name, thumbnailUrl or uploadDate; a FAQPage question without its answer text); and,
+  from `/robots.txt`, `robots-missing`, `robots-blocks-all`, `robots-no-sitemap` and `sitemap-blocked` (error: the sitemap
+  lists a URL robots.txt disallows to Googlebot, matched as RFC 9309 says). `crawlSite` returns `robots` (the file's text, null
+  when it did not load as text) and `auditPages` takes it; left out, the robots checks are skipped. The four live sites
+  checked (dustinedwards.info, Foxing, julieedwards.info, the specimen) have no new findings.
+- `sitemapDocument` throws past 50,000 URLs or 50 MiB, the limit a crawler reads one file to
+  (https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap), and says to split; new
+  `sitemapIndexDocument(sitemaps)` writes the index that lists the files, and `SITEMAP_MAX_URLS` and `SITEMAP_MAX_BYTES` are exported.
+
 ## 0.35.1 (2026-11-07)
 
 - The `enarratio` peer range is `^0.7.3 || ^0.8.0 || ^0.9.0` (it was exactly 0.7.3), so a site that moves Enarratio no

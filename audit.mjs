@@ -37,11 +37,13 @@ const MAX_HOPS = 5;
  * writes and the links in the page, so it needs no HTML parser. Pure: it fetches nothing.
  *
  * @param {AuditPage[]} pages
- * @param {{ origin: string, sitemap?: string[] }} site `origin` is the production origin every canonical must be on;
- *   `sitemap` the URLs the sitemap lists (a page's own `inSitemap` counts too), and an empty list is itself a finding
+ * @param {{ origin: string, sitemap?: string[], robots?: string | null }} site `origin` is the production origin every canonical
+ *   must be on; `sitemap` the URLs the sitemap lists (a page's own `inSitemap` counts too), and an empty list is itself a
+ *   finding; `robots` the text of `/robots.txt` (`crawlSite` returns it, null when it did not load), left out to skip the
+ *   robots checks
  * @returns {AuditReport}
  */
-export function auditPages(pages, { origin, sitemap }) {
+export function auditPages(pages, { origin, sitemap, robots: robotsText }) {
   /** @type {AuditFinding[]} */
   const findings = [];
   const add = (
@@ -68,6 +70,33 @@ export function auditPages(pages, { origin, sitemap }) {
 
   if (sitemap && sitemap.length === 0)
     add(origin, "sitemap-empty", "error", "the sitemap lists no pages, or did not load");
+
+  /** @type {Group | null} */
+  let googlebot = null;
+  if (robotsText === null)
+    add(`${origin}/robots.txt`, "robots-missing", "warning", "robots.txt did not load as text");
+  else if (robotsText !== undefined) {
+    googlebot = robotsGroup(robotsText, "googlebot");
+    if (!robotsAllows(googlebot, "/"))
+      add(
+        `${origin}/robots.txt`,
+        "robots-blocks-all",
+        "error",
+        "robots.txt disallows the home page to Googlebot, so no page is crawled",
+      );
+    if (!/^\s*sitemap\s*:/im.test(robotsText))
+      add(
+        `${origin}/robots.txt`,
+        "robots-no-sitemap",
+        "warning",
+        "robots.txt has no Sitemap line, so a crawler finds the sitemap only if it is told",
+      );
+    for (const url of listed) {
+      const { pathname, search } = new URL(url);
+      if (!robotsAllows(googlebot, pathname + search))
+        add(url, "sitemap-blocked", "error", "the sitemap lists a URL robots.txt disallows");
+    }
+  }
 
   for (const page of pages) {
     const { url } = page;
@@ -101,6 +130,23 @@ export function auditPages(pages, { origin, sitemap }) {
     const { html } = page;
     const head = headOf(html);
 
+    if (!/<html\b[^>]*\slang\s*=\s*["']?[a-z]/i.test(html))
+      add(
+        url,
+        "html-lang-missing",
+        "warning",
+        "no lang on <html>, so a reader cannot pick the language",
+      );
+    if (!meta(head, "name", "viewport"))
+      add(
+        url,
+        "viewport-missing",
+        "warning",
+        "no viewport meta, so Google's mobile-first crawl sees a desktop-width page",
+      );
+    if (!/<h1\b/i.test(html))
+      add(url, "h1-missing", "warning", "no <h1>, so the page has no top heading");
+
     const title = textOf(head, "title");
     if (!title) add(url, "title-missing", "error", "no <title>");
     else {
@@ -130,8 +176,26 @@ export function auditPages(pages, { origin, sitemap }) {
       push(descriptions, description, url);
     }
 
-    const href = tags(head, "link").find((attrs) => attrs.rel?.toLowerCase() === "canonical")?.href;
+    const canonicals = tags(head, "link").filter(
+      (attrs) => attrs.rel?.toLowerCase() === "canonical",
+    );
+    const href = canonicals[0]?.href;
     const canonical = href ? resolve(href, url) : null;
+    if (new Set(canonicals.map((attrs) => resolve(attrs.href, url))).size > 1)
+      add(
+        url,
+        "canonical-multiple",
+        "error",
+        "more than one canonical link, and they differ, so Google ignores them all",
+      );
+    const ogUrl = meta(head, "property", "og:url");
+    if (ogUrl && canonical && normalize(resolve(ogUrl, url) ?? ogUrl) !== normalize(canonical))
+      add(
+        url,
+        "og-url-mismatch",
+        "warning",
+        `og:url is ${ogUrl}, but the canonical is ${canonical}`,
+      );
     if (!canonical) add(url, "canonical-missing", "error", "no canonical link");
     else if (new URL(canonical).origin !== origin)
       add(url, "canonical-off-site", "error", `the canonical is ${canonical}, not on ${origin}`);
@@ -172,11 +236,14 @@ export function auditPages(pages, { origin, sitemap }) {
     }
 
     for (const script of jsonLdBlocks(html)) {
+      let data;
       try {
-        JSON.parse(script);
+        data = JSON.parse(script);
       } catch {
         add(url, "jsonld-invalid", "error", "a JSON-LD block does not parse");
+        continue;
       }
+      for (const problem of jsonLdProblems(data)) add(url, "jsonld-incomplete", "warning", problem);
     }
     for (const img of tags(html, "img")) {
       // alt="" is a decorative image, and right; a file name for alt is read aloud as one.
@@ -240,7 +307,8 @@ export function auditPages(pages, { origin, sitemap }) {
  * page with status 0 and its error. A browser's fetch hides a manual redirect's status, so run it in a Worker or Node.
  *
  * @param {CrawlInput} input
- * @returns {Promise<{ pages: AuditPage[], sitemap: string[] }>}
+ * @returns {Promise<{ pages: AuditPage[], sitemap: string[], robots: string | null }>} `robots` is `/robots.txt`'s text, null when it
+ *   did not load as text; pass it to `auditPages`
  */
 export async function crawlSite({
   origin,
@@ -251,6 +319,7 @@ export async function crawlSite({
   const sitemap = [
     ...new Set(await readSitemap(fetcher, new URL(sitemapPath, origin).href, origin, true)),
   ];
+  const robots = await readRobots(fetcher, origin);
   /** @type {AuditPage[]} */
   const pages = [];
   const seen = new Set();
@@ -276,7 +345,7 @@ export async function crawlSite({
 
   for (const page of pages.filter((each) => each.html !== undefined)) {
     for (const url of internalLinks(/** @type {string} */ (page.html), page.url, origin)) {
-      if (pages.length >= maxPages) return { pages, sitemap };
+      if (pages.length >= maxPages) return { pages, sitemap, robots };
       if (seen.has(normalize(url))) continue;
       seen.add(normalize(url));
       const head = await fetchPage(fetcher, url, "HEAD", false);
@@ -287,7 +356,21 @@ export async function crawlSite({
       );
     }
   }
-  return { pages, sitemap };
+  return { pages, sitemap, robots };
+}
+
+/** @param {typeof fetch} fetcher @param {string} origin @returns {Promise<string | null>} */
+async function readRobots(fetcher, origin) {
+  try {
+    const response = await fetcher(`${origin}/robots.txt`);
+    if (!response.ok || !/text\/plain/i.test(response.headers.get("content-type") ?? "")) {
+      await response.body?.cancel();
+      return null;
+    }
+    return await response.text();
+  } catch {
+    return null;
+  }
 }
 
 /** @param {typeof fetch} fetcher @param {string} url @param {string} origin @param {boolean} index @returns {Promise<string[]>} */
@@ -484,4 +567,105 @@ function decodeEntities(text) {
       return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
     },
   );
+}
+
+/**
+ * @typedef {{ allow: boolean, path: string }} Rule
+ * @typedef {Rule[]} Group
+ */
+
+/**
+ * The rules that apply to one crawler, as RFC 9309 picks them: the group naming it, else `*`; groups are not combined.
+ *
+ * @param {string} text robots.txt
+ * @param {string} agent lower-case product token, e.g. `googlebot`
+ * @returns {Group}
+ */
+function robotsGroup(text, agent) {
+  /** @type {Array<{ agents: string[], rules: Rule[] }>} */
+  const groups = [];
+  let open = false;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.replace(/#.*/, "").trim();
+    const match = /^([a-z-]+)\s*:\s*(.*)$/i.exec(line);
+    if (!match) continue;
+    const key = match[1].toLowerCase();
+    const value = match[2].trim();
+    if (key === "user-agent") {
+      if (!open) groups.push({ agents: [], rules: [] });
+      groups[groups.length - 1].agents.push(value.toLowerCase());
+      open = true;
+    } else if (key === "allow" || key === "disallow") {
+      open = false;
+      if (groups.length > 0 && value !== "")
+        groups[groups.length - 1].rules.push({ allow: key === "allow", path: value });
+    } else open = false;
+  }
+  const named = groups.filter((group) => group.agents.includes(agent));
+  const chosen = named.length > 0 ? named : groups.filter((group) => group.agents.includes("*"));
+  return chosen.flatMap((group) => group.rules);
+}
+
+/** Longest matching rule wins, and Allow wins a tie (RFC 9309 2.2.2). @param {Group} rules @param {string} path */
+function robotsAllows(rules, path) {
+  let best = { allow: true, length: -1 };
+  for (const rule of rules) {
+    const pattern = new RegExp(
+      `^${rule.path
+        .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+        .replace(/\*/g, ".*")
+        .replace(/\\\$$/, "$")}`,
+    );
+    if (!pattern.test(path)) continue;
+    const length = rule.path.length;
+    if (length > best.length || (length === best.length && rule.allow))
+      best = { allow: rule.allow, length };
+  }
+  return best.allow;
+}
+
+/**
+ * What Google's structured-data pages call required, for the types a page of these sites carries; a block that parses can
+ * still earn no rich result. Walks `@graph`. Only what Google documents as required is flagged, never what is merely
+ * recommended (https://developers.google.com/search/docs/appearance/structured-data/breadcrumb,
+ * https://developers.google.com/search/docs/appearance/structured-data/video).
+ *
+ * @param {unknown} data
+ * @returns {string[]}
+ */
+function jsonLdProblems(data) {
+  /** @type {string[]} */
+  const problems = [];
+  const visit = (/** @type {unknown} */ node) => {
+    if (Array.isArray(node)) return node.forEach(visit);
+    if (!node || typeof node !== "object") return;
+    const record = /** @type {Record<string, any>} */ (node);
+    if (record["@graph"]) visit(record["@graph"]);
+    const types = [record["@type"]].flat().filter(Boolean);
+    if (types.includes("BreadcrumbList")) {
+      const items = Array.isArray(record.itemListElement) ? record.itemListElement : [];
+      if (items.length === 0) problems.push("a BreadcrumbList has no itemListElement");
+      items.forEach((/** @type {Record<string, any>} */ item, /** @type {number} */ index) => {
+        const last = index === items.length - 1;
+        if (typeof item?.position !== "number" || !item?.name || (!last && !item?.item))
+          problems.push(
+            `BreadcrumbList item ${index + 1} lacks ${typeof item?.position !== "number" ? "a position" : !item?.name ? "a name" : "an item URL"}`,
+          );
+      });
+    }
+    if (types.includes("VideoObject")) {
+      const missing = ["name", "thumbnailUrl", "uploadDate"].filter((key) => !record[key]);
+      if (missing.length > 0) problems.push(`a VideoObject lacks ${missing.join(", ")}`);
+    }
+    if (types.includes("FAQPage")) {
+      const questions = [record.mainEntity].flat().filter(Boolean);
+      if (
+        questions.length === 0 ||
+        questions.some((question) => !question.name || !question.acceptedAnswer?.text)
+      )
+        problems.push("a FAQPage question lacks its name or accepted answer text");
+    }
+  };
+  visit(data);
+  return problems;
 }

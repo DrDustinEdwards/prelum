@@ -43,12 +43,12 @@ if (!(home instanceof Response) || home.status >= 500) {
   );
   process.exit(2);
 }
-const { pages, sitemap } = await crawlSite({
+const { pages, sitemap, robots } = await crawlSite({
   origin,
   fetch: fetcher,
   maxPages: Number(values["max-pages"]),
 });
-const report = auditPages(pages, { origin, sitemap });
+const report = auditPages(pages, { origin, sitemap, robots });
 for (const finding of await auditIcons({ origin, fetch: fetcher })) {
   report.findings.push(finding);
   report.summary[finding.check] = (report.summary[finding.check] ?? 0) + 1;
