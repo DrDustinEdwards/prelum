@@ -327,3 +327,40 @@ test("search: the fusion constant is the argument's, not a baked-in one", () => 
   const [only] = fuse([[{ uid: "a" }]], 10);
   assert.equal(only.score, 1 / 11);
 });
+
+test("lastmod: an unchanged page keeps the live date, a changed or new one gets today's", async () => {
+  const { pageDates } = await import("../lastmod.mjs");
+  const before = pageDates(
+    [
+      ["/a", "one"],
+      ["/b", "two"],
+    ],
+    undefined,
+    "2026-01-01",
+  );
+  assert.deepEqual(
+    Object.values(before).map((p) => p.lastmod),
+    ["2026-01-01", "2026-01-01"],
+  );
+  const after = pageDates(
+    [
+      ["/a", "one"],
+      ["/b", "changed"],
+      ["/c", "new"],
+    ],
+    before,
+    "2026-02-02",
+  );
+  assert.deepEqual(Object.fromEntries(Object.entries(after).map(([k, v]) => [k, v.lastmod])), {
+    "/a": "2026-01-01",
+    "/b": "2026-02-02",
+    "/c": "2026-02-02",
+  });
+  const first = pageDates([["/a", "one 2026-01-01"]], undefined, "2026-01-01", {
+    ignore: ["2026-01-01"],
+  });
+  const stamped = pageDates([["/a", "one 2026-02-02"]], first, "2026-02-02", {
+    ignore: ["2026-02-02"],
+  });
+  assert.equal(stamped["/a"].lastmod, "2026-01-01");
+});

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.38.0 (2026-11-07)
+
+- `pageDates` and `readPageRecord` (`/lastmod`) give a static build's sitemap an accurate `lastmod` for every page: a page whose text matches the live
+  build's record keeps that record's date, and a changed or new page gets today's. Capsid's explorer had this as a local copy.
+
 ## 0.37.1 (2026-11-07)
 
 - The footnote preview (`enhance`) copies the footnote node by node instead of assigning `innerHTML`, so a page that requires Trusted Types
