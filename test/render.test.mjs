@@ -454,7 +454,7 @@ test("the editorial pack: sidenotes, pull quotes, swatches, charts and diagrams,
   assert.equal(
     (
       html.match(
-        /<div class="cap-chart" data-prelum-chart="[^"]*"><div class="cap-chart-figure"><figure class="chart-figure enarratio"/g,
+        /<div class="cap-chart" data-enarratio-redraw="[^"]*"><div class="cap-chart-figure"><figure class="chart-figure enarratio"/g,
       ) ?? []
     ).length,
     2,

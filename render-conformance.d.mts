@@ -12,7 +12,7 @@
  *   violations: Array<{ input: string, kind: string, tag: string, attribute?: string }>,
  * }>}
  */
-export function runConformance(
+export function runRenderConformance(
   renderSource: (source: string) => Promise<{
     html: string;
   }>,

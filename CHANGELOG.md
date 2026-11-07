@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.35.0 (2026-11-07)
+
+- **Removed:** `render/chart-enhance` and its `enhanceCharts`. A chart's redraw spec is now written in Enarratio's own
+  attribute, `data-enarratio-redraw` (it was `data-prelum-chart`), so Enarratio's `redrawCharts` from `enarratio/redraw`
+  (the same call Capsomer's chart-enhance makes) is the one script and Prelum no longer carries a copy. Replace
+  `import { enhanceCharts } from "@drdustinedwards/site-helpers/render/chart-enhance"` with
+  `import { redrawCharts } from "enarratio/redraw"`. `RENDER_VERSION` is 19, so stored HTML re-renders on a mismatch;
+  until it does, a chart still carrying the old attribute is the server's drawing, readable with its table.
+- **Renamed:** `runConformance` (`render/conformance`) is `runRenderConformance`, because site-api exports a different
+  `runConformance` for the Carrel API and devkit's overlap check flags the shared name.
+
 ## 0.34.0 (2026-11-07)
 
 - New in the library, so the sites stop carrying their own copies: `htmlToText(html)` (`./text`: scripts, styles, tags and
