@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.37.0 (2026-11-07)
+
+- `markdownCopies` takes `llmsFullSkip(path)`: pages that get a Markdown copy but stay out of the llms-full.txt it builds, such as a
+  catalog of thousands of records that an agent fetches one at a time. Nothing else changes.
+
 ## 0.36.0 (2026-11-07)
 
 - `prelum-audit` and `auditPages` check more of what Google and Bing document: `html-lang-missing`, `viewport-missing` and

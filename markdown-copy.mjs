@@ -259,6 +259,8 @@ export const sitemapLocs = (xml) =>
  * @property {number | false} [llmsFull] build /llms-full.txt from the sitemap when the site serves none, with at most this many
  *   pages (200 by default); false leaves /llms-full.txt to the site
  * @property {(path: string) => boolean} [skip] pages that get no Markdown copy, by path
+ * @property {(path: string) => boolean} [llmsFullSkip] pages that get a copy but stay out of llms-full.txt, by path: a
+ *   catalog of records, say, which an agent fetches one at a time
  */
 
 /** A response's headers, carried to its Markdown copy without the ones that describe the HTML body. */
@@ -315,6 +317,7 @@ export function markdownCopies(fetch, options) {
   const origin = options.origin.replace(/\/$/, "");
   const maxPages = options.llmsFull === false ? 0 : (options.llmsFull ?? 200);
   const skip = options.skip ?? (() => false);
+  const leaveOut = options.llmsFullSkip ?? (() => false);
 
   /**
    * The page at `path` as the site renders it, following its redirects.
@@ -384,7 +387,7 @@ export function markdownCopies(fetch, options) {
     const paths = [
       ...new Set((await locs("/sitemap.xml")).map((loc) => new URL(loc, origin).pathname)),
     ]
-      .filter((path) => !skip(path))
+      .filter((path) => !skip(path) && !leaveOut(path))
       .slice(0, maxPages);
 
     /** @type {(import("./llms.mjs").LlmsPage | null)[]} */

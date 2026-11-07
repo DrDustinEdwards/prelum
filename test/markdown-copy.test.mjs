@@ -103,6 +103,16 @@ test("llms-full.txt is built from llms.txt and the sitemap, without noindex page
   assert.doesNotMatch(full, /Private|Hush/);
 });
 
+test("llmsFullSkip keeps a page's copy but leaves it out of llms-full.txt", async () => {
+  const skipping = markdownCopies(site, {
+    origin: ORIGIN,
+    llmsFullSkip: (path) => path === "/about",
+  });
+  const full = await (await skipping(new Request(`${ORIGIN}/llms-full.txt`))).text();
+  assert.doesNotMatch(full, /# About\n/);
+  assert.match(await (await skipping(new Request(`${ORIGIN}/about.md`))).text(), /^# About\n/);
+});
+
 test("a static site's copies are written at build and served as files, with no parser in the Worker", async () => {
   const { mkdtemp, readFile, writeFile, mkdir } = await import("node:fs/promises");
   const { join } = await import("node:path");
