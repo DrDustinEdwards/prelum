@@ -403,11 +403,16 @@ test("lastmod: writeSitemapLastmod dates each sitemap URL from its Markdown copy
 
 test("lastmod: trackPageDates dates a page when its text changes and keeps the entry of a page it cannot read", async () => {
   const { trackPageDates, kvPageRecord } = await import("../lastmod.mjs");
+  /** @type {Map<string, string>} */
   const store = new Map();
-  const kv = { get: async (k) => store.get(k) ?? null, put: async (k, v) => void store.set(k, v) };
+  const kv = {
+    get: async (/** @type {string} */ k) => store.get(k) ?? null,
+    put: async (/** @type {string} */ k, /** @type {string} */ v) => void store.set(k, v),
+  };
   const { load, save } = kvPageRecord(kv, "dates");
+  /** @type {Record<string, string>} */
   const pages = { "/a": "one", "/b": "two" };
-  const read = async (path) => pages[path] ?? null;
+  const read = async (/** @type {string} */ path) => pages[path] ?? null;
   const first = await trackPageDates({
     paths: ["/a", "/b"],
     read,
