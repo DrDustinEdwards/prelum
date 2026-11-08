@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.41.3 (2026-11-08)
+
+- **Enarratio 0.10.0 is supported.** The `enarratio` peer range adds `^0.10.0`. Its figures carry a `lang` attribute and name their data-table scroll region, so a chart's rendered HTML changes and `RENDER_VERSION` is 23: a site re-renders its stored HTML. The specimen and the dev dependencies move to enarratio 0.10.0 and site-runtime 0.101.3.
+
 - **The specimen is on Capsomer 0.84.0.** Its `base.css` names an `aspect-ratio` for an `img` with `width` and `height`, which clears Chrome's `LazyLoadImageIssue` for the specimen's lazy images (11 flagged before, 0 after). Specimen only; no change to `render` or RENDER_VERSION.
 
 ## 0.41.2 (2026-11-07)
