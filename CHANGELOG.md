@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **The specimen is on Capsomer 0.84.0.** Its `base.css` names an `aspect-ratio` for an `img` with `width` and `height`, which clears Chrome's `LazyLoadImageIssue` for the specimen's lazy images (11 flagged before, 0 after). Specimen only; no change to `render` or RENDER_VERSION.
+
 ## 0.41.2 (2026-11-07)
 
 - **The accessibility statement says what was checked.** `HAND_CHECK_LIMITATIONS` no longer says screen-reader testing is unfinished; it says no screen reader has been run and that pages are scanned automatically and reviewed for structure and keyboard use. No change to `render` or RENDER_VERSION.
