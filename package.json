@@ -167,7 +167,7 @@
   },
   "devDependencies": {
     "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.27.0",
-    "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.102.0",
+    "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.108.0",
     "@fontsource-variable/source-serif-4": "5.3.1",
     "@mermaid-js/mermaid-cli": "12.2.0",
     "@observablehq/plot": "0.6.17",
