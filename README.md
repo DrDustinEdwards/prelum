@@ -424,11 +424,12 @@ file, `<order>-<id>.md`, with a `name` and `summary` header.
   builds and deploys it (a merge to `main` deploys it too, through ci.yml's `deploy` job: devkit's shared deploy, which waits for
   `/health` to report the commit and rolls back when the home page does not answer).
 - `test/specimen.test.mjs` holds each element to its stored output in `specimen/expected/`, checks the elements cover every
-  directive, chart type and highlighted language Prelum has, and builds the site to check the index, the footer and that no page
+  directive except `diagram` (the specimen draws that one by hand; `test/render.test.mjs` covers `:::diagram`), every chart
+  type and highlighted language Prelum has, and builds the site to check the index, the footer and that no page
   has a generator tag or an inline script. `UPDATE_SPECIMEN=1 npm test` rewrites `specimen/expected/`; a changed file there is a change
   in what every site publishes, and goes with a `RENDER_VERSION` bump.
-- Diagrams are drawn ahead of time by `npm run specimen:diagrams` and committed in `specimen/diagrams/`; the build stops when
-  one is missing.
+- A `:::diagram` an element still carries is drawn ahead of time by `npm run specimen:diagrams` and committed in `specimen/diagrams/`; the build stops when
+  one of those drawings is missing. The specimen's own diagram is not one of those: it is a hand-built SVG in the page.
 
 ## Diagrams
 

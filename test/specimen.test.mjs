@@ -1,5 +1,6 @@
 // The specimen site (specimen/): each element renders to the output stored beside it, the elements cover everything Prelum can
-// produce, and the built site carries the index Carrel reads and names Prelum's version.
+// produce (the diagram is drawn by hand in the page; :::diagram stays covered in test/render.test.mjs), and the built site
+// carries the index Carrel reads and names Prelum's version.
 //
 // UPDATE_SPECIMEN=1 npm test rewrites specimen/expected/ from the current output. Review the diff: a changed file is a change in
 // what every site publishes for that markdown, and belongs with a RENDER_VERSION bump.
@@ -76,11 +77,9 @@ function used() {
 test("the elements cover every directive, chart type and highlighted language Prelum has, and nothing it lacks", () => {
   const { languages, charts } = used();
   const directives = new Set(elements.flatMap((e) => e.directives));
-  assert.deepEqual(
-    [...directives].sort(),
-    [...PACKS.core, ...PACKS.editorial].sort(),
-    "directives",
-  );
+  // The specimen draws its diagram by hand. :::diagram stays in the library and is covered by test/render.test.mjs.
+  const catalog = [...PACKS.core, ...PACKS.editorial].filter((name) => name !== "diagram");
+  assert.deepEqual([...directives].sort(), catalog.sort(), "directives");
   assert.deepEqual([...charts].sort(), [...CHART_TYPES].sort(), "chart types");
   assert.deepEqual([...languages].sort(), [...LANGUAGES].sort(), "highlighted languages");
 });
@@ -129,6 +128,10 @@ test("the built site carries the index generated from the sources, names Prelum'
     const page = readFileSync(join(out, "index.html"), "utf8");
     for (const element of elements)
       assert.ok(page.includes(`id="el-${element.id}"`), `index.html shows ${element.id}`);
+    assert.match(page, /<figure class="blog-diagram" role="img"/);
+    assert.match(page, /<title>From draft to page<\/title>/);
+    assert.doesNotMatch(page, /prelum-03318765/);
+    assert.doesNotMatch(page, /class="diagram-image/);
   } finally {
     rmSync(out, { recursive: true, force: true });
   }

@@ -486,6 +486,37 @@ main {
     display: block;
   }
 }
+/* The specimen's own diagram, in the page: one SVG, filled from the page's variables, at its natural width. */
+.prose .blog-diagram {
+  margin: 2rem 0;
+  overflow: visible;
+}
+.prose .blog-diagram svg {
+  display: block;
+  width: 432px;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 432 / 56;
+}
+.prose .blog-diagram .node {
+  fill: var(--surface);
+  stroke: var(--line-strong);
+  stroke-width: 1px;
+}
+.prose .blog-diagram .label {
+  fill: var(--text);
+  font-family: var(--prose);
+  font-size: 13px;
+  font-weight: 500;
+}
+.prose .blog-diagram .connector {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1px;
+}
+.prose .blog-diagram .arrow-head {
+  fill: var(--line-strong);
+}
 .prose .enarratio svg {
   max-inline-size: 100%;
   block-size: auto;

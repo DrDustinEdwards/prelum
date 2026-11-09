@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **The specimen's diagram is drawn in the page.** Draft, Prelum and Page are one inline SVG (`figure.blog-diagram`, with `title` and `desc`), filled from the page's color variables, so the same drawing follows light and dark. The Mermaid files `specimen/diagrams/prelum-03318765-light.svg` and `specimen/diagrams/prelum-03318765-dark.svg` are removed. `:::diagram`, `drawDiagrams` and `renderDiagramHast` are unchanged, and `RENDER_VERSION` is unchanged.
+
 ## 0.41.3 (2026-11-08)
 
 - **Enarratio 0.10.0 is supported.** The `enarratio` peer range adds `^0.10.0`. Its figures carry a `lang` attribute and name their data-table scroll region, so a chart's rendered HTML changes and `RENDER_VERSION` is 23: a site re-renders its stored HTML. The specimen and the dev dependencies move to enarratio 0.10.0 and site-runtime 0.101.3.

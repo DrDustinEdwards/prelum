@@ -1,6 +1,7 @@
-// Draws the specimen's diagrams, one SVG per theme, into specimen/diagrams, colored from Capsomer's tokens, with the same
-// drawing code every site uses (render-diagram-draw.mjs). It is run by hand when a diagram source changes and the drawings
-// are committed, so the site build needs no browser. Missing drawings are drawn, every drawing is drawn again when the
+// Draws a specimen element's :::diagram, one SVG per theme, into specimen/diagrams, colored from Capsomer's tokens, with the
+// same drawing code every site uses (render-diagram-draw.mjs). The page's own diagram is hand-built in
+// specimen/elements/50-diagram.md and is not drawn here. This script is run by hand when a :::diagram source changes and the
+// drawings are committed, so the site build needs no browser. Missing drawings are drawn, every drawing is drawn again when the
 // configuration in config.json changes, and drawings no element uses are deleted.
 //
 //   npm run specimen:diagrams
