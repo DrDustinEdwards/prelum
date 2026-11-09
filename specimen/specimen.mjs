@@ -1,7 +1,8 @@
 // The specimen's elements: each is a short markdown file in specimen/elements, rendered here exactly as a site configured like
-// dustinedwards-info renders it (the editorial pack and code highlighting on). The site build (specimen/build.mjs) and the tests
-// (test/specimen.test.mjs) both read the elements through this file, so the page, the stored expected output and the index Carrel
-// reads cannot drift apart.
+// dustinedwards-info renders it (the editorial pack and code highlighting on). The diagram element is the exception: it is a
+// hand-built SVG in the page, because the pipeline drops raw HTML and does not inline a drawing. The site build
+// (specimen/build.mjs) and the tests (test/specimen.test.mjs) both read the elements through this file, so the page, the stored
+// expected output and the index Carrel reads cannot drift apart.
 
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -223,7 +224,22 @@ export function loadElements() {
  * @param {Element} element
  * @param {{ taken: boolean }} [priority] the page's, when several elements share one page, so only its first image is high
  */
-export function renderElement(element, priority) {
+export async function renderElement(element, priority) {
+  // :::diagram stays the library's Mermaid path. This one figure is the specimen page's own drawing, inlined, so one SVG
+  // follows both themes through the page's color variables. The pipeline would drop the markup.
+  if (element.id === "diagram") {
+    const html = element.source.trim();
+    if (
+      !html.startsWith('<figure class="blog-diagram" role="img"') ||
+      !html.includes("<title>") ||
+      !html.includes("<desc>")
+    ) {
+      throw new Error(
+        `${element.file}: the specimen diagram is a <figure class="blog-diagram" role="img"> with a title and a desc`,
+      );
+    }
+    return { html, diagrams: [], images: [], videos: [] };
+  }
   return render({
     file: `specimen/elements/${element.file}`,
     body: element.source,
