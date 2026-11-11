@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.45.0 (2026-11-11)
+
+- **`SLUG_PATTERN`** and **`isSlug`** (`./slug`), beside `slugify`: the one slug rule as a pattern and a check, for the copies of `/^[a-z0-9]+(?:-[a-z0-9]+)*$/` in Carrel, dustinedwards.info, Foxhound and site-api, and for Capsomer's `SlugField` (shared-code audit pass 2, C14). No change to `render` or RENDER_VERSION.
+
 ## 0.43.0 (2026-11-11)
 
 - **`standardFiles`** (`./files`): robots.txt, ai.txt, site.webmanifest, the IndexNow key file and search engines' ownership files from one config, answered before React Router, so no site writes their routes (shared-code audit items 44 and 45).

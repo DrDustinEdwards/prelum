@@ -13,7 +13,7 @@ import { llmsDocument, llmsLink } from "../llms.mjs";
 import { htmlToMarkdown, llmsHeaderOf, sitemapLocs } from "../markdown-copy.mjs";
 import { toMatchExpression } from "../search.mjs";
 import { sitemapDocument } from "../sitemap.mjs";
-import { slugify } from "../slug.mjs";
+import { isSlug, slugify } from "../slug.mjs";
 import { htmlToText, isoDuration } from "../text.mjs";
 import { absolutizeUrls, cdata, escapeXml, isoDay, rfc822, unescapeXml } from "../xml.mjs";
 
@@ -177,4 +177,12 @@ test("sitemap: priority and changefreq are validated, images are capped at 1,000
 
 test("head: a protocol-relative URL becomes https", () => {
   assert.equal(absoluteUrl("https://e.test", "//cdn.x/i.png"), "https://cdn.x/i.png");
+});
+
+test("isSlug holds what slugify makes and refuses the rest", () => {
+  for (const text of ["Café au lait", "Straße Ørsted", "  2026: Spring update!  "])
+    assert.equal(isSlug(slugify(text)), true);
+  for (const bad of ["", "-lead", "trail-", "two--hyphens", "Upper", "under_score", 7, null])
+    assert.equal(isSlug(bad), false);
+  assert.equal(isSlug("field-notes", { max: 5 }), false);
 });
