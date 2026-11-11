@@ -63,3 +63,21 @@ test("storedRender: a body that no longer renders keeps its last stored HTML", a
   );
   assert.equal(current.fresh, true);
 });
+
+test("toBibtex: a page range gets every dash as --, and a title's & and _ are escaped", async () => {
+  const { toBibtex } = await import("../scholar.mjs");
+  const entry = toBibtex({
+    id: "k",
+    title: "R&D_x",
+    authors: ["A B"],
+    journal: "J",
+    year: 2020,
+    pages: "100-110",
+  });
+  assert.match(entry, /pages = \{100--110\}/);
+  assert.match(entry, /title = \{R\\&D\\_x\}/);
+  assert.match(
+    toBibtex({ id: "k", title: "t", authors: [], pages: "e12345" }),
+    /pages = \{e12345\}/,
+  );
+});

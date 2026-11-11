@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.51.0 (2026-11-11)
+
+No change to `render` or RENDER_VERSION.
+
+- **`./scholar`: `escapeBibtex` and `bibtexPages` are exported, and `toBibtex` writes a page range with `--`.** BibTeX wants `100--110`; a verbatim `100-110` is a minus sign in a typeset reference. `bibtexPages` turns every hyphen or dash run between numbers into `--` (an article number such as `e12345` is unchanged), and `toBibtex` uses it. dustinedwards.info's CV and protocol writers had their own BibTeX that fixed only the first hyphen and escaped nothing; they move onto these.
+
 ## 0.50.0 (2026-11-11)
 
 No change to `render` or RENDER_VERSION.
