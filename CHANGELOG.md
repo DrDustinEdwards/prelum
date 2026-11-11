@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.45.0 (2026-11-11)
+
+- **`SLUG_PATTERN`** and **`isSlug`** (`./slug`), beside `slugify`: the one slug rule as a pattern and a check, for the copies of `/^[a-z0-9]+(?:-[a-z0-9]+)*$/` in Carrel, dustinedwards.info, Foxhound and site-api, and for Capsomer's `SlugField` (shared-code audit pass 2, C14). No change to `render` or RENDER_VERSION.
+
 ## 0.44.0 (2026-11-11)
 
 - **site-runtime is a peer dependency** (`>=0.113.0`): the diagram file names use its `fnv1a32` and `errorMessage` is its `./log` one, re-exported from `./render-error`, so neither is a copy (devkit-shared). Every site and package that uses Prelum already has it.
