@@ -170,8 +170,8 @@
     "bloat": "devkit-no-bloat --warn-only"
   },
   "devDependencies": {
-    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.35.0",
-    "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.123.1",
+    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.35.1",
+    "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.124.0",
     "@fontsource-variable/source-serif-4": "5.3.1",
     "@mermaid-js/mermaid-cli": "12.2.0",
     "@observablehq/plot": "0.6.17",
@@ -182,7 +182,7 @@
     "@types/mdast": "4.0.4",
     "@types/node": "24.19.2",
     "axe-core": "4.14.0",
-    "capsomer": "github:DrDustinEdwards/capsomer#v0.95.0",
+    "capsomer": "github:DrDustinEdwards/capsomer#v0.95.1",
     "enarratio": "0.12.2",
     "hast-util-from-html": "2.0.3",
     "hast-util-to-mdast": "10.1.2",

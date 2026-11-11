@@ -52,7 +52,7 @@ jobs:
     concurrency:
       group: deploy
       cancel-in-progress: false
-    uses: DrDustinEdwards/devkit/.github/workflows/worker-deploy.yml@e752d5def9b12dcbdcd8fe8824ae76da8b8676e5 # v0.35.0
+    uses: DrDustinEdwards/devkit/.github/workflows/worker-deploy.yml@dd9a9a001a21b335fa0fc0832b0df053835fa17f # v0.35.1
     with:
       worker-name: prelum
       health-url: https://prelum.dustinedwards.info/health
