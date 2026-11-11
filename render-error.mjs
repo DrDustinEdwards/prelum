@@ -12,12 +12,5 @@ export class ContentError extends Error {
   }
 }
 
-/**
- * The message of a thrown value: an Error's own message, anything else as a string.
- *
- * @param {unknown} error
- * @returns {string}
- */
-export function errorMessage(error) {
-  return error instanceof Error ? error.message : String(error);
-}
+// The message of a thrown value: site-runtime ./log's, the one every package and site uses.
+export { errorMessage } from "@dustinedwards/site-runtime/log";

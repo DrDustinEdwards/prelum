@@ -12,8 +12,8 @@ export interface StandardFiles {
   ai?:
     | { name: string; contact: string; policy?: string[] }
     | ((request: Request) => Promise<{ name: string; contact: string; policy?: string[] }>);
-  /** site.webmanifest's fields (webManifest); no manifest without it. */
-  manifest?: ManifestSite;
+  /** site.webmanifest's fields (webManifest), or a function reading them (from the site's content); no manifest without it. */
+  manifest?: ManifestSite | ((request: Request) => Promise<ManifestSite>);
   /** The IndexNow key, served at `/<key>.txt`. */
   indexNowKey?: string;
   /** Ownership files by exact path (`"/google0123abcd.html": "google-site-verification: google0123abcd.html"`). */
