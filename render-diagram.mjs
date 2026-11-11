@@ -2,25 +2,11 @@
 // the site's build renders assets ahead of time and the HTML carries only the key and source.
 
 import { h, text } from "./render-hast.mjs";
+import { fnv1a32 } from "@dustinedwards/site-runtime/encoding";
 
 // Bump when the token map, the site's color tokens or the mermaid version changes: the key hashes
 // only the source, so a restyle without a bump leaves every rendered asset at the old colors forever.
 const DIAGRAM_TEMPLATE_VERSION = 1;
-
-/**
- * FNV-1a, 32 bits, over UTF-16 code units: a short stable fingerprint, not a security boundary.
- *
- * @param {string} input
- * @returns {string} eight lowercase hex digits
- */
-function fnv1a32(input) {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < input.length; i += 1) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  return hash.toString(16).padStart(8, "0");
-}
 
 export const DIAGRAM_ASSET_DIR = "diagrams";
 

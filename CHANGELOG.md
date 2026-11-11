@@ -4,6 +4,7 @@
 
 ## 0.44.0 (2026-11-11)
 
+- **site-runtime is a peer dependency** (`>=0.113.0`): the diagram file names use its `fnv1a32` and `errorMessage` is its `./log` one, re-exported from `./render-error`, so neither is a copy (devkit-shared). Every site and package that uses Prelum already has it.
 - **`standardFiles`** takes `manifest` as a function too, as `ai` already did, for a site whose name and description live in its content (julieedwards.info reads them from D1).
 
 ## 0.43.0 (2026-11-11)
