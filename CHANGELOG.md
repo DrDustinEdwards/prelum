@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.41.4 (2026-11-11)
+
+- **Enarratio 0.11 and 0.12 are supported.** The `enarratio` peer range adds `^0.11.0 || ^0.12.0`. 0.11 puts the chart toolbar above the drawing and keeps the data table visually hidden after it; 0.12 draws solid bars and areas with the series named on the chart, values at bar tips and rounded bar tops. A chart's rendered HTML changes, so `RENDER_VERSION` is 24: a site re-renders its stored HTML. The render allowlist is regenerated from the corpus (bars are now paths, new `data-enarratio-at` and `data-enarratio-shown` attributes, the toolbar's buttons), and the chart audit's planted "no table" charts now remove the hidden table instead of the old "Show data" disclosure. The specimen and the dev dependencies move to enarratio 0.12.0.
+
 - **The specimen's diagram is drawn in the page.** Draft, Prelum and Page are one inline SVG (`figure.blog-diagram`, with `title` and `desc`), filled from the page's color variables, so the same drawing follows light and dark. The Mermaid files `specimen/diagrams/prelum-03318765-light.svg` and `specimen/diagrams/prelum-03318765-dark.svg` are removed. `:::diagram`, `drawDiagrams` and `renderDiagramHast` are unchanged, and `RENDER_VERSION` is unchanged.
 
 ## 0.41.3 (2026-11-08)
