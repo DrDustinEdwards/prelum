@@ -26,6 +26,10 @@ export type CitationOptions = {
   /** terms BibTeX styles must not lowercase (a genus and species); group 1 is braced */
   protect?: RegExp | undefined;
 };
+/** A value as BibTeX text: entities decoded, special characters escaped. */
+export function escapeBibtex(value: string | number | null | undefined): string;
+/** A page range as BibTeX writes it: any hyphen or dash run between numbers becomes `--`. */
+export function bibtexPages(value: string | number | null | undefined): string;
 /** One work as a BibTeX entry: entities decoded, special characters escaped, `protect` terms braced. */
 export function toBibtex(work: CitedWork, options?: CitationOptions): string;
 /** One work as a RIS record: `TY` first, `ER` last, authors as `Family, Given`. */

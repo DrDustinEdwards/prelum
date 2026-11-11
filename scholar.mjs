@@ -46,8 +46,12 @@ const BIBTEX_ESCAPES = [
   ["^", "\\textasciicircum{}"],
 ];
 
-/** @param {string | number | null | undefined} value */
-function escapeBibtex(value) {
+/**
+ * A value as BibTeX text: entities decoded, then every special character escaped.
+ *
+ * @param {string | number | null | undefined} value
+ */
+export function escapeBibtex(value) {
   let out = decode(value);
   for (const [from, to] of BIBTEX_ESCAPES) out = out.split(from).join(to);
   return out;
@@ -62,6 +66,16 @@ const BIBTEX_TYPES = {
   chapter: "incollection",
   "teaching-resource": "misc",
 };
+
+/**
+ * A page range as BibTeX writes it: a hyphen or dash between two numbers becomes `--`, every one of them. An article
+ * number or a single page is left as given.
+ *
+ * @param {string | number | null | undefined} value
+ */
+export function bibtexPages(value) {
+  return escapeBibtex(value).replace(/\s*[-\u2010-\u2015]+\s*/g, "--");
+}
 
 /**
  * One work as a BibTeX entry. Special characters are escaped after the entities are decoded, and `protect` braces a term
@@ -94,7 +108,7 @@ export function toBibtex(work, options = {}) {
   if (work.year) lines.push(field("year", String(work.year)));
   if (work.volume) lines.push(field("volume", escapeBibtex(work.volume)));
   if (work.issue) lines.push(field("number", escapeBibtex(work.issue)));
-  if (work.pages) lines.push(field("pages", escapeBibtex(work.pages)));
+  if (work.pages) lines.push(field("pages", bibtexPages(work.pages)));
   if (work.doi) {
     lines.push(field("doi", work.doi));
     lines.push(field("url", `https://doi.org/${work.doi}`));
