@@ -53,10 +53,7 @@ jobs:
     with:
       worker-name: prelum
       health-url: https://prelum.dustinedwards.info/health
-      verify-command: >-
-        code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 https://prelum.dustinedwards.info/ || true);
-        echo "home page answered $code";
-        if [ "$code" = 200 ]; then exit 0; elif [ "$code" = 000 ]; then exit 3; else exit 1; fi
+      verify-command: node "$DEVKIT_DIR/bin/verify-deploy.mjs" https://prelum.dustinedwards.info
       install: PUPPETEER_SKIP_DOWNLOAD=true npm ci
       pre-deploy: npm run specimen
       sha-var: DEPLOY_SHA
