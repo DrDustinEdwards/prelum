@@ -1,3 +1,5 @@
+import { sha256Hex } from "@dustinedwards/site-runtime/encoding";
+
 import { unescapeXml } from "./xml.mjs";
 
 const ENDPOINT = "https://api.indexnow.org/indexnow";
@@ -51,6 +53,27 @@ export async function submitIndexNow({
       ok = response.ok && ok;
     }
     return ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Submit `urls` only when the set differs from the one last submitted, for a page that rebuilds the whole set on each
+ * request (a sitemap): the sorted set's SHA-256 is kept in `kv` under `hashKey`, and it is written only once the
+ * submission went, so a failed ping is tried again on the next request instead of being lost. Never throws, as
+ * `submitIndexNow`; true when the set changed and was submitted.
+ *
+ * @param {IndexNowInput & { kv: { get(key: string): Promise<string | null>, put(key: string, value: string): Promise<void> }, hashKey: string }} input
+ * @returns {Promise<boolean>}
+ */
+export async function submitIndexNowIfChanged({ kv, hashKey, ...input }) {
+  try {
+    const hash = await sha256Hex([...input.urls].sort().join("\n"));
+    if (hash === (await kv.get(hashKey))) return false;
+    if (!(await submitIndexNow(input))) return false;
+    await kv.put(hashKey, hash);
+    return true;
   } catch {
     return false;
   }

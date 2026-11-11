@@ -48,6 +48,20 @@ export type IndexNowInput = {
   from?: string | undefined;
   fetch?: typeof fetch | undefined;
 };
+/**
+ * Submit `urls` only when the set differs from the one last submitted (a sitemap that rebuilds the whole set on each
+ * request): the sorted set's SHA-256 is kept in `kv` under `hashKey` and written only once the submission went, so a
+ * failed ping is tried again next time. Never throws; true when the set changed and was submitted.
+ */
+export function submitIndexNowIfChanged(
+  input: IndexNowInput & {
+    kv: {
+      get(key: string): Promise<string | null>;
+      put(key: string, value: string): Promise<void>;
+    };
+    hashKey: string;
+  },
+): Promise<boolean>;
 /** The `/<key>.txt` file whose whole body is the key; `headers` adds to or replaces the Content-Type. */
 export function keyFileResponse(key: string, headers?: HeadersInit): Response;
 /** The sitemap's URLs with a lastmod within `days` (2) of `now`; every URL when the sitemap has no lastmod. */

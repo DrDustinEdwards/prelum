@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.48.0 (2026-11-11)
+
+Shared-code audit item 49, first part. No change to `render` or RENDER_VERSION.
+
+- **`submitIndexNowIfChanged`** (`./indexnow`), from Foxing's sitemap: submits a page set only when it differs from the one last submitted, for a sitemap that rebuilds the whole set on each request. The sorted set's SHA-256 (site-runtime's `sha256Hex`) is kept in KV under the site's `hashKey`, and it is written only after the submission went, so a failed ping is tried again on the next request; Foxing wrote the hash first, so one failed ping lost that change until the set changed again. Never throws, as `submitIndexNow`.
+- **Not in this release** (item 49's other parts): the search engine and the HTML site map from dustinedwards.info, the stored-HTML re-render from germomics, and Carrel's chart and figure writers and SEO checks.
+
 ## Unreleased
 
 - **The specimen enforces Trusted Types.** site-runtime 0.132.0 (dev dependency) moves `require-trusted-types-for 'script'` from the specimen's Report-Only policy into its enforced one (`site-runtime-headers` writes it into `_headers`). No change to the library or RENDER_VERSION.
