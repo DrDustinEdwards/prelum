@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.42.0 (2026-11-11)
+
+- **The web app manifest has an `id`.** `webManifest` writes `id` (`"/"` unless the site passes one), so an installed app keeps its identity when `start_url` changes (W3C Web App Manifest, the id member; Chrome's Modern Web Guidance, install-web-app). `auditIcons` warns on a manifest with no `id`. A site's `/site.webmanifest` gains one line on the bump; nothing else changes.
+- **The page audit asks for the text-scale opt-in.** `auditPages` warns (`text-scale-missing`) on a page without `<meta name="text-scale" content="scale">`, which lets Chrome and Edge 146 on phones scale `rem` sizes with the reader's system text size (Chrome's Modern Web Guidance, respect-os-text-scale; other browsers ignore it). The specimen opts in. No change to `render` or RENDER_VERSION.
+
 ## 0.41.4 (2026-11-11)
 
 - **Enarratio 0.11 and 0.12 are supported.** The `enarratio` peer range adds `^0.11.0 || ^0.12.0`. 0.11 puts the chart toolbar above the drawing and keeps the data table visually hidden after it; 0.12 draws solid bars and areas with the series named on the chart, values at bar tips and rounded bar tops. A chart's rendered HTML changes, so `RENDER_VERSION` is 24: a site re-renders its stored HTML. The render allowlist is regenerated from the corpus (bars are now paths, new `data-enarratio-at` and `data-enarratio-shown` attributes, the toolbar's buttons), and the chart audit's planted "no table" charts now remove the hidden table instead of the old "Show data" disclosure. The specimen and the dev dependencies move to enarratio 0.12.0.

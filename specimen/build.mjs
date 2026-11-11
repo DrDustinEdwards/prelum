@@ -319,6 +319,7 @@ function documentHtml({ title, description, body, version, path, scripts, media 
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="text-scale" content="scale">
 ${tags}
 ${ICON_LINKS}
 <link rel="stylesheet" href="/site.css">

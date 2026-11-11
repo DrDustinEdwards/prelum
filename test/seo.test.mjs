@@ -270,7 +270,7 @@ const page = (
   /** @type {string} */ description,
   canonical = `${ORIGIN}${path}`,
 ) =>
-  `<html lang="en"><head><title>${title}</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="${description}"><link rel="canonical" href="${canonical}"><meta property="og:title" content="${title}">${CARD}</head><body><h1>${title}</h1>`;
+  `<html lang="en"><head><title>${title}</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="text-scale" content="scale"><meta name="description" content="${description}"><link rel="canonical" href="${canonical}"><meta property="og:title" content="${title}">${CARD}</head><body><h1>${title}</h1>`;
 
 test("the audit finds a broken link through a trailing slash, a redirect chain once, a link to a redirect and a duplicate title", () => {
   const { findings, pages, summary } = auditPages(
@@ -632,6 +632,7 @@ test("the audit reads robots.txt as Googlebot does and flags a head a mobile or 
     "jsonld-incomplete",
     "og-url-mismatch",
     "sitemap-blocked",
+    "text-scale-missing",
     "viewport-missing",
   ]);
   // A named group replaces `*` (RFC 9309), so Googlebot is not bound by the wildcard's `Disallow: /admin`, and `$` anchors.
