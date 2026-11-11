@@ -125,7 +125,8 @@ const site = {
     [
       // B30, B28 and F: no data table, an SVG with no role or name, and Enarratio's bare figure outside the frame.
       chart("No table", { csv: false })
-        .replace(/<details[\s\S]*<\/details>/, "")
+        // The data table, visually hidden after the drawing since enarratio 0.11 (record 0035).
+        .replace(/<div class="enarratio-data[\s\S]*?<\/table><\/div>/, "")
         .replace(/ role="img" aria-label="[^"]*"/, ""),
       // B1 in dark only, and B3: the caption drawn at 10 px.
       frame("dim", chart("Dim in dark")),
@@ -149,7 +150,10 @@ const site = {
   // Reached only through --pages, and drawn only after --start set the demo cookie.
   "/demo/start": page("<p>Demo session started.</p>"),
   "/demo/charts": page(
-    chart("Demo only", { csv: false }).replace(/<details[\s\S]*<\/details>/, ""),
+    chart("Demo only", { csv: false }).replace(
+      /<div class="enarratio-data[\s\S]*?<\/table><\/div>/,
+      "",
+    ),
   ),
   "/charts.css": `${baseStylesheet}\n${stylesheet(defaultTheme)}\nbody { background: #fff; color: #111 } @media (prefers-color-scheme: dark) { body { background: #111; color: #eee } }`,
   "/vendor/chart.umd.js":
