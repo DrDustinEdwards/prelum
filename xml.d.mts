@@ -69,3 +69,10 @@ export function jsonLdText(value: unknown): string;
  * @param {string} html
  */
 export function mathToTex(html: string): string;
+/** A text document with its type and a public max-age (seconds), `headers` applied over them. */
+export declare function documentResponse(
+  body: string,
+  type: string,
+  maxAge: number,
+  headers?: HeadersInit,
+): Response;

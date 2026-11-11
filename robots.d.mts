@@ -162,3 +162,5 @@ export function robotsResponse(input: Omit<RobotsInput, "preview"> & PlainTextOp
  * policy for machines, not a page for search results.
  */
 export function aiTxtResponse(input: AiTxtInput & PlainTextOptions): Response;
+/** A search engine's ownership file at its exact path, `text/html; charset=utf-8` unless `type` is given, noindex. */
+export function verificationFileResponse(body: string, type?: string): Response;

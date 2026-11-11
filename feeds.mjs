@@ -1,4 +1,4 @@
-import { absolutizeUrls, cdata, escapeXml, mathToTex, toDate } from "./xml.mjs";
+import { absolutizeUrls, cdata, documentResponse, escapeXml, mathToTex, toDate } from "./xml.mjs";
 
 /*
  * RSS 2.0, Atom 1.0 and JSON Feed 1.1 from the same post rows. `<description>` keeps the summary because readers show it in the
@@ -250,4 +250,28 @@ export function jsonFeedDocument(feed) {
     authors: [{ name: feed.authorName, url: feed.origin }],
     items: feed.posts.map((post) => feedItem(post, feed.origin, feed.itemPath)),
   };
+}
+
+/**
+ * The Content-Type of each feed format. JSON Feed goes as `application/json`, not `application/feed+json`: Cloudflare
+ * does not compress `+json` types, and readers know a JSON Feed by its `version` member.
+ */
+export const FEED_CONTENT_TYPES = Object.freeze({
+  rss: "application/rss+xml; charset=utf-8",
+  atom: "application/atom+xml; charset=utf-8",
+  json: "application/json; charset=utf-8",
+});
+
+/**
+ * A feed document as a whole response: its format's Content-Type (FEED_CONTENT_TYPES), cached for an hour. `body` is
+ * what rssDocument or atomDocument wrote, or jsonFeedDocument's object. `headers` adds to those or replaces the caching.
+ *
+ * @param {"rss" | "atom" | "json"} format
+ * @param {string | object} body
+ * @param {HeadersInit} [headers]
+ * @returns {Response}
+ */
+export function feedResponse(format, body, headers) {
+  const text = typeof body === "string" ? body : `${JSON.stringify(body, null, 2)}\n`;
+  return documentResponse(text, FEED_CONTENT_TYPES[format], 3600, headers);
 }

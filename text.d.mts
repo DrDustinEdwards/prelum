@@ -10,3 +10,7 @@ export function excerpt(text: string, max?: number): string;
 export function htmlToText(html: string): string;
 /** Seconds as an ISO 8601 duration (`PT1H2M3S`); undefined for zero, negative or missing seconds. */
 export function isoDuration(totalSeconds: number | null | undefined): string | undefined;
+/** Every wide dash (U+2010 to U+2015, U+2212) in `text`, with its 1-based line and column, code point and context. */
+export function findWideDashes(
+  text: string,
+): Array<{ line: number; column: number; char: string; excerpt: string }>;
