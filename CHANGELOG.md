@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.50.0 (2026-11-11)
+
+No change to `render` or RENDER_VERSION.
+
+- **Breaking: `enhance()` (`./render/enhance`) draws no reading progress bar.** The bar is Capsomer's reading progress (`capsomer/reading-progress.css`, Capsomer 0.99.0): CSS only, a scroll-driven animation on the article's view timeline, with no scroll listener. A site that called `enhance()` and styled `.reading-progress` renders `<div class="cap-reading-progress" aria-hidden="true"></div>` and marks its article `data-cap-reading` instead. The `article` option now only scopes the selection link.
+
 ## 0.49.0 (2026-11-11)
 
 Shared-code audit item 49, second part. No change to `render` or RENDER_VERSION.

@@ -1,6 +1,7 @@
-// The reader enhancements for a rendered post, in the browser: reading progress, the table of contents' current section, code copy
+// The reader enhancements for a rendered post, in the browser: the table of contents' current section, code copy
 // buttons, heading link copy, footnote previews, Markdown copy, a link to the selected text and click-to-load
-// embeds. The image viewer is Capsomer's lightbox (capsomer/behavior/lightbox), not here. It is dustinedwards-info's app/enhance/blog.ts moved here, so every site that renders with this pipeline decorates the same
+// embeds. The image viewer is Capsomer's lightbox (capsomer/behavior/lightbox) and the reading bar Capsomer's CSS-only
+// reading progress (capsomer/reading-progress.css), not here. It is dustinedwards-info's app/enhance/blog.ts moved here, so every site that renders with this pipeline decorates the same
 // markup the same way. Every one is an addition: without script the page reads, links and opens images as plain HTML.
 //
 // Browser-only; its one import (render-embeds.mjs) is dependency-free too. Nothing runs on import; a site calls `enhance()` once the
@@ -12,9 +13,6 @@ import { embedPlayerUrl } from "./render-embeds.mjs";
 const FRAGMENT_MIN_CHARS = 12;
 const FRAGMENT_MAX_CHARS = 200;
 const FRAGMENT_EDGE_WORDS = 6;
-
-// Two viewports, not one: at one the bar describes a few pixels of scroll and jumps from empty to full.
-const PROGRESS_MIN_VIEWPORTS = 2;
 
 const SELECTION_LABEL = "Copy link to selection";
 
@@ -113,7 +111,7 @@ export function enhanceEmbeds({ root = ".prose" } = {}) {
  * Decorates the rendered post. A second call does nothing.
  *
  * @param {{ root?: string, toc?: string, article?: string }} [options] `root` is the rendered markup (default ".prose"), `toc` the
- *   table of contents (default ".post-toc") and `article` the post body the progress bar and selection link measure (default ".post .prose").
+ *   table of contents (default ".post-toc") and `article` the post body the selection link measures (default ".post .prose").
  * @returns {void}
  */
 export function enhance(options = {}) {
@@ -130,40 +128,6 @@ export function enhance(options = {}) {
     if ("requestIdleCallback" in window) requestIdleCallback(fn);
     else setTimeout(fn, 1);
   };
-
-  function readingProgress() {
-    const article = document.querySelector(articleSelector);
-    if (!(article instanceof HTMLElement)) return;
-
-    const worthDrawing = () => article.offsetHeight >= window.innerHeight * PROGRESS_MIN_VIEWPORTS;
-    if (!worthDrawing()) return;
-
-    const bar = document.createElement("div");
-    bar.className = "reading-progress";
-    bar.setAttribute("role", "presentation");
-    document.body.insertBefore(bar, document.body.firstChild);
-
-    let ticking = false;
-    const update = () => {
-      bar.hidden = !worthDrawing();
-      const top = article.offsetTop;
-      const height = article.offsetHeight - window.innerHeight;
-      const scrolled = height > 0 ? (window.scrollY - top) / height : 0;
-      bar.style.transform = `scaleX(${Math.min(1, Math.max(0, scrolled))})`;
-      ticking = false;
-    };
-
-    const schedule = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(update);
-    };
-
-    addEventListener("scroll", schedule, { passive: true });
-    // A rotation changes both the viewport and the article's height, so it re-asks the question.
-    addEventListener("resize", schedule, { passive: true });
-    update();
-  }
 
   function scrollSpy() {
     const toc = document.querySelector(tocSelector);
@@ -510,7 +474,6 @@ export function enhance(options = {}) {
     });
   }
 
-  readingProgress();
   scrollSpy();
   codeBlocks();
   headingLinks();
