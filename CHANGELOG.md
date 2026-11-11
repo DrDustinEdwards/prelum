@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **The specimen deploy's live gate runs again.** Every devkit workflow call moves from v0.27.0 to v0.33.0, whose worker-deploy sets `DEVKIT_DIR` for the verify command; v0.27.0 never set it. No change to the library.
+
 ## 0.45.0 (2026-11-11)
 
 - **`SLUG_PATTERN`** and **`isSlug`** (`./slug`), beside `slugify`: the one slug rule as a pattern and a check, for the copies of `/^[a-z0-9]+(?:-[a-z0-9]+)*$/` in Carrel, dustinedwards.info, Foxhound and site-api, and for Capsomer's `SlugField` (shared-code audit pass 2, C14). No change to `render` or RENDER_VERSION.
