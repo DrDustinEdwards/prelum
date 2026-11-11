@@ -22,7 +22,7 @@ import { TDM_RESERVATION_HEADERS } from "../robots.mjs";
 export const PAGE_PRELOADS = preloads([
   { href: "/site.css", as: "style" },
   { href: "/fonts/inter-latin-wght-normal.woff2", as: "font", type: "font/woff2" },
-  { href: "/fonts/source-serif-4-latin-wght-normal.woff2", as: "font", type: "font/woff2" },
+  { href: "/fonts/source-serif-4-latin-core-normal.woff2", as: "font", type: "font/woff2" },
 ]);
 
 const site = staticSite({

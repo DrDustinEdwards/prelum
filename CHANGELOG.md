@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Specimen builds with `capsomer/build`**: `specimen/build.mjs` drops its own `inlineCss`, stylesheet assembly and Rolldown bundler for Capsomer's `capsomerStylesheet`, `copyFonts` and `bundleScript`, and takes Source Serif 4 from Capsomer's fonts (the latin core file is the one preloaded), so `@fontsource-variable/source-serif-4` goes. No change to the package's own modules.
+
 ## 0.44.0 (2026-11-11)
 
 - **site-runtime is a peer dependency** (`>=0.113.0`): the diagram file names use its `fnv1a32` and `errorMessage` is its `./log` one, re-exported from `./render-error`, so neither is a copy (devkit-shared). Every site and package that uses Prelum already has it.
