@@ -48,6 +48,14 @@ pings, in one form. `headTags` returns the descriptor objects React Router's `me
 a static build writes the same objects with `headHtml`. Each site keeps its own facts (who it is, its sameAs links, its default
 card), and passes them in.
 
+The machine files every site answers come from one config: `standardFiles({ origin, disallow, ai, manifest, indexNowKey,
+verification })` (`./files`) answers `/robots.txt`, `/ai.txt`, `/site.webmanifest`, `/<key>.txt` and each search engine's
+ownership file (`verificationFileResponse`, at its exact path), and null for any other path, so a Worker calls it before
+React Router and the sites carry no route glue for them. llms.txt and the sitemap stay routes, filled from each site's own
+content, with `llmsResponse`, `sitemapResponse(entries)` and, for a feed, `feedResponse(format, body)` (JSON Feed as
+`application/json`, which Cloudflare compresses). `webManifestResponse` is the manifest alone. For a route's `meta`,
+`rootLoaderData(matches)` reads the root loader's data and `privateMeta(title)` is a private page's whole head.
+
 What they hold every site to:
 
 - The canonical, `og:url` and every absolute URL come from the site's production origin, never the request's, so a workers.dev

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.44.0 (2026-11-11)
+
+- **site-runtime is a peer dependency** (`>=0.113.0`): the diagram file names use its `fnv1a32` and `errorMessage` is its `./log` one, re-exported from `./render-error`, so neither is a copy (devkit-shared). Every site and package that uses Prelum already has it.
+- **`standardFiles`** takes `manifest` as a function too, as `ai` already did, for a site whose name and description live in its content (julieedwards.info reads them from D1).
+
+## 0.43.0 (2026-11-11)
+
+- **`standardFiles`** (`./files`): robots.txt, ai.txt, site.webmanifest, the IndexNow key file and search engines' ownership files from one config, answered before React Router, so no site writes their routes (shared-code audit items 44 and 45).
+- **`sitemapResponse`**, **`feedResponse`** with **`FEED_CONTENT_TYPES`**, **`webManifestResponse`** and **`verificationFileResponse`**: the response wrappers each site wrote around the documents. `documentResponse` (`./xml`) is the one they share.
+- **`rootLoaderData`** and **`privateMeta`** (`./head`), from txasm and julieedwards.info.
+- **`findWideDashes`** (`./text`), the house no-wide-dash check from dustinedwards.info.
+- No change to `render` or RENDER_VERSION.
+
 ## 0.42.0 (2026-11-11)
 
 - **The web app manifest has an `id`.** `webManifest` writes `id` (`"/"` unless the site passes one), so an installed app keeps its identity when `start_url` changes (W3C Web App Manifest, the id member; Chrome's Modern Web Guidance, install-web-app). `auditIcons` warns on a manifest with no `id`. A site's `/site.webmanifest` gains one line on the bump; nothing else changes.

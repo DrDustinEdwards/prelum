@@ -1,4 +1,4 @@
-import { escapeXml, isoDay, toDate } from "./xml.mjs";
+import { documentResponse, escapeXml, isoDay, toDate } from "./xml.mjs";
 
 /** Google's and Bing's limit for one sitemap file: 50,000 URLs and 50 MiB uncompressed (https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap). */
 export const SITEMAP_MAX_URLS = 50_000;
@@ -142,4 +142,21 @@ ${rows.join("\n")}
 function datetime(value) {
   const date = toDate(value, null);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+/**
+ * `sitemap.xml` as a whole response, the route every site wrote: `sitemapDocument(entries, options)` as
+ * `application/xml; charset=utf-8`, cached for an hour. `headers` adds to those or replaces the caching.
+ *
+ * @param {SitemapEntry[]} entries
+ * @param {SitemapOptions & { headers?: HeadersInit }} [options]
+ * @returns {Response}
+ */
+export function sitemapResponse(entries, { headers, ...options } = {}) {
+  return documentResponse(
+    sitemapDocument(entries, options),
+    "application/xml; charset=utf-8",
+    3600,
+    headers,
+  );
 }

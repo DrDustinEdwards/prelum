@@ -75,3 +75,8 @@ export type SitemapOptions = {
   lastmodFormat?: "day" | "datetime";
   trailingNewline?: boolean;
 };
+/** `sitemap.xml` as `application/xml; charset=utf-8`, cached an hour; `headers` adds or replaces. */
+export function sitemapResponse(
+  entries: SitemapEntry[],
+  options?: SitemapOptions & { headers?: HeadersInit },
+): Response;

@@ -208,3 +208,22 @@ export function robotsResponse(input) {
 export function aiTxtResponse(input) {
   return plainTextResponse(aiTxt(input), { ...input, noindex: true });
 }
+
+/**
+ * A search engine's site-ownership file (Google Search Console's `/google<token>.html`, Bing's `/BingSiteAuth.xml`),
+ * served by the Worker at exactly its path: Workers Static Assets would redirect a `.html` file to the bare path, and
+ * the engine drops the property when the file stops answering 200. `type` defaults to `text/html; charset=utf-8`.
+ *
+ * @param {string} body the file's whole content, as the engine gave it
+ * @param {string} [type]
+ * @returns {Response}
+ */
+export function verificationFileResponse(body, type = "text/html; charset=utf-8") {
+  return new Response(body, {
+    headers: {
+      "Content-Type": type,
+      "Cache-Control": "public, max-age=86400",
+      "X-Robots-Tag": "noindex",
+    },
+  });
+}

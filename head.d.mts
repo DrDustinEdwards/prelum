@@ -310,3 +310,11 @@ export function defineHead(site: SiteHead): (page: PageHead) => HeadTag[];
  * entity it does not know is kept as written. The result is text, so it is escaped where it is written, as every tag is.
  */
 export function metaText(html: string, limit?: number | SerpMeasure): string;
+/** The root route's loader data from a route's `meta` matches; undefined on an error page. */
+export function rootLoaderData<T>(
+  matches: ReadonlyArray<{ id: string; loaderData?: unknown } | undefined>,
+): T | undefined;
+/** A private page's whole head: its title and `robots: noindex`. */
+export function privateMeta(
+  title: string,
+): Array<{ title: string } | { name: string; content: string }>;
