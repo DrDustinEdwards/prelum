@@ -35,7 +35,10 @@ export function standardFiles({
       const who = typeof ai === "function" ? await ai(request) : ai;
       return aiTxtResponse({ ...who, disallow, ...plain });
     }
-    if (path === "/site.webmanifest" && manifest) return webManifestResponse(manifest);
+    if (path === "/site.webmanifest" && manifest)
+      return webManifestResponse(
+        typeof manifest === "function" ? await manifest(request) : manifest,
+      );
     if (indexNowKey && path === `/${indexNowKey}.txt`)
       return keyFileResponse(indexNowKey, { "Cache-Control": "public, max-age=86400" });
     const file = Object.hasOwn(verification, path) ? verification[path] : undefined;
