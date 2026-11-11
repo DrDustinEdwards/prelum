@@ -42,3 +42,14 @@ export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export function isSlug(value, { max = Infinity } = {}) {
   return typeof value === "string" && value.length <= max && SLUG_PATTERN.test(value);
 }
+
+/**
+ * The longest slug a site stores or an address segment takes. A separate limit, not part of SLUG_PATTERN, so the pattern can
+ * go in a form's `pattern` attribute as it is.
+ */
+export const SLUG_MAX_LENGTH = 120;
+
+/**
+ * SLUG_PATTERN without its anchors, for an `<input pattern>`, which the browser anchors itself.
+ */
+export const SLUG_ATTRIBUTE_PATTERN = SLUG_PATTERN.source.slice(1, -1);

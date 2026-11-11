@@ -1,5 +1,6 @@
 import { absoluteUrl, articleDates } from "./head.mjs";
-import { toDate } from "./xml.mjs";
+import { isoDuration } from "./text.mjs";
+import { toDate, unescapeXml } from "./xml.mjs";
 
 const CONTEXT = "https://schema.org";
 
@@ -306,6 +307,364 @@ export function faqPage(faqs) {
       name: faq.question,
       acceptedAnswer: { "@type": "Answer", text: faq.answer },
     })),
+  });
+}
+
+/**
+ * Profile links as schema.org `sameAs` wants them: absolute http(s) URLs, trimmed, each once, in the order given. Undefined
+ * when none are left, since an empty list claims profiles the page does not have.
+ *
+ * @param {ReadonlyArray<string | null | undefined> | null | undefined} urls
+ * @returns {string[] | undefined}
+ */
+export function sameAs(urls) {
+  /** @type {string[]} */
+  const kept = [];
+  for (const url of urls ?? []) {
+    const trimmed = url?.trim();
+    if (trimmed && /^https?:\/\/[^\s/]+/i.test(trimmed) && !kept.includes(trimmed))
+      kept.push(trimmed);
+  }
+  return kept.length > 0 ? kept : undefined;
+}
+
+/**
+ * @typedef {object} AddressInput
+ * @property {string} [streetAddress]
+ * @property {string} [locality] the city
+ * @property {string} [region] the state or province
+ * @property {string} [postalCode]
+ * @property {string} [country] an ISO 3166-1 code, e.g. `US`
+ */
+
+/**
+ * A PostalAddress node, for an Organization's or a series' `address`. An empty part is left out.
+ *
+ * @param {AddressInput | null | undefined} address
+ * @returns {SchemaNode | undefined} undefined when there is nothing to say
+ */
+export function postalAddress(address) {
+  if (!address) return undefined;
+  const fields = compact({
+    streetAddress: address.streetAddress,
+    addressLocality: address.locality,
+    addressRegion: address.region,
+    postalCode: address.postalCode,
+    addressCountry: address.country,
+  });
+  return Object.keys(fields).length > 0 ? { "@type": "PostalAddress", ...fields } : undefined;
+}
+
+/**
+ * A name as a node: a string becomes `{ "@type": type, name }`; a node or an `{ "@id" }` reference is kept as it is.
+ *
+ * @param {string | SchemaNode | null | undefined} value
+ * @param {string} type
+ * @returns {SchemaNode | undefined}
+ */
+function named(value, type) {
+  if (!value) return undefined;
+  return typeof value === "string" ? { "@type": type, name: value } : value;
+}
+
+/**
+ * @typedef {object} PersonInput
+ * @property {string} name
+ * @property {string} [id] the node's `@id`, so a page, an article or a podcast can name the person by reference
+ * @property {string} [url]
+ * @property {string} [honorificPrefix]
+ * @property {string} [honorificSuffix]
+ * @property {string} [jobTitle]
+ * @property {string} [description]
+ * @property {string | SchemaNode | Array<string | SchemaNode>} [image] a URL, or ImageObject nodes (`pageImage`)
+ * @property {string | SchemaNode} [worksFor] an organization's name, or its node or `{ "@id" }`
+ * @property {string | SchemaNode} [affiliation] the same
+ * @property {string | SchemaNode} [memberOf] the same
+ * @property {ReadonlyArray<string | SchemaNode>} [alumniOf] organization names or nodes
+ * @property {readonly string[]} [knowsAbout]
+ * @property {ReadonlyArray<string | null | undefined>} [sameAs] run through `sameAs`
+ */
+
+/**
+ * A Person. A name given where an organization is wanted is written as an Organization; `sameAs` is cleaned, and every empty
+ * field is dropped.
+ *
+ * @param {PersonInput} person
+ * @returns {SchemaNode}
+ */
+export function person(person) {
+  return thing("Person", {
+    "@id": person.id,
+    name: person.name,
+    honorificPrefix: person.honorificPrefix,
+    honorificSuffix: person.honorificSuffix,
+    jobTitle: person.jobTitle,
+    image: person.image,
+    description: person.description,
+    url: person.url,
+    worksFor: named(person.worksFor, "Organization"),
+    affiliation: named(person.affiliation, "Organization"),
+    memberOf: named(person.memberOf, "Organization"),
+    alumniOf: person.alumniOf?.map((each) => named(each, "Organization")),
+    knowsAbout: person.knowsAbout ? [...person.knowsAbout] : undefined,
+    sameAs: sameAs(person.sameAs),
+  });
+}
+
+/**
+ * @typedef {object} OrganizationInput
+ * @property {string} name
+ * @property {string} [id]
+ * @property {string} [url]
+ * @property {string} [description]
+ * @property {string | SchemaNode} [logo] a URL, or an ImageObject (`pageImage`); Google reads a logo at least 112 px square
+ * @property {string | SchemaNode} [founder] a person's name, or their node or `{ "@id" }`
+ * @property {AddressInput | SchemaNode} [address] parts, or a PostalAddress node
+ * @property {string} [email] the public contact address, written as a ContactPoint
+ * @property {string} [contactType] what the contact is for; `customer support` unless given
+ * @property {readonly string[]} [knowsAbout]
+ * @property {ReadonlyArray<string | null | undefined>} [sameAs] run through `sameAs`
+ */
+
+/**
+ * An Organization, for the home page and About, where Google reads its name and logo
+ * (https://developers.google.com/search/docs/appearance/structured-data/organization).
+ *
+ * @param {OrganizationInput} organization
+ * @returns {SchemaNode}
+ */
+export function organization(organization) {
+  const address = organization.address;
+  return thing("Organization", {
+    "@id": organization.id,
+    name: organization.name,
+    url: organization.url,
+    logo: organization.logo,
+    description: organization.description,
+    founder: named(organization.founder, "Person"),
+    address: address && "@type" in address ? address : postalAddress(address),
+    contactPoint: organization.email
+      ? {
+          "@type": "ContactPoint",
+          email: organization.email,
+          contactType: organization.contactType ?? "customer support",
+        }
+      : undefined,
+    knowsAbout: organization.knowsAbout ? [...organization.knowsAbout] : undefined,
+    sameAs: sameAs(organization.sameAs),
+  });
+}
+
+/**
+ * @typedef {object} SoftwareApplicationInput
+ * @property {string} name
+ * @property {string} [id]
+ * @property {string} [url]
+ * @property {string} [description]
+ * @property {string} [applicationCategory] a schema.org category, e.g. `BusinessApplication`
+ * @property {string} [operatingSystem] e.g. `Web`
+ * @property {SchemaNode} [publisher] usually `{ "@id": ... }` of the Organization
+ * @property {SchemaNode | SchemaNode[]} [offers] only a price the page can honor; a product with no single price writes none
+ */
+
+/**
+ * A SoftwareApplication. `offers` is written only when given: a price a crawler reads is a promise.
+ *
+ * @param {SoftwareApplicationInput} app
+ * @returns {SchemaNode}
+ */
+export function softwareApplication(app) {
+  return thing("SoftwareApplication", {
+    "@id": app.id,
+    name: app.name,
+    applicationCategory: app.applicationCategory,
+    operatingSystem: app.operatingSystem,
+    url: app.url,
+    description: app.description,
+    publisher: app.publisher,
+    offers: app.offers,
+  });
+}
+
+/**
+ * @typedef {object} PodcastSeriesInput
+ * @property {string} name
+ * @property {string} url the show's page
+ * @property {string} [id]
+ * @property {string} [description]
+ * @property {string} [image] the artwork, absolute
+ * @property {string} [webFeed] the feed's address, absolute
+ * @property {string | SchemaNode} [author] a person's name, or their node
+ * @property {AddressInput | SchemaNode} [address]
+ * @property {ReadonlyArray<string | null | undefined>} [sameAs] run through `sameAs`
+ */
+
+/**
+ * A PodcastSeries, tying the show to its feed.
+ *
+ * @param {PodcastSeriesInput} series
+ * @returns {SchemaNode}
+ */
+export function podcastSeries(series) {
+  const address = series.address;
+  return thing("PodcastSeries", {
+    "@id": series.id,
+    name: series.name,
+    url: series.url,
+    description: series.description,
+    image: series.image,
+    webFeed: series.webFeed,
+    author: named(series.author, "Person"),
+    address: address && "@type" in address ? address : postalAddress(address),
+    sameAs: sameAs(series.sameAs),
+  });
+}
+
+/**
+ * @typedef {object} PodcastEpisodeInput
+ * @property {string} name
+ * @property {string} url
+ * @property {Date | number | string | null} [published]
+ * @property {Date | number | string | null} [modified]
+ * @property {string | null} [description]
+ * @property {string | null} [image] absolute
+ * @property {number | null} [episodeNumber]
+ * @property {number | null} [durationSeconds]
+ * @property {{ url: string, type?: string | null, bytes?: number | null } | null} [audio] the enclosure, as the feed gives it
+ * @property {{ name: string, url?: string }} [series] the show, written as a PodcastSeries reference by name and URL
+ * @property {ReadonlyArray<{ name: string, url?: string | null }>} [hosts] the episode's authors
+ * @property {ReadonlyArray<{ name: string }>} [guests] written as `actor`
+ */
+
+/**
+ * A PodcastEpisode. The length is `duration`, an ISO 8601 duration, on the episode and on its audio file (schema.org's
+ * Episode and MediaObject both take it; `timeRequired` is for reading time). Dates come from `articleDates`, as an Article's do.
+ *
+ * @param {PodcastEpisodeInput} episode
+ * @returns {SchemaNode}
+ */
+export function podcastEpisode(episode) {
+  const dates = articleDates({ published: episode.published, modified: episode.modified });
+  const duration = isoDuration(episode.durationSeconds);
+  return thing("PodcastEpisode", {
+    name: episode.name,
+    url: episode.url,
+    datePublished: dates.published,
+    dateModified: dates.modified,
+    description: episode.description,
+    image: episode.image,
+    episodeNumber: episode.episodeNumber || undefined,
+    duration,
+    associatedMedia: episode.audio
+      ? {
+          "@type": "MediaObject",
+          contentUrl: episode.audio.url,
+          encodingFormat: episode.audio.type ?? "audio/mpeg",
+          contentSize: episode.audio.bytes ? String(episode.audio.bytes) : undefined,
+          duration,
+        }
+      : undefined,
+    partOfSeries: episode.series
+      ? { "@type": "PodcastSeries", name: episode.series.name, url: episode.series.url }
+      : undefined,
+    author: episode.hosts?.map((host) => ({
+      "@type": "Person",
+      name: host.name,
+      url: host.url || undefined,
+    })),
+    actor: episode.guests?.map((guest) => ({ "@type": "Person", name: guest.name })),
+  });
+}
+
+// abstract is still a ScholarlyArticle: hiding abstracts on a site is editorial, not a claim about them.
+/** @type {Record<string, string>} */
+const SCHOLARLY_TYPES = {
+  article: "ScholarlyArticle",
+  review: "ScholarlyArticle",
+  abstract: "ScholarlyArticle",
+  chapter: "Chapter",
+  "teaching-resource": "LearningResource",
+};
+
+/**
+ * The schema.org type of a publication from its curated type (`article`, `review`, `abstract`, `chapter`,
+ * `teaching-resource`), never from the journal's name. Anything else is a ScholarlyArticle, so a render does not fail on it.
+ *
+ * @param {string | null | undefined} type
+ * @returns {string}
+ */
+export function scholarlyType(type) {
+  return SCHOLARLY_TYPES[type ?? ""] ?? "ScholarlyArticle";
+}
+
+/**
+ * @typedef {object} ScholarlyPaper
+ * @property {string} title
+ * @property {readonly string[]} authors
+ * @property {number | null} [year]
+ * @property {string | null} [publishedDate] a partial ISO date (`2011`, `2011-04`) is kept as deposited
+ * @property {string | null} [journal]
+ * @property {string | number | null} [volume]
+ * @property {string | number | null} [issue]
+ * @property {string | null} [firstPage]
+ * @property {string | null} [lastPage]
+ * @property {string | null} [abstract]
+ * @property {string | null} [doi]
+ * @property {string | null} [type]
+ * @property {boolean} [isOpenAccess] the open-access answer (Unpaywall), not whether a PDF is hosted here
+ * @property {string | null} [license]
+ */
+
+/**
+ * A scholarly article, chapter or learning resource as one node: its `@id` and `url` are its page, a DOI is its
+ * `identifier` and `sameAs`, the journal is a Periodical with its volume and issue nested as schema.org's own examples do,
+ * and a hosted PDF is its `encoding`. Character references in the record's text (stored escaped) are decoded, since JSON-LD
+ * needs no escaping and `jsonLd` makes it safe in a script element.
+ *
+ * @param {ScholarlyPaper} paper
+ * @param {object} context
+ * @param {string} context.pageUrl absolute URL of the paper's page
+ * @param {string | null} [context.pdfUrl] absolute URL of the PDF, when hosted on the site
+ * @param {(name: string) => SchemaNode} [context.author] each author as a node; a Person by name unless given. A site passes
+ *   its owner's `{ "@id": ... }` reference here, so a co-author list is never replaced by the owner alone
+ * @param {ReadonlyArray<{ label: string }>} [context.topics] written as `about`
+ * @returns {SchemaNode}
+ */
+export function scholarlyArticle(paper, context) {
+  const text = (/** @type {string | null | undefined} */ value) => unescapeXml(value ?? "");
+  const title = text(paper.title);
+  const volume = paper.volume ? String(paper.volume) : undefined;
+  const issue = paper.issue ? String(paper.issue) : undefined;
+  const issueNode = issue ? { "@type": "PublicationIssue", issueNumber: issue } : undefined;
+  const volumeNode = volume
+    ? { "@type": "PublicationVolume", volumeNumber: volume, hasPart: issueNode }
+    : undefined;
+  return thing(scholarlyType(paper.type), {
+    "@id": context.pageUrl,
+    headline: title,
+    name: title,
+    author: paper.authors.map(
+      context.author ?? ((name) => ({ "@type": "Person", name: text(name) })),
+    ),
+    datePublished: paper.publishedDate ?? (paper.year ? String(paper.year) : undefined),
+    url: context.pageUrl,
+    mainEntityOfPage: context.pageUrl,
+    identifier: paper.doi
+      ? { "@type": "PropertyValue", propertyID: "DOI", value: paper.doi }
+      : undefined,
+    sameAs: paper.doi ? `https://doi.org/${paper.doi}` : undefined,
+    isPartOf: paper.journal
+      ? { "@type": "Periodical", name: text(paper.journal), hasPart: volumeNode }
+      : undefined,
+    pageStart: paper.firstPage,
+    pageEnd: paper.lastPage,
+    abstract: paper.abstract ? text(paper.abstract) : undefined,
+    isAccessibleForFree: Boolean(paper.isOpenAccess),
+    license: paper.license,
+    encoding: context.pdfUrl
+      ? { "@type": "MediaObject", encodingFormat: "application/pdf", contentUrl: context.pdfUrl }
+      : undefined,
+    about: context.topics?.map((topic) => ({ "@type": "Thing", name: topic.label })),
   });
 }
 

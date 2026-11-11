@@ -477,11 +477,15 @@ export function searchTitle(title, suffix) {
  * @property {HeadFeed[]} [feeds] the site's feeds, linked from every page
  * @property {Record<string, string>} [sections] the names of the section pages a breadcrumb trail passes through, by path
  *   (`{ "/blog": "Blog" }`); a path not named here is left out of the trail
+ * @property {string} [description] the site's own description, for a page that passes none
+ * @property {boolean} [wholeHomeTitle] the home page's `title` is already the whole `<title>`, so it takes no suffix
  */
 
 /**
- * @typedef {Omit<HeadInput, "origin" | "siteName" | "image" | "locale"> & {
+ * @typedef {Omit<HeadInput, "origin" | "siteName" | "image" | "locale" | "description"> & {
+ *   description?: string,
  *   image?: HeadImage | string | null,
+ *   imageAlt?: string,
  *   fullTitle?: boolean,
  *   pageType?: string,
  *   breadcrumbs?: Array<{ name: string, path: string }> | false,
@@ -490,7 +494,9 @@ export function searchTitle(title, suffix) {
  * `<title>`, in which case the site's suffix is taken off it for the page's name in the graph and its breadcrumb. `feeds`
  * are added to the site's. `pageType` is the WebPage subtype (`CollectionPage` for a list, `AboutPage`,
  * `ProfilePage`, `SearchResultsPage`); `breadcrumbs` is the trail from the home page down, in place of the one built from
- * `sections`, or false for none.
+ * `sections`, or false for none. `description` falls back to the site's. `imageAlt` is the alt of the page's own `image` when
+ * that is a URL or has none; the site's default card keeps its own. A path's trailing slash is dropped (`keepTrailingSlash`
+ * keeps it), and with the site's `wholeHomeTitle` the home page's title is the whole `<title>`.
  */
 
 /**
@@ -504,14 +510,24 @@ export function searchTitle(title, suffix) {
  * @returns {(page: PageHead) => HeadTag[]}
  */
 export function defineHead(site) {
-  return ({ fullTitle, image, feeds, pageType, breadcrumbs, ...page }) => {
+  return ({ fullTitle: whole, image, imageAlt, feeds, pageType, breadcrumbs, ...input }) => {
+    const path = input.keepTrailingSlash ? input.path : withoutTrailingSlash(input.path);
+    const fullTitle = whole ?? (site.wholeHomeTitle && path === "/" ? true : undefined);
+    const description = input.description ?? site.description ?? "";
+    const page = { ...input, path, description };
+    const card =
+      image && imageAlt
+        ? typeof image === "string"
+          ? { url: image, alt: imageAlt }
+          : { ...image, alt: image.alt ?? imageAlt }
+        : image;
     const title = fullTitle ? page.title : searchTitle(page.title, site.suffix ?? "");
     const tags = headTags({
       ...page,
       origin: site.origin,
       siteName: site.siteName,
       locale: site.locale,
-      image: image ?? site.image,
+      image: card ?? site.image,
       title,
       socialTitle: page.socialTitle ?? (title === page.title ? undefined : page.title),
       description: truncateForSerp(page.description, SERP_DESCRIPTION),
