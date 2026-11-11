@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.46.1 (2026-11-11)
+
+- **Enarratio 0.13 is supported** (peer range `^0.13.0` added) and 0.13.1 is the tested version. Its phone-width layouts change the drawings but not the markup this library allows, so the 213 tests pass unchanged and `RENDER_VERSION` stays 25.
+
 ## 0.46.0 (2026-11-11)
 
 - **Enarratio 0.12.2 is the tested version.** Its toolbar icons are inline `<svg class="enarratio-icon">` elements, not `<span data-icon>`, so a chart's rendered HTML changes and `RENDER_VERSION` is 25: a site re-renders its stored HTML. The render allowlist drops `span data-icon` and adds `svg class`, `svg aria-hidden` and `svg focusable`; the goldens and the specimen's chart outputs are regenerated. The chart audit's planted heavy chart puts its weight in the drawing, since the first `</svg>` is now an icon's.
