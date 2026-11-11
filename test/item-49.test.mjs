@@ -76,5 +76,8 @@ test("toBibtex: a page range gets every dash as --, and a title's & and _ are es
   });
   assert.match(entry, /pages = \{100--110\}/);
   assert.match(entry, /title = \{R\\&D\\_x\}/);
-  assert.match(toBibtex({ id: "k", title: "t", authors: [], pages: "e12345" }), /pages = \{e12345\}/);
+  assert.match(
+    toBibtex({ id: "k", title: "t", authors: [], pages: "e12345" }),
+    /pages = \{e12345\}/,
+  );
 });
