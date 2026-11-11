@@ -151,3 +151,56 @@ export function findWideDashes(text) {
   });
   return hits;
 }
+
+/**
+ * A count with its noun: `plural(1, "post")` is "1 post", `plural(3, "post")` "3 posts", and an irregular noun passes its
+ * plural: `plural(2, "entry", "entries")`. A count is written with the locale's digits grouping ("1,204 posts") when
+ * `grouped` is true.
+ *
+ * @param {number} count
+ * @param {string} one
+ * @param {string} [many] default `one` plus "s"
+ * @param {{ grouped?: boolean }} [options]
+ * @returns {string}
+ */
+export function plural(count, one, many = `${one}s`, { grouped = false } = {}) {
+  return `${grouped ? count.toLocaleString("en-US") : count} ${count === 1 ? one : many}`;
+}
+
+/**
+ * Line endings as LF: CRLF and lone CR (an old Mac file) both become `\n`, so a line count, a front matter split or a
+ * comparison reads one file the same way from any editor.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function normalizeNewlines(text) {
+  return String(text).replace(/\r\n?/g, "\n");
+}
+
+/**
+ * A value made safe for one cell of a GFM table: a pipe is escaped (`\|`, which GFM reads as a literal pipe inside a cell) and a
+ * line break becomes a space, since a cell cannot hold one. null and undefined are an empty cell.
+ *
+ * @param {string | number | null | undefined} value
+ * @returns {string}
+ */
+export function mdCell(value) {
+  return String(value ?? "")
+    .replace(/\s*[\r\n]+\s*/g, " ")
+    .replaceAll("|", "\\|");
+}
+
+/**
+ * Text made literal in Markdown: the characters CommonMark gives a meaning inline (backslash, backtick, `*`, `_`, brackets,
+ * angle brackets, `#`, `|`) are backslash-escaped, and a colon before a letter too, since Prelum reads `:word` as a directive and
+ * refuses one it does not know.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function escapeMarkdown(text) {
+  return String(text)
+    .replace(/([\\`*_[\]<>#|])/g, "\\$1")
+    .replace(/:(?=[A-Za-z])/g, "\\:");
+}

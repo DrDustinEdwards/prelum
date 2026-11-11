@@ -16,3 +16,16 @@ export function findWideDashes(
 ): Array<{ line: number; column: number; char: string; excerpt: string }>;
 /** True when `text` holds any wide dash (U+2010 to U+2015, U+2212). */
 export function hasWideDash(text: string): boolean;
+/** A count with its noun: "1 post", "3 posts"; an irregular noun passes `many`. `grouped` writes 1,204. */
+export function plural(
+  count: number,
+  one: string,
+  many?: string,
+  options?: { grouped?: boolean },
+): string;
+/** CRLF and lone CR as LF. */
+export function normalizeNewlines(text: string): string;
+/** A value safe for one GFM table cell: pipes escaped, line breaks as spaces, null as empty. */
+export function mdCell(value: string | number | null | undefined): string;
+/** Text made literal in Markdown, `:word` directives included. */
+export function escapeMarkdown(text: string): string;
