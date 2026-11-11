@@ -1,6 +1,6 @@
 {
   "name": "@drdustinedwards/site-helpers",
-  "version": "0.45.0",
+  "version": "0.46.0",
   "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt and llms-full.txt, Markdown copy, frontmatter, head tag, JSON-LD, robots.txt, IndexNow, site audit and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, and the markdown pipeline they all render with, once.",
   "license": "MIT",
   "bin": {
@@ -170,8 +170,8 @@
     "bloat": "devkit-no-bloat --warn-only"
   },
   "devDependencies": {
-    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.30.0",
-    "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.114.0",
+    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.35.0",
+    "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.123.1",
     "@fontsource-variable/source-serif-4": "5.3.1",
     "@mermaid-js/mermaid-cli": "12.2.0",
     "@observablehq/plot": "0.6.17",
@@ -182,8 +182,8 @@
     "@types/mdast": "4.0.4",
     "@types/node": "24.19.2",
     "axe-core": "4.14.0",
-    "capsomer": "github:DrDustinEdwards/capsomer#v0.89.0",
-    "enarratio": "0.12.1",
+    "capsomer": "github:DrDustinEdwards/capsomer#v0.95.0",
+    "enarratio": "0.12.2",
     "hast-util-from-html": "2.0.3",
     "hast-util-to-mdast": "10.1.2",
     "hast-util-to-string": "3.0.1",
