@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.49.0 (2026-11-11)
+
+Shared-code audit item 49, second part. No change to `render` or RENDER_VERSION.
+
+- **Search (`./search`)**, from dustinedwards.info's app/lib/search: `parseQuery(input, { operators, minYear, maxYear })` (quoted phrases, then `name:value` operators, then a bare year as a date filter, then terms), `hasFilters`, `parseSort` and `applySort` (relevance by default; date puts undated hits last), `isPubliclyVisible` and `PUBLISHED_STATUS` (a `publishAt` that does not parse is not public), and `normalizeZeroResultQuery` with `ZERO_RESULT_MAX_LENGTH` (a no-result search a site may keep, refused when shaped like an address, a phone number or a name). The site's operators are passed in: dustinedwards.info's `tag`, `type` and `base` arrive under `filters.tag`, `filters.type` and `filters.base` instead of `tags`, `types` and `bases`.
+- **HTML site map, new `./site-map`**, from dustinedwards.info's app/lib/site-map.mjs: `siteMapSections(urls, sections)`, `sectionOf(path, sections)` and `lineText`. The sections are the site's own (an id, a heading, a hub and the address prefixes it owns; the last is the catch-all). A counted kind with no index of its own is plain text, so no two links with different text go to one place (WCAG 2.4.4).
+- **Stored HTML, new `./stored-render`**, from germomics' app/lib/render.server.ts: `storedRender(stored, { render, current, onError })` shows a stored render at this release, renders an older one in memory, and keeps the last stored HTML when the body no longer renders; `rerenderEach(rows, { render, save, onError })` renders and saves each row so one failure never stops the rest; `wrapRendered(html, version)` and `RENDER_VERSION_ATTRIBUTE` are the `data-render-version` wrapper render-audit reads.
+- **Not in this release**: Carrel's chart and figure writers and SEO checks (item 49's last part).
+
 ## 0.48.0 (2026-11-11)
 
 Shared-code audit item 49, first part. No change to `render` or RENDER_VERSION.

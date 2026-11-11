@@ -211,3 +211,139 @@ export function staticSearch(index, query, { limit = 50, snippet = 160 } = {}) {
 export function likeContains(text) {
   return `%${String(text).replace(/[\\%_]/g, "\\$&")}%`;
 }
+
+/**
+ * A typed search query, from dustinedwards.info's search (app/lib/search/query.mjs). The rules apply in order and each consumes
+ * its tokens: quoted phrases first, so an operator inside quotes stays text; then `name:value` operators (each name in
+ * `operators`), lowercased; then the first bare four-digit year inside `minYear` to `maxYear` becomes a date filter, since
+ * prose rarely spells out its own date. What is left is the terms, ANDed.
+ *
+ * @param {string} input
+ * @param {{ operators?: string[], minYear?: number, maxYear?: number }} [options] `operators` default none; `minYear` default 2000
+ *   (so 1024 or 8080 stays a term); `maxYear` default next year, read at call time so a deploy never freezes it
+ * @returns {{ raw: string, terms: string[], phrases: string[], filters: Record<string, string[]>, year: number | null, isEmpty: boolean }}
+ */
+export function parseQuery(input, { operators = [], minYear = 2000, maxYear } = {}) {
+  const raw = input ?? "";
+  const ceiling = maxYear ?? new Date().getUTCFullYear() + 1;
+  /** @type {string[]} */
+  const phrases = [];
+  let rest = raw.replace(/"([^"]+)"/g, (_m, /** @type {string} */ phrase) => {
+    const trimmed = phrase.trim();
+    if (trimmed) phrases.push(trimmed);
+    return " ";
+  });
+  /** @type {Record<string, string[]>} */
+  const filters = Object.fromEntries(operators.map((name) => [name.toLowerCase(), []]));
+  if (operators.length > 0) {
+    const names = operators.map((name) => name.replace(/[^a-z0-9_-]/gi, "")).join("|");
+    rest = rest.replace(
+      new RegExp(`\\b(${names}):([^\\s]+)`, "gi"),
+      (_m, /** @type {string} */ field, /** @type {string} */ value) => {
+        const clean = value.trim().toLowerCase();
+        if (clean) filters[field.toLowerCase()]?.push(clean);
+        return " ";
+      },
+    );
+  }
+  /** @type {number | null} */
+  let year = null;
+  /** @type {string[]} */
+  const terms = [];
+  for (const token of rest.split(/\s+/).filter(Boolean)) {
+    if (year === null && /^\d{4}$/.test(token)) {
+      const candidate = Number(token);
+      if (candidate >= minYear && candidate <= ceiling) {
+        year = candidate;
+        continue;
+      }
+    }
+    terms.push(token);
+  }
+  return {
+    raw,
+    terms,
+    phrases,
+    filters,
+    year,
+    isEmpty: terms.length === 0 && phrases.length === 0,
+  };
+}
+
+/**
+ * Whether a parsed query filters (an operator or a year). A filter-only query leaves no text for FTS5, so it takes a browse path.
+ *
+ * @param {{ filters: Record<string, string[]>, year: number | null }} parsed
+ * @returns {boolean}
+ */
+export function hasFilters(parsed) {
+  return parsed.year !== null || Object.values(parsed.filters).some((values) => values.length > 0);
+}
+
+/**
+ * The sort a `?sort=` value asks for: "date", else "relevance", the default (a site's best pages may be old ones that a
+ * date-first list buries).
+ *
+ * @param {string | null | undefined} value
+ * @returns {"relevance" | "date"}
+ */
+export function parseSort(value) {
+  return value === "date" ? "date" : "relevance";
+}
+
+/**
+ * Hits in the order `sort` asks for: as given for relevance, newest `publishAt` first for date, undated last (-Infinity, not 0,
+ * which would misplace a date before 1970). Sort before paging: sorting one page of ten reads as a broken list.
+ *
+ * @template {{ publishAt: number | null }} T
+ * @param {T[]} hits
+ * @param {"relevance" | "date"} sort
+ * @returns {T[]}
+ */
+export function applySort(hits, sort) {
+  if (sort !== "date") return hits;
+  return [...hits].sort((a, b) => (b.publishAt ?? -Infinity) - (a.publishAt ?? -Infinity));
+}
+
+/** The one spelling of the published status: a typo in a status literal fails open on a filter. */
+export const PUBLISHED_STATUS = "published";
+
+/**
+ * Whether a post is public at `nowMs`: published, and its `publishAt` missing (publish at once) or past. A `publishAt` that
+ * does not parse is not public: failing closed keeps a draft out of search and out of an ask box's answers.
+ *
+ * @param {{ status?: string, publishAt?: string | Date | number | null }} post
+ * @param {number} [nowMs]
+ * @returns {boolean}
+ */
+export function isPubliclyVisible(post, nowMs = Date.now()) {
+  if (post.status !== PUBLISHED_STATUS) return false;
+  const at = post.publishAt;
+  if (at === null || at === undefined || at === "") return true;
+  const when = at instanceof Date ? at.getTime() : typeof at === "number" ? at : Date.parse(at);
+  return !Number.isNaN(when) && when <= nowMs;
+}
+
+/** The longest search a site keeps when it found nothing. */
+export const ZERO_RESULT_MAX_LENGTH = 200;
+
+/**
+ * A search that found nothing, as a site may keep it to learn what readers look for, or null when it must not be kept: shorter
+ * than three characters (a fragment), longer than ZERO_RESULT_MAX_LENGTH (refused, not cut: a cut paste is the same problem),
+ * no letter or digit, or shaped like an email address, a phone number or a person's name. The name shape over-matches
+ * ("Cloudflare Workers") on purpose: a dropped query costs one row, a kept personal one is a record. The shapes are tested on
+ * the raw text, since lowercasing destroys the name shape's only signal. Kept lowercased with single spaces.
+ *
+ * @param {string} raw
+ * @returns {string | null}
+ */
+export function normalizeZeroResultQuery(raw) {
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  if (trimmed.length < 3 || trimmed.length > ZERO_RESULT_MAX_LENGTH) return null;
+  if (/\S+@\S+/.test(trimmed)) return null;
+  if (/(?:\+?\d[\d\s().-]{6,}\d)/.test(trimmed)) return null;
+  if (/\b[A-Z][a-z]+\s+[A-Z][a-z]+/.test(trimmed)) return null;
+  const normalized = trimmed.toLowerCase().replace(/\s+/g, " ");
+  return /[\p{L}\p{N}]/u.test(normalized) ? normalized : null;
+}
