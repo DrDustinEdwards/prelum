@@ -28,10 +28,12 @@ export function iconLinks() {
 }
 
 /**
- * The web app manifest, `site.webmanifest`, pointing at the icon files.
+ * The web app manifest, `site.webmanifest`, pointing at the icon files. `id` is the app's identity, kept apart from its
+ * launch URL so a changed `start_url` is still the same installed app (W3C Web App Manifest, "id member"; web.dev
+ * "Uniquely identifying PWAs with the web app manifest id property"): `/` unless the site names one.
  *
  * @param {{ name: string, shortName?: string, description?: string, themeColor: string, backgroundColor: string,
- *   startUrl?: string, display?: "standalone" | "minimal-ui" | "browser", lang?: string }} site
+ *   startUrl?: string, id?: string, display?: "standalone" | "minimal-ui" | "browser", lang?: string }} site
  */
 export function webManifest(site) {
   const png = (/** @type {string} */ src, /** @type {number} */ size, purpose = "any") => ({
@@ -41,6 +43,7 @@ export function webManifest(site) {
     purpose,
   });
   return {
+    id: site.id ?? "/",
     name: site.name,
     short_name: site.shortName ?? site.name,
     ...(site.description ? { description: site.description } : {}),
@@ -81,7 +84,7 @@ export function icoFile(images) {
 
 /**
  * The live check for a site's icons, the site-wide half of `prelum-audit`: `/favicon.ico` answers an image, the home page
- * links an icon, an Apple touch icon and a manifest, and the manifest names the site and an icon at 192 and 512 pixels and a
+ * links an icon, an Apple touch icon and a manifest, and the manifest names the site, carries an id and has an icon at 192 and 512 pixels and a
  * maskable one, each of which loads.
  *
  * @param {{ origin: string, fetch: typeof fetch }} site
@@ -143,6 +146,13 @@ export async function auditIcons({ origin, fetch: fetcher }) {
     return findings;
   }
   if (!manifest.name) add(manifestUrl, "icon-manifest", "warning", "the manifest has no name");
+  if (typeof manifest.id !== "string" || manifest.id === "")
+    add(
+      manifestUrl,
+      "icon-manifest",
+      "warning",
+      "the manifest has no id, so its identity follows start_url",
+    );
   /** @type {Array<{ src?: unknown, sizes?: unknown, purpose?: unknown }>} */
   const icons = Array.isArray(manifest.icons) ? manifest.icons : [];
   const sized = (/** @type {number} */ size) =>

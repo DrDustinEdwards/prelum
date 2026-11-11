@@ -167,6 +167,13 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
         "warning",
         "no viewport meta, so Google's mobile-first crawl sees a desktop-width page",
       );
+    if (meta(head, "name", "text-scale")?.trim().toLowerCase() !== "scale")
+      add(
+        url,
+        "text-scale-missing",
+        "warning",
+        'no <meta name="text-scale" content="scale">, so a phone keeps the page at its default size and ignores the reader\'s system text size',
+      );
     if (!/<h1\b/i.test(html))
       add(url, "h1-missing", "warning", "no <h1>, so the page has no top heading");
 

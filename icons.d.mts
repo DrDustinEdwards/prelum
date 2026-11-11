@@ -32,6 +32,8 @@ export interface ManifestSite {
   themeColor: string;
   backgroundColor: string;
   startUrl?: string;
+  /** The app's identity, apart from its launch URL. Default `/`. */
+  id?: string;
   display?: "standalone" | "minimal-ui" | "browser";
   lang?: string;
 }
@@ -45,6 +47,7 @@ export interface ManifestIcon {
 
 /** The web app manifest, `site.webmanifest`, pointing at the icon files. */
 export declare function webManifest(site: ManifestSite): {
+  id: string;
   name: string;
   short_name: string;
   description?: string;
