@@ -61,3 +61,7 @@ export function citationTags(
   >,
   urls: { abstractUrl: string; pdfUrl?: string | null | undefined },
 ): Array<{ name: string; content: string }>;
+/** A DOI: "10.", a 4 to 9 digit registrant prefix, a slash, a suffix. */
+export const DOI_PATTERN: RegExp;
+/** A DOI as one lowercase URL segment, for a page slug that outlives the title. */
+export function doiSlug(doi: string): string;

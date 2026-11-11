@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.49.0 (2026-11-11)
+
+Shared-code audit item 49, second part. No change to `render` or RENDER_VERSION.
+
+- **Search (`./search`)**, from dustinedwards.info's app/lib/search: `parseQuery(input, { operators, minYear, maxYear })` (quoted phrases, then `name:value` operators, then a bare year as a date filter, then terms), `hasFilters`, `parseSort` and `applySort` (relevance by default; date puts undated hits last), `isPubliclyVisible` and `PUBLISHED_STATUS` (a `publishAt` that does not parse is not public), and `normalizeZeroResultQuery` with `ZERO_RESULT_MAX_LENGTH` (a no-result search a site may keep, refused when shaped like an address, a phone number or a name). The site's operators are passed in: dustinedwards.info's `tag`, `type` and `base` arrive under `filters.tag`, `filters.type` and `filters.base` instead of `tags`, `types` and `bases`.
+- **HTML site map, new `./site-map`**, from dustinedwards.info's app/lib/site-map.mjs: `siteMapSections(urls, sections)`, `sectionOf(path, sections)` and `lineText`. The sections are the site's own (an id, a heading, a hub and the address prefixes it owns; the last is the catch-all). A counted kind with no index of its own is plain text, so no two links with different text go to one place (WCAG 2.4.4).
+- **Stored HTML, new `./stored-render`**, from germomics' app/lib/render.server.ts: `storedRender(stored, { render, current, onError })` shows a stored render at this release, renders an older one in memory, and keeps the last stored HTML when the body no longer renders; `rerenderEach(rows, { render, save, onError })` renders and saves each row so one failure never stops the rest; `wrapRendered(html, version)` and `RENDER_VERSION_ATTRIBUTE` are the `data-render-version` wrapper render-audit reads.
+- **Markdown source, new `./source`**, from Carrel's lib/chart-block.ts, lib/site-markdown.ts and lib/seo-checks.ts: what an editor writes and checks in Prelum's dialect. `chartBlock(fields)`, `chartBlocks(body)`, `csvColumns(csv)` and `CHART_KINDS` for `:::chart`; `figureMarkup(url, alt, { caption, figure })` for `:::figure` (a decorative image, empty alt, is always plain `![""](url)`, the one form the renderer reads as decorative); `imagesWithoutAlt(source)` (Markdown, `<img>` and `:::figure`, code skipped) and `isAbsoluteHttps`. Carrel's per-site field names and its draft messages stay Carrel's.
+- **Text and citation helpers (pass2 audit targets).** `./text`: `plural(count, one, many, { grouped })` (21 inline `=== 1 ? "" : "s"` in Carrel, four helpers in dustinedwards.info, more in Foxhound), `normalizeNewlines` (CRLF and lone CR; 27 inline copies in Carrel), `mdCell` (a GFM table cell: pipes escaped and line breaks as spaces, where dustinedwards.info's five copies escaped only the pipe) and `escapeMarkdown` (with Prelum's `:word` directive guard). `./scholar`: `DOI_PATTERN` (four copies in dustinedwards.info) and `doiSlug`.
+- The site-runtime peer range is `>=0.117.0`, the first with `./csv`'s `parseCsv`.
+
 ## 0.48.0 (2026-11-11)
 
 Shared-code audit item 49, first part. No change to `render` or RENDER_VERSION.

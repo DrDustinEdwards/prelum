@@ -93,3 +93,43 @@ export function staticSearch(
 ): StaticSearchResult[];
 /** A LIKE pattern matching `text` anywhere, with `%`, `_` and the backslash escaped, for `col LIKE ? ESCAPE '\'`. */
 export function likeContains(text: string): string;
+/** A typed query: what was typed, its bare terms (ANDed) and quoted phrases, its `name:value` filters by operator, a year. */
+export type ParsedQuery = {
+  raw: string;
+  terms: string[];
+  phrases: string[];
+  filters: Record<string, string[]>;
+  year: number | null;
+  isEmpty: boolean;
+};
+/**
+ * Parse a typed search: quoted phrases first, then `name:value` operators (each name in `operators`, values lowercased), then the
+ * first bare year inside `minYear` (default 2000) to `maxYear` (default next year) as a date filter; the rest are terms.
+ */
+export function parseQuery(
+  input: string,
+  options?: { operators?: string[]; minYear?: number; maxYear?: number },
+): ParsedQuery;
+/** True when the query filters by an operator or a year; a filter-only query has no text for FTS5. */
+export function hasFilters(parsed: Pick<ParsedQuery, "filters" | "year">): boolean;
+/** `?sort=date` is "date"; anything else is "relevance", the default. */
+export function parseSort(value: string | null | undefined): "relevance" | "date";
+/** Hits as given for relevance; newest `publishAt` first for date, undated last. */
+export function applySort<T extends { publishAt: number | null }>(
+  hits: T[],
+  sort: "relevance" | "date",
+): T[];
+/** The one spelling of the published status. */
+export const PUBLISHED_STATUS: "published";
+/** Published, and `publishAt` missing or past; a `publishAt` that does not parse is not public. */
+export function isPubliclyVisible(
+  post: { status?: string; publishAt?: string | Date | number | null },
+  nowMs?: number,
+): boolean;
+/** The longest no-result search a site keeps. */
+export const ZERO_RESULT_MAX_LENGTH: 200;
+/**
+ * A no-result search as a site may keep it (lowercased, single spaces), or null when it must not be kept: a fragment, too long,
+ * no letter or digit, or shaped like an email address, a phone number or a person's name.
+ */
+export function normalizeZeroResultQuery(raw: string): string | null;

@@ -254,3 +254,21 @@ export function citationTags(work, urls) {
   if (urls.pdfUrl) tags.push({ name: "citation_pdf_url", content: urls.pdfUrl });
   return tags;
 }
+
+/** A DOI as the registration agencies issue it (DOI Handbook 2.2): "10.", a registrant prefix of 4 to 9 digits, a slash, a suffix. */
+export const DOI_PATTERN = /^10\.\d{4,9}\/\S+$/;
+
+/**
+ * A DOI as one lowercase URL segment ("10.1128/JVI.01234-19" is "10-1128-jvi-01234-19"): a page slug that stays the same for
+ * the work's life, where its title may change.
+ *
+ * @param {string} doi
+ * @returns {string}
+ */
+export function doiSlug(doi) {
+  return String(doi ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
