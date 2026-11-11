@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **The specimen enforces Trusted Types.** site-runtime 0.132.0 (dev dependency) moves `require-trusted-types-for 'script'` from the specimen's Report-Only policy into its enforced one (`site-runtime-headers` writes it into `_headers`). No change to the library or RENDER_VERSION.
+
 ## 0.47.0 (2026-11-11)
 
 Shared-code audit items 46 to 48. No change to `render` or RENDER_VERSION.
