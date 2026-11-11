@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.46.0 (2026-11-11)
 
+- **Enarratio 0.12.2 is the tested version.** Its toolbar icons are inline `<svg class="enarratio-icon">` elements, not `<span data-icon>`, so a chart's rendered HTML changes and `RENDER_VERSION` is 25: a site re-renders its stored HTML. The render allowlist drops `span data-icon` and adds `svg class`, `svg aria-hidden` and `svg focusable`; the goldens and the specimen's chart outputs are regenerated. The chart audit's planted heavy chart puts its weight in the drawing, since the first `</svg>` is now an icon's.
 - **The specimen deploy's live gate runs again.** Every devkit workflow call moves from v0.27.0 to v0.33.0, whose worker-deploy sets `DEVKIT_DIR` for the verify command; v0.27.0 never set it. No change to the library.
 
 ## 0.45.0 (2026-11-11)

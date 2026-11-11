@@ -136,7 +136,14 @@ const site = {
         chart("Unnamed link").replace("</figcaption>", '<a href="/more"></a></figcaption>'),
       ),
       // D6: a drawing over the 100 kB budget.
-      frame("heavy", chart("Heavy").replace("</svg>", `<desc>${"x".repeat(110_000)}</desc></svg>`)),
+      // The toolbar's icons are inline SVG too (Enarratio 0.12.2), so the weight goes into the drawing, in the frame.
+      frame(
+        "heavy",
+        chart("Heavy").replace(
+          /(class="enarratio-frame[ "][^]*?)<\/svg>/,
+          `$1<desc>${"x".repeat(110_000)}</desc></svg>`,
+        ),
+      ),
       // F: an SVG chart drawn by hand.
       '<svg width="200" height="40" role="img" aria-label="Visits"><polyline fill="none" stroke="#333" points="0,40 50,20 100,30 150,5 200,12"/></svg>',
       '<div id="later"></div><script>document.getElementById("later").innerHTML = LATER;</script>',
