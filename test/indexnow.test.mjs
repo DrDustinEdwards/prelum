@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { recentSitemapUrls } from "../indexnow.mjs";
+import { recentSitemapUrls, submitIndexNowIfChanged } from "../indexnow.mjs";
 
 test("recentSitemapUrls: only pages changed within the window, or every page when the sitemap carries no lastmod", () => {
   const now = new Date("2026-10-25T12:00:00Z");
@@ -12,4 +12,33 @@ test("recentSitemapUrls: only pages changed within the window, or every page whe
     recentSitemapUrls("<urlset><url><loc>https://example.com/</loc></url></urlset>", { now }),
     ["https://example.com/"],
   );
+});
+
+test("submitIndexNowIfChanged: one ping per changed set, and a failed ping is tried again", async () => {
+  /** @type {Map<string, string>} */
+  const store = new Map();
+  const kv = {
+    /** @param {string} k */
+    get: async (k) => store.get(k) ?? null,
+    /** @param {string} k @param {string} v */
+    put: async (k, v) => void store.set(k, v),
+  };
+  let calls = 0;
+  let ok = false;
+  const fetch = async () => (calls++, new Response(null, { status: ok ? 200 : 500 }));
+  /** @param {string[]} urls */
+  const input = (urls) => ({
+    kv,
+    hashKey: "h",
+    origin: "https://example.com",
+    key: "k",
+    urls,
+    fetch,
+  });
+  const urls = ["https://example.com/b", "https://example.com/a"];
+  assert.equal(await submitIndexNowIfChanged(input(urls)), false);
+  ok = true;
+  assert.equal(await submitIndexNowIfChanged(input(urls)), true);
+  assert.equal(await submitIndexNowIfChanged(input([...urls].reverse())), false);
+  assert.equal(calls, 2);
 });
