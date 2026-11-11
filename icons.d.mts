@@ -71,3 +71,5 @@ export declare function auditIcons(site: {
   origin: string;
   fetch: typeof fetch;
 }): Promise<AuditFinding[]>;
+/** `site.webmanifest` as `application/manifest+json; charset=utf-8`, cached a day; `headers` adds or replaces. */
+export declare function webManifestResponse(site: ManifestSite, headers?: HeadersInit): Response;

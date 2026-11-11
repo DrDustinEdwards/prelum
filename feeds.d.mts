@@ -206,3 +206,11 @@ export function jsonFeedDocument(feed: {
     image: string;
   }[];
 };
+/** The Content-Type of each feed format (JSON Feed as `application/json`, which Cloudflare compresses). */
+export const FEED_CONTENT_TYPES: Readonly<{ rss: string; atom: string; json: string }>;
+/** A feed document as its format's Content-Type, cached an hour; `headers` adds or replaces. */
+export function feedResponse(
+  format: "rss" | "atom" | "json",
+  body: string | object,
+  headers?: HeadersInit,
+): Response;

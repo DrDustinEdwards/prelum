@@ -247,3 +247,20 @@ function spanEnd(source, start) {
   }
   return -1;
 }
+
+/**
+ * A text document with its type and a public max-age, `headers` applied over them.
+ *
+ * @param {string} body
+ * @param {string} type
+ * @param {number} maxAge
+ * @param {HeadersInit} [headers]
+ */
+export function documentResponse(body, type, maxAge, headers) {
+  const merged = new Headers({
+    "Content-Type": type,
+    "Cache-Control": `public, max-age=${maxAge}`,
+  });
+  for (const [name, value] of new Headers(headers)) merged.set(name, value);
+  return new Response(body, { headers: merged });
+}

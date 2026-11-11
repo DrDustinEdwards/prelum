@@ -1,3 +1,4 @@
+import { documentResponse } from "./xml.mjs";
 /**
  * The icon files every site serves, at the same paths everywhere: what Google's favicon rules, iOS and an installable web app
  * each ask for. `prelum-icons` draws them from one SVG.
@@ -177,4 +178,21 @@ export async function auditIcons({ origin, fetch: fetcher }) {
     if (!isImage(await get(src))) add(src, "icon-broken", "error", "a manifest icon does not load");
   }
   return findings;
+}
+
+/**
+ * `site.webmanifest` as a whole response, the route every site wrote: `webManifest(site)` as
+ * `application/manifest+json; charset=utf-8`, cached for a day. `headers` adds to those or replaces the caching.
+ *
+ * @param {Parameters<typeof webManifest>[0]} site
+ * @param {HeadersInit} [headers]
+ * @returns {Response}
+ */
+export function webManifestResponse(site, headers) {
+  return documentResponse(
+    JSON.stringify(webManifest(site)),
+    "application/manifest+json; charset=utf-8",
+    86_400,
+    headers,
+  );
 }

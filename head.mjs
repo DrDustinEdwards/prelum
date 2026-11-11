@@ -600,3 +600,28 @@ function sectionTrail(site, path, title, keepSlash) {
 export function metaText(html, limit = SERP_DESCRIPTION) {
   return truncateForSerp(htmlToText(html), limit);
 }
+
+/**
+ * The root route's loader data, read from a route's `meta` matches: the one place a page's title suffix, the site's
+ * settings or the request origin are loaded once for every page. Undefined when the root has no loader data (an error
+ * page). React Router 8 names it `loaderData`.
+ *
+ * @template T
+ * @param {ReadonlyArray<{ id: string, loaderData?: unknown } | undefined>} matches
+ * @returns {T | undefined}
+ */
+export function rootLoaderData(matches) {
+  return /** @type {T | undefined} */ (matches.find((match) => match?.id === "root")?.loaderData);
+}
+
+/**
+ * A signed-in, admin or other private page's whole head: its title and `robots: noindex`, and nothing a share card or a
+ * search result would read. The Worker also sends `X-Robots-Tag: noindex` on these paths, which covers their redirects
+ * and resource routes, where no meta can go.
+ *
+ * @param {string} title
+ * @returns {Array<{ title: string } | { name: string, content: string }>}
+ */
+export function privateMeta(title) {
+  return [{ title }, { name: "robots", content: "noindex" }];
+}
