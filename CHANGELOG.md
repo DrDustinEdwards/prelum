@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.44.0 (2026-11-11)
+
+- **`standardFiles`** takes `manifest` as a function too, as `ai` already did, for a site whose name and description live in its content (julieedwards.info reads them from D1).
+
 ## 0.43.0 (2026-11-11)
 
 - **`standardFiles`** (`./files`): robots.txt, ai.txt, site.webmanifest, the IndexNow key file and search engines' ownership files from one config, answered before React Router, so no site writes their routes (shared-code audit items 44 and 45).
