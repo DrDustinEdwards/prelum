@@ -232,3 +232,167 @@ export type ArticleInput = {
    */
   type?: string | undefined;
 };
+export type AddressInput = {
+  streetAddress?: string | undefined;
+  /** the city */
+  locality?: string | undefined;
+  /** the state or province */
+  region?: string | undefined;
+  postalCode?: string | undefined;
+  /** an ISO 3166-1 code, e.g. `US` */
+  country?: string | undefined;
+};
+export type PersonInput = {
+  name: string;
+  /** the node's `@id`, so a page, an article or a podcast can name the person by reference */
+  id?: string | undefined;
+  url?: string | undefined;
+  honorificPrefix?: string | undefined;
+  honorificSuffix?: string | undefined;
+  jobTitle?: string | undefined;
+  description?: string | undefined;
+  /** a URL, or ImageObject nodes (`pageImage`) */
+  image?: string | SchemaNode | Array<string | SchemaNode> | undefined;
+  /** an organization's name, or its node or `{ "@id" }` */
+  worksFor?: string | SchemaNode | undefined;
+  affiliation?: string | SchemaNode | undefined;
+  memberOf?: string | SchemaNode | undefined;
+  alumniOf?: ReadonlyArray<string | SchemaNode> | undefined;
+  knowsAbout?: readonly string[] | undefined;
+  /** run through `sameAs` */
+  sameAs?: ReadonlyArray<string | null | undefined> | undefined;
+};
+export type OrganizationInput = {
+  name: string;
+  id?: string | undefined;
+  url?: string | undefined;
+  description?: string | undefined;
+  /** a URL, or an ImageObject (`pageImage`) */
+  logo?: string | SchemaNode | undefined;
+  /** a person's name, or their node or `{ "@id" }` */
+  founder?: string | SchemaNode | undefined;
+  /** parts, or a PostalAddress node */
+  address?: AddressInput | SchemaNode | undefined;
+  /** the public contact address, written as a ContactPoint */
+  email?: string | undefined;
+  /** what the contact is for; `customer support` unless given */
+  contactType?: string | undefined;
+  knowsAbout?: readonly string[] | undefined;
+  /** run through `sameAs` */
+  sameAs?: ReadonlyArray<string | null | undefined> | undefined;
+};
+export type SoftwareApplicationInput = {
+  name: string;
+  id?: string | undefined;
+  url?: string | undefined;
+  description?: string | undefined;
+  /** a schema.org category, e.g. `BusinessApplication` */
+  applicationCategory?: string | undefined;
+  /** e.g. `Web` */
+  operatingSystem?: string | undefined;
+  /** usually `{ "@id": ... }` of the Organization */
+  publisher?: SchemaNode | undefined;
+  /** only a price the page can honor; a product with no single price writes none */
+  offers?: SchemaNode | SchemaNode[] | undefined;
+};
+export type PodcastSeriesInput = {
+  name: string;
+  /** the show's page */
+  url: string;
+  id?: string | undefined;
+  description?: string | undefined;
+  /** the artwork, absolute */
+  image?: string | undefined;
+  /** the feed's address, absolute */
+  webFeed?: string | undefined;
+  /** a person's name, or their node */
+  author?: string | SchemaNode | undefined;
+  address?: AddressInput | SchemaNode | undefined;
+  /** run through `sameAs` */
+  sameAs?: ReadonlyArray<string | null | undefined> | undefined;
+};
+export type PodcastEpisodeInput = {
+  name: string;
+  url: string;
+  published?: Date | number | string | null | undefined;
+  modified?: Date | number | string | null | undefined;
+  description?: string | null | undefined;
+  /** absolute */
+  image?: string | null | undefined;
+  episodeNumber?: number | null | undefined;
+  durationSeconds?: number | null | undefined;
+  /** the enclosure, as the feed gives it */
+  audio?:
+    | { url: string; type?: string | null | undefined; bytes?: number | null | undefined }
+    | null
+    | undefined;
+  /** the show, written as a PodcastSeries reference by name and URL */
+  series?: { name: string; url?: string | undefined } | undefined;
+  /** the episode's authors */
+  hosts?: ReadonlyArray<{ name: string; url?: string | null | undefined }> | undefined;
+  /** written as `actor` */
+  guests?: ReadonlyArray<{ name: string }> | undefined;
+};
+export type ScholarlyPaper = {
+  title: string;
+  authors: readonly string[];
+  year?: number | null | undefined;
+  /** a partial ISO date (`2011`, `2011-04`) is kept as deposited */
+  publishedDate?: string | null | undefined;
+  journal?: string | null | undefined;
+  volume?: string | number | null | undefined;
+  issue?: string | number | null | undefined;
+  firstPage?: string | null | undefined;
+  lastPage?: string | null | undefined;
+  abstract?: string | null | undefined;
+  doi?: string | null | undefined;
+  type?: string | null | undefined;
+  /** the open-access answer (Unpaywall), not whether a PDF is hosted here */
+  isOpenAccess?: boolean | undefined;
+  license?: string | null | undefined;
+};
+/**
+ * Profile links as schema.org `sameAs` wants them: absolute http(s) URLs, trimmed, each once, in the order given. Undefined
+ * when none are left, since an empty list claims profiles the page does not have.
+ */
+export function sameAs(
+  urls: ReadonlyArray<string | null | undefined> | null | undefined,
+): string[] | undefined;
+/** A PostalAddress node, for an Organization's or a series' `address`; undefined when there is nothing to say. */
+export function postalAddress(address: AddressInput | null | undefined): SchemaNode | undefined;
+/**
+ * A Person. A name given where an organization is wanted is written as an Organization; `sameAs` is cleaned, and every empty
+ * field is dropped.
+ */
+export function person(person: PersonInput): SchemaNode;
+/** An Organization, for the home page and About: name, logo, founder, address, a ContactPoint and `sameAs`. */
+export function organization(organization: OrganizationInput): SchemaNode;
+/** A SoftwareApplication. `offers` is written only when given: a price a crawler reads is a promise. */
+export function softwareApplication(app: SoftwareApplicationInput): SchemaNode;
+/** A PodcastSeries, tying the show to its feed. */
+export function podcastSeries(series: PodcastSeriesInput): SchemaNode;
+/**
+ * A PodcastEpisode. The length is `duration`, an ISO 8601 duration, on the episode and on its audio file; dates come from
+ * `articleDates`, as an Article's do.
+ */
+export function podcastEpisode(episode: PodcastEpisodeInput): SchemaNode;
+/**
+ * The schema.org type of a publication from its curated type (`article`, `review`, `abstract`, `chapter`,
+ * `teaching-resource`); anything else is a ScholarlyArticle.
+ */
+export function scholarlyType(type: string | null | undefined): string;
+/**
+ * A scholarly article, chapter or learning resource as one node: `@id` and `url` are its page, a DOI is its `identifier` and
+ * `sameAs`, the journal a Periodical with volume and issue nested, a hosted PDF its `encoding`. Character references in the
+ * record's text are decoded. `context.author` writes each author as a node (a site's owner as an `@id` reference); a Person
+ * by name otherwise.
+ */
+export function scholarlyArticle(
+  paper: ScholarlyPaper,
+  context: {
+    pageUrl: string;
+    pdfUrl?: string | null | undefined;
+    author?: ((name: string) => SchemaNode) | undefined;
+    topics?: ReadonlyArray<{ label: string }> | undefined;
+  },
+): SchemaNode;

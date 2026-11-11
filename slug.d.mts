@@ -9,3 +9,9 @@ export const SLUG_PATTERN: RegExp;
 
 /** True when `value` is a slug by SLUG_PATTERN (and, given `max`, at most that long). */
 export function isSlug(value: unknown, options?: { max?: number }): value is string;
+
+/** The longest slug a site stores or an address segment takes (120). */
+export const SLUG_MAX_LENGTH: 120;
+
+/** SLUG_PATTERN's source without its anchors, for an `<input pattern>`. */
+export const SLUG_ATTRIBUTE_PATTERN: string;

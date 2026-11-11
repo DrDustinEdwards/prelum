@@ -18,14 +18,15 @@ export function wordCount(text) {
 
 /**
  * Minutes to read, never less than one: the words at WORDS_PER_MINUTE plus Medium's image time, 12 seconds for the first image and one
- * second less for each after it, down to 3.
+ * second less for each after it, down to 3. A site with its own published pace passes `wordsPerMinute`.
  *
  * @param {number} words
  * @param {number} [images]
+ * @param {number} [wordsPerMinute]
  * @returns {number}
  */
-export function readingMinutes(words, images = 0) {
-  let seconds = (words / WORDS_PER_MINUTE) * 60;
+export function readingMinutes(words, images = 0, wordsPerMinute = WORDS_PER_MINUTE) {
+  let seconds = (words / wordsPerMinute) * 60;
   for (let i = 0; i < images; i += 1) seconds += Math.max(12 - i, 3);
   return Math.max(1, Math.round(seconds / 60));
 }
@@ -114,6 +115,17 @@ export function isoDuration(totalSeconds) {
 // The network's no-wide-dash house style, as one check for every pipeline and validator that holds text to it.
 // Escapes, so this file stays clean under the no-em-dash rule. U+2010 to U+2015 plus U+2212.
 const WIDE_DASH = /[\u2010-\u2015\u2212]/g;
+
+/**
+ * True when `text` holds any wide dash, for a field check that needs a yes or no and not the places.
+ *
+ * @param {string} text
+ * @returns {boolean}
+ */
+export function hasWideDash(text) {
+  WIDE_DASH.lastIndex = 0;
+  return WIDE_DASH.test(text);
+}
 
 /**
  * Server-side half of the no-em-dash rule: a save to the stored source never meets the local hook.

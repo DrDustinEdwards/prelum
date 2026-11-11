@@ -276,16 +276,31 @@ export type SiteHead = {
    * (`{ "/blog": "Blog" }`); a path not named here is left out of the trail
    */
   sections?: Record<string, string> | undefined;
+  /**
+   * the site's own description, for a page that passes none
+   */
+  description?: string | undefined;
+  /**
+   * the home page's `title` is already the whole `<title>`, so it takes no suffix
+   */
+  wholeHomeTitle?: boolean | undefined;
 };
 /**
  * One page's head: `title` is the page's own title, without the suffix, unless `fullTitle` says it is already the whole
  * `<title>`, in which case the site's suffix is taken off it for the page's name in the graph and its breadcrumb. `feeds`
  * are added to the site's. `pageType` is the WebPage subtype (`CollectionPage` for a list, `AboutPage`,
  * `ProfilePage`, `SearchResultsPage`); `breadcrumbs` is the trail from the home page down, in place of the one built from
- * `sections`, or false for none.
+ * `sections`, or false for none. `description` falls back to the site's. `imageAlt` is the alt of the page's own `image` when
+ * that is a URL or has none; the site's default card keeps its own. A path's trailing slash is dropped (`keepTrailingSlash`
+ * keeps it), and with the site's `wholeHomeTitle` the home page's title is the whole `<title>`.
  */
-export type PageHead = Omit<HeadInput, "origin" | "siteName" | "image" | "locale"> & {
+export type PageHead = Omit<
+  HeadInput,
+  "origin" | "siteName" | "image" | "locale" | "description"
+> & {
+  description?: string;
   image?: HeadImage | string | null;
+  imageAlt?: string;
   fullTitle?: boolean;
   pageType?: string;
   breadcrumbs?:

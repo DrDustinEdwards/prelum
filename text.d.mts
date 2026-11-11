@@ -2,8 +2,8 @@
 export const WORDS_PER_MINUTE: 238;
 /** Words as Unicode counts them (Intl.Segmenter). */
 export function wordCount(text: string): number;
-/** Minutes to read, never less than one: words at WORDS_PER_MINUTE plus Medium's image time. */
-export function readingMinutes(words: number, images?: number): number;
+/** Minutes to read, never less than one: words at `wordsPerMinute` (WORDS_PER_MINUTE) plus Medium's image time. */
+export function readingMinutes(words: number, images?: number, wordsPerMinute?: number): number;
 /** Text cut to at most `max` characters (default 160) at a word boundary, with an ellipsis when cut. */
 export function excerpt(text: string, max?: number): string;
 /** The text of an HTML fragment: scripts, styles, tags and Prelum's `#` heading anchors dropped, entities decoded, white space collapsed. */
@@ -14,3 +14,5 @@ export function isoDuration(totalSeconds: number | null | undefined): string | u
 export function findWideDashes(
   text: string,
 ): Array<{ line: number; column: number; char: string; excerpt: string }>;
+/** True when `text` holds any wide dash (U+2010 to U+2015, U+2212). */
+export function hasWideDash(text: string): boolean;
