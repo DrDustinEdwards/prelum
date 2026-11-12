@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.54.0 (2026-11-12)
+
+No change to `render` or RENDER_VERSION. Additive.
+
+- **`./text`: `formatCount(n)`, `capitalize(text)`, `titleCase(text)` and `humanize(text)`**, the label rules Foxhound, txasm and Foxing each wrote inline (about twenty copies). `formatCount` is en-US grouping (1,204), which `plural(..., { grouped: true })` now calls. `titleCase` capitalizes every word of a slug or snake_case value ("payment_recovery" is "Payment Recovery"); `humanize` writes it as a sentence ("insufficient_funds" is "Insufficient funds"). Both treat runs of `_`, `-` and spaces as one break and drop empty words.
+
 ## 0.53.0 (2026-11-12)
 
 No change to `render` or RENDER_VERSION. Pins site-runtime v0.143.0 (peer `>=0.143.0`) and devkit v0.39.0; shared-code sweep leftovers.

@@ -23,6 +23,14 @@ export function plural(
   many?: string,
   options?: { grouped?: boolean },
 ): string;
+/** A count with en-US grouping: 1,204. */
+export function formatCount(count: number): string;
+/** The first character upper case, the rest as written. */
+export function capitalize(text: string): string;
+/** A slug or snake_case value with every word capitalized: "payment_recovery" is "Payment Recovery". */
+export function titleCase(text: string): string;
+/** A slug or snake_case value as a sentence: "insufficient_funds" is "Insufficient funds". */
+export function humanize(text: string): string;
 /** CRLF and lone CR as LF. */
 export function normalizeNewlines(text: string): string;
 /** A value safe for one GFM table cell: pipes escaped, line breaks as spaces, null as empty. */
