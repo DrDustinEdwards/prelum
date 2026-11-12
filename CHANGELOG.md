@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.52.0 (2026-11-12)
+
+No change to `render` or RENDER_VERSION.
+
+- **`./slug`: `uniqueSlug(text, { taken, fallback, max, tries })`**, a slug for a new row that no other row holds. With `taken` (the site's lookup, sync or async) it tries the base, `base-2`, `base-3` ... up to `tries` (100), then a random six-character a-z0-9 suffix; without `taken` it always adds the suffix. The result stays within `max` (SLUG_MAX_LENGTH) and SLUG_PATTERN. From Foxing's `uniqueSlug` (always a suffix, nanoid), Foxhound's `uniqueSlugFromTitle` and germomics' people `uniqueSlug` (counted, with a UUID or `Date.now()` fallback that could exceed the length limit).
+
 ## 0.51.0 (2026-11-11)
 
 No change to `render` or RENDER_VERSION.
