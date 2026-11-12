@@ -10,7 +10,7 @@ import { frontmatter } from "../frontmatter.mjs";
 import { absoluteUrl } from "../head.mjs";
 import { recentSitemapUrls, submitIndexNow } from "../indexnow.mjs";
 import { llmsDocument, llmsLink } from "../llms.mjs";
-import { htmlToMarkdown, llmsHeaderOf, sitemapLocs } from "../markdown-copy.mjs";
+import { htmlToMarkdown, llmsHeaderOf } from "../markdown-copy.mjs";
 import { toMatchExpression } from "../search.mjs";
 import { sitemapDocument } from "../sitemap.mjs";
 import { isSlug, slugify } from "../slug.mjs";
@@ -88,10 +88,7 @@ test("indexnow: 10,000 URLs a POST, a trailing-slash origin works, all five enti
   );
 });
 
-test("markdown copy: sitemap locs decode, blank lines in fenced code stay, a malformed canonical is ignored", () => {
-  assert.deepEqual(sitemapLocs("<loc>https://e.test/?a=1&amp;b=2</loc>"), [
-    "https://e.test/?a=1&b=2",
-  ]);
+test("markdown copy: blank lines in fenced code stay, a malformed canonical is ignored", () => {
   const page = htmlToMarkdown(
     `<html><head><title>T</title><link rel="canonical" href="http://[bad"></head><body><main><p>a</p><pre><code>x\n\n\n\ny</code></pre></main></body></html>`,
     { base: "https://e.test/p" },

@@ -72,5 +72,3 @@ export function llmsHeaderOf(
   summary: string;
   intro: string[];
 };
-/** The `<loc>` addresses of a sitemap or sitemap index, in order. */
-export function sitemapLocs(xml: string): string[];
