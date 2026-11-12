@@ -94,7 +94,10 @@ function withSuffix(base, suffix, max) {
  * @param {{ fallback?: string, max?: number, tries?: number, taken?: (slug: string) => boolean | Promise<boolean> }} [options]
  * @returns {Promise<string>}
  */
-export async function uniqueSlug(text, { fallback = "entry", max = SLUG_MAX_LENGTH, tries = 100, taken } = {}) {
+export async function uniqueSlug(
+  text,
+  { fallback = "entry", max = SLUG_MAX_LENGTH, tries = 100, taken } = {},
+) {
   const base = slugify(text, { max }) || fallback;
   if (taken) {
     for (let n = 1; n <= tries; n++) {
