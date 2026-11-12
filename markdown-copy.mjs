@@ -8,6 +8,7 @@
  * Needs `hast-util-from-html`, `hast-util-to-mdast`, `mdast-util-to-markdown` and `mdast-util-gfm`, optional peers.
  */
 
+import { sitemapLocs } from "@dustinedwards/site-runtime/html";
 import { fromHtml } from "hast-util-from-html";
 import { toMdast } from "hast-util-to-mdast";
 import { gfmToMarkdown } from "mdast-util-gfm";
@@ -21,7 +22,6 @@ import {
   prefersMarkdown,
 } from "./llms.mjs";
 import { plainTextResponse } from "./robots.mjs";
-import { unescapeXml } from "./xml.mjs";
 
 /** Elements that carry no reading text: scripts, styles, controls, the site's own navigation, players and drawings. */
 const DROPPED = new Set([
@@ -244,10 +244,6 @@ export function llmsHeaderOf(text, origin) {
     .filter(Boolean);
   return { title, summary, intro };
 }
-
-/** The `<loc>` addresses of a sitemap or sitemap index, in order. @param {string} xml */
-export const sitemapLocs = (xml) =>
-  [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((match) => unescapeXml(match[1] ?? ""));
 
 /**
  * Runs of blank lines become one, except inside a fenced code block, where they are the code's own.

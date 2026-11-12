@@ -1,3 +1,5 @@
+import { unescapeHtml } from "@dustinedwards/site-runtime/html";
+
 import { documentResponse, escapeXml, isoDay, toDate } from "./xml.mjs";
 
 /** Google's and Bing's limit for one sitemap file: 50,000 URLs and 50 MiB uncompressed (https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap). */
@@ -159,4 +161,21 @@ export function sitemapResponse(entries, { headers, ...options } = {}) {
     3600,
     headers,
   );
+}
+
+/**
+ * The `<url>` and `<sitemap>` entries of a sitemap or sitemap index, in order, each `{ loc, lastmod }`: `loc` trimmed and
+ * entity-decoded, `lastmod` the text or null. An entry with no `<loc>` is left out. The one reader the audit and IndexNow
+ * share; for the addresses alone, site-runtime's `sitemapLocs`.
+ *
+ * @param {string} xml
+ * @returns {Array<{ loc: string, lastmod: string | null }>}
+ */
+export function sitemapEntries(xml) {
+  return [...xml.matchAll(/<(?:url|sitemap)\b[^>]*>([\s\S]*?)<\/(?:url|sitemap)>/gi)]
+    .map((match) => ({
+      loc: unescapeHtml(/<loc>\s*([^<]*?)\s*<\/loc>/i.exec(match[1] ?? "")?.[1] ?? ""),
+      lastmod: /<lastmod>\s*([^<]*?)\s*<\/lastmod>/i.exec(match[1] ?? "")?.[1] || null,
+    }))
+    .filter((entry) => entry.loc !== "");
 }

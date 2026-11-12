@@ -80,3 +80,12 @@ export function sitemapResponse(
   entries: SitemapEntry[],
   options?: SitemapOptions & { headers?: HeadersInit },
 ): Response;
+/**
+ * The `<url>` and `<sitemap>` entries of a sitemap or sitemap index, in order, each `{ loc, lastmod }`: `loc` trimmed and
+ * entity-decoded, `lastmod` the text or null. An entry with no `<loc>` is left out. The one reader the audit and IndexNow
+ * share; for the addresses alone, site-runtime's `sitemapLocs`.
+ */
+export function sitemapEntries(xml: string): Array<{
+  loc: string;
+  lastmod: string | null;
+}>;

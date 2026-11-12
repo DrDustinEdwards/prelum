@@ -1,6 +1,6 @@
 import { sha256Hex } from "@dustinedwards/site-runtime/encoding";
 
-import { unescapeXml } from "./xml.mjs";
+import { sitemapEntries } from "./sitemap.mjs";
 
 const ENDPOINT = "https://api.indexnow.org/indexnow";
 // The protocol takes at most 10,000 URLs in one POST.
@@ -103,10 +103,7 @@ export function keyFileResponse(key, headers) {
  * @returns {string[]}
  */
 export function recentSitemapUrls(xml, { days = 2, now = new Date() } = {}) {
-  const entries = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)].map(([, body]) => ({
-    loc: unescapeXml(/<loc>\s*([^<]+?)\s*<\/loc>/.exec(body)?.[1] ?? ""),
-    lastmod: /<lastmod>\s*([^<]+?)\s*<\/lastmod>/.exec(body)?.[1],
-  }));
+  const entries = /<sitemapindex\b/i.test(xml) ? [] : sitemapEntries(xml);
   const dated = entries.some((entry) => entry.lastmod);
   const since = now.getTime() - days * 86_400_000;
   return entries

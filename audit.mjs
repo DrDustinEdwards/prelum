@@ -1,4 +1,7 @@
+import { htmlAttributes, unescapeHtml } from "@dustinedwards/site-runtime/html";
+
 import { SERP_DESCRIPTION, SERP_TITLE, serpWidth } from "./head.mjs";
+import { sitemapEntries } from "./sitemap.mjs";
 
 /** How many redirects `crawlSite` follows from one URL, so a chain is seen hop by hop and a loop ends. */
 const MAX_HOPS = 5;
@@ -460,12 +463,7 @@ async function readSitemap(fetcher, url, origin, index) {
     return [];
   }
   const isIndex = /<sitemapindex\b/i.test(xml);
-  const entries = [...xml.matchAll(/<(?:url|sitemap)\b[^>]*>([\s\S]*?)<\/(?:url|sitemap)>/gi)]
-    .map((match) => ({
-      loc: decodeEntities(/<loc>\s*([^<]*?)\s*<\/loc>/i.exec(match[1])?.[1] ?? ""),
-      lastmod: /<lastmod>\s*([^<]*?)\s*<\/lastmod>/i.exec(match[1])?.[1] ?? null,
-    }))
-    .filter((entry) => entry.loc !== "" && sameOrigin(entry.loc, origin));
+  const entries = sitemapEntries(xml).filter((entry) => sameOrigin(entry.loc, origin));
   if (!isIndex) return entries;
   if (!index) return [];
   const urls = [];
@@ -595,7 +593,7 @@ function headOf(html) {
 /** @param {string} html @param {string} name */
 function textOf(html, name) {
   const match = html.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`, "i"));
-  return match ? decodeEntities(match[1]).trim() : null;
+  return match ? unescapeHtml(match[1]).trim() : null;
 }
 
 /** @param {string} html @param {"name" | "property"} key @param {string} value */
@@ -621,30 +619,7 @@ function jsonLdBlocks(html) {
  */
 function tags(html, name) {
   return [...html.matchAll(new RegExp(`<${name}\\b((?:[^>"']|"[^"]*"|'[^']*')*)>`, "gi"))].map(
-    (match) => {
-      /** @type {Record<string, string>} */
-      const attrs = {};
-      for (const attr of match[1].matchAll(
-        /([^\s=/"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g,
-      )) {
-        attrs[attr[1].toLowerCase()] = decodeEntities(attr[2] ?? attr[3] ?? attr[4] ?? "");
-      }
-      return attrs;
-    },
-  );
-}
-
-/** @param {string} text */
-function decodeEntities(text) {
-  // One pass, so "&amp;lt;" stays "&lt;"; numeric references cover the &#x27; and &#8217; that sites write.
-  const named = { quot: '"', apos: "'", lt: "<", gt: ">", amp: "&", nbsp: "\u00a0" };
-  return text.replace(
-    /&(?:#x([0-9a-f]+)|#(\d+)|(quot|apos|lt|gt|amp|nbsp));/gi,
-    (whole, hex, dec, name) => {
-      if (name) return named[/** @type {keyof typeof named} */ (name.toLowerCase())];
-      const code = Number.parseInt(hex ?? dec, hex ? 16 : 10);
-      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
-    },
+    (match) => /** @type {Record<string, string>} */ (htmlAttributes(match[1])),
   );
 }
 

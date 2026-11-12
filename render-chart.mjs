@@ -3,6 +3,7 @@
 // the summary, the source, the CSV link and the data table. The site's stylesheet is that theme.
 
 import { areaChart, barChart, lineChart, scatterPlot } from "enarratio/plot";
+import { parseCsv } from "@dustinedwards/site-runtime/csv";
 import { fromHtml } from "hast-util-from-html";
 
 import { h } from "./render-hast.mjs";
@@ -22,52 +23,11 @@ const STRICT_CHART_ISSUES = ["title-missing", "too-many-series"];
  * @returns {{ columns: string[], rows: string[][] }}
  */
 function parseChartCsv(text) {
-  // A byte order mark (Excel's "CSV UTF-8") would otherwise be part of the first column's name.
-  const source = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
-
-  // One pass, so a quoted field may hold a comma, a doubled quote or a line break; blank lines between records are skipped.
-  /** @type {string[][]} */
-  const records = [];
-  /** @type {string[]} */
-  let out = [];
-  let field = "";
-  let quoted = false;
-  let blank = true;
-  const endRecord = () => {
-    out.push(field.trim());
-    if (!blank) records.push(out);
-    out = [];
-    field = "";
-    blank = true;
-  };
-  for (let i = 0; i < source.length; i += 1) {
-    const ch = source[i];
-    if (quoted) {
-      if (ch === '"') {
-        if (source[i + 1] === '"') {
-          field += '"';
-          i += 1;
-        } else {
-          quoted = false;
-        }
-      } else {
-        field += ch;
-      }
-    } else if (ch === '"') {
-      quoted = true;
-      blank = false;
-    } else if (ch === ",") {
-      blank = false;
-      out.push(field.trim());
-      field = "";
-    } else if (ch === "\n") {
-      endRecord();
-    } else {
-      if (ch !== " " && ch !== "\t") blank = false;
-      field += ch;
-    }
-  }
-  endRecord();
+  // site-runtime's reader drops a byte order mark (Excel's "CSV UTF-8") and reads a quoted field holding a comma, a
+  // doubled quote or a line break; fields are trimmed here, and blank lines between records are skipped.
+  const records = parseCsv(text)
+    .map((record) => record.map((field) => field.trim()))
+    .filter((record) => record.length > 1 || record[0] !== "");
 
   const header = records[0];
   if (header === undefined) throw new Error("chart data is empty");

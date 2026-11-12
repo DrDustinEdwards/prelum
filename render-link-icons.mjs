@@ -10,6 +10,8 @@
 // and a time cap on every request, the type read from the bytes rather than the header, and an SVG refused when it holds anything
 // that could run or load (it is also served with a sandboxing policy, so one that slipped through cannot run on the site's origin).
 
+import { crc32 } from "@dustinedwards/site-runtime/encoding";
+
 /** Where the icons are served unless the site says otherwise: `/link-icons/<host>.<ext>`. */
 export const LINK_ICON_PATH = "/link-icons";
 
@@ -168,19 +170,6 @@ async function fetchCapped(url, max, { fetch, timeoutMs }) {
 
 /** The icon is shown at 16 CSS pixels; 32 covers a 2x screen, and a bigger one only costs bytes and decoding. */
 export const LINK_ICON_SIZE = /** @type {const} */ (32);
-
-const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
-  let c = n;
-  for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-  return c >>> 0;
-});
-
-/** @param {Uint8Array} bytes */
-const crc32 = (bytes) => {
-  let c = 0xffffffff;
-  for (const byte of bytes) c = (CRC_TABLE[(c ^ byte) & 0xff] ?? 0) ^ (c >>> 8);
-  return (c ^ 0xffffffff) >>> 0;
-};
 
 /** @param {Uint8Array} bytes */
 const deflate = async (bytes) => {

@@ -3,6 +3,8 @@
 // image, no markdown syntax leaking into the page, and stored HTML rendered by the current pipeline. Regexes over the HTML, as audit.mjs
 // reads it, so the bin runs with no parser installed.
 
+import { htmlAttributes } from "@dustinedwards/site-runtime/html";
+
 import { RENDER_VERSION } from "./render-version.mjs";
 
 /**
@@ -23,12 +25,6 @@ const textOf = (html) =>
     .replace(/<(script|style|pre|code|template|textarea)\b[\s\S]*?<\/\1\s*>/gi, " ")
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/g, " ");
-
-/** @param {string} tag @param {string} name */
-const attribute = (tag, name) => {
-  const match = new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "i").exec(tag);
-  return match ? (match[1] ?? match[2] ?? match[3] ?? "") : null;
-};
 
 /**
  * Findings for every 200 HTML page the crawl fetched. `check` names the checklist item; errors are what a reader gets wrong (a link to
@@ -73,11 +69,11 @@ export function auditContent(pages, { renderVersion = RENDER_VERSION } = {}) {
     }
 
     for (const m of html.matchAll(/<img\b[^>]*>/gi)) {
-      const tag = m[0];
-      const src = attribute(tag, "src") ?? "(no src)";
-      if (attribute(tag, "alt") === null)
+      const attrs = htmlAttributes(m[0].slice(4, -1));
+      const src = attrs.src ?? "(no src)";
+      if (attrs.alt === undefined)
         add("writing-img-alt", "error", `image ${src} has no alt attribute`);
-      if (attribute(tag, "width") === null || attribute(tag, "height") === null)
+      if (attrs.width === undefined || attrs.height === undefined)
         add(
           "writing-img-size",
           "warning",

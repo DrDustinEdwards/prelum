@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.53.0 (2026-11-12)
+
+No change to `render` or RENDER_VERSION. Pins site-runtime v0.143.0 (peer `>=0.143.0`) and devkit v0.39.0; shared-code sweep leftovers.
+
+- **Breaking: `sitemapLocs` is no longer exported from `./markdown-copy`.** Import it from `@dustinedwards/site-runtime/html`, which now holds the one reader of a sitemap's `<loc>` addresses (trimmed, entity-decoded).
+- **`./sitemap`: `sitemapEntries(xml)`**, the `{ loc, lastmod }` of every `<url>` or `<sitemap>` in a sitemap or index. `crawlSite`'s sitemap reader and `recentSitemapUrls` (`./indexnow`) shared a hand-written copy each; both use it now. `recentSitemapUrls` still gives nothing for a sitemap index.
+- `auditPages`/`crawlSite` read attributes and entities with site-runtime's `htmlAttributes` and `unescapeHtml` instead of their own copies. A repeated attribute now keeps its first value (as a browser does), not its last.
+- The writing audit (`prelum-audit` writing checks) reads an image's `alt`, `width` and `height` with `htmlAttributes`: an `alt` written with no value counts as present and empty (as in HTML), and values are entity-decoded.
+- The `:::chart` CSV (`render-chart.mjs`) is read with site-runtime's `parseCsv` (fields trimmed and blank lines skipped here, as before) instead of a second RFC 4180 state machine.
+- Link icons (`render-link-icons.mjs`) take the PNG CRC-32 from site-runtime's `crc32`.
+
 ## 0.52.1 (2026-11-12)
 
 No change to `render` or RENDER_VERSION.
