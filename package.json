@@ -187,10 +187,10 @@
     "specimen": "node specimen/build.mjs && node bin/markdown.mjs --dir specimen/dist --origin https://prelum.dustinedwards.info && site-runtime-headers --site prelum --out specimen/dist/_headers --header \"tdm-reservation: 1\"",
     "specimen:diagrams": "node specimen/diagrams.mjs",
     "deploy:specimen": "npm run specimen && npx --yes wrangler@4.143.0 deploy",
-    "bloat": "devkit-no-bloat --warn-only"
+    "bloat": "devkit-no-bloat"
   },
   "devDependencies": {
-    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.36.0",
+    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.37.1",
     "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.136.0",
     "@fontsource-variable/source-serif-4": "5.3.1",
     "@mermaid-js/mermaid-cli": "12.2.0",
