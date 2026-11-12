@@ -23,12 +23,12 @@ jobs:
       contents: write
       id-token: write
       attestations: write
-    uses: DrDustinEdwards/devkit/.github/workflows/release.yml@652ea5c54236c9025c9b9716f5c6a62bf026050a # v0.36.0
+    uses: DrDustinEdwards/devkit/.github/workflows/release.yml@4d15a99f349921cce8c4aa83786c2c161c867b2d # v0.38.0
 
   # A tag made with the workflow's own token starts no other workflow, so the consumer bumps start from here.
   bump:
     needs: release
     if: needs.release.outputs.created == 'true'
-    uses: DrDustinEdwards/devkit/.github/workflows/bump-consumers.yml@652ea5c54236c9025c9b9716f5c6a62bf026050a # v0.36.0
+    uses: DrDustinEdwards/devkit/.github/workflows/bump-consumers.yml@4d15a99f349921cce8c4aa83786c2c161c867b2d # v0.38.0
     secrets:
       token: ${{ secrets.RENOVATE_TRIGGER_TOKEN }}
