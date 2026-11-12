@@ -1,6 +1,6 @@
 {
   "path": [".", "bin", "specimen"],
-  "format": ["javascript", "css"],
+  "format": ["javascript", "typescript", "css"],
   "ignore": ["**/node_modules/**", "**/dist/**", "test/**", "specimen/expected/**"],
   "gitignore": true,
   "reporters": ["json"],
