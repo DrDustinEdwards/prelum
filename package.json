@@ -190,8 +190,8 @@
     "bloat": "devkit-no-bloat"
   },
   "devDependencies": {
-    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.39.0",
-    "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.143.0",
+    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.40.0",
+    "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.143.1",
     "@fontsource-variable/source-serif-4": "5.3.1",
     "@mermaid-js/mermaid-cli": "12.2.0",
     "@observablehq/plot": "0.6.17",
