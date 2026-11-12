@@ -164,7 +164,58 @@ export function findWideDashes(text) {
  * @returns {string}
  */
 export function plural(count, one, many = `${one}s`, { grouped = false } = {}) {
-  return `${grouped ? count.toLocaleString("en-US") : count} ${count === 1 ? one : many}`;
+  return `${grouped ? formatCount(count) : count} ${count === 1 ? one : many}`;
+}
+
+/**
+ * A count as an American reader writes it: 1,204 (en-US grouping, so the server and every browser agree).
+ *
+ * @param {number} count
+ * @returns {string}
+ */
+export function formatCount(count) {
+  return count.toLocaleString("en-US");
+}
+
+/**
+ * The first character upper case and the rest as written: "monthly" becomes "Monthly", "" stays "".
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function capitalize(text) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
+ * A slug or snake_case value as a title, every word capitalized: "payment-recovery" and "payment_recovery" both become
+ * "Payment Recovery". Runs of `_`, `-` and spaces are one break, and an empty value stays "".
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function titleCase(text) {
+  return text
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map(capitalize)
+    .join(" ");
+}
+
+/**
+ * A snake_case or slug value as a sentence, only its first word capitalized: "insufficient_funds" becomes
+ * "Insufficient funds". Runs of `_`, `-` and spaces are one space, trimmed; an empty value stays "".
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function humanize(text) {
+  return capitalize(
+    text
+      .split(/[\s_-]+/)
+      .filter(Boolean)
+      .join(" "),
+  );
 }
 
 /**

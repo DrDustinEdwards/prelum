@@ -14,7 +14,7 @@ import { htmlToMarkdown, llmsHeaderOf } from "../markdown-copy.mjs";
 import { toMatchExpression } from "../search.mjs";
 import { sitemapDocument } from "../sitemap.mjs";
 import { isSlug, slugify } from "../slug.mjs";
-import { htmlToText, isoDuration } from "../text.mjs";
+import { htmlToText, humanize, isoDuration, titleCase } from "../text.mjs";
 import { absolutizeUrls, cdata, escapeXml, isoDay, rfc822, unescapeXml } from "../xml.mjs";
 
 test("xml: characters XML 1.0 forbids are dropped, tab, newline and astral characters kept", () => {
@@ -182,4 +182,12 @@ test("isSlug holds what slugify makes and refuses the rest", () => {
   for (const bad of ["", "-lead", "trail-", "two--hyphens", "Upper", "under_score", 7, null])
     assert.equal(isSlug(bad), false);
   assert.equal(isSlug("field-notes", { max: 5 }), false);
+});
+
+test("text: titleCase and humanize treat runs of _, - and spaces as one break and drop empty words", () => {
+  assert.equal(titleCase("payment-recovery"), "Payment Recovery");
+  assert.equal(titleCase("retry__card_declined"), "Retry Card Declined");
+  assert.equal(titleCase("-"), "");
+  assert.equal(humanize(" insufficient_funds "), "Insufficient funds");
+  assert.equal(humanize("_"), "");
 });
