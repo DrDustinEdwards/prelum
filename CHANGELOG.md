@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.52.1 (2026-11-12)
+
+No change to `render` or RENDER_VERSION.
+
+- `ARTICLE_IMAGE_RATIOS` (`./schema`) is site-runtime's `./image` constant re-exported, the same `["16x9", "4x3", "1x1"]`, instead of a second definition.
+- `accessibilityStatement`'s HTML copy escapes text with site-runtime's `escapeHtml` instead of its own `esc`. The one difference is that an apostrophe in text the site passes is written `&#39;`, which renders the same.
+
 ## 0.52.0 (2026-11-12)
 
 No change to `render` or RENDER_VERSION.
