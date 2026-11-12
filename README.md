@@ -61,7 +61,7 @@ content, with `llmsResponse`, `sitemapResponse(entries)` and, for a feed, `feedR
 `application/json`, which Cloudflare compresses). `webManifestResponse` is the manifest alone. For a route's `meta`,
 `rootLoaderData(matches)` reads the root loader's data and `privateMeta(title)` is a private page's whole head. A site's own
 `buildMeta` is `defineHead(...)` called with the page's facts, so no site writes one. `./text` also has `hasWideDash(text)`,
-and `readingMinutes(words, images, wordsPerMinute)` takes a site's own pace where it has published one. `plural(count, one, many)`, `normalizeNewlines`, `mdCell` (one GFM table cell) and
+and `readingMinutes(words, images, wordsPerMinute)` takes a site's own pace where it has published one. `plural(count, one, many)`, `formatCount(n)` (en-US grouping), `capitalize`, `titleCase` (a slug or snake_case value, every word capitalized), `humanize` (the same as a sentence), `normalizeNewlines`, `mdCell` (one GFM table cell) and
 `escapeMarkdown` are the small text rules every site wrote inline; `./scholar` has `DOI_PATTERN` and `doiSlug`.
 
 What they hold every site to:
