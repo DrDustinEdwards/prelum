@@ -40,7 +40,7 @@ jobs:
         run: npm run format:check
       - name: The sites' published output, reproduced byte for byte
         run: npm test
-      - name: devkit's no-bloat report against .no-bloat.json (a warning, never a failure)
+      - name: devkit's no-bloat ratchet against .no-bloat.json
         run: npm run bloat
 
   # The specimen at https://prelum.dustinedwards.info, through devkit's shared deploy (worker-deploy.yml), as on the D1
