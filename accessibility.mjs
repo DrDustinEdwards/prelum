@@ -5,6 +5,8 @@
 // Capsomer, and how its links stand apart from text), so each sentence about the build is true of that site. It returns the page as Markdown (for a site that renders with its own
 // pipeline) and as HTML (for a site with no Markdown pipeline); the site puts either in its own layout.
 
+import { escapeHtml } from "@dustinedwards/site-runtime/html";
+
 /** Where the statement lives. */
 export const ACCESSIBILITY_PATH = "/accessibility";
 
@@ -53,15 +55,6 @@ function longDate(day) {
   const month = m ? MONTHS[Number(m[2]) - 1] : undefined;
   if (!m || !month) throw new Error(`accessibilityStatement: date must be YYYY-MM-DD, got ${day}`);
   return `${month} ${Number(m[3])}, ${m[1]}`;
-}
-
-/** Text for an HTML element or a double-quoted attribute. @param {unknown} text */
-function esc(text) {
-  return String(text)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 /**
@@ -119,14 +112,14 @@ export function accessibilityStatement({
     `## Date\n\n${reviewed}`,
   ].join("\n\n");
   const ul = (/** @type {string[]} */ items) =>
-    `<ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`;
+    `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
   const html = [
-    `<p>${esc(intro)}</p>`,
-    `<h2>Conformance status</h2><p>${esc(status)}</p>`,
+    `<p>${escapeHtml(intro)}</p>`,
+    `<h2>Conformance status</h2><p>${escapeHtml(status)}</p>`,
     `<h2>Measures we take</h2>${ul(measuresTaken)}`,
     `<h2>Known limitations</h2>${open.length > 0 ? ul(open) : `<p>${none}</p>`}`,
-    `<h2>Tell us about a problem</h2><p>${report(`<a href="${esc(contact.href)}">${esc(contact.label)}</a>`)}</p>`,
-    `<h2>Date</h2><p>${esc(reviewed)}</p>`,
+    `<h2>Tell us about a problem</h2><p>${report(`<a href="${escapeHtml(contact.href)}">${escapeHtml(contact.label)}</a>`)}</p>`,
+    `<h2>Date</h2><p>${escapeHtml(reviewed)}</p>`,
   ].join("\n");
   return {
     title: "Accessibility statement",

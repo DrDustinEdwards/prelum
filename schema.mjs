@@ -1,3 +1,5 @@
+import { ARTICLE_IMAGE_RATIOS } from "@dustinedwards/site-runtime/image";
+
 import { absoluteUrl, articleDates } from "./head.mjs";
 import { isoDuration } from "./text.mjs";
 import { toDate, unescapeXml } from "./xml.mjs";
@@ -130,8 +132,7 @@ export function imageObject(image) {
   return creditText || creator?.name || copyrightNotice || license ? pageImage(image) : null;
 }
 
-/** The crops Google asks an Article's image in, widest first (https://developers.google.com/search/docs/appearance/structured-data/article). */
-export const ARTICLE_IMAGE_RATIOS = /** @type {const} */ (["16x9", "4x3", "1x1"]);
+export { ARTICLE_IMAGE_RATIOS };
 
 /**
  * An Article's `image` set: one picture cut at each of Google's three ratios (site-runtime's ./image cuts them around the focal
