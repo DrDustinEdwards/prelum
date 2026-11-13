@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.56.0 (2026-11-13)
+
+No change to `render` or RENDER_VERSION. Additive.
+
+- **`./matter`: `matter(source)` and `stringifyMatter(content, data)`**, YAML frontmatter as a whole mapping, in place of gray-matter. gray-matter's js-yaml 3 imports esprima (135 KB in a Worker bundle, which UMD keeps whole) and `eval`s; this reads with the `yaml` package (YAML 1.2 core plus the timestamp tag), so a bare date is still a `Date` and `yes`, `1:30` and `0777` are no longer guessed. The fences, BOM, CRLF and the content after the closing line read as gray-matter's did (all 269 Markdown files of dustinedwards.info parse identically). A duplicate key, unreadable YAML or a header that is not a mapping throws. `yaml` is a new optional peer dependency (2.9.1), needed only by a site that imports `./matter`. `./frontmatter` is unchanged: it reads text blocks with no parser.
+
 ## 0.55.0 (2026-11-13)
 
 No change to `render` or RENDER_VERSION. Additive.
