@@ -7,6 +7,22 @@ export type Split = { front: string | null; body: string; open: string; close: s
 export function splitSource(source: string): Split;
 /** The source again from its parts. */
 export function joinSource(s: Split): string;
+/** A top-level block: its key line and the lines under it. `key` is null for lines before the first key. */
+export type Block = { key: string | null; lines: string[] };
+/**
+ * The frontmatter's top-level blocks in order: a key line and every line after it up to the next key line, cut the way
+ * `setBlock` cuts them.
+ */
+export function blocks(front: string): Block[];
+/** A scalar without its YAML quotes (double quotes read as JSON, single quotes with `''` as `'`); an unquoted value is only trimmed. */
+export function unquote(raw: string): string;
+/**
+ * A value without its trailing YAML comment: a `#` after white space, outside quotes. Quotes count only where YAML starts
+ * one, at the start of a value or inside a flow list.
+ */
+export function withoutComment(raw: string): string;
+/** The items of a flow list's inside (between `[` and `]`), split at the commas outside quotes, not unquoted. */
+export function splitFlow(inside: string): string[];
 /** One top-level key's value as one line of text, or "" when the frontmatter lacks it. */
 export function readKey(front: string | null, key: string): string;
 /** One top-level key's list, flow (`[a, b]`) or block (`- a` lines), unquoted and in order; [] when the frontmatter lacks it. */

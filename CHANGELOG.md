@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.58.0 (2026-11-13)
+
+No change to `render` or RENDER_VERSION. Additive.
+
+- **`./frontmatter`: `blocks`, `unquote`, `withoutComment` and `splitFlow` are exported**, the pieces `readKey`, `readList` and `setBlock` already read with. Capsomer's frontmatter fields kept its own copy of each (`blocksOf`, `unquoteItem`, `outsideQuotes`/`hasComment`, `readFlowItems`) to type a block into a box; it imports these instead once this is released.
+
 ## 0.57.0 (2026-11-13)
 
 No change to `render` or RENDER_VERSION. Additive.
