@@ -1,10 +1,16 @@
 # Changelog
 
-## 0.57.0 (2026-11-13)
+## 0.58.0 (2026-11-13)
 
 No change to `render` or RENDER_VERSION. Additive.
 
 - **`./frontmatter`: `blocks`, `unquote`, `withoutComment` and `splitFlow` are exported**, the pieces `readKey`, `readList` and `setBlock` already read with. Capsomer's frontmatter fields kept its own copy of each (`blocksOf`, `unquoteItem`, `outsideQuotes`/`hasComment`, `readFlowItems`) to type a block into a box; it imports these instead once this is released.
+
+## 0.57.0 (2026-11-13)
+
+No change to `render` or RENDER_VERSION. Additive.
+
+- **Enarratio 0.15 is supported.** The `enarratio` peer range adds `^0.15.0` (0.15.0 adds `enarratio/lite/sparkline`). The suite and the goldens pass unchanged on 0.15.0, which is now the dev dependency, so a chart's rendered HTML does not change.
 
 ## 0.56.0 (2026-11-13)
 

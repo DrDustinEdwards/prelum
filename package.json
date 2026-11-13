@@ -1,6 +1,6 @@
 {
   "name": "@drdustinedwards/site-helpers",
-  "version": "0.57.0",
+  "version": "0.58.0",
   "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt and llms-full.txt, Markdown copy, frontmatter, head tag, JSON-LD, robots.txt, IndexNow, site audit and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, and the markdown pipeline they all render with, once.",
   "license": "MIT",
   "bin": {
@@ -206,7 +206,7 @@
     "@types/node": "24.19.2",
     "axe-core": "4.14.0",
     "capsomer": "github:DrDustinEdwards/capsomer#v0.126.0",
-    "enarratio": "0.13.1",
+    "enarratio": "0.15.0",
     "hast-util-from-html": "2.0.3",
     "hast-util-to-mdast": "10.1.2",
     "hast-util-to-string": "3.0.1",
@@ -246,7 +246,7 @@
     "@shikijs/rehype": "4.5.0",
     "@shikijs/transformers": "4.5.0",
     "axe-core": "4.14.0",
-    "enarratio": "^0.7.3 || ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0",
+    "enarratio": "^0.7.3 || ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^0.15.0",
     "hast-util-from-html": "2.0.3",
     "hast-util-to-mdast": "10.1.2",
     "hast-util-to-string": "3.0.1",
