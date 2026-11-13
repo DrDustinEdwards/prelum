@@ -44,10 +44,12 @@ export function joinSource(s) {
 /** @typedef {{ key: string | null, lines: string[] }} Block */
 
 /**
+ * The frontmatter's top-level blocks in order: a key line and every line after it up to the next key line, cut the way
+ * `setBlock` cuts them. Lines before the first key form a block whose key is null.
  * @param {string} front
  * @returns {Block[]}
  */
-function blocks(front) {
+export function blocks(front) {
   /** @type {Block[]} */
   const out = [];
   // A CRLF source reads like an LF one: a key line with a CR on it is still a key line.
@@ -61,8 +63,11 @@ function blocks(front) {
   return out;
 }
 
-/** @param {string} raw */
-function unquote(raw) {
+/**
+ * A scalar without its YAML quotes: `"a \"b\""` is `a "b"`, `'it''s'` is `it's`; an unquoted value is only trimmed.
+ * @param {string} raw
+ */
+export function unquote(raw) {
   const v = raw.trim();
   if (v.startsWith('"') && v.endsWith('"') && v.length >= 2) {
     try {
@@ -81,7 +86,7 @@ function unquote(raw) {
  * at the start of a value or inside a flow list, so an apostrophe in `don't # note` is just a letter.
  * @param {string} raw
  */
-function withoutComment(raw) {
+export function withoutComment(raw) {
   const v = raw.trim();
   const quoting = /^["'[]/.test(v);
   let quote = "";
@@ -103,7 +108,7 @@ const valueOf = (block) => withoutComment(KEY.exec(block.lines[0] ?? "")?.[2] ??
  * The items of a flow list's inside, split at the commas outside quotes.
  * @param {string} inside
  */
-function splitFlow(inside) {
+export function splitFlow(inside) {
   /** @type {string[]} */
   const items = [];
   let quote = "";
