@@ -15,4 +15,4 @@ Prelum is the family's publishing library (`@drdustinedwards/site-helpers`): the
 
 ## Releases
 
-Every change goes in `CHANGELOG.md`. Sites pin a tag (`github:DrDustinEdwards/prelum#vX.Y.Z`). Merging a version bump tags it and publishes the release (`.github/workflows/release.yml`); nobody tags by hand.
+A pull request adds a changeset (`npx changeset`; `--empty` when there is nothing to release) and never sets the version or writes `CHANGELOG.md`. A release is its own pull request, `npx changeset version` on main, made when a site needs what has merged; merging it is the release (`.github/workflows/release.yml` tags it and publishes it; nobody tags by hand). Sites pin a tag (`github:DrDustinEdwards/prelum#vX.Y.Z`). Dustin's ruling, 2026-11-13.

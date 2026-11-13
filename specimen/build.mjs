@@ -15,6 +15,7 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -582,10 +583,12 @@ ${await outputsSection(version, elements.length + 1, priority)}
     }),
   );
   writeFileSync(join(outDir, `${INDEXNOW_KEY}.txt`), INDEXNOW_KEY);
-  // The page changes with each release, so its lastmod is the date of the release it shows (the CHANGELOG's top entry).
-  const released = /^## [\d.]+ \((\d{4}-\d{2}-\d{2})\)/m.exec(
-    readFileSync(join(ROOT, "CHANGELOG.md"), "utf8"),
-  )?.[1];
+  // The page changes with each release, so its lastmod is the date the CHANGELOG last changed (a release writes its
+  // entry; Changesets' headings carry no date).
+  const released = execFileSync("git", ["log", "-1", "--format=%cs", "--", "CHANGELOG.md"], {
+    cwd: ROOT,
+    encoding: "utf8",
+  }).trim();
   writeFileSync(
     join(outDir, "sitemap.xml"),
     sitemapDocument([
