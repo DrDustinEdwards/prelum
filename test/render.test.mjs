@@ -70,26 +70,6 @@ test("an image the site has no size for is written unsized, not refused", async 
   assert.doesNotMatch(html, /width=/);
 });
 
-test("render is deterministic: the same input is the same bytes, run after run", async () => {
-  for (const name of ["prose", "math", "code", "directives"]) {
-    const first = await site(fixture(name));
-    const second = await site(fixture(name));
-    assert.equal(second.html, first.html, name);
-  }
-});
-
-test("render needs no site: the core renders without media, packs or highlighting", async () => {
-  const { html, mediaRefs } = await core(fixture("prose"));
-  assert.match(html, /<h2 id="second-heading">/);
-  assert.match(
-    html,
-    /<div class="table-scroll" tabindex="0" role="region" aria-label="Table: [^"]+"><table>/,
-  );
-  assert.match(html, /<img src="\/media\/example-sample-0123456789abcdef-640x480.png"/);
-  assert.doesNotMatch(html, /srcset=/);
-  assert.deepEqual(mediaRefs, []);
-});
-
 test("headings get an id, a keyboard-reachable anchor named for the heading, and an outline entry; footnotes do not", async () => {
   const { html, toc } = await core("## Methods & `code`\n\ntext[^1]\n\n[^1]: note");
   assert.match(

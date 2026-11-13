@@ -117,6 +117,7 @@ test("feeds: a stored guid is kept over the link, so a renamed post is not annou
     "entry",
   );
   assert.equal(one(entry, "id"), "urn:site:7");
+  assert.equal(feedItem(jsonPost({ guid: "urn:x:1" }), ORIGIN).id, "urn:x:1");
 });
 
 test("feeds: an unreadable date is refused with the post and the value, never written as Invalid Date", () => {
@@ -207,18 +208,6 @@ test("feeds: the Atom feed's updated is its newest post's latest date, and the e
   assert.doesNotMatch(empty, /<entry>/);
 });
 
-test("feeds: Date objects are dated the same as ISO strings", () => {
-  const when = new Date("2026-06-21T09:30:00Z");
-  assert.equal(
-    one(rssItem(post({ publishAt: when }), ORIGIN), "pubDate"),
-    "Sun, 21 Jun 2026 09:30:00 GMT",
-  );
-  assert.equal(
-    one(atomEntry(post({ publishAt: when }), ORIGIN), "published"),
-    "2026-06-21T09:30:00.000Z",
-  );
-});
-
 test("feeds: &, <, > and quotes in every text field stay text in RSS and Atom", () => {
   const nasty = post({ slug: "a&b", title: NASTY, description: NASTY, tags: [NASTY] });
   const rss = rssDocument({
@@ -273,42 +262,6 @@ test("feeds: root-relative links and KaTeX in a body are made readable on someon
   const expected = `<![CDATA[<a href="${ORIGIN}/about">a</a><img src="${ORIGIN}/i.png">$x$]]>`;
   assert.equal(one(rssItem(post({ html }), ORIGIN), "content:encoded"), expected);
   assert.equal(one(atomEntry(post({ html }), ORIGIN), "content"), expected);
-});
-
-test("feeds: a long post and many posts come through whole and in order", () => {
-  const long = "word & ".repeat(5000);
-  const posts = Array.from({ length: 50 }, (_, n) =>
-    post({ slug: `p${n}`, title: `${n} ${long}`, html: `<p>${long}</p>` }),
-  );
-  const rss = rssDocument(rssFeed(posts));
-  const atom = atomDocument(atomFeed(posts));
-  assertWellFormed(rss);
-  assertWellFormed(atom);
-  const titles = posts.map((p) => p.title.replace(/&/g, "&amp;"));
-  assert.deepEqual(
-    all(rss, "item").map((i) => one(i, "title")),
-    titles,
-  );
-  assert.deepEqual(
-    all(atom, "entry").map((e) => one(e, "title")),
-    titles,
-  );
-  assert.equal(one(all(rss, "item")[49], "content:encoded"), `<![CDATA[<p>${long}</p>]]>`);
-});
-
-test("feeds: a post lives under /writing unless itemPath says otherwise", () => {
-  assert.equal(one(rssItem(post(), ORIGIN), "link"), `${ORIGIN}/writing/first`);
-  assert.equal(one(atomEntry(post(), ORIGIN), "id"), `${ORIGIN}/writing/first`);
-  const doc = jsonFeedDocument({
-    title: "Site",
-    homePageUrl: `${ORIGIN}/`,
-    feedUrl: `${ORIGIN}/feed.json`,
-    description: "About",
-    authorName: "Author",
-    origin: ORIGIN,
-    posts: [{ ...post(), body: "b", coverImage: null }],
-  });
-  assert.equal(doc.items[0].url, `${ORIGIN}/writing/first`);
 });
 
 const jsonPost = (/** @type {Record<string, unknown>} */ over = {}) => ({

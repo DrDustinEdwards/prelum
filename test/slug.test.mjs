@@ -3,10 +3,12 @@ import { test } from "node:test";
 
 import { SLUG_PATTERN, slugify, uniqueSlug } from "../slug.mjs";
 
-test("accents fold, other runs are one hyphen, and a cut ends on a whole word with no trailing hyphen", () => {
+test("accents fold and ß ø æ œ đ ł transliterate, other runs are one hyphen, and a cut ends on a whole word with no trailing hyphen", () => {
   assert.equal(slugify("  Café — Naïve: Ünïcode!  "), "cafe-naive-unicode");
   assert.equal(slugify("The quick brown fox", { max: 10 }), "the-quick");
   assert.equal(slugify("¿?"), "");
+  assert.equal(slugify("Straße Ørsted"), "strasse-orsted");
+  assert.equal(slugify("Æon œuvre Đorđe Łódź"), "aeon-oeuvre-dorde-lodz");
 });
 
 test("uniqueSlug counts past taken slugs, stays within max, and falls back to a random suffix", async () => {

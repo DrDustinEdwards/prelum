@@ -5,7 +5,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { auditPages } from "../audit.mjs";
-import { feedItem } from "../feeds.mjs";
 import { frontmatter } from "../frontmatter.mjs";
 import { absoluteUrl } from "../head.mjs";
 import { recentSitemapUrls, submitIndexNow } from "../indexnow.mjs";
@@ -128,28 +127,6 @@ test("llms: no summary writes no empty quote and no repeated title; newlines fla
     llmsLink({ title: "t", url: "https://e.test/a b_(c)" }),
     "- [t](https://e.test/a%20b_%28c%29)",
   );
-});
-
-test("feeds: the JSON Feed id is the guid when given", () => {
-  const post = {
-    slug: "s",
-    title: "T",
-    body: "b",
-    description: null,
-    publishAt: null,
-    updatedAt: null,
-    coverImage: null,
-    tags: [],
-  };
-  assert.equal(feedItem({ ...post, guid: "urn:x:1" }, "https://e.test").id, "urn:x:1");
-  assert.equal(feedItem(post, "https://e.test").id, "https://e.test/writing/s");
-});
-
-test("slug: a cut ends on a whole word; ß ø æ œ đ ł transliterate", () => {
-  assert.equal(slugify("Straße Ørsted"), "strasse-orsted");
-  assert.equal(slugify("Æon œuvre Đorđe Łódź"), "aeon-oeuvre-dorde-lodz");
-  assert.equal(slugify("alpha beta gamma", { max: 8 }), "alpha");
-  assert.equal(slugify("alpha beta gamma", { max: 10 }), "alpha-beta");
 });
 
 test("sitemap: priority and changefreq are validated, images are capped at 1,000", () => {
