@@ -78,6 +78,10 @@ jobs:
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
+      # indexnow.mjs imports @dustinedwards/site-runtime/encoding, so the dependencies must be installed.
+      - run: npm ci
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
       - name: Tell IndexNow
         run: |
           key=$(sed -n 's/^const INDEXNOW_KEY = "\(.*\)";$/\1/p' specimen/build.mjs)
