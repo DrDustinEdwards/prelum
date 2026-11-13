@@ -8,7 +8,8 @@
  * Needs `htmlparser2`, `hastscript`, `hast-util-to-mdast`, `mdast-util-to-markdown` and `mdast-util-gfm`, optional peers.
  * The page is read with htmlparser2, not parse5 (`hast-util-from-html`): the copy runs inside each site's Worker, the pages
  * are the site's own well-formed HTML, and parse5's spec-exact tree building costs about 30 KiB gzip of every Worker that
- * wraps itself, where htmlparser2 costs a few.
+ * wraps itself, where htmlparser2 costs a few. Only its `Parser` callbacks are used, the same in 10 and 12, so a site whose
+ * Worker already carries htmlparser2 10 (linkedom's) shares that one copy.
  */
 
 import { sitemapLocs } from "@dustinedwards/site-runtime/html";
