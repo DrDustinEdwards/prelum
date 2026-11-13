@@ -31,6 +31,8 @@ export function capitalize(text: string): string;
 export function titleCase(text: string): string;
 /** A slug or snake_case value as a sentence: "insufficient_funds" is "Insufficient funds". */
 export function humanize(text: string): string;
+/** `#abc` or `#aabbcc` as lowercase `#aabbcc`; space around it and a missing `#` are tolerated, anything else passes through lowercased. */
+export function normalizeHex(hex: string): string;
 /** CRLF and lone CR as LF. */
 export function normalizeNewlines(text: string): string;
 /** A value safe for one GFM table cell: pipes escaped, line breaks as spaces, null as empty. */

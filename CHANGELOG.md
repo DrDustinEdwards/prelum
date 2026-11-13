@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.55.0 (2026-11-13)
+
+No change to `render` or RENDER_VERSION. Additive.
+
+- **`./text`: `normalizeHex(hex)`**, `#abc` or `#aabbcc` as lowercase `#aabbcc`, the one copy. The diagram audit (`render-diagram-draw.mjs`) had its own, which expanded a 3-digit hex but neither trimmed space nor accepted a missing `#`; Capsomer's `token-check` had the other. This is Capsomer's behavior (the more tolerant one), and `render-diagram-draw` now imports it. Capsomer drops its copy and imports this.
+
 ## 0.54.0 (2026-11-12)
 
 No change to `render` or RENDER_VERSION. Additive.

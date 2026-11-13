@@ -219,6 +219,18 @@ export function humanize(text) {
 }
 
 /**
+ * `#abc` or `#aabbcc` as lowercase `#aabbcc`. Surrounding space and a missing `#` are tolerated; anything else (an 8-digit hex with
+ * alpha, a name) passes through lowercased, so a caller validates first.
+ *
+ * @param {string} hex
+ * @returns {string}
+ */
+export function normalizeHex(hex) {
+  const h = hex.trim().toLowerCase().replace("#", "");
+  return `#${h.length === 3 ? h.replace(/./g, "$&$&") : h}`;
+}
+
+/**
  * Line endings as LF: CRLF and lone CR (an old Mac file) both become `\n`, so a line count, a front matter split or a
  * comparison reads one file the same way from any editor.
  *
