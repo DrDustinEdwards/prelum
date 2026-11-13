@@ -20,65 +20,65 @@ main {
 /* The NASA manual theme (capsomer/manual.css) in cerulean: the facts in form boxes, the contents as a leader index,
    each element a numbered part, and a letterhead at the foot. */
 .page-head h1 {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-3);
   font-size: clamp(2rem, 1.5rem + 2vw, 3rem);
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tight);
 }
 .page-head .cap-form-boxes {
-  margin-block: 24px 0;
+  margin-block: var(--space-6) 0;
 }
 .page-lead {
   max-inline-size: var(--measure);
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-5);
   color: var(--muted);
 }
 .contents {
-  margin: 40px 0 8px;
+  margin: 40px 0 var(--space-3);
 }
 @media (min-width: 64rem) {
   .contents .cap-leader-index {
     columns: 2;
-    column-gap: 48px;
+    column-gap: var(--space-8);
   }
   .contents .cap-leader-index li {
     break-inside: avoid;
   }
 }
 .outputs > .pair-label {
-  margin-block-start: 24px;
+  margin-block-start: var(--space-6);
 }
 .contents h2 {
-  margin: 0 0 8px;
-  font: var(--weight-heading) 0.75rem / 1.5 var(--mono);
-  letter-spacing: 0.08em;
+  margin: 0 0 var(--space-3);
+  font: var(--weight-heading) var(--mono-size) / var(--leading-normal) var(--mono);
+  letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
 }
 
 .element,
 .outputs {
   margin-block: 56px;
-  padding-block-start: 16px;
-  border-block-start: 4px solid var(--text);
-  scroll-margin-block-start: 16px;
+  padding-block-start: var(--space-5);
+  border-block-start: var(--line-w-heavy) solid var(--text);
+  scroll-margin-block-start: var(--space-5);
 }
 .element-name {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: var(--title-3);
 }
 .element-name a {
   color: inherit;
 }
 .element-meta {
-  margin: 4px 0 16px;
+  margin: var(--space-2) 0 var(--space-5);
   color: var(--muted);
 }
 .element-pack {
   display: inline-block;
-  margin-inline-start: 4px;
-  padding: 0 8px;
-  border: 1px solid var(--text);
-  font: 0.6875rem / 1.7 var(--mono);
-  letter-spacing: 0.06em;
+  margin-inline-start: var(--space-2);
+  padding: 0 var(--space-3);
+  border: var(--line-w) solid var(--text);
+  font: var(--fs-label) / var(--leading-loose) var(--mono);
+  letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
   color: var(--text);
 }
@@ -86,7 +86,7 @@ main {
   display: grid;
   /* minmax(0, ...), or a long line of source widens its column past the page on a phone. */
   grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  gap: var(--space-5);
 }
 @media (min-width: 900px) {
   .pair {
@@ -95,35 +95,35 @@ main {
   }
 }
 .pair-label {
-  margin: 0 0 6px;
-  font: 600 0.6875rem / 1.5 var(--mono);
-  letter-spacing: 0.08em;
+  margin: 0 0 var(--space-2-5);
+  font: var(--weight-semibold) var(--fs-label) / var(--leading-normal) var(--mono);
+  letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
   color: var(--muted);
 }
 .source,
 .code-view {
   margin: 0;
-  padding: 12px;
+  padding: var(--space-4);
   overflow-x: auto;
   background: var(--sunken);
-  border: 1px solid var(--line-strong);
-  font: 0.8125rem / 1.6 var(--mono);
+  border: var(--line-w) solid var(--line-strong);
+  font: var(--fs-detail) / var(--leading-relaxed) var(--mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 .output {
-  padding: 16px;
+  padding: var(--space-5);
   background: var(--surface);
-  border: 1px solid var(--line-strong);
-  border-block-start: 4px solid var(--on);
+  border: var(--line-w) solid var(--line-strong);
+  border-block-start: var(--line-w-heavy) solid var(--on);
   min-inline-size: 0;
 }
 .views {
-  margin-block-start: 12px;
+  margin-block-start: var(--space-4);
 }
 .views details {
-  margin-block-start: 8px;
+  margin-block-start: var(--space-3);
 }
 .views summary {
   min-block-size: 24px;
@@ -131,7 +131,7 @@ main {
   color: var(--accent-text);
 }
 .views details .code-view {
-  margin-block-start: 8px;
+  margin-block-start: var(--space-3);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -169,18 +169,18 @@ main {
 .prose blockquote {
   margin: 1.25em 0;
   padding: 0.25em 0 0.25em 1em;
-  border-inline-start: 3px solid var(--line-strong);
+  border-inline-start: var(--line-w-bar) solid var(--line-strong);
   color: var(--muted);
 }
 .prose hr {
   margin: 2em 0;
   border: 0;
-  border-block-start: 1px solid var(--line-strong);
+  border-block-start: var(--line-w) solid var(--line-strong);
 }
 .prose img {
   max-inline-size: 100%;
   block-size: auto;
-  border-radius: 6px;
+  border-radius: var(--radius-m);
 }
 .prose a.image-link {
   display: inline-block;
@@ -192,8 +192,8 @@ main {
 .prose figcaption {
   margin-block-start: 0.5em;
   color: var(--muted);
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: var(--fs-body);
+  line-height: var(--leading-normal);
 }
 .prose figcaption p {
   margin: 0;
@@ -201,7 +201,7 @@ main {
 .figure-credit {
   display: block;
   margin-block-start: 0.25em;
-  font-size: 0.8125rem;
+  font-size: var(--fs-detail);
 }
 /* A picture whose paragraph became its figure to carry the library's credit. */
 .prose .image-figure {
@@ -225,7 +225,7 @@ main {
   gap: 0.4em;
   margin-block-start: 0.4em;
   font-family: var(--ui);
-  font-size: 0.875rem;
+  font-size: var(--fs-body);
   cursor: pointer;
 }
 .prose .motion-pause input {
@@ -249,7 +249,7 @@ main {
   display: block;
   max-inline-size: 100%;
   block-size: auto;
-  border-radius: 6px;
+  border-radius: var(--radius-m);
 }
 /* The native audio player is 300 px wide by default, wider than a 320 px screen's column (WCAG 1.4.10). */
 .prose audio {
@@ -264,7 +264,7 @@ main {
   place-items: center;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: var(--radius-m);
   background: var(--raised);
   color: var(--text);
   text-decoration: none;
@@ -293,7 +293,7 @@ main {
 }
 .prose .embed-play::before {
   content: "";
-  margin-inline-start: 0.25rem;
+  margin-inline-start: var(--space-2);
   border-block: 0.6rem solid transparent;
   border-inline-start: 1rem solid #fff;
 }
@@ -308,8 +308,8 @@ main {
   background: linear-gradient(transparent, rgb(0 0 0 / 0.75));
   color: #fff;
   font-family: var(--ui);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--fs-body);
+  font-weight: var(--weight-semibold);
 }
 .prose .embed-link:not(:has(img)) .embed-label {
   background: none;
@@ -317,7 +317,7 @@ main {
 }
 @media (forced-colors: active) {
   .prose .embed-play {
-    border: 2px solid ButtonText;
+    border: var(--line-w-thick) solid ButtonText;
   }
   .prose .embed-play::before {
     border-inline-start-color: ButtonText;
@@ -332,11 +332,11 @@ main {
   min-inline-size: 100%;
   border-collapse: collapse;
   font-family: var(--ui);
-  font-size: 0.9375rem;
+  font-size: var(--fs-lead);
 }
 .prose :where(th, td) {
   padding: 0.5em 0.75em;
-  border: 1px solid var(--line);
+  border: var(--line-w) solid var(--line);
   text-align: start;
 }
 .prose th {
@@ -356,10 +356,10 @@ main {
   margin: 1.25em 0;
   padding: 1em;
   overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  border: var(--line-w) solid var(--line);
+  border-radius: var(--radius-m);
   background: var(--sunken);
-  font: 0.875rem / 1.6 var(--mono);
+  font: var(--fs-body) / var(--leading-relaxed) var(--mono);
 }
 /* Shiki writes both themes' colors as custom properties; light-dark() picks by the page's color-scheme, which Capsomer's tokens
    set. The themes' own backgrounds are used because their token colors are tuned to them. */
@@ -387,8 +387,8 @@ main {
 .prose .footnotes {
   margin-block-start: 1.5em;
   padding-block-start: 1em;
-  border-block-start: 1px solid var(--line);
-  font-size: 0.9375rem;
+  border-block-start: var(--line-w) solid var(--line);
+  font-size: var(--fs-lead);
   color: var(--muted);
 }
 .prose [data-footnote-ref],
@@ -399,15 +399,15 @@ main {
 }
 .post-details {
   margin: 1em 0;
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  border: var(--line-w) solid var(--line);
+  border-radius: var(--radius-m);
 }
 .post-details > summary {
   padding: 0.5em 0.75em;
   min-block-size: 24px;
   cursor: pointer;
   font-family: var(--ui);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 .post-details > :not(summary) {
   margin: 0;
@@ -416,9 +416,9 @@ main {
 .post-note {
   margin: 1em 0;
   padding: 0.75em 1em;
-  border-inline-start: 3px solid var(--accent-line);
+  border-inline-start: var(--line-w-bar) solid var(--accent-line);
   background: var(--raised);
-  font-size: 0.9375rem;
+  font-size: var(--fs-lead);
 }
 .post-note p {
   margin: 0;
@@ -426,7 +426,7 @@ main {
 .post-note-kind {
   display: block;
   font-family: var(--ui);
-  font-size: 0.8125rem;
+  font-size: var(--fs-detail);
   color: var(--accent-text);
 }
 .prose .pull-quote {
@@ -445,7 +445,7 @@ main {
   inline-size: 0.85em;
   block-size: 0.85em;
   flex: none;
-  border: 1px solid var(--line-strong);
+  border: var(--line-w) solid var(--line-strong);
   border-radius: 0.15em;
   background: var(--swatch, transparent);
 }
@@ -464,7 +464,7 @@ main {
 .diagram-title {
   margin: 0 0 0.5em;
   font-family: var(--ui);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 .diagram-image {
   display: block;
@@ -488,7 +488,7 @@ main {
 }
 /* The specimen's own diagram, in the page: one SVG, filled from the page's variables, at its natural width. */
 .prose .blog-diagram {
-  margin: 2rem 0;
+  margin: var(--space-7) 0;
   overflow: visible;
 }
 .prose .blog-diagram svg {
@@ -506,8 +506,8 @@ main {
 .prose .blog-diagram .label {
   fill: var(--text);
   font-family: var(--prose);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--fs-detail);
+  font-weight: var(--weight-medium);
 }
 .prose .blog-diagram .connector {
   fill: none;
@@ -528,7 +528,7 @@ main {
    capsomer/enarratio.css carries the same two rules from the release after v0.55.0. */
 .enarratio :is(.enarratio-source, .enarratio-note, .enarratio-caption) :is(a, .enarratio-export) {
   color: var(--accent-text);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   text-decoration: none;
 }
 .enarratio
