@@ -11,7 +11,7 @@ const input = {
   links: "marked",
 };
 
-test("a partial statement lists the site's findings and the hand-check gaps, with a plain date", () => {
+test("a partial statement lists the findings and the hand-check gaps, a full one says none are known, and the date is plain or refused", () => {
   const { body, title } = accessibilityStatement({
     ...input,
     limitations: ["The map has no text alternative."],
@@ -22,9 +22,7 @@ test("a partial statement lists the site's findings and the hand-check gaps, wit
   for (const item of HAND_CHECK_LIMITATIONS) assert.ok(body.includes(item));
   assert.match(body, /\[the contact page\]\(\/contact\)/);
   assert.match(body, /last reviewed on October 31, 2026\./);
-});
-
-test("a full statement with no findings says none are known; a bad date is refused", () => {
+  // A full statement with no findings says none are known; a bad date is refused.
   assert.match(
     accessibilityStatement({ ...input, conformance: "full" }).body,
     /conforms to WCAG 2\.2 level AA\./,

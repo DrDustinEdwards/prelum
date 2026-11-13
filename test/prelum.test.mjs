@@ -48,16 +48,13 @@ function entriesOf(/** @type {string} */ xml, /** @type {RegExp} */ lastmodPatte
   });
 }
 
-test("sitemap: a compact document is reproduced byte for byte", () => {
+test("sitemap: a compact document, with and without its trailing newline, is reproduced byte for byte", () => {
   const xml = fixture("sitemap-compact.xml");
   assert.equal(sitemapDocument(entriesOf(xml, /^\d{4}-\d{2}-\d{2}$/)), xml);
-});
-
-test("sitemap: a compact document with no trailing newline is reproduced byte for byte", () => {
-  const xml = fixture("sitemap-compact-no-newline.xml");
+  const bare = fixture("sitemap-compact-no-newline.xml");
   assert.equal(
-    sitemapDocument(entriesOf(xml, /^\d{4}-\d{2}-\d{2}$/), { trailingNewline: false }),
-    xml,
+    sitemapDocument(entriesOf(bare, /^\d{4}-\d{2}-\d{2}$/), { trailingNewline: false }),
+    bare,
   );
 });
 
@@ -315,15 +312,13 @@ test("search: only the last term takes the prefix star, and nothing to match is 
   assert.equal(toMatchExpression({ terms: [] }), null);
 });
 
-test("search: fusion uses k = 60 and adds a document's contributions from every list", () => {
+test("search: fusion uses k = 60, or the k passed, and adds a document's contributions from every list", () => {
   assert.equal(RRF_K, 60);
   const [top] = fuse([[{ uid: "a" }, { uid: "b" }], [{ uid: "b" }]]);
   assert.equal(top.item.uid, "b");
   assert.equal(top.score, 1 / (60 + 2) + 1 / (60 + 1));
   assert.deepEqual(top.ranks, [2, 1]);
-});
-
-test("search: the fusion constant is the argument's, not a baked-in one", () => {
+  // The constant is the argument's when one is passed, not a baked-in one.
   const [only] = fuse([[{ uid: "a" }]], 10);
   assert.equal(only.score, 1 / 11);
 });
