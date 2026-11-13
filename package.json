@@ -191,10 +191,12 @@
     "specimen": "node specimen/build.mjs && node bin/markdown.mjs --dir specimen/dist --origin https://prelum.dustinedwards.info && site-runtime-headers --site prelum --out specimen/dist/_headers --header \"tdm-reservation: 1\"",
     "specimen:diagrams": "node specimen/diagrams.mjs",
     "deploy:specimen": "npm run specimen && npx --yes wrangler@4.143.0 deploy",
-    "bloat": "devkit-no-bloat"
+    "bloat": "devkit-no-bloat",
+    "changeset": "changeset"
   },
   "devDependencies": {
-    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.45.0",
+    "@changesets/cli": "3.0.3",
+    "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.48.0",
     "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.148.1",
     "@mermaid-js/mermaid-cli": "12.2.0",
     "@observablehq/plot": "0.6.17",
