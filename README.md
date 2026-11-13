@@ -247,7 +247,7 @@ stay, links become absolute), written by `markdownPage` with the canonical link.
 wrapper builds it from llms.txt's header and the sitemap's pages (at most `llmsFull`, 200 by default; noindex pages left out)
 and keeps it in the Cache API for an hour. A site's own `.md` route, its own negotiation and its own llms-full.txt win: the
 wrapper fills in only what the site answers 404 (or HTML) for. `skip(path)` leaves pages out, and `llmsFullSkip(path)` keeps pages that have a copy out of llms-full.txt (a catalog of records, say). `siteMarkdown: false` says the site answers no `.md` path itself, so a copy is made without first asking the site (which a site that counts its 404s would count). It needs the optional peers
-`hast-util-from-html`, `hast-util-to-mdast`, `mdast-util-to-markdown` and `mdast-util-gfm` (about 80 KB gzipped).
+`htmlparser2`, `hastscript`, `hast-util-to-mdast`, `mdast-util-to-markdown` and `mdast-util-gfm` (about 63 KB gzipped in a Worker).
 
 A static site does the same at build time, so its Worker carries no HTML parser: `prelum-markdown --dir dist --origin
 https://example.com` (or `writeMarkdownCopies` from `./markdown-files`) writes each page's copy beside it (`about.html` and
