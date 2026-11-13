@@ -1,6 +1,6 @@
 {
   "name": "@drdustinedwards/site-helpers",
-  "version": "0.54.0",
+  "version": "0.56.0",
   "description": "The XML escaping, RSS/Atom/JSON feed, sitemap, llms.txt and llms-full.txt, Markdown copy, frontmatter, head tag, JSON-LD, robots.txt, IndexNow, site audit and FTS5 search helpers the Dustin Edwards sites each wrote for themselves, and the markdown pipeline they all render with, once.",
   "license": "MIT",
   "bin": {
@@ -68,6 +68,10 @@
     "./frontmatter": {
       "types": "./frontmatter.d.mts",
       "default": "./frontmatter.mjs"
+    },
+    "./matter": {
+      "types": "./matter.d.mts",
+      "default": "./matter.mjs"
     },
     "./head": {
       "types": "./head.d.mts",
@@ -192,7 +196,6 @@
   "devDependencies": {
     "@dustinedwards/devkit": "github:DrDustinEdwards/devkit#v0.45.0",
     "@dustinedwards/site-runtime": "github:DrDustinEdwards/site-runtime#v0.148.1",
-    "@fontsource-variable/source-serif-4": "5.3.1",
     "@mermaid-js/mermaid-cli": "12.2.0",
     "@observablehq/plot": "0.6.17",
     "@resvg/resvg-js": "2.6.2",
@@ -202,12 +205,13 @@
     "@types/mdast": "4.0.4",
     "@types/node": "24.19.2",
     "axe-core": "4.14.0",
-    "capsomer": "github:DrDustinEdwards/capsomer#v0.117.0",
+    "capsomer": "github:DrDustinEdwards/capsomer#v0.126.0",
     "enarratio": "0.13.1",
     "hast-util-from-html": "2.0.3",
     "hast-util-to-mdast": "10.1.2",
     "hast-util-to-string": "3.0.1",
     "katex": "0.16.47",
+    "lightningcss": "1.33.0",
     "linkedom": "0.18.14",
     "mdast-util-directive": "3.1.1",
     "mdast-util-gfm": "3.1.0",
@@ -232,7 +236,8 @@
     "shiki": "4.5.0",
     "typescript": "5.9.3",
     "unified": "11.0.5",
-    "unist-util-visit": "5.2.0"
+    "unist-util-visit": "5.2.0",
+    "yaml": "2.9.1"
   },
   "peerDependencies": {
     "@dustinedwards/site-runtime": ">=0.143.0",
@@ -265,7 +270,8 @@
     "remark-smartypants": "3.0.3",
     "shiki": "4.5.0",
     "unified": "11.0.5",
-    "unist-util-visit": "5.2.0"
+    "unist-util-visit": "5.2.0",
+    "yaml": "2.9.1"
   },
   "peerDependenciesMeta": {
     "@mermaid-js/mermaid-cli": {
@@ -356,6 +362,9 @@
       "optional": true
     },
     "unist-util-visit": {
+      "optional": true
+    },
+    "yaml": {
       "optional": true
     }
   },

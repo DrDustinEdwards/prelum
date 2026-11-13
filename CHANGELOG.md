@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.56.0 (2026-11-13)
+
+No change to `render` or RENDER_VERSION. Additive.
+
+- **`./matter`: `matter(source)` and `stringifyMatter(content, data)`**, YAML frontmatter as a whole mapping, in place of gray-matter. gray-matter's js-yaml 3 imports esprima (135 KB in a Worker bundle, which UMD keeps whole) and `eval`s; this reads with the `yaml` package (YAML 1.2 core plus the timestamp tag), so a bare date is still a `Date` and `yes`, `1:30` and `0777` are no longer guessed. The fences, BOM, CRLF and the content after the closing line read as gray-matter's did (all 269 Markdown files of dustinedwards.info parse identically). A duplicate key, unreadable YAML or a header that is not a mapping throws. `yaml` is a new optional peer dependency (2.9.1), needed only by a site that imports `./matter`. `./frontmatter` is unchanged: it reads text blocks with no parser.
+
+## 0.55.0 (2026-11-13)
+
+No change to `render` or RENDER_VERSION. Additive.
+
+- **`./text`: `normalizeHex(hex)`**, `#abc` or `#aabbcc` as lowercase `#aabbcc`, the one copy. The diagram audit (`render-diagram-draw.mjs`) had its own, which expanded a 3-digit hex but neither trimmed space nor accepted a missing `#`; Capsomer's `token-check` had the other. This is Capsomer's behavior (the more tolerant one), and `render-diagram-draw` now imports it. Capsomer drops its copy and imports this.
+- **Specimen builds with `capsomer/build`**: `specimen/build.mjs` drops its own `inlineCss`, stylesheet assembly and Rolldown bundler for Capsomer's `capsomerStylesheet`, `copyFonts` and `bundleScript`, and takes Source Serif 4 from Capsomer's fonts (the latin core file is the one preloaded), so `@fontsource-variable/source-serif-4` goes. Capsomer v0.126.0 (dev dependency) needs `lightningcss` as a peer, added as a dev dependency. No change to the package's own modules.
+
 ## 0.54.0 (2026-11-12)
 
 No change to `render` or RENDER_VERSION. Additive.
