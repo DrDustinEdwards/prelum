@@ -5,11 +5,15 @@
  * llms-full.txt built from its sitemap. A site that serves its own copy of a page, or its own llms-full.txt, keeps it: the
  * wrapper only fills in what the site answers 404 or HTML for.
  *
- * Needs `hast-util-from-html`, `hast-util-to-mdast`, `mdast-util-to-markdown` and `mdast-util-gfm`, optional peers.
+ * Needs `htmlparser2`, `hastscript`, `hast-util-to-mdast`, `mdast-util-to-markdown` and `mdast-util-gfm`, optional peers.
+ * The page is read with htmlparser2, not parse5 (`hast-util-from-html`): the copy runs inside each site's Worker, the pages
+ * are the site's own well-formed HTML, and parse5's spec-exact tree building costs about 30 KiB gzip of every Worker that
+ * wraps itself, where htmlparser2 costs a few.
  */
 
 import { sitemapLocs } from "@dustinedwards/site-runtime/html";
-import { fromHtml } from "hast-util-from-html";
+import { h } from "hastscript";
+import { Parser } from "htmlparser2";
 import { toMdast } from "hast-util-to-mdast";
 import { gfmToMarkdown } from "mdast-util-gfm";
 import { toMarkdown } from "mdast-util-to-markdown";
@@ -48,6 +52,63 @@ const DROPPED = new Set([
 ]);
 
 /** @typedef {import("hast").Root | import("hast").Element} Parent */
+
+/** Elements with no end tag, so never a parent. */
+const VOID = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "source",
+  "track",
+  "wbr",
+]);
+
+/**
+ * A page's HTML as a hast tree: htmlparser2 reads it (entities decoded, tags it implies closed) and hastscript turns each
+ * element's attributes into hast properties, as `hast-util-from-html` would.
+ * @param {string} html
+ * @returns {import("hast").Root}
+ */
+function fromHtml(html) {
+  /** @type {import("hast").Root} */
+  const root = { type: "root", children: [] };
+  /** @type {Parent[]} */
+  const open = [root];
+  const parent = () => /** @type {Parent} */ (open.at(-1));
+  const parser = new Parser(
+    {
+      onopentag(name, attributes) {
+        const element = h(name, attributes);
+        parent().children.push(element);
+        if (!VOID.has(name)) open.push(element);
+      },
+      onclosetag(name) {
+        if (VOID.has(name)) return;
+        const at = open.findLastIndex((node) => node.type === "element" && node.tagName === name);
+        if (at > 0) open.length = at;
+      },
+      ontext(value) {
+        const siblings = parent().children;
+        const last = siblings.at(-1);
+        if (last?.type === "text") last.value += value;
+        else siblings.push({ type: "text", value });
+      },
+      oncomment(value) {
+        parent().children.push({ type: "comment", value });
+      },
+    },
+    { decodeEntities: true, lowerCaseTags: true, lowerCaseAttributeNames: true },
+  );
+  parser.end(html);
+  return root;
+}
 
 /** @param {import("hast").Element} node @param {string} name */
 const prop = (node, name) => {
