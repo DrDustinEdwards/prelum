@@ -23,9 +23,9 @@ import { integrityHash } from "@dustinedwards/site-runtime/csp";
 import { securityTxt } from "@dustinedwards/site-runtime/security-txt";
 import { familyFooterHtml } from "capsomer/behavior/family-footer";
 import { letterheadHtml } from "capsomer/behavior/site-header";
+import { bundleScript, capsomerStylesheet, copyFonts } from "capsomer/build";
 import { capsomerTheme } from "capsomer/enarratio-theme";
 import { stylesheet } from "enarratio";
-import { rolldown } from "rolldown";
 
 import { absoluteUrl, defineHead, headHtml } from "../head.mjs";
 import { graph, imageObject, jsonLd, thing, videoObject, website } from "../schema.mjs";
@@ -74,70 +74,24 @@ const STATEMENT_LIMITATIONS = [];
 /** @param {string} specifier a package file, resolved from this repository's node_modules */
 const packageFile = (specifier) => require.resolve(specifier);
 
-/**
- * Capsomer's stylesheets import their parts; the specimen serves one file, so each import is read in place, wrapped in its
- * layer when it names one.
- *
- * @param {string} file
- * @param {Set<string>} [seen]
- * @returns {string}
- */
-function inlineCss(file, seen = new Set()) {
-  if (seen.has(file)) return "";
-  seen.add(file);
-  return readFileSync(file, "utf8").replace(
-    /@import\s+"([^"]+)"(?:\s+layer\(([\w.-]+)\))?\s*;/g,
-    (_, path, layer) => {
-      const inner = inlineCss(join(dirname(file), path), seen);
-      return layer ? `@layer ${layer} {\n${inner}\n}` : inner;
-    },
-  );
-}
-
-/** Source Serif 4, the prose face, latin only: the specimen is in English. Capsomer's fonts.css has the family's other faces. */
-const SERIF = ["normal", "italic"].map((style) => ({
-  file: `@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-${style}.woff2`,
-  style,
-}));
-
 /** @param {string} outDir */
 function writeStyles(outDir) {
-  // Capsomer's fonts.css names its files as ../fonts/ from css/; site.css sits beside fonts/.
-  copyTree(join(dirname(packageFile("capsomer/fonts.css")), "..", "fonts"), join(outDir, "fonts"));
-  const faces = SERIF.map((font) => {
-    const name = font.file.split("/").pop() ?? "";
-    copyFileSync(packageFile(font.file), join(outDir, "fonts", name));
-    return `@font-face {\n  font-family: "Source Serif 4";\n  font-style: ${font.style};\n  font-weight: 200 900;\n  font-display: swap;\n  src: url("fonts/${name}") format("woff2");\n}`;
-  });
-  const capsomer = dirname(packageFile("capsomer/tokens.css"));
-  const css = [
-    "/* Built by specimen/build.mjs: Capsomer's fonts, tokens, the specimen's family, base, prose, manual and chart frame styles, Enarratio's chart styles in Capsomer's theme, and specimen/site.css. */",
-    inlineCss(packageFile("capsomer/fonts.css")).replaceAll("../fonts/", "fonts/"),
-    ...faces,
-    inlineCss(join(capsomer, "tokens.css")),
-    inlineCss(join(capsomer, "base.css")),
-    // The link system's kinds (away, file, jump, footnote and the rest), after base.css as link.md asks.
-    inlineCss(join(capsomer, "..", "components", "link", "link.css")),
-    inlineCss(join(capsomer, "prose.css")),
-    // The NASA manual theme every dustinedwards.info public page shares, in the specimen's own family.
-    `@layer cap.tokens {\n${inlineCss(join(capsomer, "..", "tokens", `family-${FAMILY}.css`))}\n}`,
-    inlineCss(join(capsomer, "..", "components", "manual", "manual.css")),
-    // The theme button in the letterhead, and the tooltip (a popover) that names it.
-    inlineCss(join(capsomer, "..", "components", "popover", "popover.css")),
-    inlineCss(join(capsomer, "..", "components", "theme-switch", "theme-switch.css")),
-    // The family letterhead at the top of every page, pinned while it scrolls.
-    inlineCss(join(capsomer, "..", "components", "site-header", "site-header.css")),
-    // The family footer every dustinedwards.info site ends with, and the color marks of its Network strip.
-    inlineCss(join(capsomer, "..", "tokens", "family-marks.css")),
-    inlineCss(join(capsomer, "..", "components", "family-footer", "family-footer.css")),
-    // The frame every :::chart sits in (Capsomer 0.53).
-    inlineCss(join(capsomer, "..", "components", "chart-frame", "chart-frame.css")),
+  // Capsomer's fonts, tokens, the specimen's family, base, the link system and prose, then the NASA manual theme every
+  // dustinedwards.info public page shares, the theme button and its tip, the letterhead, the family footer and the
+  // frame every :::chart sits in (capsomer/build), then Enarratio's chart styles in Capsomer's theme and site.css.
+  copyFonts(join(outDir, "fonts"));
+  const css = capsomerStylesheet({
+    family: FAMILY,
+    prose: true,
+    parts: ["manual", "popover", "theme-switch", "site-header", "family-footer", "chart-frame"],
     // Capsomer's tokens.css also maps the --enarratio-* properties onto its tokens (css/enarratio.css). The two agree, being
     // generated from the same tokens; Enarratio 0.1.0-alpha.8 has no color-free base stylesheet, so its full one is used.
-    stylesheet(capsomerTheme),
-    readFileSync(join(HERE, "site.css"), "utf8"),
-  ].join("\n\n");
-  writeFileSync(join(outDir, "site.css"), css);
+    after: [stylesheet(capsomerTheme), readFileSync(join(HERE, "site.css"), "utf8")],
+  });
+  writeFileSync(
+    join(outDir, "site.css"),
+    `/* Built by specimen/build.mjs with capsomer/build, then specimen/site.css. */\n${css}`,
+  );
 
   // KaTeX's stylesheet names its fonts relative to itself. Only the woff2 files are copied: every browser that reads the
   // stylesheet's first src takes them. KaTeX ships font-display: block, which hides the math for up to three seconds;
@@ -194,25 +148,13 @@ function copyDiagrams(outDir, diagrams) {
 }
 
 /**
- * Bundles a script of specimen/browser for the browser, Capsomer's behavior inlined. Lazy imports (Enarratio's sound,
- * loaded on Play) are inlined too, so each script stays one file under the page's script hashes.
+ * Bundles a script of specimen/browser for the browser, Capsomer's behavior and every lazy import inlined (Enarratio's
+ * sound, loaded on Play), so each script stays one file under the page's script hashes.
  *
  * @param {string} file
  * @param {"esm" | "iife"} format
  */
-async function bundle(file, format) {
-  const built = await rolldown({
-    input: join(HERE, "browser", file),
-    platform: "browser",
-    logLevel: "silent",
-  });
-  const { output } = await built.generate({ format, minify: true, inlineDynamicImports: true });
-  await built.close();
-  const [chunk] = output;
-  if (output.length !== 1 || chunk?.type !== "chunk")
-    throw new Error(`${file}: expected one chunk`);
-  return chunk.code;
-}
+const bundle = (file, format) => bundleScript(join(HERE, "browser", file), { format });
 
 /** @param {string} from @param {string} to */
 function copyTree(from, to) {

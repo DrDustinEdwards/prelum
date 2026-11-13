@@ -10,6 +10,7 @@ import { renderMermaid } from "@mermaid-js/mermaid-cli";
 import { parseHTML } from "linkedom";
 import puppeteer from "puppeteer";
 
+import { normalizeHex } from "./text.mjs";
 import { DIAGRAM_SIZES_FILE, DIAGRAM_THEMES, diagramAssetPath } from "./render-diagram.mjs";
 
 /**
@@ -271,12 +272,6 @@ const NON_COLOR_VALUES = new Set([
   "unset",
   "revert",
 ]);
-
-/** @param {string} hex */
-function normalizeHex(hex) {
-  const h = hex.toLowerCase();
-  return h.length === 4 ? `#${h[1]}${h[1]}${h[2]}${h[2]}${h[3]}${h[3]}` : h;
-}
 
 /**
  * By brace depth, not splitting on `}`: Mermaid's stylesheet opens with nested at-rules. Unbalanced braces throw: a stray
