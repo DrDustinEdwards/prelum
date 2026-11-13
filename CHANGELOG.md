@@ -5,6 +5,7 @@
 No change to `render` or RENDER_VERSION. Additive.
 
 - **`./text`: `normalizeHex(hex)`**, `#abc` or `#aabbcc` as lowercase `#aabbcc`, the one copy. The diagram audit (`render-diagram-draw.mjs`) had its own, which expanded a 3-digit hex but neither trimmed space nor accepted a missing `#`; Capsomer's `token-check` had the other. This is Capsomer's behavior (the more tolerant one), and `render-diagram-draw` now imports it. Capsomer drops its copy and imports this.
+- **Specimen builds with `capsomer/build`**: `specimen/build.mjs` drops its own `inlineCss`, stylesheet assembly and Rolldown bundler for Capsomer's `capsomerStylesheet`, `copyFonts` and `bundleScript`, and takes Source Serif 4 from Capsomer's fonts (the latin core file is the one preloaded), so `@fontsource-variable/source-serif-4` goes. Capsomer v0.126.0 (dev dependency) needs `lightningcss` as a peer, added as a dev dependency. No change to the package's own modules.
 
 ## 0.54.0 (2026-11-12)
 
@@ -69,7 +70,6 @@ Shared-code audit item 49, first part. No change to `render` or RENDER_VERSION.
 ## Unreleased
 
 - **The specimen enforces Trusted Types.** site-runtime 0.132.0 (dev dependency) moves `require-trusted-types-for 'script'` from the specimen's Report-Only policy into its enforced one (`site-runtime-headers` writes it into `_headers`). No change to the library or RENDER_VERSION.
-- **Specimen builds with `capsomer/build`**: `specimen/build.mjs` drops its own `inlineCss`, stylesheet assembly and Rolldown bundler for Capsomer's `capsomerStylesheet`, `copyFonts` and `bundleScript`, and takes Source Serif 4 from Capsomer's fonts (the latin core file is the one preloaded), so `@fontsource-variable/source-serif-4` goes. Capsomer v0.123.0 (dev dependency) needs `lightningcss` as a peer, added as a dev dependency. No change to the package's own modules.
 
 ## 0.47.0 (2026-11-11)
 
