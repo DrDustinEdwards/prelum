@@ -348,7 +348,7 @@ test("a canonical must be on the production origin, and a sitemap page's canonic
   ]);
 });
 
-test("the crawl follows a sitemap index and each redirect hop, checks unlisted links by status, skips nofollow links, and records a failed fetch", async () => {
+test("the crawl follows a sitemap index and each redirect hop, checks unlisted links, flags an indexable one the sitemap leaves out, skips nofollow links, and records a failed fetch", async () => {
   /** @type {Record<string, () => Response>} */
   const site = {
     "/sitemap.xml": () =>
@@ -361,8 +361,19 @@ test("the crawl follows a sitemap index and each redirect hop, checks unlisted l
       ),
     "/": () =>
       new Response(
-        `${page("/", "Home", "home")}<a href="/missing">m</a><a href="/moved">v</a><a href="/admin" rel="nofollow">a</a></body></html>`,
+        `${page("/", "Home", "home")}<a href="/missing">m</a><a href="/moved">v</a><a href="/admin" rel="nofollow">a</a><a href="/unlisted">u</a><a href="/search">s</a></body></html>`,
         { headers: { "content-type": "text/html" } },
+      ),
+    "/unlisted": () =>
+      new Response(`${page("/unlisted", "Unlisted", "unlisted")}</body></html>`, {
+        headers: { "content-type": "text/html" },
+      }),
+    "/search": () =>
+      new Response(
+        `<html><head><meta name="robots" content="noindex"></head><body></body></html>`,
+        {
+          headers: { "content-type": "text/html" },
+        },
       ),
     "/old": () => new Response(null, { status: 301, headers: { location: "/older" } }),
     "/older": () => new Response(null, { status: 301, headers: { location: "/" } }),
@@ -380,13 +391,11 @@ test("the crawl follows a sitemap index and each redirect hop, checks unlisted l
     const { pathname } = new URL(String(input));
     methods.push(`${init?.method ?? "GET"} ${pathname}`);
     if (pathname === "/down") throw new Error("connection reset");
-    if (pathname === "/missing" && init?.method === "HEAD")
-      return new Response(null, { status: 405 });
     return site[pathname]?.() ?? new Response("not found", { status: 404 });
   };
   const { pages, sitemap } = await crawlSite({ origin: ORIGIN, fetch: fake });
   assert.deepEqual(sitemap, [`${ORIGIN}/`, `${ORIGIN}/old`, `${ORIGIN}/down`]);
-  assert.ok(methods.includes("HEAD /moved") && methods.includes("GET /missing"));
+  assert.ok(methods.includes("GET /moved") && methods.includes("GET /missing"));
   assert.ok(!methods.some((each) => each.endsWith(" /admin")));
   assert.deepEqual(
     pages.find((each) => each.url === `${ORIGIN}/down`),
@@ -399,6 +408,7 @@ test("the crawl follows a sitemap index and each redirect hop, checks unlisted l
     `link-broken ${ORIGIN}/`,
     `link-redirect ${ORIGIN}/`,
     `redirect-chain ${ORIGIN}/old`,
+    `sitemap-missing ${ORIGIN}/unlisted`,
     `sitemap-redirect ${ORIGIN}/old`,
   ]);
   assert.equal((await crawlSite({ origin: ORIGIN, fetch: fake, maxPages: 2 })).pages.length, 2);
@@ -613,6 +623,7 @@ test("the audit reads robots.txt as Googlebot does and flags a head a mobile or 
           ],
         },
         { "@type": "VideoObject", name: "V" },
+        { "@type": "Dataset", name: "D" },
       ],
     },
   )}</script></head><body></body></html>`;
@@ -628,6 +639,7 @@ test("the audit reads robots.txt as Googlebot does and flags a head a mobile or 
     "canonical-multiple",
     "h1-missing",
     "html-lang-missing",
+    "jsonld-incomplete",
     "jsonld-incomplete",
     "jsonld-incomplete",
     "og-url-mismatch",
