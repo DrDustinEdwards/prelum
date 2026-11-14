@@ -4,6 +4,9 @@ The shared publishing code for the Dustin Edwards sites (ruling capsid/rulings/s
 content into the documents it publishes. This repository was `DrDustinEdwards/site-helpers` and was renamed, keeping its history and
 tags. The package is still named `@drdustinedwards/site-helpers` and is installed by tag:
 `"@drdustinedwards/site-helpers": "github:DrDustinEdwards/prelum#v0.3.1"`.
+A site installs `@dustinedwards/site-runtime` (0.143.0 or later) beside it, which every site already does. It is not a
+peer dependency: site-runtime is not on the npm registry, so npm cannot resolve a peer range for it and a lockfile update
+that moves both fails with ERESOLVE.
 
 Pure ES modules, Web-standard only, so the same file runs in a Worker and in Node. The helpers have no dependencies; the markdown pipeline
 needs the unified family, KaTeX and parse5, which are optional peers: a site that only builds feeds installs none of them.
