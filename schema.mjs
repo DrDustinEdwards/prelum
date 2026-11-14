@@ -577,6 +577,48 @@ export function podcastEpisode(episode) {
   });
 }
 
+/**
+ * @typedef {object} DatasetInput
+ * @property {string} name what the data holds, not the page's short title
+ * @property {string} description Google wants 50 to 5,000 characters
+ * @property {string} url the page that shows the data
+ * @property {string} [id]
+ * @property {string | SchemaNode} [creator] a person's name, or their node
+ * @property {string} [license] a URL
+ * @property {boolean} [isAccessibleForFree] true only when the data is public with no sign-in
+ * @property {ReadonlyArray<string>} [variableMeasured] what the data counts, as its columns say
+ * @property {string} [temporalCoverage] ISO 8601, a date or an interval such as `1854-08-19/1854-09-30`
+ * @property {string | SchemaNode} [spatialCoverage] a place's name, or its node
+ * @property {ReadonlyArray<string | SchemaNode>} [citation] the sources the data was taken from
+ * @property {ReadonlyArray<{ contentUrl: string, encodingFormat: string }>} [distribution] the downloads
+ * @property {Date | number | string | null} [modified]
+ */
+
+/**
+ * A Dataset (https://developers.google.com/search/docs/appearance/structured-data/dataset): `name` and `description` are
+ * what Google requires, so they are required here; every other field is written only when given.
+ *
+ * @param {DatasetInput} data
+ * @returns {SchemaNode}
+ */
+export function dataset(data) {
+  return thing("Dataset", {
+    "@id": data.id,
+    name: data.name,
+    description: data.description,
+    url: data.url,
+    creator: named(data.creator, "Person"),
+    license: data.license,
+    isAccessibleForFree: data.isAccessibleForFree,
+    variableMeasured: data.variableMeasured ? [...data.variableMeasured] : undefined,
+    temporalCoverage: data.temporalCoverage,
+    spatialCoverage: named(data.spatialCoverage, "Place"),
+    citation: data.citation ? [...data.citation] : undefined,
+    distribution: data.distribution?.map((file) => ({ "@type": "DataDownload", ...file })),
+    dateModified: articleDates({ modified: data.modified }).modified,
+  });
+}
+
 // abstract is still a ScholarlyArticle: hiding abstracts on a site is editorial, not a claim about them.
 /** @type {Record<string, string>} */
 const SCHOLARLY_TYPES = {

@@ -155,6 +155,28 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
     if (page.html === undefined) continue;
     const { html } = page;
     const head = headOf(html);
+    // Every robots meta counts, as Google combines them, and the header with them.
+    const robots = [
+      ...tags(head, "meta")
+        .filter((attrs) => attrs.name?.toLowerCase() === "robots")
+        .map((attrs) => attrs.content ?? ""),
+      header(page.headers, "x-robots-tag"),
+    ].join(" ");
+    const { pathname, search } = new URL(url);
+    // A page the site links to but does not list: a noindex or robots-disallowed one is meant to stay out of search, so
+    // nothing more is asked of it; any other is a page search engines find only by following links. A URL with a query
+    // (a list's second page, a filter) is a variant of a page, not one a sitemap must name.
+    if (!inSitemap(page)) {
+      if (/noindex/i.test(robots) || (googlebot && !robotsAllows(googlebot, pathname + search)))
+        continue;
+      if (sitemap && sitemap.length > 0 && !search && selfCanonical(head, url))
+        add(
+          url,
+          "sitemap-missing",
+          "error",
+          "an indexable page the site links to is not in the sitemap, so search engines find it only by following links",
+        );
+    }
 
     if (!/<html\b[^>]*\slang\s*=\s*["']?[a-z]/i.test(html))
       add(
@@ -241,7 +263,6 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
       );
     }
 
-    const robots = `${meta(head, "name", "robots") ?? ""} ${header(page.headers, "x-robots-tag")}`;
     if (inSitemap(page) && /noindex/i.test(robots))
       add(url, "sitemap-noindex", "error", "the sitemap lists a noindex page");
     if (!meta(head, "property", "og:title"))
@@ -375,8 +396,8 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
 
 /**
  * Fetch a site the way an audit crawler does, for `auditPages`: every sitemap URL with `redirect: "manual"`, following up to
- * five redirects itself so each hop is a page and a chain shows; then, status only (HEAD, or GET where HEAD is refused), each
- * same-origin link target those pages name that the sitemap did not. Sequential, and never throws: a fetch that fails is a
+ * five redirects itself so each hop is a page and a chain shows; then each same-origin link target those pages name that
+ * the sitemap did not, its HTML kept so `auditPages` can tell an indexable page the sitemap left out. Sequential, and never throws: a fetch that fails is a
  * page with status 0 and its error. A browser's fetch hides a manual redirect's status, so run it in a Worker or Node.
  *
  * @param {CrawlInput} input
@@ -409,7 +430,7 @@ export async function crawlSite({
       hop++
     ) {
       seen.add(normalize(url));
-      const page = await fetchPage(fetcher, url, "GET", true);
+      const page = await fetchPage(fetcher, url);
       if (chain.length > 0) page.redirectedFrom = [...chain];
       pages.push(page);
       const next = isRedirect(page) ? resolve(page.location, url) : null;
@@ -424,12 +445,7 @@ export async function crawlSite({
       if (pages.length >= maxPages) return { pages, sitemap, robots, lastmods };
       if (seen.has(normalize(url))) continue;
       seen.add(normalize(url));
-      const head = await fetchPage(fetcher, url, "HEAD", false);
-      pages.push(
-        head.status === 405 || head.status === 501
-          ? await fetchPage(fetcher, url, "GET", false)
-          : head,
-      );
+      pages.push(await fetchPage(fetcher, url));
     }
   }
   return { pages, sitemap, robots, lastmods };
@@ -471,10 +487,10 @@ async function readSitemap(fetcher, url, origin, index) {
   return urls;
 }
 
-/** @param {typeof fetch} fetcher @param {string} url @param {"GET" | "HEAD"} method @param {boolean} body @returns {Promise<AuditPage>} */
-async function fetchPage(fetcher, url, method, body) {
+/** @param {typeof fetch} fetcher @param {string} url @returns {Promise<AuditPage>} */
+async function fetchPage(fetcher, url) {
   try {
-    const response = await fetcher(url, { method, redirect: "manual" });
+    const response = await fetcher(url, { redirect: "manual" });
     /** @type {Record<string, string>} */
     const headers = {};
     response.headers.forEach((value, name) => {
@@ -483,7 +499,7 @@ async function fetchPage(fetcher, url, method, body) {
     /** @type {AuditPage} */
     const page = { url, status: response.status, headers };
     if (headers.location) page.location = headers.location;
-    if (body && response.status === 200 && /html/i.test(headers["content-type"] ?? "text/html"))
+    if (response.status === 200 && /html/i.test(headers["content-type"] ?? "text/html"))
       page.html = await response.text();
     else await response.body?.cancel();
     return page;
@@ -508,6 +524,13 @@ function isFileName(alt, src) {
     // A malformed escape is compared as written.
   }
   return file !== "" && (text === file || text === file.replace(/\.[a-z0-9]+$/, ""));
+}
+
+/** Whether a page's canonical is the page itself, so it asks to be indexed at this URL. @param {string} head @param {string} url */
+function selfCanonical(head, url) {
+  const href = tags(head, "link").find((attrs) => attrs.rel?.toLowerCase() === "canonical")?.href;
+  const canonical = href ? resolve(href, url) : null;
+  return canonical !== null && normalize(canonical) === normalize(url);
 }
 
 /** @param {AuditPage} page */
@@ -710,6 +733,10 @@ function jsonLdProblems(data) {
     if (types.includes("VideoObject")) {
       const missing = ["name", "thumbnailUrl", "uploadDate"].filter((key) => !record[key]);
       if (missing.length > 0) problems.push(`a VideoObject lacks ${missing.join(", ")}`);
+    }
+    if (types.includes("Dataset")) {
+      const missing = ["name", "description"].filter((key) => !record[key]);
+      if (missing.length > 0) problems.push(`a Dataset lacks ${missing.join(", ")}`);
     }
     if (types.includes("FAQPage")) {
       const questions = [record.mainEntity].flat().filter(Boolean);

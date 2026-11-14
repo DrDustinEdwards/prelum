@@ -295,6 +295,32 @@ export type SoftwareApplicationInput = {
   /** only a price the page can honor; a product with no single price writes none */
   offers?: SchemaNode | SchemaNode[] | undefined;
 };
+export type DatasetInput = {
+  /** what the data holds, not the page's short title */
+  name: string;
+  /** Google wants 50 to 5,000 characters */
+  description: string;
+  /** the page that shows the data */
+  url: string;
+  id?: string | undefined;
+  /** a person's name, or their node */
+  creator?: string | SchemaNode | undefined;
+  /** a URL */
+  license?: string | undefined;
+  /** true only when the data is public with no sign-in */
+  isAccessibleForFree?: boolean | undefined;
+  /** what the data counts, as its columns say */
+  variableMeasured?: ReadonlyArray<string> | undefined;
+  /** ISO 8601, a date or an interval such as `1854-08-19/1854-09-30` */
+  temporalCoverage?: string | undefined;
+  /** a place's name, or its node */
+  spatialCoverage?: string | SchemaNode | undefined;
+  /** the sources the data was taken from */
+  citation?: ReadonlyArray<string | SchemaNode> | undefined;
+  /** the downloads */
+  distribution?: ReadonlyArray<{ contentUrl: string; encodingFormat: string }> | undefined;
+  modified?: Date | number | string | null | undefined;
+};
 export type PodcastSeriesInput = {
   name: string;
   /** the show's page */
@@ -376,6 +402,11 @@ export function podcastSeries(series: PodcastSeriesInput): SchemaNode;
  * `articleDates`, as an Article's do.
  */
 export function podcastEpisode(episode: PodcastEpisodeInput): SchemaNode;
+/**
+ * A Dataset: `name` and `description` are what Google requires, so they are required here; every other field is written
+ * only when given.
+ */
+export function dataset(data: DatasetInput): SchemaNode;
 /**
  * The schema.org type of a publication from its curated type (`article`, `review`, `abstract`, `chapter`,
  * `teaching-resource`); anything else is a ScholarlyArticle.

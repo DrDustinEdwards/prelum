@@ -27,8 +27,8 @@ export function auditPages(
 ): AuditReport;
 /**
  * Fetch a site the way an audit crawler does, for `auditPages`: every sitemap URL with `redirect: "manual"`, following up to
- * five redirects itself so each hop is a page and a chain shows; then, status only (HEAD, or GET where HEAD is refused), each
- * same-origin link target those pages name that the sitemap did not. Sequential, and never throws: a fetch that fails is a
+ * five redirects itself so each hop is a page and a chain shows; then each same-origin link target those pages name that
+ * the sitemap did not, its HTML kept so `auditPages` can tell an indexable page the sitemap left out. Sequential, and never throws: a fetch that fails is a
  * page with status 0 and its error. A browser's fetch hides a manual redirect's status, so run it in a Worker or Node.
  */
 export function crawlSite(input: CrawlInput): Promise<{
