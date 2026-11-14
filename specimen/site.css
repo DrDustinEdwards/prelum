@@ -140,7 +140,7 @@ main {
 .prose {
   font-family: var(--prose);
   font-size: var(--fs-prose);
-  line-height: 1.65;
+  line-height: var(--leading-relaxed-5);
   overflow-wrap: break-word;
 }
 .prose > :first-child {
@@ -432,7 +432,7 @@ main {
 .prose .pull-quote {
   margin: 0.5em 0;
   font-size: 1.3em;
-  line-height: 1.35;
+  line-height: var(--leading-snug-5);
   color: var(--accent-text);
   text-wrap: balance;
 }
