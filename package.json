@@ -238,7 +238,7 @@
     "remark-smartypants": "3.0.3",
     "rolldown": "1.2.15",
     "shiki": "4.5.0",
-    "typescript": "5.9.3",
+    "typescript": "7.0.2",
     "unified": "11.0.5",
     "unist-util-visit": "5.2.0",
     "yaml": "2.9.1"
