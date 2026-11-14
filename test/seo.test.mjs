@@ -22,7 +22,13 @@ import {
 } from "../head.mjs";
 import { auditIcons, icoFile, iconLinks, webManifest } from "../icons.mjs";
 import { llmsResponse } from "../llms.mjs";
-import { aiTxt, DENIED_BOTS, robotsDocument, robotsResponse } from "../robots.mjs";
+import {
+  aiTxt,
+  DENIED_BOTS,
+  privateRobotsResponse,
+  robotsDocument,
+  robotsResponse,
+} from "../robots.mjs";
 import {
   article,
   articleImageSet,
@@ -448,6 +454,9 @@ test("a request on any other origin is a preview: robots.txt disallows everythin
   });
   assert.equal(await preview.text(), "User-agent: *\nDisallow: /\n");
   assert.equal(preview.headers.get("cache-control"), "no-store");
+  const door = privateRobotsResponse();
+  assert.equal(await door.text(), "User-agent: *\nDisallow: /\n");
+  assert.equal(door.headers.get("x-robots-tag"), "noindex");
 
   const llms = llmsResponse({
     origin: ORIGIN,
