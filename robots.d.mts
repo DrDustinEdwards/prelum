@@ -164,3 +164,9 @@ export function robotsResponse(input: Omit<RobotsInput, "preview"> & PlainTextOp
 export function aiTxtResponse(input: AiTxtInput & PlainTextOptions): Response;
 /** A search engine's ownership file at its exact path, `text/html; charset=utf-8` unless `type` is given, noindex. */
 export function verificationFileResponse(body: string, type?: string): Response;
+
+/** robots.txt that asks every crawler to fetch nothing: a preview copy's, and a private host's. */
+export const DISALLOW_ALL: string;
+
+/** /robots.txt for a host no crawler should fetch from (an MCP door, an admin API): `DISALLOW_ALL`, never indexed itself. */
+export function privateRobotsResponse(): Response;

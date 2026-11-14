@@ -50,7 +50,7 @@ export const CONTENT_SIGNAL = "search=yes, ai-input=yes, ai-train=no";
  * @returns {string}
  */
 export function robotsDocument(input) {
-  if (input.preview) return "User-agent: *\nDisallow: /\n";
+  if (input.preview) return DISALLOW_ALL;
   const {
     origin,
     disallow = [],
@@ -75,6 +75,25 @@ export function robotsDocument(input) {
     ...notes.map((note) => `# ${note}`),
     "",
   ].join("\n");
+}
+
+/** robots.txt that asks every crawler to fetch nothing: a preview copy's, and a private host's. */
+export const DISALLOW_ALL = "User-agent: *\nDisallow: /\n";
+
+/**
+ * /robots.txt for a host no crawler should fetch from (an MCP door, an admin API): `DISALLOW_ALL`, never indexed itself.
+ * It needs no origin and carries no bot lists, so a door's Worker gains a few hundred bytes, not the public policy.
+ *
+ * @returns {Response}
+ */
+export function privateRobotsResponse() {
+  return new Response(DISALLOW_ALL, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": PLAIN_TEXT_CACHE_CONTROL,
+      "X-Robots-Tag": "noindex",
+    },
+  });
 }
 
 /**
