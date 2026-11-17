@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.62.0
+
+### Minor Changes
+
+- JSON-LD in `<head>` is written by site-runtime's `scriptJson` (`@dustinedwards/site-runtime/html`). `jsonLdText` is removed from `@drdustinedwards/site-helpers/xml`: import `scriptJson` from `@dustinedwards/site-runtime/html` instead (same output, `&`, `<`, `>`, U+2028 and U+2029 escaped). Capsomer's `JsonLd` already does, from Capsomer 0.155.0.
+
+### Patch Changes
+
+- The copy-control live region uses Capsomer's `cap-sr-only` class instead of `sr-only`.
+- Fix the specimen's theme button, which did nothing on every page: Capsomer's behavior imports this package by name, and the repository did not contain itself in node_modules, so the bundler left a bare `@drdustinedwards/site-helpers/text` import in /specimen.js and the whole script threw in the browser. The package is now linked to itself as a dev dependency, and the specimen build fails if a script it bundles still has a bare import.
+
 ## 0.61.0
 
 ### Minor Changes
