@@ -168,7 +168,7 @@ export function enhance(options = {}) {
   function announce(message) {
     if (!statusRegion) {
       statusRegion = document.createElement("p");
-      statusRegion.className = "sr-only";
+      statusRegion.className = "cap-sr-only";
       statusRegion.setAttribute("role", "status");
       document.body.appendChild(statusRegion);
     }
