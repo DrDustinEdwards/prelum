@@ -154,27 +154,6 @@ export function absolutizeUrls(html, origin) {
   );
 }
 
-// Built from strings: a literal U+2028 is invisible and does not survive a copy.
-const LINE_SEPARATOR = new RegExp("\\u2028", "g");
-const PARAGRAPH_SEPARATOR = new RegExp("\\u2029", "g");
-
-/**
- * A value as the text of a `<script type="application/ld+json">`. The element's content is raw text ended only by a
- * literal `</script`, so `<`, `>` and `&` are written as `\u003c`, `\u003e` and `\u0026`, and U+2028 and U+2029 as their
- * escapes (line terminators if the text is ever read as JavaScript). Every escape parses back to the same data.
- *
- * @param {unknown} value
- * @returns {string}
- */
-export function jsonLdText(value) {
-  return JSON.stringify(value)
-    .replace(/</g, "\\u003c")
-    .replace(/>/g, "\\u003e")
-    .replace(/&/g, "\\u0026")
-    .replace(LINE_SEPARATOR, "\\u2028")
-    .replace(PARAGRAPH_SEPARATOR, "\\u2029");
-}
-
 /**
  * For a site whose markdown renders math with KaTeX. A feed reader has no `katex.css`, so KaTeX's two trees (clipped MathML
  * and positioned HTML) would both show, garbled. The TeX comes from KaTeX's own annotation, taken still XML-escaped, because

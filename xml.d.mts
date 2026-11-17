@@ -56,8 +56,6 @@ export function toDate(
  * @param {string} origin no trailing slash
  */
 export function absolutizeUrls(html: string, origin: string): string;
-/** A value as the text of a `<script type="application/ld+json">`: `< > &` and U+2028/9 escaped, the data unchanged. */
-export function jsonLdText(value: unknown): string;
 /**
  * For a site whose markdown renders math with KaTeX. A feed reader has no `katex.css`, so KaTeX's two trees (clipped MathML
  * and positioned HTML) would both show, garbled. The TeX comes from KaTeX's own annotation, taken still XML-escaped, because
