@@ -1,5 +1,7 @@
 import { htmlToText } from "./text.mjs";
-import { escapeXml, jsonLdText, toDate } from "./xml.mjs";
+import { scriptJson } from "@dustinedwards/site-runtime/html";
+
+import { escapeXml, toDate } from "./xml.mjs";
 
 /**
  * Google cuts a result's title and snippet by the width they draw at, not by a count of characters
@@ -404,7 +406,7 @@ export function absoluteUrl(origin, path) {
 
 /**
  * The tags as HTML, for a page built without React Router (a static build). Attribute values are escaped, and JSON-LD is
- * written by `jsonLdText`, so a title holding `</script>` cannot end the script element.
+ * written by `scriptJson`, so a title holding `</script>` cannot end the script element.
  *
  * @param {HeadTag[]} tags
  * @returns {string}
@@ -420,7 +422,7 @@ export function headHtml(tags) {
       }
       if ("title" in tag) return `<title>${escapeXml(tag.title)}</title>`;
       if ("script:ld+json" in tag) {
-        return `<script type="application/ld+json">${jsonLdText(tag["script:ld+json"])}</script>`;
+        return `<script type="application/ld+json">${scriptJson(tag["script:ld+json"])}</script>`;
       }
       const [key, value] = "property" in tag ? ["property", tag.property] : ["name", tag.name];
       return `<meta ${key}="${escapeXml(value)}" content="${escapeXml(tag.content)}">`;

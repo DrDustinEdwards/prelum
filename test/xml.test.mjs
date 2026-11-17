@@ -6,7 +6,6 @@ import test from "node:test";
 
 import {
   absolutizeUrls,
-  jsonLdText,
   atomEntry,
   cdata,
   isoDay,
@@ -127,11 +126,4 @@ test("xml: KaTeX with no annotation, an empty one or no closing tag is left as i
   assert.equal(mathToTex(unclosedAtEnd), unclosedAtEnd);
   const followed = `${noAnnotation}${katex("y")}`;
   assert.equal(mathToTex(followed), `${noAnnotation}$y$`);
-});
-
-test("jsonLdText cannot end its script element, and parses back to the same data", () => {
-  const value = { name: `</script><b>&${String.fromCharCode(0x2028)}` };
-  const text = jsonLdText(value);
-  assert.doesNotMatch(text, new RegExp(`[<>&${String.fromCharCode(0x2028)}]`));
-  assert.deepEqual(JSON.parse(text), value);
 });
