@@ -155,7 +155,18 @@ function copyDiagrams(outDir, diagrams) {
  * @param {string} file
  * @param {"esm" | "iife"} format
  */
-const bundle = (file, format) => bundleScript(join(HERE, "browser", file), { format });
+async function bundle(file, format) {
+  const code = await bundleScript(join(HERE, "browser", file), { format });
+  // An import the bundler could not resolve is left as a bare specifier, which a browser cannot load: the whole script
+  // throws and the theme button dies. Capsomer imports this package by name, so it must be installed (the devDependency
+  // "file:." links it to itself).
+  const bare = /(?:\bfrom|\bimport)\s*\(?\s*["']([^./"'][^"']*)["']/.exec(code);
+  if (bare)
+    throw new Error(
+      `specimen/browser/${file} bundles to a bare import of "${bare[1]}"; the browser cannot resolve it`,
+    );
+  return code;
+}
 
 /** @param {string} from @param {string} to */
 function copyTree(from, to) {
