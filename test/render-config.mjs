@@ -104,5 +104,6 @@ export const FIXTURES = [
   "code",
   "directives",
   "charts",
+  "charts-zero",
   "blocks",
 ];
