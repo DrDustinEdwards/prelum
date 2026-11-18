@@ -5,6 +5,7 @@ Prelum is the family's publishing library (`@drdustinedwards/site-helpers`): the
 ## Rules that come first
 
 - Tests: keep the minimal set (a few browser tests for flows that must never break, one integration test per real behavior, unit tests only for tricky logic, shared code tested once where it lives), and remove any test that pins design, repeats coverage or has never caught a real mistake, unless it guards a harm that cannot be undone.
+- UI copy: let the layout explain. No eyebrows, restating subtitles, "this page lets you" intros, descriptions under obvious buttons, hints a label already gives, repeated captions or empty-state essays; labels, accessible names, errors, one-way warnings and legal text stay (Dustin, 2026-11-18; Capsid capsid/conventions.md).
 - `assertSafe` stays available and off by default; the specimen turns it on.
 - Every `*.mjs` module has a hand-written `*.d.mts` twin; change both.
 

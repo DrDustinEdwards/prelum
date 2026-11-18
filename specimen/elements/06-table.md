@@ -1,6 +1,5 @@
 ---
 name: Table
-summary: A table with left and right aligned columns, wrapped so a wide one scrolls.
 ---
 | Page   | Visits |
 | :----- | -----: |

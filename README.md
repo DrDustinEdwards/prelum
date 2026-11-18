@@ -434,10 +434,10 @@ dustinedwards.info uses (the core, `editorialPack` and `createHighlight`, with `
 where it differs, its RSS form, and ends with one short post as a page, an RSS item and an llms.txt line. The footer names
 Prelum's version from `package.json`.
 
-`/elements.json` lists every element (id, name, summary, markdown, the pack it needs and its directives). It is generated from
+`/elements.json` lists every element (id, name, a summary where one is written, markdown, the pack it needs and its directives). It is generated from
 `specimen/elements/` by the build; nothing in it is written by hand. (Carrel's Insert menu does not read it: its blocks are
 empty templates with the cursor in `alt`, in `carrel/app/lib/site-markdown.ts`.) An element is one
-file, `<order>-<id>.md`, with a `name` and `summary` header.
+file, `<order>-<id>.md`, with a `name` header, and a `summary` only where it says what the page does not show.
 
 - `npm run specimen` builds the site into `specimen/dist`, its `_headers` written from the site registry by site-runtime's
   `site-runtime-headers` (the Worker, `specimen/worker.mjs`, is site-runtime's `staticSite` on the same entry); `npm run deploy:specimen`

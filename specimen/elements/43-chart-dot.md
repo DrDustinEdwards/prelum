@@ -1,6 +1,5 @@
 ---
 name: Dot plot
-summary: A scatter of points.
 ---
 :::chart{type="dot" x="dose" y="response" alt="Response rises with dose across five points" title="Dose and response"}
 ```csv

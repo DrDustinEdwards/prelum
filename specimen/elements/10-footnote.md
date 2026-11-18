@@ -1,6 +1,5 @@
 ---
 name: Footnote
-summary: A footnote reference and its note.
 ---
 A claim that needs a source.[^source]
 

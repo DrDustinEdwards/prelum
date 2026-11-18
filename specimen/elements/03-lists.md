@@ -1,6 +1,5 @@
 ---
 name: Lists
-summary: Ordered, unordered and nested lists.
 ---
 1. Plan the post
 2. Write the draft

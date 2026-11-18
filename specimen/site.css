@@ -27,11 +27,6 @@ main {
 .page-head .cap-form-boxes {
   margin-block: var(--space-6) 0;
 }
-.page-lead {
-  max-inline-size: var(--measure);
-  margin: 0 0 var(--space-5);
-  color: var(--muted);
-}
 .contents {
   margin: var(--space-7-5) 0 var(--space-3);
 }
