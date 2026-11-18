@@ -383,6 +383,9 @@
   "overrides": {
     "capsomer": {
       "enarratio": "$enarratio"
+    },
+    "rehype-katex": {
+      "katex": "$katex"
     }
   },
   "allowScripts": {

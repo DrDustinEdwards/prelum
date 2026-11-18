@@ -7,6 +7,7 @@ import { parseCsv } from "@dustinedwards/site-runtime/csv";
 import { fromHtml } from "hast-util-from-html";
 
 import { h } from "./render-hast.mjs";
+import { assertSafe } from "./render-safe.mjs";
 
 export const CHART_TYPES = ["bar", "line", "dot", "area"];
 
@@ -302,6 +303,9 @@ export function renderChartHast(model, captionChildren, figure) {
   const classes = [...(figure.properties.className ?? []), ...(drawn.properties.className ?? [])];
   const inner = h("figure", { ...drawn.properties, className: classes }, []);
   figure.tagName = "div";
+  // A dot chart's `narrow` is a second drawing, an HTML string the browser script puts into the page later; the output scan never
+  // reads an attribute's value, so it is read here, as the visible drawing is, before it is written.
+  if ("narrow" in model.redraw) assertSafe(model.redraw.narrow);
   // What Enarratio's `redrawCharts` redraws the chart from at the frame's width (its own `data-enarratio-redraw`); without that script the drawing is the server's.
   figure.properties = {
     className: ["cap-chart"],

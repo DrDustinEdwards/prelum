@@ -85,13 +85,14 @@ test("an icon PNG that declares a huge image is refused before anything is alloc
   assert.deepEqual(Array.from(shrunk?.bytes.slice(16, 24) ?? []), [0, 0, 0, 32, 0, 0, 0, 32]);
 });
 
-test("an SVG icon is refused when a prefixed tag, a CSS escape or a character reference could spell what is blocked", () => {
+test("an SVG icon is refused when a prefixed tag, any backslash or a character reference could spell what is blocked", () => {
   const svg = (/** @type {string} */ inner) =>
     new TextEncoder().encode(`<svg xmlns="http://www.w3.org/2000/svg">${inner}</svg>`);
   assert.equal(linkIconType(svg('<path d="M0 0h1"/>')), "image/svg+xml");
   for (const inner of [
     "<svg:script>alert(1)</svg:script>",
     '<path style="fill:u\\72l(//x)"/>',
+    '<path style="fill:u\\rl(//x)"/>',
     '<path fill="&#106;avascript:x"/>',
   ]) {
     assert.equal(linkIconType(svg(inner)), null, inner);
