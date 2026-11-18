@@ -86,8 +86,8 @@ export function linkIconType(bytes) {
   )
     return null;
   // A prefixed element (<svg:script>) is the same tag under another name; a CSS escape or a character reference spells a blocked word
-  // (j\61vascript:, &#106;avascript:) past the checks above.
-  if (/<\/?[\w.-]+:/.test(text) || /\\[0-9a-f]/i.test(text) || /&#/.test(text)) return null;
+  // (j\61vascript:, &#106;avascript:); any backslash is refused, since CSS reads u\rl( as url( past the checks above.
+  if (/<\/?[\w.-]+:/.test(text) || /\\/.test(text) || /&#/.test(text)) return null;
   if (/\b(?:xlink:)?href\s*=\s*["']?(?!#)/i.test(text) || /url\(\s*["']?(?!#)/i.test(text))
     return null;
   return "image/svg+xml";
