@@ -1,6 +1,5 @@
 ---
 name: Code: CSS
-summary: A stylesheet rule, highlighted.
 ---
 ```css
 .note {

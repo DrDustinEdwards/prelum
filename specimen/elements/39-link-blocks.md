@@ -1,6 +1,5 @@
 ---
 name: Button and bookmark
-summary: A link styled as a button, and a link card written out so the page fetches nothing.
 ---
 ::button[Read the guide]{href="/elements.json"}
 

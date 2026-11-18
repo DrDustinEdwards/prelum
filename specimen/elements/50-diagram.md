@@ -1,6 +1,5 @@
 ---
 name: Diagram
-summary: A hand-built diagram in the page, one drawing for light and dark.
 ---
 <figure class="blog-diagram" role="img" aria-label="Diagram: from draft to page">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 432 56" width="432" height="56">

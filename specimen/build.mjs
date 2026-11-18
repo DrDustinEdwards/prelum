@@ -186,7 +186,7 @@ const footerHtml = (version) =>
     site: "prelum",
     statement: ACCESSIBILITY_PATH,
     center: `<div class="cap-family-footer-center">
-<div><p class="cap-family-footer-center-name">Prelum</p><p class="cap-family-footer-about">One publishing library for every site: markdown to pages, feeds, sitemaps, llms.txt and search.</p></div>
+<div><p class="cap-family-footer-center-name">Prelum</p></div>
 <div class="cap-family-footer-columns">
 <ul class="cap-family-footer-links"><li><a href="/#contents-name">Every element</a></li><li><a href="/elements.json">elements.json</a></li></ul>
 <ul class="cap-family-footer-links"><li><a href="${REPO}">Source, MIT licensed</a></li><li><a href="${REPO}#readme">How to use it</a></li></ul>
@@ -313,7 +313,7 @@ function elementSection(element, html, no) {
   const feed = feedForm(html);
   return `<section class="element" id="el-${element.id}" aria-labelledby="el-${element.id}-name">
 <h2 class="element-name cap-part-title" id="el-${element.id}-name"><span class="cap-part-no">${no}</span><a href="#el-${element.id}">${escapeXml(element.name)}</a></h2>
-<p class="element-meta">${escapeXml(element.summary)} ${pack}${directives ? ` <span class="sr-only">directives:</span> <code>${escapeXml(directives)}</code>` : ""}</p>
+<p class="element-meta">${element.summary ? `${escapeXml(element.summary)} ` : ""}${pack}${directives ? ` <span class="sr-only">directives:</span> <code>${escapeXml(directives)}</code>` : ""}</p>
 <div class="pair">
 <div>
 <p class="pair-label">Markdown</p>
@@ -378,7 +378,6 @@ async function outputsSection(version, no, priority) {
   });
   return `<section class="outputs" id="outputs" aria-labelledby="outputs-name">
 <h2 class="element-name cap-part-title" id="outputs-name"><span class="cap-part-no">${no}</span><a href="#outputs">One source, three outputs</a></h2>
-<p class="element-meta">A short post as a site publishes it: the page, the RSS item (<code>rssItem</code>: math as TeX, URLs made absolute) and the line llms.txt gives it (<code>llmsDocument</code>).</p>
 <div class="pair">
 <div>
 <p class="pair-label">Markdown</p>
@@ -489,7 +488,6 @@ export async function buildSpecimen(outDir) {
   const body = `<main id="main" tabindex="-1">
 <header class="page-head">
 <h1>Prelum specimen</h1>
-<p class="page-lead">Every element Prelum renders from markdown, each source beside its output, in the configuration the network's sites use: the core, the editorial pack and code highlighting. The page follows your system's light or dark setting until you choose one with the button in the letterhead. The list is also at <a href="/elements.json">elements.json</a>, generated from the same sources.</p>
 <dl class="cap-form-boxes" data-variant="readings">
 <div class="cap-form-boxes-box"><dt>Release</dt><dd>${escapeXml(version)}</dd></div>
 <div class="cap-form-boxes-box"><dt>Render version</dt><dd>${escapeXml(RENDER_VERSION)}</dd></div>
@@ -546,7 +544,7 @@ ${await outputsSection(version, elements.length + 1, priority)}
     documentHtml({
       title: "Not found: Prelum specimen",
       description: "There is no page at this address.",
-      body: `<main id="main" tabindex="-1">\n<h1>Not found</h1>\n<p>There is no page at this address. The specimen is at <a href="/">prelum.dustinedwards.info</a>, and the code at <a href="${REPO}">github.com/DrDustinEdwards/prelum</a>.</p>\n</main>`,
+      body: `<main id="main" tabindex="-1">\n<h1>Not found</h1>\n<p><a href="/">Prelum specimen</a></p>\n</main>`,
       version,
       scripts,
     }),

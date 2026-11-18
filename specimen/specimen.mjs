@@ -141,7 +141,7 @@ export async function resolveImage(src) {
  * @property {string} id the file name without its order prefix, used as the page anchor and the expected-output name
  * @property {string} file the file name in specimen/elements
  * @property {string} name
- * @property {string} summary
+ * @property {string} [summary] only where it says what the page does not show
  * @property {string} source the markdown, without the header
  * @property {string[]} directives the directives the source uses
  * @property {"core" | "editorial"} pack the pack a site must configure to render the source
@@ -154,7 +154,7 @@ export async function resolveImage(src) {
  * @param {string} text
  * @param {readonly string[]} [required] the keys the header must carry
  */
-export function splitHeader(file, text, required = ["name", "summary"]) {
+export function splitHeader(file, text, required = ["name"]) {
   const { data, body } = frontmatter(text);
   if (body === text) throw new Error(`${file}: an element starts with a --- header naming it`);
   for (const key of required) {
@@ -212,7 +212,7 @@ export function loadElements() {
       id,
       file,
       name: /** @type {string} */ (header.name),
-      summary: /** @type {string} */ (header.summary),
+      summary: header.summary,
       source,
       directives,
       pack,
