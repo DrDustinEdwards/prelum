@@ -756,9 +756,11 @@ async function readCharts({ measured, narrow, libraries, tags }) {
       const toShape = shape.el instanceof SVGGeometryElement ? shape.el.getScreenCTM() : null;
       if (
         toShape &&
-        !(/** @type {SVGGeometryElement} */ (shape.el).isPointInFill(
-          new DOMPoint(x, y).matrixTransform(toShape.inverse()),
-        ))
+        !(
+          /** @type {SVGGeometryElement} */ (shape.el).isPointInFill(
+            new DOMPoint(x, y).matrixTransform(toShape.inverse()),
+          )
+        )
       )
         continue;
       layer = [[shape.fill, shape.alpha]];
@@ -1131,7 +1133,7 @@ async function readCharts({ measured, narrow, libraries, tags }) {
   // An SVG drawn from data outside Enarratio: a polyline, or five or more marks of one kind that vary as data does (bars
   // of different lengths, a strip of slots, five dots of one size at different places, five lines of different lengths on
   // one baseline). An illustration's circles of every size and its leader lines (a plate of plaques), a diagram's boxes
-  // that hold their labels and its polygon nodes, a diagram's ports (a dot on the end of one of its wires), and
+  // that hold their labels and its polygon nodes, a Prelum diagram (figure.blog-diagram), a diagram's ports (a dot on the end of one of its wires), and
   // a decorative badge hidden with its lettering do not count.
   /** @type {string[]} */
   const drawn = [];
@@ -1140,7 +1142,7 @@ async function readCharts({ measured, narrow, libraries, tags }) {
   for (const svg of Array.from(document.querySelectorAll("svg"))) {
     if (
       svg.parentElement?.closest("svg") ||
-      svg.closest(".enarratio, [data-enarratio]") ||
+      svg.closest(".enarratio, [data-enarratio], .blog-diagram") ||
       (libraryContainers && svg.closest(libraryContainers))
     )
       continue;
@@ -1167,9 +1169,20 @@ async function readCharts({ measured, narrow, libraries, tags }) {
     const polyline = Array.from(svg.querySelectorAll("polyline")).some(
       (el) => /** @type {SVGPolylineElement} */ (el).points.length >= 4,
     );
+    // Bars stand on one baseline (or against one axis): five rects share a bottom, top, left or right edge. A wireframe's
+    // panels and a waveform's centered bars do not.
+    const aligned = [
+      (/** @type {DOMRect} */ r) => r.bottom,
+      (/** @type {DOMRect} */ r) => r.top,
+      (/** @type {DOMRect} */ r) => r.left,
+      (/** @type {DOMRect} */ r) => r.right,
+    ].some((edge) =>
+      rects.some((r) => rects.filter((q) => Math.abs(edge(q) - edge(r)) < 0.5).length >= 5),
+    );
     const why = polyline
       ? "a polyline"
       : rects.length >= 5 &&
+          aligned &&
           (distinct(rects.map((r) => r.height)) >= 3 ||
             distinct(rects.map((r) => r.width)) >= 3 ||
             (rects.length >= 8 && distinct(rects.map((r) => r.x)) >= 8))
