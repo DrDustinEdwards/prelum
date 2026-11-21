@@ -23,7 +23,7 @@ jobs:
     # A called workflow holds no more than this job grants: the write lets it push code-map.json to the code-map branch.
     permissions:
       contents: write
-    uses: DrDustinEdwards/devkit/.github/workflows/code-map.yml@6b0656ca6e6072ccdd73b85647d5c16ff85ea98f # v0.53.0
+    uses: DrDustinEdwards/devkit/.github/workflows/code-map.yml@71fed4a06c3cb6808c5bfead4da98bd88ef62c3c # v0.53.2
     with:
       include: .
       exclude: specimen/ test/
