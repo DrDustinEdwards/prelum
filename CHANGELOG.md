@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.63.4
+
+### Patch Changes
+
+- `prelum-audit` no longer reports a link to a sign-in page as a link that redirects, and on a workers.dev address (a preview) it no longer holds the preview's own `robots.txt` and `X-Robots-Tag: noindex` against the site.
+
 ## 0.63.3
 
 ### Patch Changes
