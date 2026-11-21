@@ -130,7 +130,11 @@ if (!(home instanceof Response) || home.status >= 500) {
   );
   process.exit(2);
 }
-const { pages, sitemap } = await crawlSite({ origin, fetch: fetcher, maxPages: 3000 });
+const { pages, sitemap } = await crawlSite({
+  origin,
+  fetch: fetcher,
+  maxPages: Number(values["max-pages"]),
+});
 if (sitemap.length === 0 && extra.length === 0) {
   console.error(
     `prelum-chart-audit: ${origin}/sitemap.xml lists no pages, or did not load, so there is nothing to crawl`,
