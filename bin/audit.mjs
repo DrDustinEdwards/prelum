@@ -48,7 +48,8 @@ const { pages, sitemap, robots, lastmods } = await crawlSite({
   fetch: fetcher,
   maxPages: Number(values["max-pages"]),
 });
-const report = auditPages(pages, { origin, sitemap, robots, lastmods });
+const preview = new URL(from ?? origin).hostname.endsWith(".workers.dev");
+const report = auditPages(pages, { origin, sitemap, robots, lastmods, preview });
 for (const finding of await auditIcons({ origin, fetch: fetcher })) {
   report.findings.push(finding);
   report.summary[finding.check] = (report.summary[finding.check] ?? 0) + 1;

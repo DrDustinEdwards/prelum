@@ -23,6 +23,10 @@ export function auditPages(
      * the sitemap's `lastmod` per URL (null for none), which `crawlSite` returns; left out to skip the lastmod checks
      */
     lastmods?: Record<string, string | null> | undefined;
+    /**
+     * pages are served from a workers.dev address, whose robots.txt and X-Robots-Tag keep the preview out of search on purpose
+     */
+    preview?: boolean | undefined;
   },
 ): AuditReport;
 /**
