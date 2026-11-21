@@ -752,6 +752,15 @@ async function readCharts({ measured, narrow, libraries, tags }) {
         y > shape.box.bottom
       )
         continue;
+      // The box is only a first cut: an arc's box covers its hole, so the point must be in the painted shape itself.
+      const toShape = shape.el instanceof SVGGeometryElement ? shape.el.getScreenCTM() : null;
+      if (
+        toShape &&
+        !(/** @type {SVGGeometryElement} */ (shape.el).isPointInFill(
+          new DOMPoint(x, y).matrixTransform(toShape.inverse()),
+        ))
+      )
+        continue;
       layer = [[shape.fill, shape.alpha]];
     }
     return layer;
