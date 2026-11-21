@@ -1,7 +1,7 @@
 ---
 name: Line chart
 ---
-:::chart{type="line" x="year" y="a,b" labels="Alpha,Beta" alt="Two lines rising from 2020 to 2023, Beta above Alpha" title="Two series"}
+:::chart{type="line" x="year" y="a,b" labels="Alpha,Beta" alt="Two lines rising from 2020 to 2023, Beta above Alpha" title="Two series" source="Invented numbers for the specimen"}
 ```csv
 year,a,b
 2020,1,2

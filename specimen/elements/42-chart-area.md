@@ -1,7 +1,7 @@
 ---
 name: Area chart
 ---
-:::chart{type="area" x="year" y="total" alt="Total rising from 3 in 2020 to 9 in 2023" title="Total over time"}
+:::chart{type="area" x="year" y="total" alt="Total rising from 3 in 2020 to 9 in 2023" title="Total over time" source="Invented numbers for the specimen"}
 ```csv
 year,total
 2020,3
