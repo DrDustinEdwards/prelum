@@ -1134,7 +1134,7 @@ async function readCharts({ measured, narrow, libraries, tags }) {
   // of different lengths, a strip of slots, five dots of one size at different places, five lines of different lengths on
   // one baseline). An illustration's circles of every size and its leader lines (a plate of plaques), a diagram's boxes
   // that hold their labels and its polygon nodes, a Prelum diagram (figure.blog-diagram), a diagram's ports (a dot on the end of one of its wires), and
-  // a decorative badge hidden with its lettering do not count.
+  // a decorative drawing hidden from assistive technology (a badge, an audio waveform) do not count.
   /** @type {string[]} */
   const drawn = [];
   const distinct = (/** @type {number[]} */ list) =>
@@ -1149,6 +1149,9 @@ async function readCharts({ measured, narrow, libraries, tags }) {
     const box = svg.getBoundingClientRect();
     if (box.width < 60 || box.height < 16) continue;
     if (svg.getAttribute("aria-hidden") === "true" && svg.querySelector("text")) continue;
+    // A drawing hidden from assistive technology beside the control that states its value (an audio player's waveform) is
+    // decoration: a chart is one a reader can perceive, with its table.
+    if (svg.closest("[aria-hidden='true']")) continue;
     const boxes = (/** @type {string} */ tag) =>
       Array.from(svg.querySelectorAll(tag)).map((el) => el.getBoundingClientRect());
     const labels = boxes("text").map((t) => [t.x + t.width / 2, t.y + t.height / 2]);
