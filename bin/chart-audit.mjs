@@ -468,7 +468,7 @@ async function visit(context, url, measured, narrow = false) {
   });
   try {
     let response = await page.goto(served(url), { waitUntil: "load", timeout: 30_000 });
-    // A cache that now and then answers 200 with no body (germomics, October 2026) would read as a page with no chart. The
+    // A cache that now and then answers 200 with no body would read as a page with no chart. The
     // retry skips the browser's cache, which would otherwise revalidate and keep the empty body.
     for (
       let retry = 0;
@@ -1122,8 +1122,8 @@ async function readCharts({ measured, narrow, libraries, tags }) {
   // An SVG drawn from data outside Enarratio: a polyline, or five or more marks of one kind that vary as data does (bars
   // of different lengths, a strip of slots, five dots of one size at different places, five lines of different lengths on
   // one baseline). An illustration's circles of every size and its leader lines (a plate of plaques), a diagram's boxes
-  // that hold their labels and its polygon nodes, a diagram's ports (a dot on the end of one of its wires: Capsomer's
-  // system map, 2026-11-05), and a decorative badge hidden with its lettering do not count.
+  // that hold their labels and its polygon nodes, a diagram's ports (a dot on the end of one of its wires), and
+  // a decorative badge hidden with its lettering do not count.
   /** @type {string[]} */
   const drawn = [];
   const distinct = (/** @type {number[]} */ list) =>

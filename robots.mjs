@@ -1,5 +1,5 @@
 /**
- * The family's crawler policy (Dustin, 2026-10-25): search engines and the bots that put a page in an AI answer with a link
+ * The family's crawler policy: search engines and the bots that put a page in an AI answer with a link
  * are always allowed; training crawlers are allowed here so they reach Cloudflare's Pay Per Crawl price, where AI Crawl
  * Control charges or blocks them; Bytespider is denied, since it ignores payment requests and has no answer surface.
  */

@@ -1,4 +1,4 @@
-// The family's link contract (Dustin, 2026-10-31): every author link in a rendered body says what kind of link it is, on the `a`, so
+// The family's link contract: every author link in a rendered body says what kind of link it is, on the `a`, so
 // Capsomer styles it from the markup alone. Prelum writes the markup and does not depend on Capsomer: the family list
 // (Capsomer's FAMILY_SITES) is passed in by the site, as the chart frame's markup is written here without importing it.
 //
