@@ -70,6 +70,19 @@ const site = {
       // F: a diagram's wires, a port on each end (Capsomer's system map overlay), is not a chart.
       `<svg width="300" height="120" aria-hidden="true">${[10, 30, 50, 70, 90].map((y, i) => `<path d="M 10 ${y} C 100 ${y} 200 ${110 - y} ${290 - i * 20} ${110 - y}" fill="none" stroke="currentColor"/><circle cx="10" cy="${y}" r="2.5"/><circle cx="${290 - i * 20}" cy="${110 - y}" r="2.5"/>`).join("")}</svg>`,
       '<label>Password <input type="password"></label>',
+      // F: a wireframe's panels and a waveform's centered bars share no baseline; a Prelum diagram is not a chart.
+      `<svg width="300" height="120" role="img" aria-label="A page with parts">${[
+        [10, 10, 80, 30],
+        [100, 10, 60, 70],
+        [10, 50, 80, 60],
+        [170, 20, 90, 40],
+        [170, 70, 40, 30],
+      ]
+        .map(([x, y, w, h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`)
+        .join("")}</svg>`,
+      `<svg width="300" height="60" aria-hidden="true">${[10, 16, 7, 22, 14, 9].map((h, i) => `<rect x="${10 + i * 12}" y="${30 - h}" width="8" height="${h * 2}"/>`).join("")}</svg>`,
+      `<div aria-hidden="true"><svg width="300" height="60">${[10, 16, 7, 22, 14, 9].map((h, i) => `<rect x="${10 + i * 12}" y="${60 - h}" width="8" height="${h}"/>`).join("")}</svg></div>`,
+      `<figure class="blog-diagram" role="img" aria-label="Steps"><svg width="300" height="60">${[1, 2, 3, 4, 5, 6].map((i) => `<circle cx="${i * 40}" cy="30" r="6"/>`).join("")}</svg></figure>`,
       // B28: an enhanced chart's SVG is a group described as a chart (WAI-ARIA APG), drawn narrow enough for 320 px.
       frame(
         "enhanced",
