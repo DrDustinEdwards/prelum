@@ -208,7 +208,7 @@
     "@types/mdast": "4.0.4",
     "@types/node": "24.19.2",
     "axe-core": "4.14.0",
-    "capsomer": "github:DrDustinEdwards/capsomer#v0.163.0",
+    "capsomer": "github:DrDustinEdwards/capsomer#v0.164.4",
     "enarratio": "0.16.1",
     "hast-util-from-html": "2.1.0",
     "hast-util-to-mdast": "10.1.3",
