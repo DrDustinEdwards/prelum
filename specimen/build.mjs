@@ -66,9 +66,7 @@ const INDEXNOW_KEY = "32790edc1bac129b5f5c0b174219150c";
 /** When security.txt lapses (RFC 9116 asks for under a year); renew it before then. */
 const SECURITY_TXT_EXPIRES = "2027-10-26T00:00:00Z";
 
-/** What devkit-a11y's live run still finds on the specimen, one sentence each, for the statement. Its run of 2026-11-01
-    found two, both fixed in 0.31.4: the audio player wider than a 320 px column, and displayed math clipped under WCAG
-    1.4.12's spacing (specimen/site.css). */
+/** What devkit-a11y's live run still finds on the specimen, one sentence each, for the statement. */
 /** @type {string[]} */
 const STATEMENT_LIMITATIONS = [];
 
@@ -551,7 +549,7 @@ ${await outputsSection(version, elements.length + 1, priority)}
   );
 
   // The accessibility statement (devkit-a11y S6): Prelum's own, with this site's facts and the open findings of
-  // devkit-a11y's 2026-11-01 run.
+  // devkit-a11y's last run.
   const statement = accessibilityStatement({
     siteName: "The Prelum specimen",
     contact: {

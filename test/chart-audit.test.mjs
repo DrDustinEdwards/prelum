@@ -178,7 +178,7 @@ test("prelum-chart-audit finds every planted mistake, as an error with the page 
       );
       return;
     }
-    // A page behind Cloudflare Access: a 302 to its sign-in page, which has no chart (Desk's /demos/progress, 2026-11-03).
+    // A page behind Cloudflare Access: a 302 to its sign-in page, which has no chart.
     if (path === "/private") {
       response.writeHead(302, {
         location: "/cdn-cgi/access/login/desk.example.com?redirect_url=%2Fprivate",
@@ -282,7 +282,7 @@ test("prelum-chart-audit finds every planted mistake, as an error with the page 
 });
 
 test("prelum-chart-audit fails a run whose every page is behind sign-in, and does not call it a run that could not start", async () => {
-  // Desk's /demos/progress, 2026-11-03: its one page went to Access, nothing "opened", and the run exited 2 without the G error.
+  // Its one page went to Access, nothing "opened", and the run exited 2 without the G error.
   const server = createServer((request, response) => {
     const path = new URL(request.url ?? "/", "http://localhost").pathname;
     if (path === "/private") {
