@@ -35,6 +35,7 @@ import { aiTxt, robotsDocument } from "../robots.mjs";
 import { rssItem } from "../feeds.mjs";
 import { sitemapDocument } from "../sitemap.mjs";
 import { RENDER_VERSION, render } from "../render.mjs";
+import { wrapRendered } from "../stored-render.mjs";
 import { iconLinks, webManifest } from "../icons.mjs";
 import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
 import { absolutizeUrls, escapeXml, mathToTex } from "../xml.mjs";
@@ -65,6 +66,9 @@ const INDEXNOW_KEY = "32790edc1bac129b5f5c0b174219150c";
 
 /** When security.txt lapses (RFC 9116 asks for under a year); renew it before then. */
 const SECURITY_TXT_EXPIRES = "2027-10-26T00:00:00Z";
+
+/** The day the statement was last reviewed: the statement says it, and the sitemap's lastmod for the page. */
+const STATEMENT_DATE = "2026-11-01";
 
 /** What devkit-a11y's live run still finds on the specimen, one sentence each, for the statement. */
 /** @type {string[]} */
@@ -320,7 +324,7 @@ function elementSection(element, html, no) {
 <div>
 <p class="pair-label">Output</p>
 <div class="output prose" data-context="prose">
-${html}
+${wrapRendered(html)}
 </div>
 </div>
 </div>
@@ -384,7 +388,7 @@ async function outputsSection(version, no, priority) {
 <div>
 <p class="pair-label">Page</p>
 <div class="output prose" data-context="prose">
-${html}
+${wrapRendered(html)}
 </div>
 </div>
 </div>
@@ -556,7 +560,7 @@ ${await outputsSection(version, elements.length + 1, priority)}
       href: "https://dustinedwards.info/contact",
       label: "the contact page on dustinedwards.info",
     },
-    date: "2026-11-01",
+    date: STATEMENT_DATE,
     capsomer: true,
     links: "marked",
     limitations: STATEMENT_LIMITATIONS,
@@ -604,7 +608,7 @@ ${await outputsSection(version, elements.length + 1, priority)}
         lastmod: released,
         images: images.map((i) => absoluteUrl(ORIGIN, i.src)),
       },
-      { loc: `${ORIGIN}${ACCESSIBILITY_PATH}` },
+      { loc: `${ORIGIN}${ACCESSIBILITY_PATH}`, lastmod: STATEMENT_DATE },
     ]),
   );
   // robots.txt and ai.txt (the network's bot policy, Content-Signal and the sitemap) and llms.txt; llms-full.txt and the
