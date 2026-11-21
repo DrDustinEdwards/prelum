@@ -619,7 +619,7 @@ test("htmlToText drops Prelum's heading anchors, a described list item keeps its
   );
 });
 
-test("the audit does not count a sign-in gate as a moved link, nor a preview's own robots.txt and X-Robots-Tag as the site's", () => {
+test("the audit does not count a sign-in gate as a moved link, nor a preview's own robots.txt and X-Robots-Tag as the site's, nor a list's page 2 as a duplicate title", () => {
   const home = `${page("/", "Home", "one")}<a href="/people">p</a></body></html>`;
   const run = (/** @type {boolean} */ preview) =>
     auditPages(
@@ -635,6 +635,15 @@ test("the audit does not count a sign-in gate as a moved link, nor a preview's o
       ],
       { origin: ORIGIN, sitemap: [`${ORIGIN}/`], robots: "User-agent: *\nDisallow: /\n", preview },
     ).findings.map((finding) => finding.check);
+  const variants = auditPages(
+    ["/list", "/list?page=2"].map((path) => ({
+      url: `${ORIGIN}${path}`,
+      status: 200,
+      html: `${page(path.split("?")[0], "List", "one")}</body></html>`,
+    })),
+    { origin: ORIGIN },
+  ).findings.filter((finding) => finding.check.endsWith("-duplicate"));
+  assert.deepEqual(variants, []);
   assert.deepEqual(run(true), []);
   assert.deepEqual(run(false).sort(), [
     "robots-blocks-all",

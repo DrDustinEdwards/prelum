@@ -218,7 +218,7 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
           "warning",
           `${width} px wide in Google's ${SERP_TITLE.font} px Arial (${Array.from(title).length} characters); a desktop result clips the title past ${SERP_TITLE.px} px`,
         );
-      push(titles, title, url);
+      if (!search) push(titles, title, url);
     }
 
     const description = meta(head, "name", "description");
@@ -233,7 +233,7 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
           `${width} px wide in Google's ${SERP_DESCRIPTION.font} px Arial (${Array.from(description).length} characters); a desktop result clips the snippet past ${SERP_DESCRIPTION.px} px`,
         );
       }
-      push(descriptions, description, url);
+      if (!search) push(descriptions, description, url);
     }
 
     const canonicals = tags(head, "link").filter(
