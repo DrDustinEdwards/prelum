@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.63.4
+
+### Patch Changes
+
+- `prelum-audit` no longer reports a link to a sign-in page as a link that redirects, and on a workers.dev address (a preview) it no longer holds the preview's own `robots.txt` and `X-Robots-Tag: noindex` against the site.
+- prelum-chart-audit reads at most `--max-pages` pages from the sitemap before it opens a browser, instead of always fetching up to 3,000 one at a time. On a 2,200-page site with `--max-pages 30` it took 25 seconds, not 3 minutes.
+
 ## 0.63.3
 
 ### Patch Changes
