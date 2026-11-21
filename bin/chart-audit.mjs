@@ -1307,10 +1307,16 @@ function watchShifts() {
           const tag = `${el.localName}${el.classList.length ? `.${[...el.classList].join(".")}` : ""}`;
           const dy = Math.round(source.currentRect.y - source.previousRect.y);
           const dh = Math.round(source.currentRect.height - source.previousRect.height);
+          // Which chart and when, so a shift that comes and goes between runs can be traced to its chart and its moment.
+          const title = (
+            chart.querySelector(".enarratio-title, .cap-chart-title")?.textContent ?? ""
+          )
+            .trim()
+            .slice(0, 40);
           shifts.push({
             t: entry.startTime,
             value: entry.value,
-            moved: `${tag} ${dy >= 0 ? "+" : ""}${dy} px${dh ? `, height ${dh >= 0 ? "+" : ""}${dh}` : ""}`,
+            moved: `${tag} ${dy >= 0 ? "+" : ""}${dy} px${dh ? `, height ${dh >= 0 ? "+" : ""}${dh}` : ""}${title ? ` in "${title}"` : ""} at ${Math.round(entry.startTime)} ms`,
           });
           break;
         }
