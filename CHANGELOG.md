@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.63.6
+
+### Patch Changes
+
+- `prelum-audit` no longer reports a list's second page or filter (a URL with a query) as a duplicate title or description of the page it varies.
+
 ## 0.63.5
 
 ### Patch Changes
