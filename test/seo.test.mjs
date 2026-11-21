@@ -619,6 +619,31 @@ test("htmlToText drops Prelum's heading anchors, a described list item keeps its
   );
 });
 
+test("the audit does not count a sign-in gate as a moved link, nor a preview's own robots.txt and X-Robots-Tag as the site's", () => {
+  const home = `${page("/", "Home", "one")}<a href="/people">p</a></body></html>`;
+  const run = (/** @type {boolean} */ preview) =>
+    auditPages(
+      [
+        {
+          url: `${ORIGIN}/`,
+          status: 200,
+          html: home,
+          inSitemap: true,
+          headers: { "x-robots-tag": "noindex" },
+        },
+        { url: `${ORIGIN}/people`, status: 302, location: "/login?next=%2Fpeople" },
+      ],
+      { origin: ORIGIN, sitemap: [`${ORIGIN}/`], robots: "User-agent: *\nDisallow: /\n", preview },
+    ).findings.map((finding) => finding.check);
+  assert.deepEqual(run(true), []);
+  assert.deepEqual(run(false).sort(), [
+    "robots-blocks-all",
+    "robots-no-sitemap",
+    "sitemap-blocked",
+    "sitemap-noindex",
+  ]);
+});
+
 test("the audit reads robots.txt as Googlebot does and flags a head a mobile or rich-result crawler cannot use", () => {
   const bare = `<html><head><title>T</title><meta name="description" content="d"><link rel="canonical" href="${ORIGIN}/a"><link rel="canonical" href="${ORIGIN}/b"><meta property="og:title" content="T"><meta property="og:url" content="${ORIGIN}/other">${CARD}<script type="application/ld+json">${JSON.stringify(
     {

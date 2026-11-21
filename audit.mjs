@@ -34,20 +34,25 @@ const MAX_HOPS = 5;
  * @property {Record<string, number>} summary findings per check
  */
 
+/** A redirect to a sign-in page is a page that needs an account, not a link that moved. */
+const isSignInGate = (/** @type {string | undefined} */ location) =>
+  /^\/(log-?in|sign-?in|auth)(\/|$|\?)/i.test(location ?? "");
+
 /**
  * The checks a crawler-based site audit runs (the ones Semrush and Ahrefs lead with), over pages a crawl already fetched:
  * `crawlSite`, Cloudflare Browser Run's `/crawl`, or a site's own test fetching its sitemap. It reads only the tags `headTags`
  * writes and the links in the page, so it needs no HTML parser. Pure: it fetches nothing.
  *
  * @param {AuditPage[]} pages
- * @param {{ origin: string, sitemap?: string[], robots?: string | null, lastmods?: Record<string, string | null> }} site `origin` is the production origin every canonical
+ * @param {{ origin: string, sitemap?: string[], robots?: string | null, lastmods?: Record<string, string | null>, preview?: boolean }} site `origin` is the production origin every canonical
  *   must be on; `sitemap` the URLs the sitemap lists (a page's own `inSitemap` counts too), and an empty list is itself a
  *   finding; `robots` the text of `/robots.txt` (`crawlSite` returns it, null when it did not load), left out to skip the
  *   robots checks; `lastmods` the sitemap's `lastmod` per URL (null for none), which `crawlSite` returns, left out to skip the
- *   lastmod checks
+ *   lastmod checks; `preview` marks pages served from a workers.dev address, whose robots.txt and X-Robots-Tag keep the preview
+ *   out of search on purpose, so neither is held against the site; a noindex meta still is
  * @returns {AuditReport}
  */
-export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmods }) {
+export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmods, preview }) {
   /** @type {AuditFinding[]} */
   const findings = [];
   const add = (
@@ -101,7 +106,7 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
   let googlebot = null;
   if (robotsText === null)
     add(`${origin}/robots.txt`, "robots-missing", "warning", "robots.txt did not load as text");
-  else if (robotsText !== undefined) {
+  else if (robotsText !== undefined && !preview) {
     googlebot = robotsGroup(robotsText, "googlebot");
     if (!robotsAllows(googlebot, "/"))
       add(
@@ -160,7 +165,7 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
       ...tags(head, "meta")
         .filter((attrs) => attrs.name?.toLowerCase() === "robots")
         .map((attrs) => attrs.content ?? ""),
-      header(page.headers, "x-robots-tag"),
+      preview ? "" : header(page.headers, "x-robots-tag"),
     ].join(" ");
     const { pathname, search } = new URL(url);
     // A page the site links to but does not list: a noindex or robots-disallowed one is meant to stay out of search, so
@@ -356,7 +361,7 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
       if (!linked) continue;
       if (linked.status >= 400)
         add(url, "link-broken", "error", `links to ${linked.url}, which answers ${linked.status}`);
-      else if (isRedirect(linked))
+      else if (isRedirect(linked) && !isSignInGate(linked.location))
         add(
           url,
           "link-redirect",
