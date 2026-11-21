@@ -67,10 +67,11 @@ const INDEXNOW_KEY = "32790edc1bac129b5f5c0b174219150c";
 /** When security.txt lapses (RFC 9116 asks for under a year); renew it before then. */
 const SECURITY_TXT_EXPIRES = "2027-10-26T00:00:00Z";
 
+/** The day the statement was last reviewed: the statement says it, and the sitemap's lastmod for the page. */
+const STATEMENT_DATE = "2026-11-01";
+
 /** What devkit-a11y's live run still finds on the specimen, one sentence each, for the statement. */
 /** @type {string[]} */
-// The day the statement was last reviewed: the statement says it, and the sitemap's lastmod for the page.
-const STATEMENT_DATE = "2026-11-01";
 const STATEMENT_LIMITATIONS = [];
 
 /** @param {string} specifier a package file, resolved from this repository's node_modules */
