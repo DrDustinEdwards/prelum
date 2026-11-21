@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.63.8
+
+### Patch Changes
+
+- prelum-chart-audit names the chart and the time of the shift in a D5 finding, so one that comes and goes between runs can be traced.
+
 ## 0.63.7
 
 ### Patch Changes
