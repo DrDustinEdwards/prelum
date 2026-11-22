@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.63.9
+
+### Patch Changes
+
+- The `enarratio` peer range allows 0.17. The charts the package draws are tested against Enarratio 0.17.0 and Observable Plot 0.6.19.
+
 ## 0.63.8
 
 ### Patch Changes
