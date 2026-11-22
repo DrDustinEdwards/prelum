@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "checkJs": false,
+    "rootDir": ".",
+    "outDir": "dist"
+  },
+  "include": ["*.d.ts", "*.mjs"]
+}
