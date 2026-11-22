@@ -20,6 +20,18 @@ export {
 } from "./render-nomath.mjs";
 
 /**
+ * @typedef {import("./render-nomath.mjs").HighlightOptions} HighlightOptions
+ * @typedef {import("./render-nomath.mjs").ImageFacts} ImageFacts
+ * @typedef {import("./render-nomath.mjs").MediaOptions} MediaOptions
+ * @typedef {import("./render-nomath.mjs").RenderInput} RenderInput
+ * @typedef {import("./render-nomath.mjs").RenderOptions} RenderOptions
+ * @typedef {import("./render-nomath.mjs").RenderPack} RenderPack
+ * @typedef {Awaited<ReturnType<typeof renderWith>>} RenderResult
+ * @typedef {import("./render-nomath.mjs").RenderedImage} RenderedImage
+ * @typedef {import("./render-nomath.mjs").RenderedVideo} RenderedVideo
+ */
+
+/**
  * The AST-side owner of hasMath; a site compares it with htmlHasMath over its corpus.
  *
  * @param {string} file
@@ -58,6 +70,7 @@ function remarkMathValidate(file, sink) {
  * Markdown in, a safe HTML fragment out, with `$…$` and `$$…$$` as math.
  *
  * @param {import("./render-nomath.mjs").RenderInput} input
+ * @returns {Promise<RenderResult>}
  */
 export function render(input) {
   // Option 3 in render-nomath.mjs's header: KATEX_OPTIONS leaves `trust` off.

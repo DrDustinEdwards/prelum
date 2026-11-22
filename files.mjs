@@ -13,7 +13,21 @@ import { keyFileResponse } from "./indexnow.mjs";
 import { aiTxtResponse, robotsResponse, verificationFileResponse } from "./robots.mjs";
 
 /**
- * @param {import("./files.d.mts").StandardFiles} config
+ * @typedef {{ name: string, contact: string, policy?: string[] }} AiTxtSite
+ * @typedef {object} StandardFiles
+ * @property {string} origin The production origin: the Sitemap line, ai.txt's links, and what a request on another origin is a preview of.
+ * @property {string[]} [disallow] What robots.txt and ai.txt both ask crawlers to leave alone.
+ * @property {Partial<Omit<import("./robots.mjs").RobotsInput, "origin" | "disallow" | "preview">>} [robots] The rest of robots.txt's input (bots, sitemaps, notes, content signal).
+ * @property {AiTxtSite | ((request: Request) => Promise<AiTxtSite>)} [ai] ai.txt's name and licensing contact, or a function reading them (from the site's content); no ai.txt without it.
+ * @property {import("./icons.mjs").ManifestSite | ((request: Request) => Promise<import("./icons.mjs").ManifestSite>)} [manifest] site.webmanifest's fields (webManifest), or a function reading them (from the site's content); no manifest without it.
+ * @property {string} [indexNowKey] The IndexNow key, served at `/<key>.txt`.
+ * @property {Record<string, string>} [verification] Ownership files by exact path (`"/google0123abcd.html": "google-site-verification: google0123abcd.html"`).
+ * @property {(request: Request) => boolean} [preview] Whether a request is a preview copy, for a site that knows better than the origin comparison (a Worker Preview).
+ */
+
+/**
+ * The handler: the file's response, or null when the path is not a standard file.
+ * @param {StandardFiles} config
  * @returns {(request: Request) => Promise<Response | null>}
  */
 export function standardFiles({

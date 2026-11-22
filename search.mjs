@@ -74,6 +74,10 @@ export function fuse(lists, k = RRF_K) {
   return [...scores.values()].sort((a, b) => b.score - a.score);
 }
 
+/** @typedef {{ u: string, t: string, s: string, h: Array<[string, string]>, x: string }} StaticSearchPage One page of a static search index: url, title, summary, headings [id, text] and text. */
+/** @typedef {{ v: 1, pages: StaticSearchPage[] }} StaticSearchIndex A static search index: what the build writes and the search page loads. */
+/** @typedef {{ url: string, title: string, summary: string, heading: string | null, snippet: string, score: number }} StaticSearchResult One result of `staticSearch`; `url` points to the heading that matched most words, when one did. */
+
 /**
  * Search for a site with no database (a static build, such as a gallery or a design system's docs): the build writes the
  * index once with `staticSearchIndex`, the search page loads it and ranks with `staticSearch`, in the browser. Words are
@@ -81,7 +85,7 @@ export function fuse(lists, k = RRF_K) {
  *
  * @param {Array<{ url: string, title: string, summary?: string, headings?: Array<{ id: string, text: string }>, text?: string }>} pages
  * @param {{ maxText?: number }} [options] each page keeps at most `maxText` characters of its text (default 4000)
- * @returns {{ v: 1, pages: Array<{ u: string, t: string, s: string, h: Array<[string, string]>, x: string }> }}
+ * @returns {StaticSearchIndex}
  */
 export function staticSearchIndex(pages, { maxText = 4000 } = {}) {
   const squash = (/** @type {string | undefined} */ s) =>
@@ -124,11 +128,11 @@ const WEIGHT = { t: 8, h: 4, s: 2, x: 1 };
  * the title is exactly the query. A result links to the heading that matched most words, and its snippet is the text
  * around the first match.
  *
- * @param {{ v: 1, pages: Array<{ u: string, t: string, s: string, h: Array<[string, string]>, x: string }> }} index
+ * @param {StaticSearchIndex} index
  * @param {string} query
  * @param {{ limit?: number, snippet?: number }} [options] at most `limit` results (default 50); snippets of about
  *   `snippet` characters (default 160)
- * @returns {Array<{ url: string, title: string, summary: string, heading: string | null, snippet: string, score: number }>}
+ * @returns {StaticSearchResult[]}
  */
 export function staticSearch(index, query, { limit = 50, snippet = 160 } = {}) {
   const words = searchWords(query);
@@ -142,7 +146,7 @@ export function staticSearch(index, query, { limit = 50, snippet = 160 } = {}) {
       ),
   );
   const whole = words.join(" ");
-  /** @type {Array<{ url: string, title: string, summary: string, heading: string | null, snippet: string, score: number }>} */
+  /** @type {StaticSearchResult[]} */
   const results = [];
   for (const page of index.pages) {
     const fields = {
@@ -212,6 +216,8 @@ export function likeContains(text) {
   return `%${String(text).replace(/[\\%_]/g, "\\$&")}%`;
 }
 
+/** @typedef {{ raw: string, terms: string[], phrases: string[], filters: Record<string, string[]>, year: number | null, isEmpty: boolean }} ParsedQuery A typed query: what was typed, its bare terms (ANDed) and quoted phrases, its `name:value` filters by operator, a year. */
+
 /**
  * A typed search query, from dustinedwards.info's search (app/lib/search/query.mjs). The rules apply in order and each consumes
  * its tokens: quoted phrases first, so an operator inside quotes stays text; then `name:value` operators (each name in
@@ -221,7 +227,7 @@ export function likeContains(text) {
  * @param {string} input
  * @param {{ operators?: string[], minYear?: number, maxYear?: number }} [options] `operators` default none; `minYear` default 2000
  *   (so 1024 or 8080 stays a term); `maxYear` default next year, read at call time so a deploy never freezes it
- * @returns {{ raw: string, terms: string[], phrases: string[], filters: Record<string, string[]>, year: number | null, isEmpty: boolean }}
+ * @returns {ParsedQuery}
  */
 export function parseQuery(input, { operators = [], minYear = 2000, maxYear } = {}) {
   const raw = input ?? "";
@@ -273,7 +279,7 @@ export function parseQuery(input, { operators = [], minYear = 2000, maxYear } = 
 /**
  * Whether a parsed query filters (an operator or a year). A filter-only query leaves no text for FTS5, so it takes a browse path.
  *
- * @param {{ filters: Record<string, string[]>, year: number | null }} parsed
+ * @param {Pick<ParsedQuery, "filters" | "year">} parsed
  * @returns {boolean}
  */
 export function hasFilters(parsed) {

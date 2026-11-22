@@ -108,10 +108,15 @@ export function enhanceEmbeds({ root = ".prose" } = {}) {
 }
 
 /**
+ * Where `enhance` looks, as CSS selectors: `root` is the rendered markup (default ".prose"), `toc` the table of contents
+ * (default ".post-toc") and `article` the post body the selection link measures (default ".post .prose").
+ * @typedef {{ root?: string, toc?: string, article?: string }} EnhanceOptions
+ */
+
+/**
  * Decorates the rendered post. A second call does nothing.
  *
- * @param {{ root?: string, toc?: string, article?: string }} [options] `root` is the rendered markup (default ".prose"), `toc` the
- *   table of contents (default ".post-toc") and `article` the post body the selection link measures (default ".post .prose").
+ * @param {EnhanceOptions} [options]
  * @returns {void}
  */
 export function enhance(options = {}) {

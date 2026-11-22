@@ -3,7 +3,7 @@ import { documentResponse } from "./xml.mjs";
  * The icon files every site serves, at the same paths everywhere: what Google's favicon rules, iOS and an installable web app
  * each ask for. `prelum-icons` draws them from one SVG.
  */
-export const ICONS = {
+export const ICONS = /** @type {const} */ ({
   ico: "/favicon.ico",
   svg: "/icon.svg",
   apple: "/apple-touch-icon.png",
@@ -11,7 +11,14 @@ export const ICONS = {
   any512: "/icon-512.png",
   maskable: "/icon-maskable-512.png",
   manifest: "/site.webmanifest",
-};
+});
+
+/**
+ * @typedef {{ name: string, shortName?: string, description?: string, themeColor: string, backgroundColor: string,
+ *   startUrl?: string, id?: string, display?: "standalone" | "minimal-ui" | "browser", lang?: string }} ManifestSite
+ *   `id` is the app's identity, apart from its launch URL (default `/`)
+ * @typedef {{ src: string, sizes: string, type: "image/png", purpose: string }} ManifestIcon
+ */
 
 /**
  * The `<link>`s for the icons, in the shape React Router's `links` export takes. `favicon.ico` holds 16, 32 and 48 pixel
@@ -33,16 +40,13 @@ export function iconLinks() {
  * launch URL so a changed `start_url` is still the same installed app (W3C Web App Manifest, "id member"; web.dev
  * "Uniquely identifying PWAs with the web app manifest id property"): `/` unless the site names one.
  *
- * @param {{ name: string, shortName?: string, description?: string, themeColor: string, backgroundColor: string,
- *   startUrl?: string, id?: string, display?: "standalone" | "minimal-ui" | "browser", lang?: string }} site
+ * @param {ManifestSite} site
+ * @returns {{ id: string, name: string, short_name: string, description?: string, lang?: string, start_url: string,
+ *   display: string, theme_color: string, background_color: string, icons: ManifestIcon[] }}
  */
 export function webManifest(site) {
-  const png = (/** @type {string} */ src, /** @type {number} */ size, purpose = "any") => ({
-    src,
-    sizes: `${size}x${size}`,
-    type: "image/png",
-    purpose,
-  });
+  const png = (/** @type {string} */ src, /** @type {number} */ size, purpose = "any") =>
+    /** @type {ManifestIcon} */ ({ src, sizes: `${size}x${size}`, type: "image/png", purpose });
   return {
     id: site.id ?? "/",
     name: site.name,
@@ -61,6 +65,7 @@ export function webManifest(site) {
  * An `.ico` file holding PNG images, one per size: the format browsers and Google read from `/favicon.ico`.
  *
  * @param {Array<{ size: number, png: Uint8Array }>} images
+ * @returns {Uint8Array}
  */
 export function icoFile(images) {
   const header = 6 + 16 * images.length;
@@ -184,7 +189,7 @@ export async function auditIcons({ origin, fetch: fetcher }) {
  * `site.webmanifest` as a whole response, the route every site wrote: `webManifest(site)` as
  * `application/manifest+json; charset=utf-8`, cached for a day. `headers` adds to those or replaces the caching.
  *
- * @param {Parameters<typeof webManifest>[0]} site
+ * @param {ManifestSite} site
  * @param {HeadersInit} [headers]
  * @returns {Response}
  */

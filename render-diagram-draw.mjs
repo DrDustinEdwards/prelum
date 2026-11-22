@@ -17,6 +17,8 @@ import { DIAGRAM_SIZES_FILE, DIAGRAM_THEMES, diagramAssetPath } from "./render-d
  * Every Mermaid theme variable a diagram paints with, by the role its color plays. Everything khroma would otherwise
  * derive is supplied; what is not still gets derived, which is why every drawing is audited rather than trusting this
  * list to be complete.
+ *
+ * @type {Record<string, string>}
  */
 export const DIAGRAM_ROLES = {
   background: "paper",
@@ -81,6 +83,8 @@ const VIEWPORT = { width: 1200, height: 800, deviceScaleFactor: 1 };
 /**
  * @param {"light" | "dark"} theme
  * @param {Record<string, string>} colors one hex color per name in DIAGRAM_ROLE_NAMES
+ * @returns {{ theme: string, themeVariables: Record<string, string | boolean>, htmlLabels: boolean,
+ *   flowchart: { htmlLabels: boolean, padding: number, useMaxWidth: boolean }, sequence: Record<string, number | boolean> }}
  */
 export function mermaidConfig(theme, colors) {
   const missing = DIAGRAM_ROLE_NAMES.filter(

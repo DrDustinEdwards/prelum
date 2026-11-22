@@ -17,6 +17,8 @@ export const CHART_KINDS = /** @type {const} */ ([
   { value: "dot", label: "Dot" },
 ]);
 
+/** @typedef {(typeof CHART_KINDS)[number]["value"]} ChartKind A chart type. */
+
 /**
  * A CSV's column names, and which hold only numbers (the columns a chart can measure). RFC 4180 through site-runtime's reader
  * (a byte order mark dropped); a blank line is no row, and cells are trimmed.

@@ -223,11 +223,9 @@ function scholarDate(isoish, year) {
 }
 
 /** What Google Scholar needs on a page, or it skips the page entirely. */
-export const REQUIRED_CITATION_TAGS = Object.freeze([
-  "citation_title",
-  "citation_author",
-  "citation_publication_date",
-]);
+export const REQUIRED_CITATION_TAGS = Object.freeze(
+  /** @type {const} */ (["citation_title", "citation_author", "citation_publication_date"]),
+);
 
 /**
  * The Highwire Press `citation_*` meta tags Google Scholar reads (https://scholar.google.com/intl/en/scholar/inclusion.html),

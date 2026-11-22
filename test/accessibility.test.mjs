@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { accessibilityStatement, HAND_CHECK_LIMITATIONS } from "../accessibility.mjs";
 
-/** @type {import("../accessibility.d.mts").AccessibilityInput} */
+/** @type {import("../accessibility.mjs").AccessibilityInput} */
 const input = {
   siteName: "Example",
   contact: { href: "/contact", label: "the contact page" },
