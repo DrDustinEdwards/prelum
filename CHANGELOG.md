@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.63.10
+
+### Patch Changes
+
+- prelum-chart-audit installs its browser tools into a staging directory and moves them into place whole, so two audits starting together no longer find a half-installed cache and fail with "Cannot find module 'playwright-core'".
+- A `:::chart` scatter plot is marked `data-keep-shape` with its phone drawing's height, so on a phone the wide drawing is shown at that height until the phone drawing swaps in, and the text under the chart no longer moves (D5).
+  RENDER_VERSION is 27: a `:::chart` scatter plot's output gains `data-keep-shape` and a `--cap-narrow-height` style. Capsomer 0.164.5 or later draws it.
+
 ## 0.63.9
 
 ### Patch Changes
