@@ -3,7 +3,11 @@ import { sha256Hex } from "@dustinedwards/site-runtime/encoding";
 import { sitemapEntries } from "./sitemap.mjs";
 
 // Any one engine shares a submission with the rest. From Workers, api.indexnow.org and Bing answer 429; Yandex accepts.
-const ENDPOINTS = ["https://yandex.com/indexnow", "https://search.seznam.cz/indexnow", "https://api.indexnow.org/indexnow"];
+const ENDPOINTS = [
+  "https://yandex.com/indexnow",
+  "https://search.seznam.cz/indexnow",
+  "https://api.indexnow.org/indexnow",
+];
 // The protocol takes at most 10,000 URLs in one POST.
 const MAX_URLS = 10_000;
 
