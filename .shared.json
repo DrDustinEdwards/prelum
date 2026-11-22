@@ -1,5 +1,7 @@
 {
   "copies": {
-    "bin/chart-audit.mjs": "hex runs inside the audited page (readCharts is handed to page.evaluate, which sends the function's source, not its imports), and it writes #rrggbb from an RGB array, not toHex's bytes"
+    "bin/chart-audit.mjs": "hex runs inside the audited page (readCharts is handed to page.evaluate, which sends the function's source, not its imports), and it writes #rrggbb from an RGB array, not toHex's bytes",
+    "search.mjs": "likeContains here takes text and returns a LIKE pattern string; site-runtime's takes a Drizzle column and returns SQL: a name in common, not a copy.",
+    "xml.mjs": "toDate here reads a feed value with a fallback date; site-runtime's turns epoch milliseconds into a Date or null: a name in common, not a copy."
   }
 }
