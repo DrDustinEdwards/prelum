@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.63.12
+
+### Patch Changes
+
+- `submitIndexNow` tries Bing's IndexNow endpoint when the shared one refuses or fails, in a smaller form: two endpoints, no per-status branching.
+
 ## 0.63.11
 
 ### Patch Changes
