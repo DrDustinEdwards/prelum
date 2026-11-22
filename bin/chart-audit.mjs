@@ -46,7 +46,7 @@
 // the system Chrome, else the browser at CHART_AUDIT_CHROME.
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -1238,15 +1238,31 @@ async function loadTools() {
       tmpdir(),
       `prelum-chart-audit-${specs.join("-").replace(/[^A-Za-z0-9.-]/g, "_")}`,
     );
-    if (!existsSync(join(dir, "node_modules", "axe-core", "package.json"))) {
-      mkdirSync(dir, { recursive: true });
-      writeFileSync(join(dir, "package.json"), "{}");
-      console.error(`prelum-chart-audit: installing ${specs.join(" and ")} into ${dir}`);
-      execFileSync(
-        "npm",
-        ["install", "--no-save", "--ignore-scripts", "--no-audit", "--no-fund", ...specs],
-        { cwd: dir, stdio: "pipe" },
+    // Sites run at once and each may land here first. Install into a directory of its own and rename it into place, so no
+    // run ever sees a half-installed cache (axe-core written, playwright-core not yet); the loser of the rename uses the winner's.
+    const complete = () =>
+      ["playwright-core", "axe-core"].every((name) =>
+        existsSync(join(dir, "node_modules", name, "package.json")),
       );
+    if (!complete()) {
+      const staging = `${dir}.${process.pid}`;
+      mkdirSync(staging, { recursive: true });
+      writeFileSync(join(staging, "package.json"), "{}");
+      console.error(`prelum-chart-audit: installing ${specs.join(" and ")} into ${dir}`);
+      try {
+        execFileSync(
+          "npm",
+          ["install", "--no-save", "--ignore-scripts", "--no-audit", "--no-fund", ...specs],
+          { cwd: staging, stdio: "pipe" },
+        );
+        try {
+          renameSync(staging, dir);
+        } catch (error) {
+          if (!complete()) throw error;
+        }
+      } finally {
+        rmSync(staging, { recursive: true, force: true });
+      }
     }
     const local = createRequire(join(dir, "package.json"));
     return { chromium: local("playwright-core").chromium, axeSource: local("axe-core").source };
