@@ -183,6 +183,7 @@
     }
   },
   "scripts": {
+    "prepare": "tsc -p tsconfig.build.json",
     "lint": "oxlint --type-aware --deny-warnings --report-unused-disable-directives-severity=error",
     "typecheck": "tsc -p .",
     "format": "oxfmt",

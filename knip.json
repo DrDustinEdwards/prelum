@@ -1,5 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@6.39.0/schema.json",
   "entry": ["*.mjs", "bin/*.mjs", "specimen/*.mjs", "specimen/browser/*.mjs", "test/*.test.mjs"],
-  "project": ["*.mjs", "bin/**/*.mjs", "specimen/**/*.mjs", "test/**/*.mjs"]
+  "project": ["*.mjs", "bin/**/*.mjs", "specimen/**/*.mjs", "test/**/*.mjs"],
+  // The declarations the release builds from the JSDoc (prepare); the modules they come from are what is counted.
+  "ignore": ["dist/**"]
 }
