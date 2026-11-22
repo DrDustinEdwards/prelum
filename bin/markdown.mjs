@@ -4,7 +4,7 @@
 //
 //   prelum-markdown --dir dist --origin https://example.com
 //
-// Needs hast-util-from-html, hast-util-to-mdast, mdast-util-to-markdown and mdast-util-gfm, optional peers.
+// Needs htmlparser2, hastscript, hast-util-to-mdast, mdast-util-to-markdown and mdast-util-gfm, optional peers.
 
 import { parseArgs } from "node:util";
 

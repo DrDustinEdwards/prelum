@@ -4,9 +4,8 @@
 
 import { areaChart, barChart, lineChart, scatterPlot } from "enarratio/plot";
 import { parseCsv } from "@dustinedwards/site-runtime/csv";
-import { fromHtml } from "hast-util-from-html";
 
-import { h } from "./render-hast.mjs";
+import { fromHtml, h } from "./render-hast.mjs";
 import { assertSafe } from "./render-safe.mjs";
 
 export const CHART_TYPES = ["bar", "line", "dot", "area"];
@@ -297,7 +296,7 @@ export function buildChartModel(attrs, csv, { strict = false } = {}) {
  * @param {import("hast").Element} figure the directive's figure node, which becomes the frame
  */
 export function renderChartHast(model, captionChildren, figure) {
-  const drawn = fromHtml(model.html, { fragment: true }).children.find(
+  const drawn = fromHtml(model.html).children.find(
     (/** @type {any} */ n) => n.type === "element" && n.tagName === "figure",
   );
   if (!drawn || drawn.type !== "element") throw new Error("Enarratio returned no <figure>");

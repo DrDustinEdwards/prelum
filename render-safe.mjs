@@ -5,7 +5,7 @@
 // The allowlist is DERIVED, not written: render-allowlist.mjs is regenerated from the conformance corpus by test/render-safe.test.mjs,
 // which fails both ways (a tag or attribute in the output but not in the list, and one in the list that never appears).
 
-import { parseFragment } from "parse5";
+import { Parser } from "htmlparser2";
 
 import { DEFAULT_ALLOWLIST } from "./render-allowlist.mjs";
 import { ContentError } from "./render-error.mjs";
@@ -63,20 +63,71 @@ function styleIsSafe(value) {
   return !/url\s*\(|expression\s*\(|@import|behavior\s*:|-moz-binding/i.test(value);
 }
 
+/** @typedef {{ tag: string, attrs: { name: string, value: string }[] }} ReadElement */
+
 /**
- * @param {import("parse5").DefaultTreeAdapterMap["parentNode"]} root
- * @param {(node: any) => void} visitNode
+ * Every element the HTML holds, each with every attribute it was written with (a repeated one too: a browser keeps the first, and
+ * the scan sees whichever it keeps), and the markup no output of the pipeline holds: a comment, declaration, processing
+ * instruction or CDATA section, a raw `<` in text (the serializer always writes `&lt;`), and an element inside <title> (an SVG
+ * title holds only text). htmlparser2 reads as a browser's tokenizer does: names lowercased, entities decoded with the attribute
+ * rules inside values, raw text where a browser reads raw text. It builds no tree, so where a browser's tree building would put
+ * the tokenizer in another state (title is raw text in HTML and markup in SVG; a <p> leaves SVG), the two readings part at a
+ * <title> or another raw-text element, and every way they can part shows one of those as markup, raw `<`, or a refused
+ * element. An attribute outside any element (htmlparser2 drops a second <form> whole) is read as one on `#unknown`.
+ *
+ * @param {string} html
+ * @returns {{ elements: ReadElement[], refused: Violation[] }}
  */
-function walk(root, visitNode) {
-  /** @type {any[]} */
-  const stack = [root];
-  while (stack.length > 0) {
-    const node = stack.pop();
-    visitNode(node);
-    // <template> keeps its children under `content`.
-    if (node.content) stack.push(node.content);
-    for (const child of node.childNodes ?? []) stack.push(child);
-  }
+function read(html) {
+  /** @type {ReadElement[]} */
+  const elements = [];
+  /** @type {Violation[]} */
+  const refused = [];
+  /** @type {string[]} */
+  const stack = [];
+  /** @type {ReadElement | undefined} */
+  let open;
+  const parser = new Parser(
+    {
+      onopentagname(tag) {
+        if (stack.includes("title")) refused.push({ kind: "markup", tag, detail: "inside title" });
+        stack.push(tag);
+        open = { tag, attrs: [] };
+        elements.push(open);
+      },
+      onattribute(name, value) {
+        if (!open) elements.push((open = { tag: "#unknown", attrs: [] }));
+        open.attrs.push({ name, value });
+      },
+      onopentag() {
+        open = undefined;
+      },
+      onclosetag() {
+        stack.pop();
+      },
+      ontext() {
+        if (html.slice(parser.startIndex, parser.endIndex + 1).includes("<"))
+          refused.push({ kind: "markup", tag: "#text", detail: "raw <" });
+      },
+      oncomment() {
+        refused.push({ kind: "comment", tag: "#comment" });
+      },
+      oncdatastart() {
+        refused.push({ kind: "comment", tag: "#cdata" });
+      },
+      onprocessinginstruction() {
+        refused.push({ kind: "comment", tag: "#declaration" });
+      },
+    },
+    {
+      decodeEntities: true,
+      lowerCaseTags: true,
+      lowerCaseAttributeNames: true,
+      recognizeCDATA: true,
+    },
+  );
+  parser.end(html);
+  return { elements, refused };
 }
 
 /**
@@ -88,41 +139,34 @@ function walk(root, visitNode) {
  * @returns {{ violations: Violation[], elements: number, attributes: number }}
  */
 export function scanHtml(html, allowlist = DEFAULT_ALLOWLIST) {
-  /** @type {Violation[]} */
-  const violations = [];
+  const { elements: found, refused: violations } = read(html);
   let elements = 0;
   let attributes = 0;
 
-  walk(parseFragment(html), (node) => {
-    if (node.nodeName === "#comment") {
-      violations.push({ kind: "comment", tag: "#comment" });
-      return;
-    }
-    if (!node.tagName) return;
-
+  for (const node of found) {
     elements += 1;
-    const tag = node.tagName;
+    const { tag, attrs } = node;
     if (!allowlist.tags.has(tag)) violations.push({ kind: "element", tag });
 
-    for (const { name, value } of node.attrs) {
+    for (const { name, value } of attrs) {
       attributes += 1;
-      if (/^on/i.test(name)) {
+      if (name.startsWith("on")) {
         violations.push({ kind: "event-handler", tag, attribute: name });
         continue;
       }
-      if (!allowlist.attributes.has(`${tag} ${name}`)) {
+      if (!allowlist.attributes.has(`${tag} ${name}`.toLowerCase())) {
         violations.push({ kind: "attribute", tag, attribute: name });
         continue;
       }
       const csv =
         tag === "a" &&
         name === "href" &&
-        node.attrs.some((/** @type {{ name: string }} */ attr) => attr.name === "download") &&
+        attrs.some((attr) => attr.name === "download") &&
         isCsvDownload(value);
-      if (URL_ATTRIBUTES.has(name.toLowerCase()) && !isAllowedUrl(value) && !csv) {
+      if (URL_ATTRIBUTES.has(name) && !isAllowedUrl(value) && !csv) {
         violations.push({ kind: "url", tag, attribute: name, detail: value.slice(0, 80) });
       }
-      if (name.toLowerCase() === "srcset") {
+      if (name === "srcset") {
         for (const url of srcsetUrls(value)) {
           if (!isAllowedUrl(url))
             violations.push({ kind: "url", tag, attribute: name, detail: url.slice(0, 80) });
@@ -132,7 +176,7 @@ export function scanHtml(html, allowlist = DEFAULT_ALLOWLIST) {
         violations.push({ kind: "style", tag, attribute: name, detail: value.slice(0, 80) });
       }
     }
-  });
+  }
 
   return { violations, elements, attributes };
 }
@@ -169,11 +213,10 @@ export function inventory(outputs) {
   const tags = new Set();
   const attributes = new Set();
   for (const html of outputs) {
-    walk(parseFragment(html), (node) => {
-      if (!node.tagName) return;
-      tags.add(node.tagName);
-      for (const { name } of node.attrs) attributes.add(`${node.tagName} ${name}`);
-    });
+    for (const node of read(html).elements) {
+      tags.add(node.tag);
+      for (const { name } of node.attrs) attributes.add(`${node.tag} ${name}`.toLowerCase());
+    }
   }
   return { tags: [...tags].sort(), attributes: [...attributes].sort() };
 }

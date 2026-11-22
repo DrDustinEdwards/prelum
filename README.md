@@ -9,7 +9,7 @@ peer dependency: site-runtime is not on the npm registry, so npm cannot resolve 
 that moves both fails with ERESOLVE.
 
 Pure ES modules, Web-standard only, so the same file runs in a Worker and in Node. The helpers have no dependencies; the markdown pipeline
-needs the unified family, KaTeX and parse5, which are optional peers: a site that only builds feeds installs none of them.
+needs the unified family, KaTeX, htmlparser2 and hastscript, which are optional peers: a site that only builds feeds installs none of them.
 
 ## What it holds
 
@@ -403,7 +403,7 @@ if (icon) return icon;
 
 **Safe by construction, then checked.** Raw HTML in the source is dropped before it becomes markup, the URL policy runs last, and
 KaTeX runs with `trust` off. Those are three options one edit could flip, so `render/safe` scans the rendered output with a parser
-(parse5) against an allowlist, and `render/conformance` holds 54 hostile inputs every site runs against its own configured renderer:
+(htmlparser2, held to what a browser's parser finds by a parse5 differential in the tests) against an allowlist, and `render/conformance` holds 54 hostile inputs every site runs against its own configured renderer:
 
 ```js
 import { runRenderConformance } from "@drdustinedwards/site-helpers/render/conformance";
