@@ -40,11 +40,11 @@ test("submitIndexNowIfChanged: one ping per changed set, and a failed ping is tr
   ok = true;
   assert.equal(await submitIndexNowIfChanged(input(urls)), true);
   assert.equal(await submitIndexNowIfChanged(input([...urls].reverse())), false);
-  // The 500 tried both engines; the retry went through the first.
-  assert.equal(calls, 3);
+  // The 500 tried all three engines; the retry went through the first.
+  assert.equal(calls, 4);
 });
 
-test("submitIndexNow tries Bing's endpoint when the shared one answers 429 or fails", async () => {
+test("submitIndexNow tries the next endpoint when the first one answers 429 or fails", async () => {
   /** @type {string[]} */
   const hosts = [];
   const answers = [429, 202];
@@ -54,7 +54,7 @@ test("submitIndexNow tries Bing's endpoint when the shared one answers 429 or fa
   };
   const input = { origin: "https://example.com", key: "k", urls: ["https://example.com/a"], fetch };
   assert.equal(await submitIndexNow(input), true);
-  assert.deepEqual(hosts, ["api.indexnow.org", "www.bing.com"]);
-  answers.push(500, 500);
+  assert.deepEqual(hosts, ["yandex.com", "search.seznam.cz"]);
+  answers.push(500, 500, 500);
   assert.equal(await submitIndexNow(input), false);
 });
