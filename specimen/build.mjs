@@ -20,6 +20,7 @@ import { createRequire } from "node:module";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { walkFiles } from "@dustinedwards/devkit/node";
 import { integrityHash } from "@dustinedwards/site-runtime/csp";
 import { securityTxt } from "@dustinedwards/site-runtime/security-txt";
 import { familyFooterHtml } from "capsomer/behavior/family-footer";
@@ -663,16 +664,7 @@ ${await outputsSection(version, elements.length + 1, priority)}
     }),
   );
 
-  /** @type {string[]} */
-  const files = [];
-  const walk = (/** @type {string} */ dir) => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const path = join(dir, entry.name);
-      if (entry.isDirectory()) walk(path);
-      else files.push(relative(outDir, path));
-    }
-  };
-  walk(outDir);
+  const files = walkFiles(outDir).map((path) => relative(outDir, path));
   return { version, elements: elements.length, files: files.sort() };
 }
 
