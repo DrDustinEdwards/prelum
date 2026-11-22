@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { recentSitemapUrls, submitIndexNowIfChanged } from "../indexnow.mjs";
+import { recentSitemapUrls, submitIndexNow, submitIndexNowIfChanged } from "../indexnow.mjs";
 
 test("recentSitemapUrls: only pages changed within the window, or every page when the sitemap carries no lastmod", () => {
   const now = new Date("2026-10-25T12:00:00Z");
@@ -40,5 +40,25 @@ test("submitIndexNowIfChanged: one ping per changed set, and a failed ping is tr
   ok = true;
   assert.equal(await submitIndexNowIfChanged(input(urls)), true);
   assert.equal(await submitIndexNowIfChanged(input([...urls].reverse())), false);
-  assert.equal(calls, 2);
+  // The 500 tried each of the three engines; the retry went through the first.
+  assert.equal(calls, 4);
+});
+
+test("submitIndexNow tries the next engine on a 429, a 5xx or a network error, and stops on a refused key", async () => {
+  /** @type {string[]} */
+  const hosts = [];
+  const answers = [429, "throw", 202];
+  const fetch = async (/** @type {any} */ url) => {
+    hosts.push(new URL(String(url)).host);
+    const next = answers.shift();
+    if (next === "throw") throw new Error("down");
+    return new Response(null, { status: /** @type {number} */ (next) });
+  };
+  const input = { origin: "https://example.com", key: "k", urls: ["https://example.com/a"], fetch };
+  assert.equal(await submitIndexNow(input), true);
+  assert.deepEqual(hosts, ["api.indexnow.org", "www.bing.com", "yandex.com"]);
+  hosts.length = 0;
+  answers.push(403);
+  assert.equal(await submitIndexNow(input), false);
+  assert.deepEqual(hosts, ["api.indexnow.org"]);
 });
