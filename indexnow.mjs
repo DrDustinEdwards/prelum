@@ -2,14 +2,8 @@ import { sha256Hex } from "@dustinedwards/site-runtime/encoding";
 
 import { sitemapEntries } from "./sitemap.mjs";
 
-// Any one engine passes a submission on to the others (indexnow.org/documentation). The shared endpoint comes first;
-// Cloudflare Workers' shared egress is sometimes answered 429 by it, so a 429, a 5xx or a network error tries the
-// next engine, and any other answer (a refused key, a bad URL) is final.
-const ENDPOINTS = [
-  "https://api.indexnow.org/indexnow",
-  "https://www.bing.com/indexnow",
-  "https://yandex.com/indexnow",
-];
+// Any one engine shares a submission with the rest; Workers get 429 from the first.
+const ENDPOINTS = ["https://api.indexnow.org/indexnow", "https://www.bing.com/indexnow"];
 // The protocol takes at most 10,000 URLs in one POST.
 const MAX_URLS = 10_000;
 
@@ -47,28 +41,20 @@ export async function submitIndexNow({
     if (urlList.length === 0) return false;
     let ok = true;
     for (let i = 0; i < urlList.length; i += MAX_URLS) {
-      const body = JSON.stringify({
-        host: new URL(origin).host,
-        key,
-        keyLocation: keyLocation ?? `${origin}/${key}.txt`,
-        urlList: urlList.slice(i, i + MAX_URLS),
-      });
-      let sent = false;
-      for (const endpoint of ENDPOINTS) {
-        let response;
-        try {
-          response = await fetcher(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json; charset=utf-8" },
-            body,
-          });
-        } catch {
-          continue;
-        }
-        if (response.ok) sent = true;
-        if (response.ok || (response.status !== 429 && response.status < 500)) break;
-      }
-      ok = sent && ok;
+      const init = {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify({
+          host: new URL(origin).host,
+          key,
+          keyLocation: keyLocation ?? `${origin}/${key}.txt`,
+          urlList: urlList.slice(i, i + MAX_URLS),
+        }),
+      };
+      let response;
+      for (const endpoint of ENDPOINTS)
+        if ((response = await fetcher(endpoint, init).catch(() => null))?.ok) break;
+      ok = !!response?.ok && ok;
     }
     return ok;
   } catch {
