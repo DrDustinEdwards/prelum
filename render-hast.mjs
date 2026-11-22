@@ -4,7 +4,11 @@
 import { h as hast, s } from "hastscript";
 import { Parser } from "htmlparser2";
 
-/** @param {string} tagName @param {Record<string, unknown>} properties @param {unknown[]} children */
+/**
+ * @param {string} tagName
+ * @param {Record<string, unknown>} properties
+ * @param {unknown[]} children
+ */
 export const h = (tagName, properties, children) => ({
   type: "element",
   tagName,

@@ -9,6 +9,12 @@
  * place (WCAG 2.4.4).
  */
 
+/** @typedef {{ key: string, label: string, to: string, merge: boolean }} SiteMapTally An item counted rather than listed: `to` is its index; `merge` puts the count on the index's own line. */
+/** @typedef {{ path: string, title: string, tally?: SiteMapTally }} SiteMapUrl One public URL, as the sitemap list holds it. */
+/** @typedef {{ id: string, heading: string, to: string | null, roots: readonly string[] }} SiteMapSectionSpec A section of the page: the address prefixes it owns (`roots`) and its hub (`to`). The last section is the catch-all. */
+/** @typedef {{ to: string, label: string, count?: number, plain?: boolean }} SiteMapLine One line: a link by its title, or (`plain`) a count shown as text. */
+/** @typedef {{ id: string, heading: string, to: string | null, lines: SiteMapLine[] }} SiteMapSection A section as the page draws it. */
+
 /** @param {string} path @param {string} root */
 const under = (path, root) => path === root || path.startsWith(`${root}/`);
 
@@ -17,7 +23,7 @@ const under = (path, root) => path === root || path.startsWith(`${root}/`);
  * catch-all, "Site").
  *
  * @param {string} path
- * @param {ReadonlyArray<{ id: string, roots: readonly string[] }>} sections
+ * @param {ReadonlyArray<SiteMapSectionSpec>} sections
  * @returns {string}
  */
 export function sectionOf(path, sections) {
@@ -29,14 +35,14 @@ export function sectionOf(path, sections) {
  * The page's sections from the URL list, in the order of `sections`. Lines keep the list's order, except that a section's
  * own hub (its `to`) comes first. A section with no line is left out.
  *
- * @param {Array<{ path: string, title: string, tally?: { key: string, label: string, to: string, merge: boolean } }>} urls
- * @param {ReadonlyArray<{ id: string, heading: string, to: string | null, roots: readonly string[] }>} sections
- * @returns {Array<{ id: string, heading: string, to: string | null, lines: Array<{ to: string, label: string, count?: number, plain?: boolean }> }>}
+ * @param {SiteMapUrl[]} urls
+ * @param {ReadonlyArray<SiteMapSectionSpec>} sections
+ * @returns {SiteMapSection[]}
  */
 export function siteMapSections(urls, sections) {
-  /** @type {Map<string, { tally: { key: string, label: string, to: string, merge: boolean }, count: number }>} */
+  /** @type {Map<string, { tally: SiteMapTally, count: number }>} */
   const tallies = new Map();
-  /** @type {Array<{ to: string, label: string, count?: number, plain?: boolean }>} */
+  /** @type {SiteMapLine[]} */
   const lines = [];
   for (const url of urls) {
     if (url.tally) {

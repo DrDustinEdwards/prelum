@@ -14,7 +14,7 @@
   },
   "files": [
     "*.mjs",
-    "*.d.mts",
+    "dist",
     "bin",
     "README.md"
   ],
@@ -22,163 +22,163 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./index.d.mts",
+      "types": "./dist/index.d.mts",
       "default": "./index.mjs"
     },
     "./xml": {
-      "types": "./xml.d.mts",
+      "types": "./dist/xml.d.mts",
       "default": "./xml.mjs"
     },
     "./slug": {
-      "types": "./slug.d.mts",
+      "types": "./dist/slug.d.mts",
       "default": "./slug.mjs"
     },
     "./text": {
-      "types": "./text.d.mts",
+      "types": "./dist/text.d.mts",
       "default": "./text.mjs"
     },
     "./feeds": {
-      "types": "./feeds.d.mts",
+      "types": "./dist/feeds.d.mts",
       "default": "./feeds.mjs"
     },
     "./lastmod": {
-      "types": "./lastmod.d.mts",
+      "types": "./dist/lastmod.d.mts",
       "default": "./lastmod.mjs"
     },
     "./sitemap": {
-      "types": "./sitemap.d.mts",
+      "types": "./dist/sitemap.d.mts",
       "default": "./sitemap.mjs"
     },
     "./accessibility": {
-      "types": "./accessibility.d.mts",
+      "types": "./dist/accessibility.d.mts",
       "default": "./accessibility.mjs"
     },
     "./llms": {
-      "types": "./llms.d.mts",
+      "types": "./dist/llms.d.mts",
       "default": "./llms.mjs"
     },
     "./markdown-copy": {
-      "types": "./markdown-copy.d.mts",
+      "types": "./dist/markdown-copy.d.mts",
       "default": "./markdown-copy.mjs"
     },
     "./markdown-files": {
-      "types": "./markdown-files.d.mts",
+      "types": "./dist/markdown-files.d.mts",
       "default": "./markdown-files.mjs"
     },
     "./frontmatter": {
-      "types": "./frontmatter.d.mts",
+      "types": "./dist/frontmatter.d.mts",
       "default": "./frontmatter.mjs"
     },
     "./matter": {
-      "types": "./matter.d.mts",
+      "types": "./dist/matter.d.mts",
       "default": "./matter.mjs"
     },
     "./head": {
-      "types": "./head.d.mts",
+      "types": "./dist/head.d.mts",
       "default": "./head.mjs"
     },
     "./scholar": {
-      "types": "./scholar.d.mts",
+      "types": "./dist/scholar.d.mts",
       "default": "./scholar.mjs"
     },
     "./vtt": {
-      "types": "./vtt.d.mts",
+      "types": "./dist/vtt.d.mts",
       "default": "./vtt.mjs"
     },
     "./schema": {
-      "types": "./schema.d.mts",
+      "types": "./dist/schema.d.mts",
       "default": "./schema.mjs"
     },
     "./robots": {
-      "types": "./robots.d.mts",
+      "types": "./dist/robots.d.mts",
       "default": "./robots.mjs"
     },
     "./files": {
-      "types": "./files.d.mts",
+      "types": "./dist/files.d.mts",
       "default": "./files.mjs"
     },
     "./indexnow": {
-      "types": "./indexnow.d.mts",
+      "types": "./dist/indexnow.d.mts",
       "default": "./indexnow.mjs"
     },
     "./source": {
-      "types": "./source.d.mts",
+      "types": "./dist/source.d.mts",
       "default": "./source.mjs"
     },
     "./site-map": {
-      "types": "./site-map.d.mts",
+      "types": "./dist/site-map.d.mts",
       "default": "./site-map.mjs"
     },
     "./stored-render": {
-      "types": "./stored-render.d.mts",
+      "types": "./dist/stored-render.d.mts",
       "default": "./stored-render.mjs"
     },
     "./icons": {
-      "types": "./icons.d.mts",
+      "types": "./dist/icons.d.mts",
       "default": "./icons.mjs"
     },
     "./audit": {
-      "types": "./audit.d.mts",
+      "types": "./dist/audit.d.mts",
       "default": "./audit.mjs"
     },
     "./search": {
-      "types": "./search.d.mts",
+      "types": "./dist/search.d.mts",
       "default": "./search.mjs"
     },
     "./render": {
-      "types": "./render.d.mts",
+      "types": "./dist/render.d.mts",
       "default": "./render.mjs"
     },
     "./render/nomath": {
-      "types": "./render-nomath.d.mts",
+      "types": "./dist/render-nomath.d.mts",
       "default": "./render-nomath.mjs"
     },
     "./render/packs": {
-      "types": "./render-packs.d.mts",
+      "types": "./dist/render-packs.d.mts",
       "default": "./render-packs.mjs"
     },
     "./render/highlight": {
-      "types": "./render-highlight.d.mts",
+      "types": "./dist/render-highlight.d.mts",
       "default": "./render-highlight.mjs"
     },
     "./render/safe": {
-      "types": "./render-safe.d.mts",
+      "types": "./dist/render-safe.d.mts",
       "default": "./render-safe.mjs"
     },
     "./render/enhance": {
-      "types": "./render-enhance.d.mts",
+      "types": "./dist/render-enhance.d.mts",
       "default": "./render-enhance.mjs"
     },
     "./render/embeds": {
-      "types": "./render-embeds.d.mts",
+      "types": "./dist/render-embeds.d.mts",
       "default": "./render-embeds.mjs"
     },
     "./render/audit": {
-      "types": "./render-audit.d.mts",
+      "types": "./dist/render-audit.d.mts",
       "default": "./render-audit.mjs"
     },
     "./render/conformance": {
-      "types": "./render-conformance.d.mts",
+      "types": "./dist/render-conformance.d.mts",
       "default": "./render-conformance.mjs"
     },
     "./render/math": {
-      "types": "./render-math.d.mts",
+      "types": "./dist/render-math.d.mts",
       "default": "./render-math.mjs"
     },
     "./render/url": {
-      "types": "./render-url.d.mts",
+      "types": "./dist/render-url.d.mts",
       "default": "./render-url.mjs"
     },
     "./render/link-icons": {
-      "types": "./render-link-icons.d.mts",
+      "types": "./dist/render-link-icons.d.mts",
       "default": "./render-link-icons.mjs"
     },
     "./render/diagram": {
-      "types": "./render-diagram.d.mts",
+      "types": "./dist/render-diagram.d.mts",
       "default": "./render-diagram.mjs"
     },
     "./render/diagram-draw": {
-      "types": "./render-diagram-draw.d.mts",
+      "types": "./dist/render-diagram-draw.d.mts",
       "default": "./render-diagram-draw.mjs"
     }
   },

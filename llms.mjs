@@ -52,7 +52,10 @@ function llmsHeader(doc) {
 /** A line break becomes a space. @param {string} text */
 const oneLine = (text) => text.replace(/\s*[\r\n]+\s*/g, " ");
 
-/** @param {LlmsLink} link */
+/**
+ * @param {LlmsLink} link
+ * @returns {string}
+ */
 export function llmsLink(link) {
   // One line per link: a newline in the title or description would end the list item, and a ")" in the URL would end the link.
   const title = oneLine(link.title).replace(/[[\]]/g, (bracket) => "\\" + bracket);
@@ -120,6 +123,7 @@ export function llmsFullDocument(doc) {
  * Where a page's Markdown copy lives: `/writing/post` is `/writing/post.md`, and the home page is `/index.md`.
  *
  * @param {string} path
+ * @returns {string}
  */
 export function markdownPath(path) {
   const bare = path.replace(/\/+$/, "");

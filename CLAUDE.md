@@ -16,7 +16,7 @@ Prelum is the family's publishing library (`@drdustinedwards/site-helpers`): the
 ## Rules for this repo
 
 - `assertSafe` stays available and off by default; the specimen turns it on.
-- Every `*.mjs` module has a hand-written `*.d.mts` twin; change both.
+- The types are the JSDoc in each `*.mjs`; the release builds the declarations into `dist/` (`prepare`). There are no hand-written `*.d.mts` files.
 
 ## Commands
 

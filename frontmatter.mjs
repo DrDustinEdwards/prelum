@@ -16,11 +16,13 @@ const EMPTY_FENCE = new RegExp(String.raw`^(\uFEFF?---[ \t]*\r?\n)()(${CLOSE})`)
 const FENCE = new RegExp(String.raw`^(\uFEFF?---[ \t]*\r?\n)([\s\S]*?)(\r?\n${CLOSE})`);
 const KEY = /^([A-Za-z_][\w-]*):(.*)$/;
 
+/** @typedef {{ front: string | null, body: string, open: string, close: string }} Split A source cut at its fences; `front` is null when it has no frontmatter. */
+
 /**
  * Cuts a source into its frontmatter text, its body and the fences between, so `open + front + close + body` is the source.
  * Blank lines after the closing fence go with the fence, so the body starts at its first line of text.
  * @param {string} source
- * @returns {import("./frontmatter.d.mts").Split}
+ * @returns {Split}
  */
 export function splitSource(source) {
   const m = EMPTY_FENCE.exec(source) ?? FENCE.exec(source);
@@ -35,7 +37,7 @@ export function splitSource(source) {
 
 /**
  * The source again from its parts.
- * @param {import("./frontmatter.d.mts").Split} s
+ * @param {Split} s
  */
 export function joinSource(s) {
   return s.front === null ? s.body : `${s.open}${s.front}${s.close}${s.body}`;

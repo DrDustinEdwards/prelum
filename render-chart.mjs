@@ -294,6 +294,7 @@ export function buildChartModel(attrs, csv, { strict = false } = {}) {
  * @param {ReturnType<typeof buildChartModel>} model
  * @param {import("hast").ElementContent[]} captionChildren hast for an author-written caption, may be empty
  * @param {import("hast").Element} figure the directive's figure node, which becomes the frame
+ * @returns {import("hast").ElementContent[]}
  */
 export function renderChartHast(model, captionChildren, figure) {
   const drawn = fromHtml(model.html).children.find(
@@ -347,5 +348,5 @@ export function renderChartHast(model, captionChildren, figure) {
     children.splice(after === -1 ? children.length : after + 1, 0, caption);
   }
   inner.children = children;
-  return [h("div", { className: ["cap-chart-figure"] }, [inner])];
+  return [/** @type {any} */ (h("div", { className: ["cap-chart-figure"] }, [inner]))];
 }
