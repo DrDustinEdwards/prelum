@@ -8,6 +8,8 @@ import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import test from "node:test";
 
+import { parseFragment, serialize } from "parse5";
+
 import { DEFAULT_ALLOWLIST } from "../render-allowlist.mjs";
 import { HOSTILE_INPUTS, runRenderConformance } from "../render-conformance.mjs";
 import { ContentError, render } from "../render.mjs";
@@ -161,6 +163,61 @@ test("the scan reads with a parser: attribute-looking text inside a value is not
   assert.deepEqual(scan.violations, []);
   assert.equal(scan.elements, 1);
   assert.equal(scan.attributes, 1);
+});
+
+// Malformed markup where a tokenizer could part from a browser's: attribute quoting and spacing, repeated attributes, entities and
+// control characters in URLs, comments and bogus comments, CDATA, raw-text elements, and SVG and MathML (a title is raw text in
+// HTML and markup in SVG; a <p> or a mismatched heading end tag leaves SVG in a browser, not in htmlparser2).
+const MALFORMED = [
+  `<img src="/a.png"/onerror=alert(1)>`,
+  `<img/src="/a.png"/onerror=alert(1)>`,
+  `<a href="https://x"onclick="y">t</a>`,
+  `<a href="javascript:x" href="https://x">t</a>`,
+  `<a href='https://x' """ onclick=y>t</a>`,
+  `<a  href = javascript:x >t</a>`,
+  `<a href="jav&#x09;ascript:x">t</a>`,
+  `<a href="javascript&colon;x">t</a>`,
+  `<a href="\u0000javascript:x">t</a>`,
+  `<a href="https://x"\fonclick=y>t</a>`,
+  `<p ONCLICK=x>t</p>`,
+  `<svg><title><img src=x onerror=alert(1)></title></svg>`,
+  `<svg><style><img src=x onerror=alert(1)></style></svg>`,
+  `<svg></p><title><a title="</title><img src onerror=alert(1)>">t</a></title></svg>`,
+  `<h3><svg></h2><title><a title="</title><img src onerror=alert(1)>">t</a></title></svg></h3>`,
+  `<svg></p><style><a title="</style><img src onerror=alert(1)>">`,
+  `<math><mtext><table><mglyph><style><img src=x onerror=alert(1)>`,
+  `<math><annotation encoding="text/html"><img src=x onerror=alert(1)></annotation></math>`,
+  `<math><title><img src=x onerror=alert(1)></title></math>`,
+  `<svg><![CDATA[</svg><img src=x onerror=alert(1)>]]></svg>`,
+  `<![CDATA[><img src=x onerror=alert(1)>]]>`,
+  `<!--><img src=x onerror=alert(1)>-->`,
+  `<!-- --!><img src=x onerror=alert(1)> -->`,
+  `<? x ><img src=x onerror=alert(1)>?>`,
+  `</3><img src=x onerror=alert(1)>`,
+  `<noscript><p title="</noscript><img src=x onerror=alert(1)>"></noscript>`,
+  `<title><img src=x onerror=alert(1)></title>`,
+  `<textarea><img src=x onerror=alert(1)></textarea>`,
+  `<template><img src=x onerror=alert(1)></template>`,
+  `<table><img src=x onerror=alert(1)></table>`,
+  `<form><form action="javascript:x"><button>t</button></form>`,
+  `<svg><a xlink:href="javascript:x"><text>t</text></a></svg>`,
+  `<svg><foreignobject><img src=x onerror=alert(1)></foreignobject></svg>`,
+  `<span style="color:red" style="background:url(x)">t</span>`,
+  `<p>t</p><img src=x onerror=alert(1)`,
+  `<plaintext><img src=x onerror=alert(1)>`,
+];
+
+test("the scan refuses whatever a browser's parser would find unsafe in malformed markup", () => {
+  for (const input of MALFORMED) {
+    // parse5 builds the tree a browser builds; written back out, it is markup any parser reads the same way.
+    const browser = kinds(serialize(parseFragment(input)));
+    if (browser.length > 0) assert.notDeepEqual(kinds(input), [], input);
+  }
+  // Where the readings part, the scan refuses even when the browser's tree would not.
+  assert.deepEqual(kinds(`<svg><![CDATA[x]]></svg>`), ["comment", "markup"]);
+  assert.deepEqual(kinds(`<!doctype html><p>t</p>`), ["comment"]);
+  assert.deepEqual(kinds(`<p>3 < 4</p>`), ["markup"]);
+  assert.deepEqual(kinds(`<svg><title>x &lt; y</title></svg>`), []);
 });
 
 test("the one style that may carry a url() is the pipeline's own image placeholder", () => {
