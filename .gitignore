@@ -2,3 +2,4 @@ node_modules/
 specimen/dist/
 .wrangler/
 coverage/
+dist/
