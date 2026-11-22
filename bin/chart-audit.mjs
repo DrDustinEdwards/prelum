@@ -46,7 +46,7 @@
 // the system Chrome, else the browser at CHART_AUDIT_CHROME.
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -1238,15 +1238,30 @@ async function loadTools() {
       tmpdir(),
       `prelum-chart-audit-${specs.join("-").replace(/[^A-Za-z0-9.-]/g, "_")}`,
     );
-    if (!existsSync(join(dir, "node_modules", "axe-core", "package.json"))) {
-      mkdirSync(dir, { recursive: true });
-      writeFileSync(join(dir, "package.json"), "{}");
+    // Installed in a directory of its own and moved into place once whole, so a second audit starting while the first
+    // installs never finds half of it (axe-core lands before playwright-core).
+    const ready = () => existsSync(join(dir, "node_modules", "playwright-core", "package.json"));
+    if (!ready()) {
+      const staging = `${dir}.${process.pid}`;
+      mkdirSync(staging, { recursive: true });
+      writeFileSync(join(staging, "package.json"), "{}");
       console.error(`prelum-chart-audit: installing ${specs.join(" and ")} into ${dir}`);
-      execFileSync(
-        "npm",
-        ["install", "--no-save", "--ignore-scripts", "--no-audit", "--no-fund", ...specs],
-        { cwd: dir, stdio: "pipe" },
-      );
+      try {
+        execFileSync(
+          "npm",
+          ["install", "--no-save", "--ignore-scripts", "--no-audit", "--no-fund", ...specs],
+          { cwd: staging, stdio: "pipe" },
+        );
+        if (!ready()) {
+          rmSync(dir, { recursive: true, force: true });
+          renameSync(staging, dir);
+        }
+      } catch (error) {
+        // Another audit moved its install into place first: use that one.
+        if (!ready()) throw error;
+      } finally {
+        rmSync(staging, { recursive: true, force: true });
+      }
     }
     const local = createRequire(join(dir, "package.json"));
     return { chromium: local("playwright-core").chromium, axeSource: local("axe-core").source };
