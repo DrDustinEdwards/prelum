@@ -1,12 +1,12 @@
 {
-  "renderVersion": "26",
+  "renderVersion": "27",
   "hashes": {
     "prose": "fb91e0e5a19c72d8acb17ab64221f3b2bd1a906e44bb3a2cbfcea85e0f892836",
     "math": "61e1518d71ab20c9c4314dd6915b1770c68306fe6dae64c323d7cc3d19ce037a",
     "untrusted-math": "fba47bd052c420e4cbc7ae79b37fdb132f3773917bf6b485b9dcef172fb95b0c",
     "code": "86c22bf211bb9f95ba1c995fa01acad5c6bcb03e70dd587b5e7aeb7eda30fe89",
     "directives": "82da74faf96c1f58ea2ee1ab57fed2ec339dccf09763dd632549d530d01d924c",
-    "charts": "eb35b5bbca0e3dba56de41158d67c67cfbe452c20696bec1ff9a5fad74075919",
+    "charts": "2b46a26f83fa7dcf36a847e989d92adf5ceee01ca18453ff28d9bc8f518479b0",
     "charts-zero": "a17ff27261b57e5572c50133b1742bcbd1256216f8942725167df99a339a846f",
     "blocks": "fe3169ea41fb65e5cf2d754128b4a374c4a50aef163f633e46cf8934d1ceed5d"
   }

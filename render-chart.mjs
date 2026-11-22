@@ -15,6 +15,8 @@ const DEFAULT_WIDTH = 700;
 const DEFAULT_HEIGHT = 360;
 // The dot chart's narrow drawing, put in under 30rem and scaled to the frame: drawn at the frame a 320 px phone leaves (about 240 px), so its text keeps 12 px there.
 const NARROW_WIDTH = 240;
+// A phone's scatter plot is taller for its width than the wide one, so it keeps its own shape (Capsomer's keepShape).
+const NARROW_HEIGHT = Math.round((DEFAULT_HEIGHT * 5) / 6);
 
 /** The issues `strict` refuses (E4): a reader would struggle with each, and the author can fix each in the directive. */
 const STRICT_CHART_ISSUES = ["title-missing", "too-many-series"];
@@ -171,7 +173,7 @@ function drawChart(model) {
     const narrow = scatterPlot({
       ...options,
       width: NARROW_WIDTH,
-      height: Math.round((DEFAULT_HEIGHT * 5) / 6),
+      height: NARROW_HEIGHT,
       onIssue: () => {},
     });
     return { html: scatterPlot({ ...options, onIssue }), redraw: { narrow: frameOf(narrow) } };
@@ -307,9 +309,14 @@ export function renderChartHast(model, captionChildren, figure) {
   // reads an attribute's value, so it is read here, as the visible drawing is, before it is written.
   if ("narrow" in model.redraw) assertSafe(model.redraw.narrow);
   // What Enarratio's `redrawCharts` redraws the chart from at the frame's width (its own `data-enarratio-redraw`); without that script the drawing is the server's.
+  // A scatter plot's phone drawing keeps its own shape: until the script swaps it in, the wide drawing is shown at the phone
+  // drawing's height (Capsomer's data-keep-shape), so the swap moves nothing under the chart (D5).
   figure.properties = {
     className: ["cap-chart"],
     dataEnarratioRedraw: JSON.stringify(model.redraw),
+    ...("narrow" in model.redraw
+      ? { dataKeepShape: "", style: `--cap-narrow-height: ${NARROW_HEIGHT}px` }
+      : {}),
   };
 
   const isCaption = (/** @type {any} */ n) =>
