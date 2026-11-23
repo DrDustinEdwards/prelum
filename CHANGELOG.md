@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.65.0
+
+### Minor Changes
+
+- `trackRenderedPageDates` and `setPageRenderer` (`./lastmod`): the daily page-dates job for a rendered site, each page rendered and read as its Markdown copy, so a site no longer writes the job itself.
+
 ## 0.64.1
 
 ### Patch Changes
