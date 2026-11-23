@@ -396,7 +396,7 @@ test("lastmod: writeSitemapLastmod dates each sitemap URL from its Markdown copy
   assert.equal((xml.match(/<lastmod>/g) ?? []).length, 2);
 });
 
-test("lastmod: trackPageDates dates a page when its text changes and keeps the entry of a page it cannot read", async () => {
+test("lastmod: trackPageDates dates a page when its text changes and keeps the entry of a page it cannot read; trackRenderedPageDates reads a rendered page", async () => {
   const { trackPageDates, kvPageRecord } = await import("../lastmod.mjs");
   /** @type {Map<string, string>} */
   const store = new Map();
@@ -437,4 +437,23 @@ test("lastmod: trackPageDates dates a page when its text changes and keeps the e
     today: "2026-03-03",
   });
   assert.equal(third.changed, false);
+  const { trackRenderedPageDates, setPageRenderer } = await import("../lastmod.mjs");
+  /** @type {import("../lastmod.mjs").PageRecord | undefined} */
+  let record;
+  const options = {
+    paths: ["/a", "/missing"],
+    origin: "https://example.com/",
+    load: async () => record,
+    save: async (/** @type {import("../lastmod.mjs").PageRecord} */ next) => void (record = next),
+    today: "2026-01-01",
+  };
+  await assert.rejects(trackRenderedPageDates(options), /no page renderer/);
+  setPageRenderer(async (path) =>
+    path === "/a"
+      ? "<html><head><title>A</title></head><body><main><p>Hello</p></main></body></html>"
+      : null,
+  );
+  const result = await trackRenderedPageDates(options);
+  assert.deepEqual(Object.keys(result.record), ["/a"]);
+  assert.equal(result.record["/a"].lastmod, "2026-01-01");
 });

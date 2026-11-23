@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
+import { htmlToMarkdown } from "./markdown-copy.mjs";
+
 /**
  * @typedef {Record<string, { hash: string, lastmod: string }>} PageRecord each page's content hash and the day it last changed
  */
@@ -103,4 +105,46 @@ export function kvPageRecord(kv, key) {
       await kv.put(key, JSON.stringify(record));
     },
   };
+}
+
+/** @type {((path: string, env: any) => Promise<string | null>) | undefined} */
+let pageRenderer;
+
+/**
+ * Registers how the Worker renders one of its own pages (`(path, env)` to its HTML, or null when the path is not a page), set
+ * once where the page handler is built (workers/app.ts) so the cron job can read the pages the way a visitor is served.
+ *
+ * @param {(path: string, env: any) => Promise<string | null>} renderer
+ */
+export function setPageRenderer(renderer) {
+  pageRenderer = renderer;
+}
+
+/**
+ * `trackPageDates` for a rendered site: each path is rendered (`render`, which defaults to the `setPageRenderer` one, given
+ * `env`) and read as the Markdown copy is made, its title, description and text, so the day a page's own text last changed is
+ * what the sitemap says.
+ *
+ * @param {{ paths: string[], origin: string, load: () => Promise<PageRecord | undefined>, save: (record: PageRecord) => Promise<void>, env?: unknown, render?: (path: string) => Promise<string | null>, today?: string }} options
+ * @returns {Promise<{ record: PageRecord, changed: boolean }>}
+ */
+export function trackRenderedPageDates({ paths, origin, load, save, env, render, today }) {
+  const renderPath =
+    render ??
+    ((/** @type {string} */ path) => {
+      if (!pageRenderer) throw new Error("page-dates: no page renderer is set");
+      return pageRenderer(path, env);
+    });
+  return trackPageDates({
+    paths,
+    read: async (path) => {
+      const html = await renderPath(path);
+      if (html === null) return null;
+      const facts = htmlToMarkdown(html, { base: `${origin.replace(/\/$/, "")}${path}` });
+      return `${facts.title}\n${facts.description}\n${facts.markdown}`;
+    },
+    load,
+    save,
+    today,
+  });
 }
