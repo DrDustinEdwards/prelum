@@ -52,7 +52,7 @@ import { ContentError } from "./render-error.mjs";
 import { rehypeLinks, remarkLinkDirectives } from "./render-links.mjs";
 import { RENDER_VERSION } from "./render-version.mjs";
 import { LQIP_STYLE, assertSafe, srcsetUrls } from "./render-safe.mjs";
-import { isAllowedUrl, isCsvDownload } from "./render-url.mjs";
+import { isAllowedUrl, isCsvDownload, URL_ATTRIBUTES } from "./render-url.mjs";
 import { excerpt, readingMinutes, wordCount } from "./text.mjs";
 
 export { ContentError, RENDER_VERSION, isAllowedUrl };
@@ -565,7 +565,7 @@ function rehypeUrlProtocols(file, sink) {
       // Every other attribute a browser loads or navigates to: a plugin that wrote one is held to the same list. The attribute goes, the
       // element stays.
       for (const name of Object.keys(properties)) {
-        if (!URL_ATTRIBUTES.has(name.toLowerCase())) continue;
+        if (!URL_ATTRIBUTE_NAMES.has(name.toLowerCase())) continue;
         if ((isLink && name === "href") || (isImage && name === "src")) continue;
         const raw = properties[name];
         if (raw === undefined || raw === null || raw === false || raw === true) continue;
@@ -581,21 +581,7 @@ function rehypeUrlProtocols(file, sink) {
 }
 
 /** Attributes that hold a URL the browser loads or navigates to, as hast names them and as a plugin may write them, lower-cased. */
-const URL_ATTRIBUTES = new Set([
-  "href",
-  "src",
-  "poster",
-  "srcset",
-  "action",
-  "formaction",
-  "data",
-  "cite",
-  "xlinkhref",
-  "xlink:href",
-  "longdesc",
-  "ping",
-  "background",
-]);
+const URL_ATTRIBUTE_NAMES = new Set([...URL_ATTRIBUTES, "srcset", "xlinkhref", "longdesc"]);
 
 /** Under this media query a site's sources are an animation's first frame (site-runtime's ./image writes them for a GIF). */
 const REDUCED_MOTION = /prefers-reduced-motion:\s*reduce/;

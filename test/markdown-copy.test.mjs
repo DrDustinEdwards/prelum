@@ -5,6 +5,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { annotation } from "../annotation.mjs";
 import { htmlToMarkdown, markdownCopies } from "../markdown-copy.mjs";
 
 const ORIGIN = "https://example.com";
@@ -101,6 +102,37 @@ test("llms-full.txt is built from llms.txt and the sitemap, without noindex page
   assert.ok(full.startsWith("# Sample\n\n> A sample site.\n\nIntro line.\n"), full);
   assert.match(full, /# About\n/);
   assert.doesNotMatch(full, /Private|Hush/);
+});
+
+test("llms-full.txt is built without the first visitor's Cookie or language, and a sitemap index that lists itself ends", async () => {
+  /** @type {(string | null)[]} */
+  const seen = [];
+  const looping = markdownCopies(
+    async (request) => {
+      const { pathname } = new URL(request.url);
+      if (pathname !== "/llms-full.txt")
+        seen.push(request.headers.get("Cookie") ?? request.headers.get("Accept-Language"));
+      if (pathname === "/sitemap.xml")
+        return new Response(
+          `<sitemapindex><sitemap><loc>${ORIGIN}/sitemap.xml</loc></sitemap></sitemapindex>`,
+        );
+      return site(request);
+    },
+    { origin: ORIGIN },
+  );
+  const response = await looping(
+    new Request(`${ORIGIN}/llms-full.txt`, {
+      headers: { Cookie: "session=1", "Accept-Language": "fr" },
+    }),
+  );
+  assert.equal(response.status, 200);
+  assert.deepEqual(seen.filter(Boolean), []);
+});
+
+test("an annotation carries a crawled newline as text, never as a second workflow command", () => {
+  const line = annotation("error", "a:b", "https://x.test/ 100% x\n::stop-commands::tok");
+  assert.ok(!line.includes("\n"));
+  assert.equal(line, "::error title=a%3Ab::https://x.test/ 100%25 x%0A::stop-commands::tok");
 });
 
 test("llmsFullSkip keeps a page's copy but leaves it out of llms-full.txt", async () => {

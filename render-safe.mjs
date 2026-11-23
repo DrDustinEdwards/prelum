@@ -9,21 +9,7 @@ import { Parser } from "htmlparser2";
 
 import { DEFAULT_ALLOWLIST } from "./render-allowlist.mjs";
 import { ContentError } from "./render-error.mjs";
-import { isAllowedUrl, isCsvDownload } from "./render-url.mjs";
-
-/** Attributes whose value is a URL, whatever the element. */
-const URL_ATTRIBUTES = new Set([
-  "href",
-  "src",
-  "xlink:href",
-  "action",
-  "formaction",
-  "poster",
-  "data",
-  "background",
-  "cite",
-  "ping",
-]);
+import { isAllowedUrl, isCsvDownload, URL_ATTRIBUTES } from "./render-url.mjs";
 
 /**
  * The one form of `style` that may carry a url(): the pipeline's own low-quality image placeholder (render-nomath.mjs, rehypeImageSources).

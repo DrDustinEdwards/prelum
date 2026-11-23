@@ -310,6 +310,7 @@ const BODY_HEADERS = [
   "last-modified",
   "link",
   "vary",
+  "set-cookie",
 ];
 
 /**
@@ -410,21 +411,20 @@ export function markdownCopies(fetch, options) {
     const kept = cache && !preview ? await cache.match(key) : undefined;
     if (kept) return kept;
 
-    const guide = await fetch(htmlRequest(request, "/llms.txt"), env, ctx);
+    const anonymous = new Request(new URL("/", request.url)); // the shared file never carries the first visitor's Cookie or language
+    const guide = await fetch(htmlRequest(anonymous, "/llms.txt"), env, ctx);
     const { title, summary, intro } = llmsHeaderOf(guide.ok ? await guide.text() : "", origin);
 
-    /** @param {string} path @returns {Promise<string[]>} */
-    const locs = async (path) => {
-      const response = await fetch(htmlRequest(request, path), env, ctx);
-      if (!response.ok) return [];
-      const xml = await response.text();
-      const found = sitemapLocs(xml);
-      return /<sitemapindex\b/.test(xml)
-        ? (await Promise.all(found.map((loc) => locs(new URL(loc).pathname)))).flat()
-        : found;
+    const read = async (/** @type {string} */ path) => {
+      const response = await fetch(htmlRequest(anonymous, path), env, ctx);
+      return response.ok ? await response.text() : "";
     };
+    const index = await read("/sitemap.xml");
+    const sitemaps = /<sitemapindex\b/.test(index)
+      ? await Promise.all(sitemapLocs(index).map((loc) => read(new URL(loc).pathname)))
+      : [index];
     const paths = [
-      ...new Set((await locs("/sitemap.xml")).map((loc) => new URL(loc, origin).pathname)),
+      ...new Set(sitemaps.flatMap(sitemapLocs).map((loc) => new URL(loc, origin).pathname)),
     ]
       .filter((path) => !skip(path) && !leaveOut(path))
       .slice(0, maxPages);
@@ -436,7 +436,7 @@ export function markdownCopies(fetch, options) {
       while (next < paths.length) {
         const at = next++;
         const path = paths[at] ?? "/";
-        const response = await page(request, path, env, ctx);
+        const response = await page(anonymous, path, env, ctx);
         if (!isHtml(response)) {
           void response.body?.cancel();
           continue;

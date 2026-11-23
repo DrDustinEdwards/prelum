@@ -4,7 +4,7 @@
     "jscpd": "jscpd@5.4.0"
   },
   "baseline": {
-    "measured_at": "e7077a8",
+    "measured_at": "481e6d8",
     "knip": {},
     "jscpd": {
       "clones": 0,
@@ -19,24 +19,23 @@
     "legacy": {},
     "size": {
       "audit.mjs": 757,
-      "bin/chart-audit.mjs": 1460,
+      "bin/chart-audit.mjs": 1459,
       "head.mjs": 645,
       "markdown-copy.mjs": 523,
       "render-blocks.mjs": 646,
-      "render-link-icons.mjs": 503,
-      "render-nomath.mjs": 1218,
+      "render-nomath.mjs": 1204,
       "schema.mjs": 737,
-      "specimen/build.mjs": 677,
-      "specimen/site.css": 536
+      "specimen/build.mjs": 669,
+      "specimen/site.css": 535
     },
     "tests": {
       "files": 24,
-      "cases": 168
+      "cases": 172
     },
     "comments": {
-      "lines": 6041,
-      "code": 16801,
-      "percentage": 26.45
+      "lines": 4427,
+      "code": 15171,
+      "percentage": 22.59
     }
   }
 }

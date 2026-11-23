@@ -135,7 +135,7 @@ export function srtToVtt(srt) {
   const body = srt
     .replace(/^﻿/, "")
     .replace(/\r\n?/g, "\n")
-    .replace(/^\d+[ \t]*$/gm, "")
+    .replace(/(^|\n\n)\d+[ \t]*\n(?=\d{2}:\d{2}:\d{2},\d{3} -->)/g, "$1")
     .replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, "$1.$2");
   return `WEBVTT\n\n${body.trim()}\n`;
 }
