@@ -8,6 +8,8 @@ import { ContentError, render } from "../render.mjs";
 import { fitLinkIcon, linkIconType, lookupLinkIcon } from "../render-link-icons.mjs";
 import { editorialPack } from "../render-packs.mjs";
 import { resolveImage, siteOptions } from "./render-config.mjs";
+import { escapeBibtex } from "../scholar.mjs";
+import { srtToVtt } from "../vtt.mjs";
 
 /** @param {string} body @param {object} [options] */
 const core = (body, options = {}) => render({ file: "post.md", body, resolveImage, options });
@@ -228,4 +230,32 @@ test("a chart src with a .. segment, a backslash or a scheme but http(s) never r
   }
   await cite("https://example.com/a.csv");
   assert.deepEqual(asked, ["https://example.com/a.csv"]);
+});
+
+test("a backslash is escaped once for BibTeX, and an SRT cue that is only a number keeps its text", () => {
+  assert.equal(escapeBibtex("a\\b {c}"), "a\\textbackslash{}b \\{c\\}");
+  const srt = "1\n00:00:01,000 --> 00:00:02,000\n42\n\n2\n00:00:03,000 --> 00:00:04,000\nhi\n";
+  assert.equal(
+    srtToVtt(srt),
+    "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n42\n\n00:00:03.000 --> 00:00:04.000\nhi\n",
+  );
+});
+
+test("a link-icon host that could not be reached is not stored as having no icon", async () => {
+  /** @type {unknown[]} */
+  const put = [];
+  const store = {
+    get: async () => null,
+    put: async (/** @type {unknown} */ host) => put.push(host),
+  };
+  await lookupLinkIcon("down.example.com", {
+    store,
+    fetch: async () => new Response("", { status: 503 }),
+  });
+  assert.deepEqual(put, []);
+  await lookupLinkIcon("none.example.com", {
+    store,
+    fetch: async () => new Response("", { status: 404 }),
+  });
+  assert.deepEqual(put, ["none.example.com"]);
 });

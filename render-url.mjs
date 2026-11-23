@@ -71,3 +71,17 @@ export function isAllowedUrl(value) {
   }
   return true;
 }
+
+/** Attributes whose value is a URL, whatever the element (`srcset`, a list of them, is read by its callers). */
+export const URL_ATTRIBUTES = new Set([
+  "href",
+  "src",
+  "xlink:href",
+  "action",
+  "formaction",
+  "poster",
+  "data",
+  "background",
+  "cite",
+  "ping",
+]);

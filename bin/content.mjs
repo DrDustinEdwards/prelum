@@ -5,10 +5,11 @@
 //   prelum-content --origin https://example.com [--from https://example.workers.dev] [--max 200]
 //
 // --from fetches from another host (a workers.dev address before a domain moves) while links are judged against --origin. Exits 0
-// when clean, 1 on an error finding, 2 when it could not run.
+// when clean, 1 on an error finding, 2 when it could not run, 3 when nothing failed but some pages were not read.
 
 import { parseArgs } from "node:util";
 
+import { annotation } from "../annotation.mjs";
 import { crawlSite } from "../audit.mjs";
 import { auditContent } from "../render-audit.mjs";
 
@@ -44,10 +45,14 @@ if (read.length === 0) {
 const findings = auditContent(read);
 // A sitemap page that did not answer or answered a server error was not read: not measured, never passed by leaving it out.
 const unread = pages.filter((page) => page.status === 0 || page.status >= 500);
-for (const f of findings) console.log(`::${f.severity} title=${f.check}::${f.url} ${f.detail}`);
+for (const f of findings) console.log(annotation(f.severity, f.check, `${f.url} ${f.detail}`));
 for (const page of unread)
   console.log(
-    `::notice title=page::${page.url} could not measure: answered ${page.status || page.error || "nothing"}, so its writing was not checked`,
+    annotation(
+      "notice",
+      "page",
+      `${page.url} could not measure: answered ${page.status || page.error || "nothing"}, so its writing was not checked`,
+    ),
   );
 const errors = findings.filter((f) => f.severity === "error").length;
 console.log(

@@ -31,30 +31,27 @@ const decode = (/** @type {string | number | null | undefined} */ value) =>
 /** @param {string} name @param {CitationOptions} options */
 const authorOf = (name, options) => (options.author ? options.author(name) : name).trim();
 
-// The backslash goes first, or it escapes the escapes that follow it.
-/** @type {Array<[string, string]>} */
-const BIBTEX_ESCAPES = [
-  ["\\", "\\textbackslash{}"],
-  ["{", "\\{"],
-  ["}", "\\}"],
-  ["&", "\\&"],
-  ["%", "\\%"],
-  ["$", "\\$"],
-  ["#", "\\#"],
-  ["_", "\\_"],
-  ["~", "\\textasciitilde{}"],
-  ["^", "\\textasciicircum{}"],
-];
+/** @type {Record<string, string>} */
+const BIBTEX_ESCAPES = {
+  "\\": "\\textbackslash{}",
+  "{": "\\{",
+  "}": "\\}",
+  "&": "\\&",
+  "%": "\\%",
+  $: "\\$",
+  "#": "\\#",
+  _: "\\_",
+  "~": "\\textasciitilde{}",
+  "^": "\\textasciicircum{}",
+};
 
 /**
- * A value as BibTeX text: entities decoded, then every special character escaped.
+ * A value as BibTeX text: entities decoded, then every special character escaped in one pass, so no replacement is escaped again.
  *
  * @param {string | number | null | undefined} value
  */
 export function escapeBibtex(value) {
-  let out = decode(value);
-  for (const [from, to] of BIBTEX_ESCAPES) out = out.split(from).join(to);
-  return out;
+  return decode(value).replace(/[\\{}&%$#_~^]/g, (char) => BIBTEX_ESCAPES[char] ?? char);
 }
 
 // misc, not electronic, which the standard styles render as nothing.

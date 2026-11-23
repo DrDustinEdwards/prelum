@@ -6,11 +6,12 @@
 //   prelum-audit --origin https://example.com [--from https://preview.example.workers.dev] [--max-pages 3000]
 //
 // --from fetches the pages from another host (a preview) while the canonicals are still checked against --origin.
-// Each finding is printed as a GitHub annotation. Exits 1 when any finding is an error, so a scheduled job goes red, and 2
-// when the site does not answer at all, so an outage is never read as findings.
+// Each finding is printed as a GitHub annotation. Exits 1 when any finding is an error, so a scheduled job goes red, 2 when the
+// site does not answer at all, so an outage is never read as findings, and 3 when nothing failed but some pages were not measured.
 
 import { parseArgs } from "node:util";
 
+import { annotation } from "../annotation.mjs";
 import { auditPages, crawlSite } from "../audit.mjs";
 import { auditIcons } from "../icons.mjs";
 
@@ -58,8 +59,8 @@ for (const finding of report.findings) {
   // What could not be measured is a notice in devkit-live's form, never a pass or a failure; exit 3 when nothing failed.
   console.log(
     finding.severity === "unmeasured"
-      ? `::notice title=${finding.check}::${finding.url} could not measure: ${finding.detail}`
-      : `::${finding.severity} title=${finding.check}::${finding.url} ${finding.detail}`,
+      ? annotation("notice", finding.check, `${finding.url} could not measure: ${finding.detail}`)
+      : annotation(finding.severity, finding.check, `${finding.url} ${finding.detail}`),
   );
 }
 const errors = report.findings.filter((finding) => finding.severity === "error").length;

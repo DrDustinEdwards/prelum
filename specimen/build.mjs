@@ -7,6 +7,7 @@
 
 import {
   copyFileSync,
+  cpSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -20,7 +21,7 @@ import { createRequire } from "node:module";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { walkFiles } from "@dustinedwards/devkit/node";
+import { isMain, walkFiles } from "@dustinedwards/devkit/node";
 import { integrityHash } from "@dustinedwards/site-runtime/csp";
 import { securityTxt } from "@dustinedwards/site-runtime/security-txt";
 import { familyFooterHtml } from "capsomer/behavior/family-footer";
@@ -169,15 +170,6 @@ async function bundle(file, format) {
       `specimen/browser/${file} bundles to a bare import of "${bare[1]}"; the browser cannot resolve it`,
     );
   return code;
-}
-
-/** @param {string} from @param {string} to */
-function copyTree(from, to) {
-  mkdirSync(to, { recursive: true });
-  for (const entry of readdirSync(from, { withFileTypes: true })) {
-    if (entry.isDirectory()) copyTree(join(from, entry.name), join(to, entry.name));
-    else copyFileSync(join(from, entry.name), join(to, entry.name));
-  }
 }
 
 /**
@@ -442,7 +434,7 @@ export async function buildSpecimen(outDir) {
   }
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
-  copyTree(join(HERE, "static"), outDir);
+  cpSync(join(HERE, "static"), outDir, { recursive: true });
   writeFileSync(
     join(outDir, "site.webmanifest"),
     JSON.stringify(
@@ -668,7 +660,7 @@ ${await outputsSection(version, elements.length + 1, priority)}
   return { version, elements: elements.length, files: files.sort() };
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const outDir = process.argv[2] ?? join(HERE, "dist");
   const result = await buildSpecimen(outDir);
   console.log(

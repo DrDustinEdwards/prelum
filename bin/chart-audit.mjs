@@ -48,10 +48,11 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { tmpdir } from "node:os";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 
+import { annotation } from "../annotation.mjs";
 import { crawlSite } from "../audit.mjs";
 
 /** @typedef {import("playwright-core").Browser} Browser */
@@ -272,11 +273,10 @@ unique.sort(
   (a, b) => a.url.localeCompare(b.url) || a.item.localeCompare(b.item, "en", { numeric: true }),
 );
 for (const f of unique) {
-  const detail = f.detail.replace(/\r?\n/g, " ");
   console.log(
     f.severity === "unmeasured"
-      ? `::notice title=${f.item}::${f.url} could not measure: ${detail}`
-      : `::${f.severity} title=${f.item}::${f.url} ${detail}`,
+      ? annotation("notice", f.item, `${f.url} could not measure: ${f.detail}`)
+      : annotation(f.severity, f.item, `${f.url} ${f.detail}`),
   );
 }
 /** @type {Record<string, number>} */
@@ -1234,16 +1234,15 @@ async function loadTools() {
   } catch {
     const pins = createRequire(import.meta.url)("../package.json").peerDependencies;
     const specs = ["playwright-core", "axe-core"].map((name) => `${name}@${pins[name]}`);
-    const dir = join(
-      tmpdir(),
-      `prelum-chart-audit-${specs.join("-").replace(/[^A-Za-z0-9.-]/g, "_")}`,
-    );
+    // In the user's own cache, never a shared /tmp, where another user could plant the install this one then runs.
+    const name = `prelum-chart-audit-${specs.join("-").replace(/[^A-Za-z0-9.-]/g, "_")}`;
+    const dir = join(homedir(), ".cache", name);
     // Installed in a directory of its own and moved into place once whole, so a second audit starting while the first
     // installs never finds half of it (axe-core lands before playwright-core).
     const ready = () => existsSync(join(dir, "node_modules", "playwright-core", "package.json"));
     if (!ready()) {
       const staging = `${dir}.${process.pid}`;
-      mkdirSync(staging, { recursive: true });
+      mkdirSync(staging, { recursive: true, mode: 0o700 });
       writeFileSync(join(staging, "package.json"), "{}");
       console.error(`prelum-chart-audit: installing ${specs.join(" and ")} into ${dir}`);
       try {
