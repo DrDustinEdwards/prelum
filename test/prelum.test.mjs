@@ -438,3 +438,25 @@ test("lastmod: trackPageDates dates a page when its text changes and keeps the e
   });
   assert.equal(third.changed, false);
 });
+
+test("lastmod: trackRenderedPageDates reads a rendered page as Markdown and throws with no renderer", async () => {
+  const { trackRenderedPageDates, setPageRenderer } = await import("../lastmod.mjs");
+  /** @type {import("../lastmod.mjs").PageRecord | undefined} */
+  let record;
+  const options = {
+    paths: ["/a", "/missing"],
+    origin: "https://example.com/",
+    load: async () => record,
+    save: async (/** @type {import("../lastmod.mjs").PageRecord} */ next) => void (record = next),
+    today: "2026-01-01",
+  };
+  await assert.rejects(trackRenderedPageDates(options), /no page renderer/);
+  setPageRenderer(async (path) =>
+    path === "/a"
+      ? "<html><head><title>A</title></head><body><main><p>Hello</p></main></body></html>"
+      : null,
+  );
+  const result = await trackRenderedPageDates(options);
+  assert.deepEqual(Object.keys(result.record), ["/a"]);
+  assert.equal(result.record["/a"].lastmod, "2026-01-01");
+});
