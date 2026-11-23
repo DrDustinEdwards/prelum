@@ -396,7 +396,7 @@ test("lastmod: writeSitemapLastmod dates each sitemap URL from its Markdown copy
   assert.equal((xml.match(/<lastmod>/g) ?? []).length, 2);
 });
 
-test("lastmod: trackPageDates dates a page when its text changes and keeps the entry of a page it cannot read", async () => {
+test("lastmod: trackPageDates dates a page when its text changes and keeps the entry of a page it cannot read; trackRenderedPageDates reads a rendered page", async () => {
   const { trackPageDates, kvPageRecord } = await import("../lastmod.mjs");
   /** @type {Map<string, string>} */
   const store = new Map();
@@ -437,9 +437,6 @@ test("lastmod: trackPageDates dates a page when its text changes and keeps the e
     today: "2026-03-03",
   });
   assert.equal(third.changed, false);
-});
-
-test("lastmod: trackRenderedPageDates reads a rendered page as Markdown and throws with no renderer", async () => {
   const { trackRenderedPageDates, setPageRenderer } = await import("../lastmod.mjs");
   /** @type {import("../lastmod.mjs").PageRecord | undefined} */
   let record;
