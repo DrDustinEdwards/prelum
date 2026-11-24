@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.67.0
+
+### Minor Changes
+
+- `render` no longer returns `faq`, the `:::faq` pairs kept for FAQPage JSON-LD: no site writes that markup now. The block still renders as a `<dl class="faq">`.
+
+## 0.66.0
+
+### Minor Changes
+
+- The audit compares a canonical and og:url with the page's own address, trailing slash included, so a canonical on the URL that redirects is a finding. A static site's `.md` copy answers with the page's own canonical (its `Source:` line), slash kept, on GET and HEAD. `prelum-lastmod` takes `--ignore <text>` (repeatable) so a printed release number is no edit. The specimen's 404 page carries `robots: noindex`. `faqPage` is removed: Google no longer shows the FAQ rich result (changelog 2026-05-08), so no site writes the markup.
+
 ## 0.65.0
 
 ### Minor Changes

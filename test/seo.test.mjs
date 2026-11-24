@@ -327,7 +327,7 @@ test("the audit finds a broken link through a trailing slash, a redirect chain o
   assert.equal(summary["title-duplicate"], 2);
 });
 
-test("a canonical must be on the production origin, and a sitemap page's canonical must be itself", () => {
+test("a canonical must be on the production origin, and a sitemap page's canonical must be itself, trailing slash included", () => {
   const { findings } = auditPages(
     [
       {
@@ -350,6 +350,7 @@ test("a canonical must be on the production origin, and a sitemap page's canonic
   );
   assert.deepEqual(findings.map((finding) => `${finding.check} ${finding.url}`).sort(), [
     `canonical-elsewhere ${ORIGIN}/b`,
+    `canonical-elsewhere ${ORIGIN}/c/`,
     `canonical-off-site ${ORIGIN}/a`,
   ]);
 });

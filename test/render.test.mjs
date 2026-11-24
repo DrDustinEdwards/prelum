@@ -37,7 +37,6 @@ test("render returns the contract: a fragment, the outline, and what the page ci
     "blockedUrls",
     "diagrams",
     "excerpt",
-    "faq",
     "hasMath",
     "html",
     "images",
@@ -604,10 +603,6 @@ test("the blocks every site gets: callouts, media, embeds, galleries, links, FAQ
     html,
     /<figure class="code-frame"><figcaption class="code-title">example\.js<\/figcaption><pre[^>]* aria-label="Code: example\.js">/,
   );
-  assert.deepEqual(result.faq, [
-    { question: "What is this?", answer: "A fixture." },
-    { question: "Does an answer run on?", answer: "It runs on over the next line." },
-  ]);
   assert.ok(
     result.mediaRefs.some((ref) => ref.form === "media-directive" && ref.key.endsWith(".vtt")),
   );
@@ -624,9 +619,8 @@ test("the blocks every site gets: callouts, media, embeds, galleries, links, FAQ
     /<a href="\/writing\/new">that post<\/a> and <code>::postlink\[gone\]<\/code>/,
   );
   assert.deepEqual(linked.postLinks, ["old", "gone"]);
-  // Foxhound's live FAQ showed ::postlink[…] as text: the answer links on the page and reads as words in the JSON-LD.
+  // Foxhound's live FAQ showed ::postlink[…] as text: the answer links on the page.
   assert.match(linked.html, /<dd>In <a href="\/writing\/new">New<\/a>\.<\/dd>/);
-  assert.deepEqual(linked.faq, [{ question: "Where?", answer: "In New." }]);
 
   const outline = await core("Intro words here.\n\n## A\n\n#### Too deep");
   assert.deepEqual(
