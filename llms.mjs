@@ -214,11 +214,18 @@ export function serveMarkdownCopies(fetch, { origin, skip = () => false }) {
     const path = url.pathname;
     if (path.endsWith(".md")) {
       if (response.status !== 200) return response;
+      // The page's own address is the copy's `Source:` line: the path alone cannot say whether it ends in a slash.
+      const full =
+        request.method === "HEAD"
+          ? await fetch(new Request(request, { method: "GET" }), ...rest)
+          : response.clone();
+      const text = await full.text();
+      const source = /^Source: (\S+)$/m.exec(text)?.[1];
       const out = new Response(response.body, response);
       out.headers.set("Content-Type", "text/markdown; charset=utf-8");
       out.headers.set(
         "Link",
-        `<${base}${path === "/index.md" ? "/" : path.slice(0, -3)}>; rel="canonical"`,
+        `<${source ?? `${base}${path === "/index.md" ? "/" : path.slice(0, -3)}`}>; rel="canonical"`,
       );
       return out;
     }

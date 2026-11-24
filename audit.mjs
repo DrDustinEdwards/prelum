@@ -249,7 +249,7 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
         "more than one canonical link, and they differ, so Google ignores them all",
       );
     const ogUrl = meta(head, "property", "og:url");
-    if (ogUrl && canonical && normalize(resolve(ogUrl, url) ?? ogUrl) !== normalize(canonical))
+    if (ogUrl && canonical && withoutHash(resolve(ogUrl, url) ?? ogUrl) !== withoutHash(canonical))
       add(
         url,
         "og-url-mismatch",
@@ -259,7 +259,7 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
     if (!canonical) add(url, "canonical-missing", "error", "no canonical link");
     else if (new URL(canonical).origin !== origin)
       add(url, "canonical-off-site", "error", `the canonical is ${canonical}, not on ${origin}`);
-    else if (inSitemap(page) && normalize(canonical) !== normalize(url)) {
+    else if (inSitemap(page) && withoutHash(canonical) !== withoutHash(url)) {
       add(
         url,
         "canonical-elsewhere",
@@ -535,7 +535,7 @@ function isFileName(alt, src) {
 function selfCanonical(head, url) {
   const href = tags(head, "link").find((attrs) => attrs.rel?.toLowerCase() === "canonical")?.href;
   const canonical = href ? resolve(href, url) : null;
-  return canonical !== null && normalize(canonical) === normalize(url);
+  return canonical !== null && withoutHash(canonical) === withoutHash(url);
 }
 
 /** @param {AuditPage} page */
@@ -567,6 +567,13 @@ function normalize(url) {
   const parsed = new URL(url);
   parsed.hash = "";
   return parsed.href.replace(/\/$/, "");
+}
+
+/** A URL without its fragment, slash kept: `/a` and `/a/` are two addresses, and a canonical on the one that redirects to the other is wrong. @param {string} url */
+function withoutHash(url) {
+  const parsed = new URL(url);
+  parsed.hash = "";
+  return parsed.href;
 }
 
 /** `href` made absolute against `base`, without its fragment, or null when it is no URL. @param {string | undefined} href @param {string} base */
