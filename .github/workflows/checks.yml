@@ -36,7 +36,7 @@ jobs:
       pull-requests: write
       id-token: write
       checks: write
-    uses: DrDustinEdwards/devkit/.github/workflows/pr.yml@7ca141c8b91ba55a0fbb95e381e3b7f978ac030a # v0.59.3
+    uses: DrDustinEdwards/devkit/.github/workflows/pr.yml@c07fc6642c81f16a0dd33b18d068cf4dcbdeec9e # v0.59.6
     with:
       review: true
       # No install here: Prelum's no-bloat report is a warning in ci.yml's check job (npm run bloat), and the specimen's
