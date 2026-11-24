@@ -4,7 +4,7 @@
     "jscpd": "jscpd@5.4.0"
   },
   "baseline": {
-    "measured_at": "481e6d8",
+    "measured_at": "f23f051",
     "knip": {},
     "jscpd": {
       "clones": 0,
@@ -18,13 +18,13 @@
     },
     "legacy": {},
     "size": {
-      "audit.mjs": 757,
+      "audit.mjs": 754,
       "bin/chart-audit.mjs": 1459,
       "head.mjs": 645,
       "markdown-copy.mjs": 523,
       "render-blocks.mjs": 646,
       "render-nomath.mjs": 1204,
-      "schema.mjs": 737,
+      "schema.mjs": 726,
       "specimen/build.mjs": 669,
       "specimen/site.css": 535
     },

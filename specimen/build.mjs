@@ -30,7 +30,7 @@ import { bundleScript, capsomerStylesheet, copyFonts } from "capsomer/build";
 import { capsomerTheme } from "capsomer/enarratio-theme";
 import { stylesheet } from "enarratio";
 
-import { absoluteUrl, defineHead, headHtml } from "../head.mjs";
+import { absoluteUrl, defineHead, headHtml, privateMeta } from "../head.mjs";
 import { graph, imageObject, jsonLd, thing, videoObject, website } from "../schema.mjs";
 import { llmsDocument } from "../llms.mjs";
 import { aiTxt, robotsDocument } from "../robots.mjs";
@@ -262,7 +262,7 @@ function documentHtml({ title, description, body, version, path, scripts, media 
         ...head({ path, title, fullTitle: true, description, videos: media?.videos }),
         jsonLd(graph([...SITE_GRAPH, ...(media?.schema ?? [])])),
       ])
-    : `<title>${escapeXml(title)}</title>\n<meta name="description" content="${escapeXml(description)}">`;
+    : `${headHtml(privateMeta(title))}\n<meta name="description" content="${escapeXml(description)}">`;
   return `<!doctype html>
 <html lang="en" data-family="${FAMILY}">
 <head>

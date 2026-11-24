@@ -300,17 +300,6 @@ export function itemList(origin, name, items) {
   });
 }
 
-/** @param {Array<{ question: string, answer: string }>} faqs */
-export function faqPage(faqs) {
-  return thing("FAQPage", {
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: { "@type": "Answer", text: faq.answer },
-    })),
-  });
-}
-
 /**
  * Profile links as schema.org `sameAs` wants them: absolute http(s) URLs, trimmed, each once, in the order given. Undefined
  * when none are left, since an empty list claims profiles the page does not have.

@@ -74,11 +74,12 @@ export async function writeMarkdownCopies({ dir, origin, skip = () => false }) {
  * live build's `build.json`, and `build.json` is written beside the sitemap for the next build to read. A URL with no copy (a
  * page left out, or noindex) keeps no `lastmod`, and any `lastmod` the sitemap had is replaced. Returns the record.
  *
- * @param {{ dir: string, origin: string, previous?: string, today?: string }} options `previous` is the live record's address
- *   (default `<origin>/build.json`); `today` is `YYYY-MM-DD` (default the UTC day)
+ * @param {{ dir: string, origin: string, previous?: string, today?: string, ignore?: string[] }} options `previous` is the live record's address
+ *   (default `<origin>/build.json`); `today` is `YYYY-MM-DD` (default the UTC day); `ignore` is text
+ *   left out before hashing, such as the release number a page prints
  * @returns {Promise<import("./lastmod.mjs").PageRecord>}
  */
-export async function writeSitemapLastmod({ dir, origin, previous, today }) {
+export async function writeSitemapLastmod({ dir, origin, previous, today, ignore }) {
   const base = origin.replace(/\/$/, "");
   const day = today ?? new Date().toISOString().slice(0, 10);
   const sitemap = await readFile(join(dir, "sitemap.xml"), "utf8");
@@ -89,7 +90,9 @@ export async function writeSitemapLastmod({ dir, origin, previous, today }) {
     const copy = await readFile(join(dir, markdownPath(path).slice(1)), "utf8").catch(() => null);
     if (copy !== null) pages.push([path, copy]);
   }
-  const record = pageDates(pages, await readPageRecord(previous ?? `${base}/build.json`), day);
+  const record = pageDates(pages, await readPageRecord(previous ?? `${base}/build.json`), day, {
+    ignore,
+  });
   const written = sitemap.replace(/<url>[\s\S]*?<\/url>/g, (block) => {
     const loc = /<loc>([^<]*)<\/loc>/.exec(block)?.[1];
     if (loc === undefined) return block;
