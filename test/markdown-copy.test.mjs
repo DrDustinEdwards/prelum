@@ -212,6 +212,16 @@ test("a static site's copies are written at build and served as files, with no p
   const md = await files(new Request(`${ORIGIN}/guide.md`));
   assert.equal(md.headers.get("Content-Type"), "text/markdown; charset=utf-8");
   assert.equal(md.headers.get("Link"), `<${ORIGIN}/guide>; rel="canonical"`);
+  const slashed = serveMarkdownCopies(
+    async (/** @type {Request} */ request) =>
+      new Response(request.method === "HEAD" ? null : `# A\n\nSource: ${ORIGIN}/a/\n`),
+    { origin: ORIGIN },
+  );
+  for (const method of ["GET", "HEAD"])
+    assert.equal(
+      (await slashed(new Request(`${ORIGIN}/a.md`, { method }))).headers.get("Link"),
+      `<${ORIGIN}/a/>; rel="canonical"`,
+    ); // the page's own address, slash kept
   const negotiated = await files(
     new Request(`${ORIGIN}/guide`, { headers: { Accept: "text/markdown" } }),
   );
@@ -219,18 +229,4 @@ test("a static site's copies are written at build and served as files, with no p
   assert.match(await negotiated.text(), /^# Guide/);
   const browser = await files(new Request(`${ORIGIN}/`, { headers: { Accept: "text/html" } }));
   assert.match(browser.headers.get("Link") ?? "", /index\.md>; rel="alternate"/);
-});
-
-test("serveMarkdownCopies: a .md copy's canonical Link is the page's own address, trailing slash kept, on GET and HEAD", async () => {
-  const { serveMarkdownCopies } = await import("../llms.mjs");
-  const files = serveMarkdownCopies(
-    async (/** @type {Request} */ request) =>
-      new Response(request.method === "HEAD" ? null : `# A\n\nSource: ${ORIGIN}/a/\n`),
-    { origin: ORIGIN },
-  );
-  for (const method of ["GET", "HEAD"])
-    assert.equal(
-      (await files(new Request(`${ORIGIN}/a.md`, { method }))).headers.get("Link"),
-      `<${ORIGIN}/a/>; rel="canonical"`,
-    );
 });

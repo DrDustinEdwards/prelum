@@ -62,7 +62,7 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
     /** @type {string} */ detail,
   ) => findings.push({ url, check, severity, detail });
   const byUrl = new Map(pages.map((page) => [normalize(page.url), page]));
-  const listed = new Set((sitemap ?? []).map(normalize));
+  const listed = new Set((sitemap ?? []).map((entry) => normalize(entry)));
   const inSitemap = (/** @type {AuditPage} */ page) =>
     Boolean(page.inSitemap) || listed.has(normalize(page.url));
   const redirectTargets = new Set(
@@ -239,8 +239,7 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
     const canonicals = tags(head, "link").filter(
       (attrs) => attrs.rel?.toLowerCase() === "canonical",
     );
-    const href = canonicals[0]?.href;
-    const canonical = href ? resolve(href, url) : null;
+    const canonical = resolve(canonicals[0]?.href, url);
     if (new Set(canonicals.map((attrs) => resolve(attrs.href, url))).size > 1)
       add(
         url,
@@ -249,17 +248,12 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
         "more than one canonical link, and they differ, so Google ignores them all",
       );
     const ogUrl = meta(head, "property", "og:url");
-    if (ogUrl && canonical && withoutHash(resolve(ogUrl, url) ?? ogUrl) !== withoutHash(canonical))
-      add(
-        url,
-        "og-url-mismatch",
-        "warning",
-        `og:url is ${ogUrl}, but the canonical is ${canonical}`,
-      );
+    if (ogUrl && canonical && !same(resolve(ogUrl, url) ?? ogUrl, canonical))
+      add(url, "og-url-mismatch", "warning", `og:url ${ogUrl} is not the canonical ${canonical}`);
     if (!canonical) add(url, "canonical-missing", "error", "no canonical link");
     else if (new URL(canonical).origin !== origin)
       add(url, "canonical-off-site", "error", `the canonical is ${canonical}, not on ${origin}`);
-    else if (inSitemap(page) && withoutHash(canonical) !== withoutHash(url)) {
+    else if (inSitemap(page) && !same(canonical, url)) {
       add(
         url,
         "canonical-elsewhere",
@@ -356,7 +350,7 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
         "warning",
         `${images.length} images and none has loading="lazy"`,
       );
-    for (const target of new Set(internalLinks(html, url, origin).map(normalize))) {
+    for (const target of new Set(internalLinks(html, url, origin).map((link) => normalize(link)))) {
       const linked = byUrl.get(target);
       if (!linked) continue;
       if (linked.status >= 400)
@@ -534,8 +528,8 @@ function isFileName(alt, src) {
 /** Whether a page's canonical is the page itself, so it asks to be indexed at this URL. @param {string} head @param {string} url */
 function selfCanonical(head, url) {
   const href = tags(head, "link").find((attrs) => attrs.rel?.toLowerCase() === "canonical")?.href;
-  const canonical = href ? resolve(href, url) : null;
-  return canonical !== null && withoutHash(canonical) === withoutHash(url);
+  const canonical = resolve(href, url);
+  return canonical !== null && same(canonical, url);
 }
 
 /** @param {AuditPage} page */
@@ -562,19 +556,15 @@ function push(map, key, url) {
   map.set(key, [...(map.get(key) ?? []), url]);
 }
 
-/** A URL without its fragment or a trailing slash, so `/a/` and `/a#top` name the page `/a` names. @param {string} url */
-function normalize(url) {
+/** A URL without its fragment or, unless `exact`, a trailing slash, so `/a/` and `/a#top` name the page `/a` names. @param {string} url @param {boolean} [exact] */
+function normalize(url, exact = false) {
   const parsed = new URL(url);
   parsed.hash = "";
-  return parsed.href.replace(/\/$/, "");
+  return exact ? parsed.href : parsed.href.replace(/\/$/, "");
 }
 
-/** A URL without its fragment, slash kept: `/a` and `/a/` are two addresses, and a canonical on the one that redirects to the other is wrong. @param {string} url */
-function withoutHash(url) {
-  const parsed = new URL(url);
-  parsed.hash = "";
-  return parsed.href;
-}
+/** The same page, slash included. @param {string} a @param {string} b */
+const same = (a, b) => normalize(a, true) === normalize(b, true);
 
 /** `href` made absolute against `base`, without its fragment, or null when it is no URL. @param {string | undefined} href @param {string} base */
 function resolve(href, base) {
