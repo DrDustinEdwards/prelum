@@ -168,11 +168,10 @@ export function htmlToMarkdown(html, { base } = {}) {
     );
   const href = canonicalElement && prop(canonicalElement, "href");
   const canonical = href && base ? absoluteHref(href, base) : href;
-  const robots =
-    prop(
-      meta("name", "robots") ?? { type: "element", tagName: "meta", properties: {}, children: [] },
-      "content",
-    ) ?? "";
+  const metaContent = (/** @type {string} */ key, /** @type {string} */ value) => {
+    const found = meta(key, value);
+    return found && prop(found, "content");
+  };
 
   const main =
     find(tree, (element) => element.tagName === "main") ??
@@ -180,9 +179,8 @@ export function htmlToMarkdown(html, { base } = {}) {
     tree;
   prune(main);
   const h1 = find(main, (element) => element.tagName === "h1");
-  const ogTitle = meta("property", "og:title");
   const title =
-    (ogTitle && prop(ogTitle, "content")) ||
+    metaContent("property", "og:title") ||
     (titleElement && text(titleElement).trim()) ||
     (h1 && text(h1).trim()) ||
     "";
@@ -198,7 +196,6 @@ export function htmlToMarkdown(html, { base } = {}) {
     };
     remove(main);
   }
-  const description = meta("name", "description");
   const mdast = toMdast(main);
   settle(mdast, canonical ?? base ?? "https://invalid.example/");
   const markdown = collapseBlankLines(
@@ -211,9 +208,9 @@ export function htmlToMarkdown(html, { base } = {}) {
   ).trim();
   return {
     title: title.replace(/\s+/g, " ").trim(),
-    description: ((description && prop(description, "content")) ?? "").replace(/\s+/g, " ").trim(),
+    description: (metaContent("name", "description") ?? "").replace(/\s+/g, " ").trim(),
     canonical,
-    noindex: /\bnoindex\b/i.test(robots),
+    noindex: /\bnoindex\b/i.test(metaContent("name", "robots") ?? ""),
     markdown,
   };
 }
@@ -389,12 +386,7 @@ export function markdownCopies(fetch, options) {
     for (const name of BODY_HEADERS) headers.delete(name);
     if (facts.noindex) headers.set("X-Robots-Tag", "noindex");
     const canonical = facts.canonical ?? `${origin}${path}`;
-    const markdown = markdownPage({
-      title: facts.title,
-      description: facts.description,
-      url: canonical,
-      markdown: facts.markdown,
-    });
+    const markdown = markdownPage({ ...facts, url: canonical });
     const out = markdownResponse(markdown, {
       canonical,
       vary,
@@ -443,12 +435,7 @@ export function markdownCopies(fetch, options) {
         }
         const facts = htmlToMarkdown(await response.text(), { base: `${origin}${path}` });
         if (facts.noindex) continue;
-        pages[at] = {
-          title: facts.title,
-          description: facts.description,
-          url: facts.canonical ?? `${origin}${path}`,
-          markdown: facts.markdown,
-        };
+        pages[at] = { ...facts, url: facts.canonical ?? `${origin}${path}` };
       }
     };
     await Promise.all(Array.from({ length: 4 }, worker));
