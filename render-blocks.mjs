@@ -478,14 +478,12 @@ function faqPairs(content) {
 }
 
 /**
- * :::faq, Q: and A: lines read from the block's source, shown as text, and returned as `faq` so a site's FAQPage JSON-LD says exactly
- * what the page says (Google's FAQ rules).
+ * :::faq, Q: and A: lines read from the block's source and shown as text in a `<dl class="faq">`.
  *
  * @param {string} file
  * @param {string} body
- * @param {Array<{ question: string, answer: string }>} sink
  */
-export function remarkFaq(file, body, sink) {
+export function remarkFaq(file, body) {
   return (/** @type {import("mdast").Root} */ tree) => {
     visit(tree, "containerDirective", (node) => {
       if (node.name !== "faq") return;
@@ -497,7 +495,6 @@ export function remarkFaq(file, body, sink) {
       );
       if (pairs.length === 0)
         throw new ContentError(file, `${where(node, ":::faq")} holds no Q: and A: pair`);
-      sink.push(...pairs);
       node.data = { hName: "dl", hProperties: { className: ["faq"] } };
       node.children = pairs.map(
         ({ question, answer }) =>
@@ -522,9 +519,8 @@ const POSTLINK = /::postlink\[([^|\]]+)(?:\|([^\]]+))?\]/g;
  *
  * @param {(slug: string) => Promise<{ url: string, title: string } | null>} resolve
  * @param {string[]} sink
- * @param {Array<{ question: string, answer: string }>} faq the :::faq pairs, whose answers are text: a post link in one becomes its words
  */
-export function remarkPostLinks(resolve, sink, faq) {
+export function remarkPostLinks(resolve, sink) {
   return async (/** @type {import("mdast").Root} */ tree) => {
     /** @type {Array<{ node: import("mdast").Text, parent: import("mdast").Parent }>} */
     const found = [];
@@ -544,12 +540,6 @@ export function remarkPostLinks(resolve, sink, faq) {
         slugs.map(async (slug) => /** @type {const} */ ([slug, await resolve(slug)])),
       ),
     );
-    for (const pair of faq) {
-      pair.answer = pair.answer.replace(
-        POSTLINK,
-        (_m, slug, text) => text?.trim() || targets.get(slug.trim())?.title || slug.trim(),
-      );
-    }
     for (const { node, parent } of found) {
       /** @type {any[]} */
       const parts = [];
