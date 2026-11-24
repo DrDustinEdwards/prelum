@@ -1053,8 +1053,6 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
   /** @type {Array<{ file: string, tag: string, url: string }>} */
   const blockedUrls = [];
   const hasMath = { value: false };
-  /** @type {Array<{ question: string, answer: string }>} */
-  const faq = [];
   /** @type {string[]} */
   const postLinks = [];
   /** @type {Array<{ line: number | null, message: string }>} */
@@ -1103,10 +1101,10 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
     .use(remarkGallery, file)
     .use(remarkLinkBlocks, file)
     // Reads the block's source, so before anything rewrites its text.
-    .use(remarkFaq, file, body, faq)
+    .use(remarkFaq, file, body)
     .use(remarkCodeFrames)
     .use(remarkOutline, warnings);
-  if (options.postLink) processor.use(remarkPostLinks, options.postLink, postLinks, faq);
+  if (options.postLink) processor.use(remarkPostLinks, options.postLink, postLinks);
   // After every block that reads text as written: a post link's slug and a FAQ's source must not gain curly quotes. Old-school dashes,
   // as in TeX: -- is an en dash, --- an em dash.
   if (options.smartPunctuation !== false) processor.use(remarkSmartypants, { dashes: "oldschool" });
@@ -1190,7 +1188,6 @@ export async function renderWith({ file, body, resolveImage, options = {} }, mat
     mediaRefs,
     images: media.images,
     videos: media.videos,
-    faq,
     postLinks,
     words: reading.words,
     readingMinutes: readingMinutes(reading.words, reading.images),

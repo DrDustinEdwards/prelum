@@ -22,8 +22,8 @@
       "bin/chart-audit.mjs": 1459,
       "head.mjs": 645,
       "markdown-copy.mjs": 523,
-      "render-blocks.mjs": 646,
-      "render-nomath.mjs": 1204,
+      "render-blocks.mjs": 636,
+      "render-nomath.mjs": 1201,
       "schema.mjs": 726,
       "specimen/build.mjs": 669,
       "specimen/site.css": 535
