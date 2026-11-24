@@ -378,6 +378,9 @@
     },
     "rehype-katex": {
       "katex": "$katex"
+    },
+    "linkedom": {
+      "htmlparser2": "$htmlparser2"
     }
   },
   "allowScripts": {
