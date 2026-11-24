@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.67.0
+
+### Minor Changes
+
+- `render` no longer returns `faq`, the `:::faq` pairs kept for FAQPage JSON-LD: no site writes that markup now. The block still renders as a `<dl class="faq">`.
+
 ## 0.66.0
 
 ### Minor Changes
