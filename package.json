@@ -376,6 +376,9 @@
     "capsomer": {
       "enarratio": "$enarratio"
     },
+    "linkedom": {
+      "htmlparser2": "$htmlparser2"
+    },
     "rehype-katex": {
       "katex": "$katex"
     }
