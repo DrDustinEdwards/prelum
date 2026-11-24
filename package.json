@@ -376,11 +376,11 @@
     "capsomer": {
       "enarratio": "$enarratio"
     },
-    "rehype-katex": {
-      "katex": "$katex"
-    },
     "linkedom": {
       "htmlparser2": "$htmlparser2"
+    },
+    "rehype-katex": {
+      "katex": "$katex"
     }
   },
   "allowScripts": {
