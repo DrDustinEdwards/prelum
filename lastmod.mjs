@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
-import { htmlToMarkdown } from "./markdown-copy.mjs";
+import { htmlToMarkdown } from "./markdown-html.mjs";
 
 /**
  * @typedef {Record<string, { hash: string, lastmod: string }>} PageRecord each page's content hash and the day it last changed

@@ -10,7 +10,8 @@ import { sitemapLocs } from "@dustinedwards/site-runtime/html";
 import { unescapeXml } from "./xml.mjs";
 import { pageDates, readPageRecord } from "./lastmod.mjs";
 import { llmsFullDocument, markdownPage, markdownPath } from "./llms.mjs";
-import { htmlToMarkdown, llmsHeaderOf } from "./markdown-copy.mjs";
+import { htmlToMarkdown } from "./markdown-html.mjs";
+import { llmsHeaderOf } from "./markdown-copy.mjs";
 
 /**
  * A static site's Markdown copies, written at build time beside its pages: for each `.html` file in `dir` (the 404 page and
