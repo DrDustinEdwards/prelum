@@ -11,7 +11,7 @@ import { escapeHtml } from "@dustinedwards/site-runtime/html";
 export const ACCESSIBILITY_PATH = /** @type {const} */ ("/accessibility");
 
 /** The standard the network holds its sites to. */
-export const ACCESSIBILITY_STANDARD = /** @type {const} */ ("WCAG 2.2 level AA");
+const ACCESSIBILITY_STANDARD = /** @type {const} */ ("WCAG 2.2 level AA");
 
 /**
  * What the checks leave open, true of every site: no screen reader has been run, and signed-in pages are not scanned.

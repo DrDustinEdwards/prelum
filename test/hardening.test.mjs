@@ -1,4 +1,4 @@
-// Inputs that used to exhaust time or memory, slip a check or collide: each is one behavior, held to what a reader or a site would see.
+// Inputs that exhaust time or memory, slip a check or collide: each is one behavior, held to what a reader or a site would see.
 
 import assert from "node:assert/strict";
 import { deflateSync } from "node:zlib";
@@ -8,7 +8,7 @@ import { ContentError, render } from "../render.mjs";
 import { fitLinkIcon, linkIconType, lookupLinkIcon } from "../render-link-icons.mjs";
 import { editorialPack } from "../render-packs.mjs";
 import { resolveImage, siteOptions } from "./render-config.mjs";
-import { escapeBibtex } from "../scholar.mjs";
+import { escapeBibtex, toBibtex } from "../scholar.mjs";
 import { srtToVtt } from "../vtt.mjs";
 
 /** @param {string} body @param {object} [options] */
@@ -238,6 +238,23 @@ test("a backslash is escaped once for BibTeX, and an SRT cue that is only a numb
   assert.equal(
     srtToVtt(srt),
     "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n42\n\n00:00:03.000 --> 00:00:04.000\nhi\n",
+  );
+});
+
+test("toBibtex: a page range gets every dash as --, and a title's & and _ are escaped", () => {
+  const entry = toBibtex({
+    id: "k",
+    title: "R&D_x",
+    authors: ["A B"],
+    journal: "J",
+    year: 2020,
+    pages: "100-110",
+  });
+  assert.match(entry, /pages = \{100--110\}/);
+  assert.match(entry, /title = \{R\\&D\\_x\}/);
+  assert.match(
+    toBibtex({ id: "k", title: "t", authors: [], pages: "e12345" }),
+    /pages = \{e12345\}/,
   );
 });
 

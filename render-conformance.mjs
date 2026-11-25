@@ -1,8 +1,8 @@
 // The conformance corpus for the markdown pipeline: hostile inputs, and the check every site runs against its own configured renderer
 // (carrel/design-markdown-pipeline.md, section 5). Extended whenever a bypass is found; never shortened.
 //
-// The oracle is a parser, not a regex: a first regex scan of the original 44 reported 5 false positives (text such as `onerror=`
-// sitting inside an escaped attribute value). A pair of counts comes back with the result, so zero violations cannot mean zero read.
+// The oracle is a parser, not a regex: a regex scan reports false positives (text such as `onerror=` sitting inside an escaped
+// attribute value). A pair of counts comes back with the result, so zero violations cannot mean zero read.
 
 import { ContentError } from "./render-error.mjs";
 import { scanHtml } from "./render-safe.mjs";

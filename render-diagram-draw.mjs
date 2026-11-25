@@ -20,7 +20,7 @@ import { DIAGRAM_SIZES_FILE, DIAGRAM_THEMES, diagramAssetPath } from "./render-d
  *
  * @type {Record<string, string>}
  */
-export const DIAGRAM_ROLES = {
+const DIAGRAM_ROLES = {
   background: "paper",
   primaryColor: "paper",
   primaryBorderColor: "borderStrong",
@@ -86,7 +86,7 @@ const VIEWPORT = { width: 1200, height: 800, deviceScaleFactor: 1 };
  * @returns {{ theme: string, themeVariables: Record<string, string | boolean>, htmlLabels: boolean,
  *   flowchart: { htmlLabels: boolean, padding: number, useMaxWidth: boolean }, sequence: Record<string, number | boolean> }}
  */
-export function mermaidConfig(theme, colors) {
+function mermaidConfig(theme, colors) {
   const missing = DIAGRAM_ROLE_NAMES.filter(
     (role) => !/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(colors[role] ?? ""),
   );

@@ -4,7 +4,7 @@
     "jscpd": "jscpd@5.4.0"
   },
   "baseline": {
-    "measured_at": "144bd8f",
+    "measured_at": "cd7ca56",
     "knip": {},
     "jscpd": {
       "clones": 0,
@@ -23,19 +23,19 @@
       "head.mjs": 645,
       "markdown-copy.mjs": 510,
       "render-blocks.mjs": 636,
-      "render-nomath.mjs": 1201,
-      "schema.mjs": 726,
+      "render-nomath.mjs": 1200,
+      "schema.mjs": 601,
       "specimen/build.mjs": 669,
       "specimen/site.css": 535
     },
     "tests": {
-      "files": 24,
+      "files": 23,
       "cases": 172
     },
     "comments": {
-      "lines": 4442,
-      "code": 15197,
-      "percentage": 22.62
+      "lines": 4381,
+      "code": 15133,
+      "percentage": 22.45
     }
   }
 }

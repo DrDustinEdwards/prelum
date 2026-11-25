@@ -8,7 +8,7 @@
 import { RENDER_VERSION } from "./render-version.mjs";
 
 /** The attribute on the wrapper of rendered writing that names the pipeline release that made it. */
-export const RENDER_VERSION_ATTRIBUTE = "data-render-version";
+const RENDER_VERSION_ATTRIBUTE = "data-render-version";
 
 /**
  * HTML in its version wrapper; empty HTML stays empty.

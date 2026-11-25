@@ -1,8 +1,8 @@
 // The reader enhancements for a rendered post, in the browser: the table of contents' current section, code copy
 // buttons, heading link copy, footnote previews, Markdown copy, a link to the selected text and click-to-load
 // embeds. The image viewer is Capsomer's lightbox (capsomer/behavior/lightbox) and the reading bar Capsomer's CSS-only
-// reading progress (capsomer/reading-progress.css), not here. It is dustinedwards-info's app/enhance/blog.ts moved here, so every site that renders with this pipeline decorates the same
-// markup the same way. Every one is an addition: without script the page reads, links and opens images as plain HTML.
+// reading progress (capsomer/reading-progress.css), not here. Every site that renders with this pipeline decorates the same markup
+// the same way. Every one is an addition: without script the page reads, links and opens images as plain HTML.
 //
 // Browser-only; its one import (render-embeds.mjs) is dependency-free too. Nothing runs on import; a site calls `enhance()` once the
 // document is parsed.

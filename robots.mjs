@@ -39,7 +39,7 @@ export const DENIED_BOTS = ["Bytespider"];
  * not used to train, the same policy ai.txt and the TDMRep header state. Written in every group, since a crawler that matches
  * a named group reads only that group.
  */
-export const CONTENT_SIGNAL = "search=yes, ai-input=yes, ai-train=no";
+const CONTENT_SIGNAL = "search=yes, ai-input=yes, ai-train=no";
 
 /**
  * robots.txt. Every named group repeats the full disallow list: a crawler that matches a named group uses only that group
@@ -78,7 +78,7 @@ export function robotsDocument(input) {
 }
 
 /** robots.txt that asks every crawler to fetch nothing: a preview copy's, and a private host's. */
-export const DISALLOW_ALL = "User-agent: *\nDisallow: /\n";
+const DISALLOW_ALL = "User-agent: *\nDisallow: /\n";
 
 /**
  * /robots.txt for a host no crawler should fetch from (an MCP door, an admin API): `DISALLOW_ALL`, never indexed itself.
@@ -149,7 +149,7 @@ export function aiTxt({ origin, name, contact, disallow = [], policy }) {
  * How long a shared cache keeps robots.txt, ai.txt and llms.txt: an hour, the lifetime most of the sites chose, so a policy
  * change reaches crawlers the same day everywhere.
  */
-export const PLAIN_TEXT_CACHE_CONTROL = "public, max-age=3600";
+const PLAIN_TEXT_CACHE_CONTROL = "public, max-age=3600";
 
 /**
  * @typedef {object} PlainTextOptions
@@ -165,7 +165,7 @@ export const PLAIN_TEXT_CACHE_CONTROL = "public, max-age=3600";
  *
  * @param {Pick<PlainTextOptions, "origin" | "request" | "preview">} options
  */
-export function isPreviewRequest({ origin, request, preview }) {
+function isPreviewRequest({ origin, request, preview }) {
   if (preview !== undefined) return preview;
   return new URL(request.url).origin !== new URL(origin).origin;
 }
@@ -196,7 +196,7 @@ export function plainTextResponse(body, options) {
  *
  * @param {string} origin
  */
-export function robotsNotes(origin) {
+function robotsNotes(origin) {
   const base = origin.replace(/\/$/, "");
   return [`AI usage policy: ${base}/ai.txt`, `LLM guide: ${base}/llms.txt`];
 }
