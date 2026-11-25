@@ -1,4 +1,4 @@
-import { absolutizeUrls, cdata, documentResponse, escapeXml, mathToTex, toDate } from "./xml.mjs";
+import { absolutizeUrls, cdata, documentResponse, escapeXml, mathToTex, feedDate } from "./xml.mjs";
 
 /*
  * RSS 2.0, Atom 1.0 and JSON Feed 1.1 from the same post rows. `<description>` keeps the summary because readers show it in the
@@ -18,7 +18,7 @@ const DEFAULT_ITEM_PATH = "/writing";
  */
 function validDate(value, what) {
   if (value === null || value === undefined || value === "") return null;
-  const date = toDate(/** @type {Date | number | string} */ (value), null);
+  const date = feedDate(/** @type {Date | number | string} */ (value), null);
   if (Number.isNaN(date.getTime()))
     throw new Error(`${what} is not a date: ${JSON.stringify(value)}`);
   return date;
