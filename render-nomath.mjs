@@ -30,15 +30,13 @@ import {
   BLOCK_DIRECTIVES,
   remarkCallouts,
   remarkCodeFrames,
-  remarkEmbeds,
   remarkFaq,
-  remarkGallery,
   remarkInlineMarks,
   remarkLinkBlocks,
-  remarkMedia,
   remarkOutline,
   remarkPostLinks,
 } from "./render-blocks.mjs";
+import { remarkEmbeds, remarkGallery, remarkMedia } from "./render-media.mjs";
 import {
   CORE_DIRECTIVES,
   remarkDetails,

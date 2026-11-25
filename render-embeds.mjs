@@ -1,5 +1,5 @@
 // @ts-check
-// The services `::embed` may load, shared by the renderer (render-blocks.mjs) and the click handler (render-enhance.mjs). A site's
+// The services `::embed` may load, shared by the renderer (render-media.mjs) and the click handler (render-enhance.mjs). A site's
 // policy lets the players in through site-runtime's `embeds` opt-in (@dustinedwards/site-runtime/embeds, whose list the test holds
 // every player here to). Dependency-free, so the browser bundle can import it.
 
