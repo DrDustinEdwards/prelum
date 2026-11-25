@@ -232,16 +232,8 @@ test("a chart src with a .. segment, a backslash or a scheme but http(s) never r
   assert.deepEqual(asked, ["https://example.com/a.csv"]);
 });
 
-test("a backslash is escaped once for BibTeX, and an SRT cue that is only a number keeps its text", () => {
+test("BibTeX escapes a backslash once, a page range's every dash and a title's & and _, and an SRT cue that is only a number keeps its text", () => {
   assert.equal(escapeBibtex("a\\b {c}"), "a\\textbackslash{}b \\{c\\}");
-  const srt = "1\n00:00:01,000 --> 00:00:02,000\n42\n\n2\n00:00:03,000 --> 00:00:04,000\nhi\n";
-  assert.equal(
-    srtToVtt(srt),
-    "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n42\n\n00:00:03.000 --> 00:00:04.000\nhi\n",
-  );
-});
-
-test("toBibtex: a page range gets every dash as --, and a title's & and _ are escaped", () => {
   const entry = toBibtex({
     id: "k",
     title: "R&D_x",
@@ -255,6 +247,11 @@ test("toBibtex: a page range gets every dash as --, and a title's & and _ are es
   assert.match(
     toBibtex({ id: "k", title: "t", authors: [], pages: "e12345" }),
     /pages = \{e12345\}/,
+  );
+  const srt = "1\n00:00:01,000 --> 00:00:02,000\n42\n\n2\n00:00:03,000 --> 00:00:04,000\nhi\n";
+  assert.equal(
+    srtToVtt(srt),
+    "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n42\n\n00:00:03.000 --> 00:00:04.000\nhi\n",
   );
 });
 

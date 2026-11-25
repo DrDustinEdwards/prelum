@@ -55,7 +55,7 @@ const wrapped = markdownCopies(site, { origin: ORIGIN });
 const get = (/** @type {string} */ path, /** @type {Record<string, string>} */ headers = {}) =>
   wrapped(new Request(`${ORIGIN}${path}`, { headers }));
 
-test("a page's copy is its main text only, with absolute links and the title as its one top heading", () => {
+test("a page's copy is its main text only, with absolute links, fenced code kept whole, and the title as its one top heading", () => {
   const copy = htmlToMarkdown(
     page(
       "About",
@@ -67,6 +67,14 @@ test("a page's copy is its main text only, with absolute links and the title as 
   assert.equal(copy.description, "About About.");
   assert.equal(copy.canonical, `${ORIGIN}/about`);
   assert.equal(copy.markdown, `## Part\n\nSee [notes](${ORIGIN}/notes).`);
+
+  // Blank lines in fenced code stay, and a malformed canonical is ignored.
+  const code = htmlToMarkdown(
+    `<html><head><title>T</title><link rel="canonical" href="http://[bad"></head><body><main><p>a</p><pre><code>x\n\n\n\ny</code></pre></main></body></html>`,
+    { base: "https://e.test/p" },
+  );
+  assert.ok(code.markdown.includes("x\n\n\n\ny"));
+  assert.equal(code.canonical, undefined);
 });
 
 test("/path.md and Accept: text/markdown answer the copy; a browser gets the HTML, told where the copy is", async () => {
@@ -133,7 +141,7 @@ test("an annotation carries a crawled newline as text, never as a second workflo
   assert.equal(line, "::error title=a%3Ab::https://x.test/ 100%25 x%0A::stop-commands::tok");
 });
 
-test("llmsFullSkip keeps a page's copy but leaves it out of llms-full.txt", async () => {
+test("llmsFullSkip keeps a page's copy but leaves it out of llms-full.txt, and siteMarkdown: false makes the copy without asking the site for the .md path", async () => {
   const skipping = markdownCopies(site, {
     origin: ORIGIN,
     llmsFullSkip: (path) => path === "/about",
@@ -141,9 +149,7 @@ test("llmsFullSkip keeps a page's copy but leaves it out of llms-full.txt", asyn
   const full = await (await skipping(new Request(`${ORIGIN}/llms-full.txt`))).text();
   assert.doesNotMatch(full, /# About\n/);
   assert.match(await (await skipping(new Request(`${ORIGIN}/about.md`))).text(), /^# About\n/);
-});
 
-test("siteMarkdown: false makes the copy without asking the site for the .md path", async () => {
   /** @type {string[]} */
   const asked = [];
   const quiet = markdownCopies(

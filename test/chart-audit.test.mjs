@@ -137,7 +137,7 @@ const site = {
     [
       // B30, B28 and F: no data table, an SVG with no role or name, and Enarratio's bare figure outside the frame.
       chart("No table", { csv: false })
-        // The data table, visually hidden after the drawing since enarratio 0.11 (record 0035).
+        // The data table, visually hidden after the drawing.
         .replace(/<div class="enarratio-data[\s\S]*?<\/table><\/div>/, "")
         .replace(/ role="img" aria-label="[^"]*"/, ""),
       // B1 in dark only, and B3: the caption drawn at 10 px.

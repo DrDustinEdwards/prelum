@@ -58,3 +58,26 @@ test("submitIndexNow tries the next endpoint when the first one answers 429 or f
   answers.push(500, 500, 500);
   assert.equal(await submitIndexNow(input), false);
 });
+
+test("submitIndexNow sends 10,000 URLs a POST, and recentSitemapUrls decodes all five entities", async () => {
+  /** @type {number[]} */
+  const sizes = [];
+  const fetcher = /** @type {typeof fetch} */ (
+    async (_url, init) => {
+      sizes.push(JSON.parse(String(init?.body)).urlList.length);
+      return new Response("", { status: 200 });
+    }
+  );
+  const urls = Array.from({ length: 10_001 }, (_, i) => `https://e.test/${i}`);
+  assert.equal(
+    await submitIndexNow({ origin: "https://e.test/", key: "k", urls, fetch: fetcher }),
+    true,
+  );
+  assert.deepEqual(sizes, [10_000, 1]);
+  assert.deepEqual(
+    recentSitemapUrls(
+      "<urlset><url><loc>https://e.test/?a=1&amp;b=&lt;&gt;&quot;&apos;</loc></url></urlset>",
+    ),
+    [`https://e.test/?a=1&b=<>"'`],
+  );
+});

@@ -49,8 +49,3 @@ test("the corpus renders to the recorded bytes, and a change to them is a new re
   );
   assert.deepEqual(hashes, golden.hashes);
 });
-
-test("every fixture is recorded, so a new one cannot go unchecked", () => {
-  const golden = JSON.parse(readFileSync(GOLDEN, "utf8"));
-  assert.deepEqual(Object.keys(golden.hashes).sort(), [...FIXTURES].sort());
-});
