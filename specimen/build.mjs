@@ -17,7 +17,6 @@ import {
   writeFileSync,
 } from "node:fs";
 import { execFileSync } from "node:child_process";
-import { createRequire } from "node:module";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -26,41 +25,30 @@ import { integrityHash } from "@dustinedwards/site-runtime/csp";
 import { securityTxt } from "@dustinedwards/site-runtime/security-txt";
 import { familyFooterHtml } from "capsomer/behavior/family-footer";
 import { letterheadHtml } from "capsomer/behavior/site-header";
-import { bundleScript, capsomerStylesheet, copyFonts } from "capsomer/build";
-import { capsomerTheme } from "capsomer/enarratio-theme";
-import { stylesheet } from "enarratio";
 
 import { absoluteUrl, defineHead, headHtml, privateMeta } from "../head.mjs";
 import { graph, imageObject, jsonLd, thing, videoObject, website } from "../schema.mjs";
 import { llmsDocument } from "../llms.mjs";
 import { aiTxt, robotsDocument } from "../robots.mjs";
-import { rssItem } from "../feeds.mjs";
 import { sitemapDocument } from "../sitemap.mjs";
-import { RENDER_VERSION, render } from "../render.mjs";
-import { wrapRendered } from "../stored-render.mjs";
+import { RENDER_VERSION } from "../render.mjs";
 import { iconLinks, webManifest } from "../icons.mjs";
-import { DIAGRAM_ASSET_DIR, DIAGRAM_THEMES, diagramAssetPath } from "../render-diagram.mjs";
-import { absolutizeUrls, escapeXml, mathToTex } from "../xml.mjs";
+import { escapeXml } from "../xml.mjs";
 import { ACCESSIBILITY_PATH, accessibilityStatement } from "../accessibility.mjs";
 import { PAGE_PRELOADS } from "./worker.mjs";
 import {
-  ASSET_PREFIX,
-  DIAGRAM_CONFIG_FILE,
   FAMILY,
   ICON_DIR,
   ORIGIN,
-  diagramConfig,
   elementIndex,
   loadElements,
-  options,
   renderElement,
-  resolveImage,
-  splitHeader,
 } from "./specimen.mjs";
+import { elementSection, outputsSection, assertUniqueIds } from "./sections.mjs";
+import { writeStyles, copyDiagrams, bundle } from "./assets.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..");
-const require = createRequire(import.meta.url);
 const REPO = "https://github.com/DrDustinEdwards/prelum";
 
 /** The IndexNow key, served as /<key>.txt; .github/workflows/ci.yml's indexnow job reads it here to ping IndexNow. Public by design. */
@@ -75,102 +63,6 @@ const STATEMENT_DATE = "2026-11-01";
 /** What devkit-a11y's live run still finds on the specimen, one sentence each, for the statement. */
 /** @type {string[]} */
 const STATEMENT_LIMITATIONS = [];
-
-/** @param {string} specifier a package file, resolved from this repository's node_modules */
-const packageFile = (specifier) => require.resolve(specifier);
-
-/** @param {string} outDir */
-function writeStyles(outDir) {
-  // Capsomer's fonts, tokens, the specimen's family, base, the link system and prose, then the NASA manual theme every
-  // dustinedwards.info public page shares, the theme button and its tip, the letterhead, the family footer and the
-  // frame every :::chart sits in (capsomer/build), then Enarratio's chart styles in Capsomer's theme and site.css.
-  copyFonts(join(outDir, "fonts"));
-  const css = capsomerStylesheet({
-    family: FAMILY,
-    prose: true,
-    parts: ["manual", "popover", "theme-switch", "site-header", "family-footer", "chart-frame"],
-    // Capsomer's tokens.css also maps the --enarratio-* properties onto its tokens (css/enarratio.css). The two agree, being
-    // generated from the same tokens; Enarratio 0.1.0-alpha.8 has no color-free base stylesheet, so its full one is used.
-    after: [stylesheet(capsomerTheme), readFileSync(join(HERE, "site.css"), "utf8")],
-  });
-  writeFileSync(
-    join(outDir, "site.css"),
-    `/* Built by specimen/build.mjs with capsomer/build, then specimen/site.css. */\n${css}`,
-  );
-
-  // KaTeX's stylesheet names its fonts relative to itself. Only the woff2 files are copied: every browser that reads the
-  // stylesheet's first src takes them. KaTeX ships font-display: block, which hides the math for up to three seconds;
-  // swap shows it in the fallback face at once.
-  const katex = dirname(packageFile("katex/dist/katex.min.css"));
-  mkdirSync(join(outDir, "katex", "fonts"), { recursive: true });
-  const katexCss = readFileSync(join(katex, "katex.min.css"), "utf8").replaceAll(
-    "font-display:block",
-    "font-display:swap",
-  );
-  writeFileSync(join(outDir, "katex", "katex.min.css"), katexCss);
-  for (const font of readdirSync(join(katex, "fonts")).filter((f) => f.endsWith(".woff2"))) {
-    copyFileSync(join(katex, "fonts", font), join(outDir, "katex", "fonts", font));
-  }
-}
-
-/**
- * Diagrams are drawn ahead of time (specimen/diagrams.mjs) because layout needs a browser; the build only copies them, and
- * stops when one is missing rather than publish a broken image.
- *
- * @param {string} outDir
- * @param {Array<{ key: string }>} diagrams
- */
-function copyDiagrams(outDir, diagrams) {
-  const stamp = join(HERE, DIAGRAM_ASSET_DIR, DIAGRAM_CONFIG_FILE);
-  if (
-    diagrams.length > 0 &&
-    (!existsSync(stamp) ||
-      readFileSync(stamp, "utf8") !== `${JSON.stringify(diagramConfig(), null, 2)}\n`)
-  ) {
-    throw new Error(
-      `specimen diagrams were drawn with another palette or Mermaid version than ${DIAGRAM_ASSET_DIR}/${DIAGRAM_CONFIG_FILE} now ` +
-        "calls for. Run npm run specimen:diagrams and commit them.",
-    );
-  }
-  const missing = [];
-  for (const { key } of diagrams) {
-    for (const theme of DIAGRAM_THEMES) {
-      const path = diagramAssetPath(key, theme, ASSET_PREFIX);
-      const source = join(HERE, path);
-      if (!existsSync(source)) {
-        missing.push(path);
-        continue;
-      }
-      mkdirSync(dirname(join(outDir, path)), { recursive: true });
-      copyFileSync(source, join(outDir, path));
-    }
-  }
-  if (missing.length > 0) {
-    throw new Error(
-      `specimen diagrams not drawn: ${missing.join(", ")}. Run npm run specimen:diagrams and commit them.`,
-    );
-  }
-}
-
-/**
- * Bundles a script of specimen/browser for the browser, Capsomer's behavior and every lazy import inlined (Enarratio's
- * sound, loaded on Play), so each script stays one file under the page's script hashes.
- *
- * @param {string} file
- * @param {"esm" | "iife"} format
- */
-async function bundle(file, format) {
-  const code = await bundleScript(join(HERE, "browser", file), { format });
-  // An import the bundler could not resolve is left as a bare specifier, which a browser cannot load: the whole script
-  // throws and the theme button dies. Capsomer imports this package by name, so it must be installed (the devDependency
-  // "file:." links it to itself).
-  const bare = /(?:\bfrom|\bimport)\s*\(?\s*["']([^./"'][^"']*)["']/.exec(code);
-  if (bare)
-    throw new Error(
-      `specimen/browser/${file} bundles to a bare import of "${bare[1]}"; the browser cannot resolve it`,
-    );
-  return code;
-}
 
 /**
  * The family footer (capsomer/family-footer), with Prelum's own part under its thin cerulean stripe.
@@ -285,127 +177,6 @@ ${body}
 </body>
 </html>
 `;
-}
-
-/** @param {string} label @param {string} text */
-const codeView = (label, text) =>
-  `<details><summary>${escapeXml(label)}</summary><pre class="code-view" tabindex="0"><code>${escapeXml(text)}</code></pre></details>`;
-
-/** What a feed carries for this HTML: rssItem's own transformation, TeX for math and absolute URLs. */
-const feedForm = (/** @type {string} */ html) => absolutizeUrls(mathToTex(html), ORIGIN);
-
-/**
- * @param {import("./specimen.mjs").Element} element
- * @param {string} html
- * @param {number} no its number on the page
- */
-function elementSection(element, html, no) {
-  const directives = element.directives.map((d) => `:${d}`).join(", ");
-  const pack =
-    element.pack === "editorial"
-      ? `<span class="element-pack">editorial pack</span>`
-      : `<span class="element-pack">core</span>`;
-  const feed = feedForm(html);
-  return `<section class="element" id="el-${element.id}" aria-labelledby="el-${element.id}-name">
-<h2 class="element-name cap-part-title" id="el-${element.id}-name"><span class="cap-part-no">${no}</span><a href="#el-${element.id}">${escapeXml(element.name)}</a></h2>
-<p class="element-meta">${element.summary ? `${escapeXml(element.summary)} ` : ""}${pack}${directives ? ` <span class="sr-only">directives:</span> <code>${escapeXml(directives)}</code>` : ""}</p>
-<div class="pair">
-<div>
-<p class="pair-label">Markdown</p>
-<pre class="source" tabindex="0"><code>${escapeXml(element.source.trimEnd())}</code></pre>
-</div>
-<div>
-<p class="pair-label">Output</p>
-<div class="output prose" data-context="prose">
-${wrapRendered(html)}
-</div>
-</div>
-</div>
-<div class="views">
-${codeView("The HTML", html)}
-${feed === html ? "" : codeView("In the RSS item", feed)}
-</div>
-</section>`;
-}
-
-/**
- * A short post through every output Prelum makes from it: the page's HTML, the RSS item and the llms.txt entry.
- *
- * @param {string} version
- * @param {number} no its number on the page
- * @param {{ taken: boolean }} priority the page's
- */
-async function outputsSection(version, no, priority) {
-  const text = readFileSync(join(HERE, "sample-post.md"), "utf8");
-  const { header: meta, source: body } = splitHeader("specimen/sample-post.md", text, [
-    "title",
-    "slug",
-    "description",
-    "date",
-  ]);
-  const { html } = await render({
-    file: "specimen/sample-post.md",
-    body,
-    resolveImage,
-    options: { ...options, priority },
-  });
-  const post = {
-    slug: meta.slug ?? "",
-    title: meta.title ?? "",
-    html,
-    description: meta.description ?? null,
-    publishAt: meta.date ?? null,
-    tags: [],
-  };
-  const item = rssItem(post, ORIGIN);
-  // The address the feed gives the post, so the llms.txt line and the RSS item cannot disagree.
-  const link = /<link>([^<]+)<\/link>/.exec(item)?.[1];
-  if (!link) throw new Error("the sample post's RSS item has no <link>");
-  const llms = llmsDocument({
-    title: "Prelum specimen",
-    summary: `Every element Prelum ${version} renders from markdown.`,
-    sections: [
-      {
-        heading: "Writing",
-        links: [{ title: post.title, url: link, description: meta.description }],
-      },
-    ],
-  });
-  return `<section class="outputs" id="outputs" aria-labelledby="outputs-name">
-<h2 class="element-name cap-part-title" id="outputs-name"><span class="cap-part-no">${no}</span><a href="#outputs">One source, three outputs</a></h2>
-<div class="pair">
-<div>
-<p class="pair-label">Markdown</p>
-<pre class="source" tabindex="0"><code>${escapeXml(text.trimEnd())}</code></pre>
-</div>
-<div>
-<p class="pair-label">Page</p>
-<div class="output prose" data-context="prose">
-${wrapRendered(html)}
-</div>
-</div>
-</div>
-<p class="pair-label">RSS item</p>
-<pre class="code-view" tabindex="0"><code>${escapeXml(item)}</code></pre>
-<p class="pair-label">llms.txt</p>
-<pre class="code-view" tabindex="0"><code>${escapeXml(llms.trimEnd())}</code></pre>
-</section>`;
-}
-
-/**
- * An id used twice on one page breaks its anchors and its accessible names. The elements are rendered separately, so two of
- * them could each produce the same heading id.
- *
- * @param {string} html
- */
-function assertUniqueIds(html) {
-  /** @type {Map<string, number>} */
-  const counts = new Map();
-  for (const [, id] of html.matchAll(/\sid="([^"]+)"/g))
-    counts.set(/** @type {string} */ (id), (counts.get(/** @type {string} */ (id)) ?? 0) + 1);
-  const repeated = [...counts].filter(([, n]) => n > 1).map(([id]) => id);
-  if (repeated.length > 0)
-    throw new Error(`the specimen page repeats the id ${repeated.join(", ")}`);
 }
 
 /**
