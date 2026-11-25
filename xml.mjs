@@ -80,7 +80,7 @@ export function cdata(content) {
  * @returns {string}
  */
 export function rfc822(value) {
-  return toDate(value).toUTCString();
+  return feedDate(value).toUTCString();
 }
 
 /**
@@ -91,7 +91,7 @@ export function rfc822(value) {
  */
 export function isoDay(value) {
   if (value === null || value === undefined || value === "") return null;
-  const date = toDate(value, null);
+  const date = feedDate(value, null);
   return date && !Number.isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : null;
 }
 
@@ -103,7 +103,7 @@ export function isoDay(value) {
  * @param {Date | null} [fallback] what an unreadable value becomes; the epoch by default, an invalid Date when null
  * @returns {Date}
  */
-export function toDate(value, fallback = new Date(0)) {
+export function feedDate(value, fallback = new Date(0)) {
   if (value instanceof Date)
     return Number.isNaN(value.getTime()) ? (fallback ?? new Date(NaN)) : value;
   if (typeof value === "number") return new Date(value);

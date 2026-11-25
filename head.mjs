@@ -1,7 +1,7 @@
 import { scriptJson } from "@dustinedwards/site-runtime/html";
 
 import { SERP_DESCRIPTION, searchTitle, truncateForSerp } from "./serp.mjs";
-import { escapeXml, toDate } from "./xml.mjs";
+import { escapeXml, feedDate } from "./xml.mjs";
 
 /**
  * The shortest trail that gets a BreadcrumbList: home, a section, the page. A top-level page (home and itself) shows no
@@ -245,7 +245,7 @@ export function articleDates(article) {
 /** @param {Date | number | string | null | undefined} value */
 function iso(value) {
   if (value === null || value === undefined) return undefined;
-  const date = toDate(value, null);
+  const date = feedDate(value, null);
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 }
 

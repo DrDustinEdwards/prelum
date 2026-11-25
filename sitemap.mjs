@@ -1,6 +1,6 @@
 import { unescapeHtml } from "@dustinedwards/site-runtime/html";
 
-import { documentResponse, escapeXml, isoDay, toDate } from "./xml.mjs";
+import { documentResponse, escapeXml, isoDay, feedDate } from "./xml.mjs";
 
 /** Google's and Bing's limit for one sitemap file: 50,000 URLs and 50 MiB uncompressed (https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap). */
 export const SITEMAP_MAX_URLS = 50_000;
@@ -142,7 +142,7 @@ ${rows.join("\n")}
 
 /** @param {Date | number | string} value */
 function datetime(value) {
-  const date = toDate(value, null);
+  const date = feedDate(value, null);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 

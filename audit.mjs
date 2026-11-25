@@ -17,7 +17,7 @@ import {
   same,
   selfCanonical,
   tags,
-  textOf,
+  elementText,
 } from "./audit-read.mjs";
 
 /**
@@ -221,7 +221,7 @@ export function auditPages(pages, { origin, sitemap, robots: robotsText, lastmod
     if (!/<h1\b/i.test(html))
       add(url, "h1-missing", "warning", "no <h1>, so the page has no top heading");
 
-    const title = textOf(head, "title");
+    const title = elementText(head, "title");
     if (!title) add(url, "title-missing", "error", "no <title>");
     else {
       const width = Math.round(serpWidth(title, SERP_TITLE.font));

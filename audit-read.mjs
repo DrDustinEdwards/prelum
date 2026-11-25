@@ -113,7 +113,7 @@ export function headOf(html) {
 }
 
 /** @param {string} html @param {string} name */
-export function textOf(html, name) {
+export function elementText(html, name) {
   const match = html.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`, "i"));
   return match ? unescapeHtml(match[1]).trim() : null;
 }

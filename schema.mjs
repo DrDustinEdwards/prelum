@@ -1,7 +1,7 @@
 import { ARTICLE_IMAGE_RATIOS } from "@dustinedwards/site-runtime/image";
 
 import { absoluteUrl, articleDates } from "./head.mjs";
-import { toDate } from "./xml.mjs";
+import { feedDate } from "./xml.mjs";
 import { thing } from "./schema-node.mjs";
 export {
   sameAs,
@@ -156,7 +156,7 @@ export function videoObject({
   duration,
   transcript,
 }) {
-  const date = toDate(uploadDate, null);
+  const date = feedDate(uploadDate, null);
   if (!name || !thumbnailUrl || Number.isNaN(date.getTime()) || !(contentUrl || embedUrl)) {
     throw new Error(
       `videoObject "${name}": name, thumbnailUrl, uploadDate and a contentUrl or embedUrl are required`,

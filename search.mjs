@@ -212,7 +212,7 @@ export function staticSearch(index, query, { limit = 50, snippet = 160 } = {}) {
  * @param {string} text
  * @returns {string}
  */
-export function likeContains(text) {
+export function likePattern(text) {
   return `%${String(text).replace(/[\\%_]/g, "\\$&")}%`;
 }
 
