@@ -29,7 +29,7 @@ const packageFile = (specifier) => require.resolve(specifier);
 export function writeStyles(outDir) {
   // Capsomer's fonts, tokens, the specimen's family, base, the link system and prose, then the NASA manual theme every
   // dustinedwards.info public page shares, the theme button and its tip, the letterhead, the family footer and the
-  // frame every :::chart sits in (capsomer/build), then Enarratio's chart styles in Capsomer's theme and site.css.
+  // frame every :::chart sits in (capsomer/build), then Enarratio's chart styles in Capsomer's theme, site.css and output.css.
   copyFonts(join(outDir, "fonts"));
   const css = capsomerStylesheet({
     family: FAMILY,
@@ -37,11 +37,14 @@ export function writeStyles(outDir) {
     parts: ["manual", "popover", "theme-switch", "site-header", "family-footer", "chart-frame"],
     // Capsomer's tokens.css also maps the --enarratio-* properties onto its tokens (css/enarratio.css). The two agree, being
     // generated from the same tokens; Enarratio 0.1.0-alpha.8 has no color-free base stylesheet, so its full one is used.
-    after: [stylesheet(capsomerTheme), readFileSync(join(HERE, "site.css"), "utf8")],
+    after: [
+      stylesheet(capsomerTheme),
+      ...["site.css", "output.css"].map((file) => readFileSync(join(HERE, file), "utf8")),
+    ],
   });
   writeFileSync(
     join(outDir, "site.css"),
-    `/* Built by specimen/build.mjs with capsomer/build, then specimen/site.css. */\n${css}`,
+    `/* Built by specimen/build.mjs with capsomer/build, then specimen/site.css and output.css. */\n${css}`,
   );
 
   // KaTeX's stylesheet names its fonts relative to itself. Only the woff2 files are copied: every browser that reads the
