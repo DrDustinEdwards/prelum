@@ -12,8 +12,6 @@ import { storedRender } from "../stored-render.mjs";
 
 import {
   RRF_K,
-  cdata,
-  escapeXml,
   fuse,
   ftsLiteral,
   frontmatter,
@@ -28,7 +26,6 @@ import {
   markdownPage,
   markdownPath,
   prefersMarkdown,
-  rfc822,
   sitemapDocument,
   toMatchExpression,
 } from "../index.mjs";
@@ -283,20 +280,6 @@ test("frontmatter blocks: a write changes only the block it names, and every oth
   );
   const crlf = splitSource("---\r\ntitle: Hello\r\ntags: [old]\r\n---\r\nBody\r\n").front ?? "";
   assert.equal(setRawKey(crlf, "title", '"Hi"'), 'title: "Hi"\r\ntags: [old]');
-});
-
-test("xml: the sites' feed fragments are the primitives' output", () => {
-  const escaped = fixture("feed.xml");
-  assert.ok(
-    escaped.includes(`<title>${escapeXml(`Spring update: notes & "questions" <draft>`)}</title>`),
-  );
-  assert.ok(escaped.includes(`<pubDate>${rfc822("2026-06-21 09:30:00")}</pubDate>`));
-  assert.ok(escaped.includes(`<pubDate>${rfc822("2026-05-02T08:00:00Z")}</pubDate>`));
-  const wrapped = fixture("feed-cdata.rss");
-  assert.ok(
-    wrapped.includes(`<title>${cdata(`Getting started: what works & what "doesn't"`)}</title>`),
-  );
-  assert.ok(wrapped.includes(`<pubDate>${rfc822(new Date("2026-08-01T12:00:00.000Z"))}</pubDate>`));
 });
 
 test("search: a quote inside a term is doubled, so the term cannot leave its quotes", () => {

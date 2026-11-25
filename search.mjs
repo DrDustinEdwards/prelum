@@ -219,7 +219,7 @@ export function likeContains(text) {
 /** @typedef {{ raw: string, terms: string[], phrases: string[], filters: Record<string, string[]>, year: number | null, isEmpty: boolean }} ParsedQuery A typed query: what was typed, its bare terms (ANDed) and quoted phrases, its `name:value` filters by operator, a year. */
 
 /**
- * A typed search query, from dustinedwards.info's search (app/lib/search/query.mjs). The rules apply in order and each consumes
+ * A typed search query. The rules apply in order and each consumes
  * its tokens: quoted phrases first, so an operator inside quotes stays text; then `name:value` operators (each name in
  * `operators`), lowercased; then the first bare four-digit year inside `minYear` to `maxYear` becomes a date filter, since
  * prose rarely spells out its own date. What is left is the terms, ANDed.

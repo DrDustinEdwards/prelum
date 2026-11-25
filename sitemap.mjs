@@ -147,7 +147,7 @@ function datetime(value) {
 }
 
 /**
- * `sitemap.xml` as a whole response, the route every site wrote: `sitemapDocument(entries, options)` as
+ * `sitemap.xml` as a whole response: `sitemapDocument(entries, options)` as
  * `application/xml; charset=utf-8`, cached for an hour. `headers` adds to those or replaces the caching.
  *
  * @param {SitemapEntry[]} entries

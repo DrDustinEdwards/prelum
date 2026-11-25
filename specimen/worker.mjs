@@ -1,13 +1,8 @@
-// The specimen's Worker: site-runtime's staticSite, the one front door the family's static sites share, with the specimen's
-// headers from its registry entry (@dustinedwards/site-runtime/sites, prelum) and the TDMRep header on top. One hop from
-// plain HTTP to HTTPS; Content-Security-Policy, Integrity-Policy and COEP reports at /csp-report with site-runtime's shared
-// receiver (logged to Workers Logs, nothing stored, limited by CSP_REPORT_RATE_LIMIT); the prefetch rules at
-// /speculation-rules.json; and every page with the Speculation-Rules, Server-Timing and preload Link headers (Early
-// Hints). A path with no file gets the 404 page, private and never stored, and so does a page asked for with a cookie.
-// wrangler.jsonc runs it first for every path but the fonts, KaTeX, images and diagrams, which the asset server answers
-// with the `_headers` rules `npm run specimen` writes from the same entry (site-runtime-headers). site-runtime is a
-// devDependency: the published library never imports this file. Prelum's serveMarkdownCopies wraps it, so the page's
-// Markdown copy answers.
+// The specimen's Worker: site-runtime's staticSite (the family's one front door for static sites) with the specimen's headers from
+// its registry entry (@dustinedwards/site-runtime/sites, prelum) and the TDMRep header on top. wrangler.jsonc runs it first for
+// every path but the fonts, KaTeX, images and diagrams, which the asset server answers with the `_headers` rules `npm run specimen`
+// writes from the same entry. site-runtime is a devDependency: the published library never imports this file. Prelum's
+// serveMarkdownCopies wraps it, so the page's Markdown copy answers.
 
 import { preloads } from "@dustinedwards/site-runtime/preload";
 import { prelum } from "@dustinedwards/site-runtime/sites";

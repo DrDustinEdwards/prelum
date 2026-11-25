@@ -186,7 +186,7 @@ export async function auditIcons({ origin, fetch: fetcher }) {
 }
 
 /**
- * `site.webmanifest` as a whole response, the route every site wrote: `webManifest(site)` as
+ * `site.webmanifest` as a whole response: `webManifest(site)` as
  * `application/manifest+json; charset=utf-8`, cached for a day. `headers` adds to those or replaces the caching.
  *
  * @param {ManifestSite} site

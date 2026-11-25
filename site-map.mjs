@@ -1,5 +1,5 @@
 /**
- * The HTML site map page, from dustinedwards.info (app/lib/site-map.mjs): drawn from the same list of public URLs as
+ * The HTML site map page, drawn from the same list of public URLs as
  * sitemap.xml, so the two cannot drift, and grouped by the site's own sections. Every page is one line by its title, except a
  * kind of page there are many of (papers, posts, tags), which is one line with its count, linking to its index.
  *

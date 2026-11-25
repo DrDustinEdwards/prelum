@@ -1,9 +1,9 @@
 /**
- * A Markdown file's YAML frontmatter as data, and data written back as frontmatter: the one reader for the sites that need a
- * whole mapping (nested lists and objects, booleans, numbers, dates), in place of gray-matter, whose js-yaml 3 imports esprima
- * (135 KB in a Worker bundle) and `eval`s. `./frontmatter` is the other reader: text blocks, no parser, byte-exact edits.
+ * A Markdown file's YAML frontmatter as data, and data written back as frontmatter: the reader for the sites that need a whole
+ * mapping (nested lists and objects, booleans, numbers, dates). `./frontmatter` is the other reader: text blocks, no parser,
+ * byte-exact edits.
  *
- * YAML 1.2's core schema plus the timestamp tag, so `date: 2026-09-30` is a `Date` (UTC midnight) as gray-matter gave, and
+ * YAML 1.2's core schema plus the timestamp tag, so `date: 2026-09-30` is a `Date` (UTC midnight), and
  * `yes`, `1:30` and `0777` stay what they look like. A duplicate key, an unreadable block or a header that is not a mapping
  * throws. No `eval`, no `new Function`, no tag that builds a function or a regular expression.
  */

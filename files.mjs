@@ -1,11 +1,9 @@
 /**
- * The standard machine files every site answers, from one config, so no site writes their route glue: robots.txt,
- * ai.txt, site.webmanifest, the IndexNow key file and any search engine's ownership file. A Worker calls the handler
- * before React Router; null means the path is not one of them. llms.txt and the sitemap stay routes, since each site's
- * own content fills them (llmsResponse, sitemapResponse).
+ * The standard machine files every site answers, from one config: robots.txt, ai.txt, site.webmanifest, the IndexNow key file and
+ * any search engine's ownership file. A Worker calls the handler before React Router; null means the path is not one of them.
+ * llms.txt and the sitemap stay routes, since each site's own content fills them (llmsResponse, sitemapResponse).
  *
- * Each file is the response its own helper writes (robotsResponse, aiTxtResponse, webManifestResponse, keyFileResponse,
- * verificationFileResponse), so its headers are the ones the network agreed on: a preview copy is `Disallow: /` and
+ * Each file is the response its own helper writes, so its headers are the family's: a preview copy is `Disallow: /` and
  * no-store, ai.txt is noindex, every text file carries the TDM reservation.
  */
 import { webManifestResponse } from "./icons.mjs";

@@ -344,7 +344,7 @@ export function headHtml(tags) {
  */
 
 /**
- * The per-site head builder every site wrote around `headTags`: the site's facts once, then a function a route's `meta`
+ * The per-site head builder around `headTags`: the site's facts once, then a function a route's `meta`
  * calls with the page's. The `<title>` is `searchTitle(title, suffix)` (the suffix dropped and the title cut where both do
  * not fit) and the share card keeps the whole title as `socialTitle`; the description is cut at a word to
  * `SERP_DESCRIPTION`'s width, and the share card keeps it whole. An indexable page also gets its WebPage and BreadcrumbList
