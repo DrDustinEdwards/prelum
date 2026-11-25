@@ -1,8 +1,8 @@
 // The specimen's elements: each is a short markdown file in specimen/elements, rendered here exactly as a site configured like
 // dustinedwards-info renders it (the editorial pack and code highlighting on). The diagram element is the exception: it is a
 // hand-built SVG in the page, because the pipeline drops raw HTML and does not inline a drawing. The site build
-// (specimen/build.mjs) and the tests (test/specimen.test.mjs) both read the elements through this file, so the page, the stored
-// expected output and the index Carrel reads cannot drift apart.
+// (specimen/build.mjs) and the tests (test/specimen.test.mjs) both read the elements through this file, so the page and the index
+// Carrel reads cannot drift apart.
 
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -24,7 +24,6 @@ import { DIAGRAM_SIZES_FILE } from "../render-diagram.mjs";
 import { editorialPack } from "../render-packs.mjs";
 
 const ELEMENTS_DIR = new URL("./elements/", import.meta.url);
-export const EXPECTED_DIR = new URL("./expected/", import.meta.url);
 
 /** The specimen's own address. The feed form of each element is absolutised against it. */
 export const ORIGIN = "https://prelum.dustinedwards.info";
@@ -138,7 +137,7 @@ export async function resolveImage(src) {
 
 /**
  * @typedef {object} Element
- * @property {string} id the file name without its order prefix, used as the page anchor and the expected-output name
+ * @property {string} id the file name without its order prefix, used as the page anchor
  * @property {string} file the file name in specimen/elements
  * @property {string} name
  * @property {string} [summary] only where it says what the page does not show
@@ -266,11 +265,6 @@ export function elementIndex(elements, version) {
       directives: e.directives,
     })),
   };
-}
-
-/** @param {string} id */
-export function expectedPath(id) {
-  return new URL(`${id}.html`, EXPECTED_DIR);
 }
 
 /** The specimen's Capsomer family, on the page's root: the build sets it and the diagrams are drawn in it. */

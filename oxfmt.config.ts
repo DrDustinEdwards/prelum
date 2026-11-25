@@ -7,7 +7,6 @@ export default defineConfig({
   ignorePatterns: [
     ...(format.ignorePatterns ?? []),
     "test/fixtures/",
-    "specimen/expected/",
     "specimen/elements/",
     "specimen/diagrams/",
   ],

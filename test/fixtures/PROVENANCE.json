@@ -6,7 +6,6 @@
       "repository": "DrDustinEdwards/germomics",
       "commit": "f993d51a139484f210eb4c7111b18105567bd79e",
       "files": {
-        "feed.xml": "site-feed.xml",
         "llms-links.txt": "llms.txt",
         "sitemap-compact-no-newline.xml": "sitemap.xml"
       }
@@ -15,7 +14,6 @@
       "repository": "DrDustinEdwards/foxhound",
       "commit": "69c122c8cb7f253199e34570b850056e9e536a0e",
       "files": {
-        "feed-cdata.rss": "feed.rss",
         "sitemap-expanded.xml": "sitemap.xml",
         "llms-prose.txt": "llms.txt"
       }

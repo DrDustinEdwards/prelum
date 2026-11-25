@@ -20,11 +20,10 @@
 //   D6   the chart's drawing (its inline SVG, as shown) is over --chart-kb; the data table and a phone drawing waiting in
 //        the frame's redraw spec are not counted, since the table is the chart's text equivalent and only one drawing shows
 //   F    the page loads another chart library, or draws an SVG chart outside Enarratio; the chart is not in the frame
-//   D5   with scripts on, at 1280 and at 320 px, the page shifts (layout-shift entries with no recent input) and a moved element
-//        is inside a chart, by 0.01 or more in all (a chart that grows or shrinks as it is enhanced or redrawn moves what follows
-//        it). A shift counts only while what it moves is on screen, so the first chart is held at the top of the screen as the
-//        page loads, each chart is then scrolled to, and a chart that changed size out of sight as the page loaded is held in
-//        view in a load of its own (up to 3 more loads); a fold the check opens itself is not counted
+//   D5   with scripts on, at 1280 and at 320 px, a chart moves by 0.01 or more in layout shifts with no recent input. A shift
+//        counts only while what it moves is on screen, so the first chart is held at the top as the page loads, each chart is
+//        scrolled to, and one that resized out of sight is held in view in a load of its own (up to 3 more); a fold the check
+//        opens itself is not counted
 //   C1   no CSV link; C2 no source line
 //   C12  at 320 px wide (scripts on, the page scrolled through), the drawing overflows its frame sideways (a table chart, a data
 //        table, may scroll: WCAG 1.4.10's two-dimensional exception), or chart text is drawn under 12 px
@@ -34,12 +33,11 @@
 // name that states its values or finding, or when it is aria-hidden beside visible text that gives the numbers; else B18.
 //
 // C1, C2 and the frame are errors; --no-strict-frame makes them warnings.
-// --pages adds pages to the crawl (a file of URLs or paths, one per line, or a comma list), for charts no link reaches,
-// a query included (/x?tab=a, for a chart behind a tab); each
-// --start URL is opened first in every browser context, so a demo route that sets a session cookie opens the pages behind it. A page the browser could not open is titled G:
-// an error when it answers 200 with an empty body (broken for every reader) or lands on a sign-in page (Cloudflare Access, a
-// login path, or a password form it was sent on to: its charts were never read), a warning otherwise. Exits 0 with no errors, 1 with any, and 2 when it could not run: the site or its sitemap does not
-// answer, no page opened, or no browser started.
+// --pages adds pages to the crawl (a file of URLs or paths, one per line, or a comma list), for charts no link reaches, a query
+// included (/x?tab=a, for a chart behind a tab); each --start URL is opened first in every browser context, so a demo route that
+// sets a session cookie opens the pages behind it. A page the browser could not open is titled G: an error when it answers 200
+// with an empty body or lands on a sign-in page (its charts were never read), a warning otherwise. Exits 0 with no errors, 1 with
+// any, and 2 when it could not run: the site or its sitemap does not answer, no page opened, or no browser started.
 //
 // Needs playwright-core and axe-core (optional peers); when they are not installed it installs the pinned versions into a
 // cache directory once, so the scoreboard's bare install can run it. It drives Playwright's Chromium when installed, else
