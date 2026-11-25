@@ -18,8 +18,8 @@ export const where = (node, name) => {
 export const attrsOf = (node) => /** @type {Record<string, string>} */ (node.attributes ?? {});
 
 /** @param {any} node @returns {string} */
-export const textOf = (node) =>
-  typeof node.value === "string" ? node.value : (node.children ?? []).map(textOf).join("");
+export const blockText = (node) =>
+  typeof node.value === "string" ? node.value : (node.children ?? []).map(blockText).join("");
 
 /**
  * @param {string} file
@@ -125,7 +125,7 @@ export function remarkLinkBlocks(file) {
   return (/** @type {import("mdast").Root} */ tree) => {
     visit(tree, "leafDirective", (node) => {
       if (node.name !== "button" && node.name !== "bookmark") return;
-      const label = textOf(node).trim();
+      const label = blockText(node).trim();
       if (!label)
         throw new ContentError(
           file,
@@ -351,7 +351,7 @@ export function remarkOutline(sink) {
       if (heading.depth > previous + 1) {
         sink.push({
           line: heading.position?.start?.line ?? null,
-          message: `heading "${textOf(heading).trim()}" skips from h${previous} to h${heading.depth}`,
+          message: `heading "${blockText(heading).trim()}" skips from h${previous} to h${heading.depth}`,
         });
       }
       previous = heading.depth;

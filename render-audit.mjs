@@ -20,7 +20,7 @@ const LEAKS = [
 ];
 
 /** @param {string} html */
-const textOf = (html) =>
+const blockText = (html) =>
   html
     .replace(/<(script|style|pre|code|template|textarea)\b[\s\S]*?<\/\1\s*>/gi, " ")
     .replace(/<[^>]*>/g, " ")
@@ -81,7 +81,7 @@ export function auditContent(pages, { renderVersion = RENDER_VERSION } = {}) {
         );
     }
 
-    const text = textOf(html);
+    const text = blockText(html);
     for (const leak of LEAKS) {
       const found = leak.pattern.exec(text);
       if (found)
