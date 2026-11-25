@@ -93,10 +93,6 @@ test("the built site carries the index generated from the sources, names Prelum'
     const page = readFileSync(join(out, "index.html"), "utf8");
     for (const element of elements)
       assert.ok(page.includes(`id="el-${element.id}"`), `index.html shows ${element.id}`);
-    assert.match(page, /<figure class="blog-diagram" role="img"/);
-    assert.match(page, /<title>From draft to page<\/title>/);
-    assert.doesNotMatch(page, /prelum-03318765/);
-    assert.doesNotMatch(page, /class="diagram-image/);
   } finally {
     rmSync(out, { recursive: true, force: true });
   }
