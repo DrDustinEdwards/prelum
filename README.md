@@ -3,7 +3,7 @@
 The shared publishing code for the Dustin Edwards sites (ruling capsid/rulings/shared-homes-2026-10-06.md): the code that turns a site's
 content into the documents it publishes. This repository was `DrDustinEdwards/site-helpers` and was renamed, keeping its history and
 tags. The package is still named `@drdustinedwards/site-helpers` and is installed by tag:
-`"@drdustinedwards/site-helpers": "github:DrDustinEdwards/prelum#v0.3.1"`.
+`"@drdustinedwards/site-helpers": "github:DrDustinEdwards/prelum#v<version>"`, a tag from the repository's releases.
 A site installs `@dustinedwards/site-runtime` (0.143.0 or later) beside it, which every site already does. It is not a
 peer dependency: site-runtime is not on the npm registry, so npm cannot resolve a peer range for it and a lockfile update
 that moves both fails with ERESOLVE.
@@ -35,7 +35,6 @@ The helpers every site wrote for itself, written once here in the form of the be
 | `indexnow`                               | `submitIndexNow(input)`, `submitIndexNowIfChanged({ kv, hashKey, ...input })` (a set only when it changed), `keyFileResponse(key, headers)` (the `/<key>.txt` file), `recentSitemapUrls(xml, { days })`; the `prelum-indexnow` bin                                                                                                                                                                                                                                                                                                                                          |
 | `audit`                                  | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-audit` bin                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `icons`                                  | `ICONS` (the file paths), `iconLinks()`, `webManifest(site)`, `icoFile(images)`, `auditIcons({ origin, fetch })`; the `prelum-icons` bin                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `audit`                                  | `auditPages(pages, { origin, sitemap })`, `crawlSite({ origin, fetch, maxPages, sitemapPath })`; the `prelum-chart-audit` bin                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `search`                                 | `ftsLiteral`, `toMatchExpression`, `fuse`, `RRF_K` (D1's FTS5); `staticSearchIndex(pages)` at build and `staticSearch(index, query)` in the browser, `searchWords`, for a site with no database; `parseQuery(input, { operators })`, `hasFilters`, `parseSort`, `applySort`, `isPubliclyVisible`, `PUBLISHED_STATUS`, `normalizeZeroResultQuery` (a no-result search a site may keep)                                                                                                                                                                                       |
 | `site-map`                               | `siteMapSections(urls, sections)` (the HTML site map page from the sitemap list, by the site's sections, kinds of page counted), `sectionOf`, `lineText`                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `source`                                 | `chartBlock(fields)`, `chartBlocks(body)`, `csvColumns(csv)`, `CHART_KINDS` (`:::chart`); `figureMarkup(url, alt, { caption, figure })` (`:::figure`); `imagesWithoutAlt(source)`, `isAbsoluteHttps`: what an editor writes and checks in a draft                                                                                                                                                                                                                                                                                                                           |
@@ -156,7 +155,7 @@ redrawCharts(); // once the document is parsed; options go to Enarratio's enhanc
 ```
 
 A site with no bundle of its own bundles that file into one (`rolldown`, `esbuild`) and loads it with
-`<script type="module" src="/charts.js"></script>`. `enarratio` (0.4.1 or later) is the one dependency; about 80 kB minified.
+`<script type="module" src="/charts.js"></script>`. `enarratio` (0.7.3 or later) is the one dependency; about 80 kB minified.
 
 `prelum-chart-audit --origin https://example.com [--from <preview origin>] [--chart-kb 100] [--no-strict-frame] [--pages <file | a,b>] [--start <url>]` is the live
 check for charts (area 10 of the completeness scoreboard). It crawls with `crawlSite`, then opens every page (and the
@@ -460,7 +459,7 @@ that paints a color outside the site's palette (`auditDiagramSvg`). It writes ea
 its width and height, `loading="lazy"`, `decoding="async"` and `role="img"` (VoiceOver announces an SVG `<img>` by its alt only
 with it). A diagram not drawn yet is written unsized, with a warning, until the body is rendered again. A site gives one hex color per role in
 `DIAGRAM_ROLE_NAMES` for each theme, and prunes the files `drawDiagrams` reports as stale by its own rules. Those three
-packages are optional peers, needed only where drawings are made.
+packages are optional peers, needed only where drawings are made. `PUPPETEER_EXECUTABLE_PATH` points Puppeteer at an installed Chromium, and `MERMAID_PUPPETEER_CONFIG` is JSON launch options, for example `{"args":["--no-sandbox"]}` in a container that runs as root.
 
 ## What it does not hold
 

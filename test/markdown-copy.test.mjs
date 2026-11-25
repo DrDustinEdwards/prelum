@@ -26,6 +26,7 @@ const site = async (request) => {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "public, max-age=60",
         "X-Frame-Options": "DENY",
+        Vary: "Cookie",
       },
     });
   if (pathname === "/about")
@@ -81,7 +82,7 @@ test("/path.md and Accept: text/markdown answer the copy; a browser gets the HTM
   const md = await get("/old.md");
   assert.equal(md.headers.get("Content-Type"), "text/markdown; charset=utf-8");
   assert.equal(md.headers.get("Link"), `<${ORIGIN}/about>; rel="canonical"`);
-  assert.equal(md.headers.get("Vary"), null);
+  assert.equal(md.headers.get("Vary"), "Cookie");
   assert.equal(md.headers.get("X-Frame-Options"), "DENY");
   const text = await md.text();
   assert.match(
@@ -90,7 +91,7 @@ test("/path.md and Accept: text/markdown answer the copy; a browser gets the HTM
   );
 
   const negotiated = await get("/about", { Accept: "text/markdown, text/html;q=0.5" });
-  assert.equal(negotiated.headers.get("Vary"), "Accept");
+  assert.equal(negotiated.headers.get("Vary"), "Cookie, Accept");
   assert.equal(await negotiated.text(), text);
 
   const browser = await get("/about", { Accept: "text/html,*/*;q=0.8" });

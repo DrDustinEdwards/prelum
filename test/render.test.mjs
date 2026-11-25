@@ -697,6 +697,16 @@ test("an icon is the host's own, fetched once, and anything the step cannot vouc
   assert.equal(await lookupLinkIcon("b.example", net), null);
   assert.equal(await lookupLinkIcon("c.example", net), null);
   assert.equal(net.kept.get("b.example")?.type, "");
+  // A page's icon on another host is not requested, and a response without a sandbox policy is refused.
+  const other = fakeNetwork({
+    "https://e.example/": '<link rel="icon" href="https://cdn.example/i.png">',
+  });
+  assert.equal(await lookupLinkIcon("e.example", other), null);
+  assert.ok(!other.asked.some((url) => url.includes("cdn.example")));
+  await assert.rejects(
+    linkIconResponse("/link-icons/a.example.png", net.store, { headers: {} }),
+    TypeError,
+  );
   // Never a private address.
   assert.equal(await lookupLinkIcon("localhost", net), null);
   assert.equal(await lookupLinkIcon("10.0.0.1", net), null);

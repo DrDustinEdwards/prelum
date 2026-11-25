@@ -182,7 +182,7 @@ export function prefersMarkdown(accept) {
 export function markdownResponse(markdown, options = {}) {
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "text/markdown; charset=utf-8");
-  if (options.vary !== false) headers.set("Vary", "Accept");
+  if (options.vary !== false) headers.append("Vary", "Accept");
   const links = [
     ...(options.canonical ? [`<${options.canonical}>; rel="canonical"`] : []),
     ...(options.links ?? []),
@@ -246,7 +246,7 @@ export function serveMarkdownCopies(fetch, { origin, skip = () => false }) {
         void response.body?.cancel();
         const out = new Response(copy.body, copy);
         out.headers.set("Content-Type", "text/markdown; charset=utf-8");
-        out.headers.set("Vary", "Accept");
+        out.headers.append("Vary", "Accept");
         out.headers.set("Link", `<${base}${path}>; rel="canonical"`);
         return out;
       }

@@ -80,7 +80,6 @@ const BODY_HEADERS = [
   "etag",
   "last-modified",
   "link",
-  "vary",
   "set-cookie",
 ];
 

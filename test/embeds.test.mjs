@@ -67,6 +67,8 @@ test("each service's URL becomes its player, built only from the checked parts, 
   // A known origin on another path, or another origin, is not a player.
   assert.equal(embedPlayerUrl("https://www.google.com/search?q=x"), null);
   assert.equal(embedPlayerUrl("https://www.instagram.com.example.com/p/x/embed/"), null);
+  assert.equal(embedPlayerUrl("https://www.instagram.com/accounts/login/"), null);
+  assert.equal(embedPlayerUrl("https://embed.podcasts.apple.com/search?term=x"), null);
   assert.equal(embedPlayerUrl("javascript:alert(1)"), null);
   // A site lets the players in through site-runtime's list, so every player built here must be on it.
   assert.deepEqual(
