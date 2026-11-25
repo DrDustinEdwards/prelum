@@ -4,7 +4,7 @@ import { documentResponse, escapeXml, isoDay, toDate } from "./xml.mjs";
 
 /** Google's and Bing's limit for one sitemap file: 50,000 URLs and 50 MiB uncompressed (https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap). */
 export const SITEMAP_MAX_URLS = 50_000;
-export const SITEMAP_MAX_BYTES = 50 * 1024 * 1024;
+const SITEMAP_MAX_BYTES = 50 * 1024 * 1024;
 
 const CHANGEFREQS = ["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"];
 const MAX_IMAGES = 1000;

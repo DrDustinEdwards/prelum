@@ -16,10 +16,10 @@ import { readUpTo, shrinkPng } from "./render-png.mjs";
 export const LINK_ICON_PATH = "/link-icons";
 
 /** An icon over this is refused: a favicon.ico with 16 to 256 pixel images is about 30 KB. */
-export const LINK_ICON_MAX_BYTES = 64 * 1024;
+const LINK_ICON_MAX_BYTES = 64 * 1024;
 
 /** Each request gives up after this, so a slow host costs a publish at most a few seconds. */
-export const LINK_ICON_TIMEOUT_MS = 3000;
+const LINK_ICON_TIMEOUT_MS = 3000;
 
 /** The home page is read only this far looking for its `<link rel="icon">`, which is in the head. */
 const PAGE_MAX_BYTES = 256 * 1024;
@@ -148,7 +148,7 @@ async function fetchCapped(url, max, { fetch, timeoutMs }) {
 }
 
 /** The icon is shown at 16 CSS pixels; 32 covers a 2x screen, and a bigger one only costs bytes and decoding. */
-export const LINK_ICON_SIZE = /** @type {const} */ (32);
+const LINK_ICON_SIZE = /** @type {const} */ (32);
 
 /**
  * An icon no bigger than it is shown needs to be. A favicon.ico holds several sizes: the smallest that covers LINK_ICON_SIZE is

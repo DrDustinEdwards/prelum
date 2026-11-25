@@ -1,5 +1,4 @@
-// Code highlighting for render.mjs, dustinedwards-info's configuration: shiki/core with an explicit language list (the full bundle took
-// that site's Worker output to 14 MB), two high-contrast themes, Oniguruma, and a wasm loader the host injects. A site that wants other
+// Code highlighting for render.mjs: shiki/core with an explicit language list (the full bundle took a Worker's output to 14 MB), two high-contrast themes, Oniguruma, and a wasm loader the host injects. A site that wants other
 // languages passes its own `languages`; a site that wants none does not pass `highlight` at all.
 
 import rehypeShikiFromHighlighter from "@shikijs/rehype/core";
@@ -19,7 +18,7 @@ import typescript from "shiki/langs/typescript.mjs";
 import githubDarkHighContrast from "shiki/themes/github-dark-high-contrast.mjs";
 import githubLightHighContrast from "shiki/themes/github-light-high-contrast.mjs";
 
-export const GRAMMARS = {
+const GRAMMARS = {
   bash,
   css,
   html,

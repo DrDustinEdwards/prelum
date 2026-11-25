@@ -1,6 +1,5 @@
 /**
- * The XML and feed-text helpers that were written again in about eight repositories, once, in the form of the best of them
- * (dustinedwards-info's rss-feed.mjs). Pure, no dependencies, Web-standard only: it runs unchanged in a Worker and in Node.
+ * The XML and feed-text helpers. Pure, no dependencies, Web-standard only: it runs unchanged in a Worker and in Node.
  */
 
 // XML 1.0 section 2.2 forbids these even as character references: C0 controls other than tab, newline and carriage return,
@@ -75,7 +74,7 @@ export function cdata(content) {
 /**
  * An RFC 822 date, which RSS `<pubDate>` requires, from a Date, an epoch in milliseconds, or the two string forms the sites
  * store: ISO 8601 (`2026-06-21T09:30:00Z`) and SQLite's `2026-06-21 09:30:00`, read as UTC. A value that is not a date reads
- * as the epoch, as the feeds it replaced did, so an item is never undated by accident.
+ * as the epoch, so an item is never undated by accident.
  *
  * @param {Date | number | string | null | undefined} value
  * @returns {string}

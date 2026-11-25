@@ -2,7 +2,7 @@ import { ARTICLE_IMAGE_RATIOS } from "@dustinedwards/site-runtime/image";
 
 import { absoluteUrl, articleDates } from "./head.mjs";
 import { isoDuration } from "./text.mjs";
-import { toDate, unescapeXml } from "./xml.mjs";
+import { toDate } from "./xml.mjs";
 
 const CONTEXT = "https://schema.org";
 
@@ -71,7 +71,7 @@ export function website({ origin, name, description, searchUrl, publisher }) {
 }
 
 /** Google's least for an Article image, width times height (https://developers.google.com/search/docs/appearance/structured-data/article). */
-export const ARTICLE_IMAGE_MIN_PIXELS = 50_000;
+const ARTICLE_IMAGE_MIN_PIXELS = 50_000;
 
 /**
  * @typedef {object} ImageInput
@@ -131,8 +131,6 @@ export function imageObject(image) {
   const { creditText, creator, copyrightNotice, license } = image;
   return creditText || creator?.name || copyrightNotice || license ? pageImage(image) : null;
 }
-
-export { ARTICLE_IMAGE_RATIOS };
 
 /**
  * An Article's `image` set: one picture cut at each of Google's three ratios (site-runtime's ./image cuts them around the focal
@@ -333,7 +331,7 @@ export function sameAs(urls) {
  * @param {AddressInput | null | undefined} address
  * @returns {SchemaNode | undefined} undefined when there is nothing to say
  */
-export function postalAddress(address) {
+function postalAddress(address) {
   if (!address) return undefined;
   const fields = compact({
     streetAddress: address.streetAddress,
@@ -442,37 +440,6 @@ export function organization(organization) {
       : undefined,
     knowsAbout: organization.knowsAbout ? [...organization.knowsAbout] : undefined,
     sameAs: sameAs(organization.sameAs),
-  });
-}
-
-/**
- * @typedef {object} SoftwareApplicationInput
- * @property {string} name
- * @property {string} [id]
- * @property {string} [url]
- * @property {string} [description]
- * @property {string} [applicationCategory] a schema.org category, e.g. `BusinessApplication`
- * @property {string} [operatingSystem] e.g. `Web`
- * @property {SchemaNode} [publisher] usually `{ "@id": ... }` of the Organization
- * @property {SchemaNode | SchemaNode[]} [offers] only a price the page can honor; a product with no single price writes none
- */
-
-/**
- * A SoftwareApplication. `offers` is written only when given: a price a crawler reads is a promise.
- *
- * @param {SoftwareApplicationInput} app
- * @returns {SchemaNode}
- */
-export function softwareApplication(app) {
-  return thing("SoftwareApplication", {
-    "@id": app.id,
-    name: app.name,
-    applicationCategory: app.applicationCategory,
-    operatingSystem: app.operatingSystem,
-    url: app.url,
-    description: app.description,
-    publisher: app.publisher,
-    offers: app.offers,
   });
 }
 
@@ -605,98 +572,6 @@ export function dataset(data) {
     citation: data.citation ? [...data.citation] : undefined,
     distribution: data.distribution?.map((file) => ({ "@type": "DataDownload", ...file })),
     dateModified: articleDates({ modified: data.modified }).modified,
-  });
-}
-
-// abstract is still a ScholarlyArticle: hiding abstracts on a site is editorial, not a claim about them.
-/** @type {Record<string, string>} */
-const SCHOLARLY_TYPES = {
-  article: "ScholarlyArticle",
-  review: "ScholarlyArticle",
-  abstract: "ScholarlyArticle",
-  chapter: "Chapter",
-  "teaching-resource": "LearningResource",
-};
-
-/**
- * The schema.org type of a publication from its curated type (`article`, `review`, `abstract`, `chapter`,
- * `teaching-resource`), never from the journal's name. Anything else is a ScholarlyArticle, so a render does not fail on it.
- *
- * @param {string | null | undefined} type
- * @returns {string}
- */
-export function scholarlyType(type) {
-  return SCHOLARLY_TYPES[type ?? ""] ?? "ScholarlyArticle";
-}
-
-/**
- * @typedef {object} ScholarlyPaper
- * @property {string} title
- * @property {readonly string[]} authors
- * @property {number | null} [year]
- * @property {string | null} [publishedDate] a partial ISO date (`2011`, `2011-04`) is kept as deposited
- * @property {string | null} [journal]
- * @property {string | number | null} [volume]
- * @property {string | number | null} [issue]
- * @property {string | null} [firstPage]
- * @property {string | null} [lastPage]
- * @property {string | null} [abstract]
- * @property {string | null} [doi]
- * @property {string | null} [type]
- * @property {boolean} [isOpenAccess] the open-access answer (Unpaywall), not whether a PDF is hosted here
- * @property {string | null} [license]
- */
-
-/**
- * A scholarly article, chapter or learning resource as one node: its `@id` and `url` are its page, a DOI is its
- * `identifier` and `sameAs`, the journal is a Periodical with its volume and issue nested as schema.org's own examples do,
- * and a hosted PDF is its `encoding`. Character references in the record's text (stored escaped) are decoded, since JSON-LD
- * needs no escaping and `jsonLd` makes it safe in a script element.
- *
- * @param {ScholarlyPaper} paper
- * @param {object} context
- * @param {string} context.pageUrl absolute URL of the paper's page
- * @param {string | null} [context.pdfUrl] absolute URL of the PDF, when hosted on the site
- * @param {(name: string) => SchemaNode} [context.author] each author as a node; a Person by name unless given. A site passes
- *   its owner's `{ "@id": ... }` reference here, so a co-author list is never replaced by the owner alone
- * @param {ReadonlyArray<{ label: string }>} [context.topics] written as `about`
- * @returns {SchemaNode}
- */
-export function scholarlyArticle(paper, context) {
-  const text = (/** @type {string | null | undefined} */ value) => unescapeXml(value ?? "");
-  const title = text(paper.title);
-  const volume = paper.volume ? String(paper.volume) : undefined;
-  const issue = paper.issue ? String(paper.issue) : undefined;
-  const issueNode = issue ? { "@type": "PublicationIssue", issueNumber: issue } : undefined;
-  const volumeNode = volume
-    ? { "@type": "PublicationVolume", volumeNumber: volume, hasPart: issueNode }
-    : undefined;
-  return thing(scholarlyType(paper.type), {
-    "@id": context.pageUrl,
-    headline: title,
-    name: title,
-    author: paper.authors.map(
-      context.author ?? ((name) => ({ "@type": "Person", name: text(name) })),
-    ),
-    datePublished: paper.publishedDate ?? (paper.year ? String(paper.year) : undefined),
-    url: context.pageUrl,
-    mainEntityOfPage: context.pageUrl,
-    identifier: paper.doi
-      ? { "@type": "PropertyValue", propertyID: "DOI", value: paper.doi }
-      : undefined,
-    sameAs: paper.doi ? `https://doi.org/${paper.doi}` : undefined,
-    isPartOf: paper.journal
-      ? { "@type": "Periodical", name: text(paper.journal), hasPart: volumeNode }
-      : undefined,
-    pageStart: paper.firstPage,
-    pageEnd: paper.lastPage,
-    abstract: paper.abstract ? text(paper.abstract) : undefined,
-    isAccessibleForFree: Boolean(paper.isOpenAccess),
-    license: paper.license,
-    encoding: context.pdfUrl
-      ? { "@type": "MediaObject", encodingFormat: "application/pdf", contentUrl: context.pdfUrl }
-      : undefined,
-    about: context.topics?.map((topic) => ({ "@type": "Thing", name: topic.label })),
   });
 }
 

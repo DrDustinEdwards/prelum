@@ -1,5 +1,5 @@
 /** Silent reading speed for non-fiction in English, from Brysbaert's 2019 meta-analysis of 190 studies (238 words a minute). */
-export const WORDS_PER_MINUTE = 238;
+const WORDS_PER_MINUTE = 238;
 
 const segmenter = new Intl.Segmenter("en", { granularity: "word" });
 

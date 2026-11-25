@@ -331,7 +331,7 @@ export function isPubliclyVisible(post, nowMs = Date.now()) {
 }
 
 /** The longest search a site keeps when it found nothing. */
-export const ZERO_RESULT_MAX_LENGTH = 200;
+const ZERO_RESULT_MAX_LENGTH = 200;
 
 /**
  * A search that found nothing, as a site may keep it to learn what readers look for, or null when it must not be kept: shorter

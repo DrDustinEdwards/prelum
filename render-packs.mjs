@@ -1,4 +1,4 @@
-// The directives dustinedwards-info writes with, registered as a pack so another site opts into them rather than inheriting them:
+// The editorial directives, registered as a pack so a site opts into them rather than inheriting them:
 // :swatch, :pullquote, :::sidenote, :::chart and :::diagram. The core (render-nomath.mjs) knows nothing of these names. A site that needs a
 // directive of its own writes a pack of the same shape: { name, directives, setup }.
 
@@ -26,7 +26,7 @@ const SWATCH_HEX = /^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
  *
  * @param {string} file
  */
-export function remarkSwatch(file) {
+function remarkSwatch(file) {
   return (/** @type {import("mdast").Root} */ tree) => {
     visit(tree, (node) => {
       if (node.type !== "textDirective" || node.name !== "swatch") return;
@@ -100,7 +100,7 @@ const PULL_QUOTE_LIMIT = 2;
  *
  * @param {string} file
  */
-export function remarkSidenote(file) {
+function remarkSidenote(file) {
   return (/** @type {import("mdast").Root} */ tree) => {
     let noteIndex = 0;
     visit(tree, (node) => {
@@ -149,7 +149,7 @@ const PULL_QUOTE_MAX_CHARS = 160;
  *
  * @param {string} file
  */
-export function remarkPullQuote(file) {
+function remarkPullQuote(file) {
   return (/** @type {import("mdast").Root} */ tree) => {
     let raised = 0;
     visit(tree, (node, index, parent) => {
@@ -277,7 +277,7 @@ function chartSrcRefusal(src) {
  * @param {string} file
  * @param {((src: string, context: { file: string }) => string | Promise<string>) | undefined} chartData
  */
-export function remarkChartSource(file, chartData) {
+function remarkChartSource(file, chartData) {
   return async (/** @type {import("mdast").Root} */ tree) => {
     /** @type {any[]} */
     const cited = [];
@@ -353,7 +353,7 @@ const remarkDiagram = remarkModelDirective({
  */
 
 /**
- * dustinedwards-info's directives, in the order its renderer ran them, so the output is the same bytes.
+ * The editorial directives, in a fixed order so the output is the same bytes.
  *
  * @param {object} options
  * @param {string} options.assetPrefix the prefix of the site's diagram assets, for example "example-"
