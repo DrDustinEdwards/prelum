@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.68.0
+
+### Minor Changes
+
+- Remove the exports no site uses, and keep the constants and helpers that only their own module reads private.
+  Removed from `schema`: `softwareApplication`, `scholarlyArticle`, `scholarlyType`, `postalAddress`, `ARTICLE_IMAGE_MIN_PIXELS` and the `ARTICLE_IMAGE_RATIOS` re-export (import it from `@dustinedwards/site-runtime/image`). No longer exported: `ACCESSIBILITY_STANDARD`, `CONTENT_SIGNAL`, `DISALLOW_ALL`, `PLAIN_TEXT_CACHE_CONTROL`, `isPreviewRequest`, `robotsNotes`, `DIAGRAM_ROLES`, `mermaidConfig`, `LINK_ICON_SIZE`, `LINK_ICON_MAX_BYTES`, `LINK_ICON_TIMEOUT_MS`, `RENDER_VERSION_ATTRIBUTE`, `SHARE_CARD_SIZE`, `SITEMAP_MAX_BYTES`, `ZERO_RESULT_MAX_LENGTH`, `WORDS_PER_MINUTE`, `GRAMMARS`, `remarkSwatch`, `remarkSidenote`, `remarkPullQuote` and `remarkChartSource` (the editorial pack still uses them).
+- Rename `textOf` in the render helpers to `blockText`, so no other package exports the same name.
+- Rename three exports that shared a name with a different function in another package: `toDate` in `xml` is now `feedDate`, `likeContains` in `search` is now `likePattern`, and the audit's `textOf` is now `elementText`.
+
+### Patch Changes
+
+- A Markdown copy keeps the `Vary` its page sent, so a shared cache never serves one reader's copy to another. The click-to-load check for Instagram and Apple Podcasts embeds now matches each player's own path. The link-icon step fetches only the linked host's own icon, and `linkIconResponse` refuses headers without a Content-Security-Policy. KaTeX under `micromark-extension-math` is 0.18.2. The README install line, enarratio range and diagram environment variables match the code.
+- Split the audit module: the crawl and the page readers move to `audit-crawl.mjs` and `audit-read.mjs`. `crawlSite` and `auditPages` are still imported from `@drdustinedwards/site-helpers/audit`.
+- Move the media, embed and gallery blocks of the markdown pipeline into `render-media.mjs`. Output is unchanged.
+- Split prelum-chart-audit further: the browser setup and the per-page audit move to `bin/chart-audit-browser.mjs` and `bin/chart-audit-run.mjs`, and the specimen's output styles to `specimen/output.css`. No change to what is checked or built.
+- Split prelum-chart-audit: the functions it runs inside the audited page move to `bin/chart-audit-page.mjs` and `bin/chart-audit-read.mjs`. No change to what it checks.
+- Move the search-result width measure (`serpWidth`, `truncateForSerp`, `searchTitle`, `metaText`, `SERP_TITLE`, `SERP_DESCRIPTION`) into `serp.mjs`. `@drdustinedwards/site-helpers/head` still exports all of them.
+- Split two modules along their seams: `htmlToMarkdown` moves to `markdown-html.mjs` and the schema.org entity builders and node core to `schema-entities.mjs` and `schema-node.mjs`. `./markdown-copy` and `./schema` still export every name they did.
+- Split the markdown pipeline module: the input limits, table and code regions, image pass and the collecting passes move to `render-limits.mjs`, `render-regions.mjs`, `render-images.mjs` and `render-collect.mjs`. Exports and output are unchanged.
+- Split the specimen build: its page sections and its written assets move to `specimen/sections.mjs` and `specimen/assets.mjs`. The specimen output is unchanged.
+
 ## 0.67.2
 
 ### Patch Changes
