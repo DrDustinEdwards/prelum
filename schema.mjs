@@ -13,7 +13,7 @@ export {
 } from "./schema-entities.mjs";
 export { jsonLd, thing, graph } from "./schema-node.mjs";
 
-/** @typedef {import("./schema-node.mjs").SchemaNode} SchemaNode */
+/** @typedef {Record<string, unknown>} SchemaNode */
 
 /**
  * The site itself. There is no SearchAction unless `searchUrl` is given: one is a promise that the template is a working search.

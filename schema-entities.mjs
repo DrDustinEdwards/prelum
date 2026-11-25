@@ -4,7 +4,7 @@ import { articleDates } from "./head.mjs";
 import { isoDuration } from "./text.mjs";
 import { thing, compact } from "./schema-node.mjs";
 
-/** @typedef {import("./schema-node.mjs").SchemaNode} SchemaNode */
+/** @import { SchemaNode } from "./schema.mjs" */
 
 /**
  * @typedef {object} AddressInput
