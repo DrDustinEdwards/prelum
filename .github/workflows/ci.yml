@@ -46,6 +46,8 @@ jobs:
           fi
       - name: Typecheck the modules, their declarations and the tests
         run: npm run typecheck
+      - name: Declarations a project with a composite tsconfig can keep
+        run: npx devkit-declarations
       - name: Lint
         run: npm run lint
       # pr.yml installs nothing here (checks.yml, node: false), so the specimen's var() check runs in this job.
