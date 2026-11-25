@@ -1,4 +1,4 @@
-import { SERP_DESCRIPTION, SERP_TITLE, serpWidth } from "./head.mjs";
+import { SERP_DESCRIPTION, SERP_TITLE, serpWidth } from "./serp.mjs";
 import {
   chainFrom,
   header,
