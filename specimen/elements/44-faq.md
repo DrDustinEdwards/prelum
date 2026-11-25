@@ -1,6 +1,5 @@
 ---
 name: Questions and answers
-summary: Question and answer pairs, rendered as a list and returned for the page's FAQPage data.
 ---
 :::faq
 Q: Does the page load anything from YouTube before a click?

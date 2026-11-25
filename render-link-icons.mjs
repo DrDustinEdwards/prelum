@@ -54,7 +54,7 @@ const publicHost = (host) =>
   /^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(host) &&
   // Not an IP literal in any form (decimal, 0x7f.1): a real top-level domain has a letter, and IPv6 never matches the pattern above.
   /\.[a-z][a-z0-9-]*$/.test(host) &&
-  // Names that resolve to a private address (an IP in the name, a LAN suffix) are not public sites.
+  // Names that are never public sites (an IP in the name, a LAN suffix). A name is not resolved, so a public name pointed at a private address is for the runtime's network to refuse.
   !/(?:^|\.)(?:localhost|local|internal|home\.arpa|invalid|nip\.io|sslip\.io|localtest\.me|lan|corp|localdomain|intranet|private)$/.test(
     host,
   );
@@ -228,7 +228,9 @@ async function fetchLinkIcon(host, options) {
     const href = attribute("href");
     if (!href) continue;
     try {
-      return await image(new URL(href, page.url).href);
+      // The host's own icon only: the page does not get to pick the next address this step requests.
+      const icon = new URL(href, page.url);
+      return icon.hostname === host ? await image(icon.href) : null;
     } catch {
       return null;
     }
@@ -286,8 +288,10 @@ export function linkIconSrc(path, host, type) {
  * @returns {Promise<Response | null>}
  */
 export async function linkIconResponse(pathname, store, { headers, path = LINK_ICON_PATH }) {
-  if (!headers)
-    throw new TypeError("linkIconResponse needs headers: site-runtime's UPLOAD_HEADERS");
+  if (!Object.keys(headers ?? {}).some((name) => name.toLowerCase() === "content-security-policy"))
+    throw new TypeError(
+      "linkIconResponse needs headers with a Content-Security-Policy: site-runtime's UPLOAD_HEADERS",
+    );
   const prefix = `${path.replace(/\/$/, "")}/`;
   if (!pathname.startsWith(prefix)) return null;
   const match = /^([a-z0-9.-]+)\.([a-z]+)$/.exec(pathname.slice(prefix.length));

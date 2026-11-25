@@ -234,3 +234,19 @@ test("a static site's copies are written at build and served as files, with no p
   const browser = await files(new Request(`${ORIGIN}/`, { headers: { Accept: "text/html" } }));
   assert.match(browser.headers.get("Link") ?? "", /index\.md>; rel="alternate"/);
 });
+
+test("a copy keeps the Vary the page sent, so a cache never shares one reader's copy", async () => {
+  const varied = markdownCopies(
+    async (_request) =>
+      new Response(page("About", "<p>Hi.</p>"), {
+        headers: { "Content-Type": "text/html", Vary: "Cookie" },
+      }),
+    { origin: ORIGIN },
+  );
+  const md = await varied(new Request(`${ORIGIN}/about.md`));
+  assert.equal(md.headers.get("Vary"), "Cookie");
+  const negotiated = await varied(
+    new Request(`${ORIGIN}/about`, { headers: { Accept: "text/markdown" } }),
+  );
+  assert.equal(negotiated.headers.get("Vary"), "Cookie, Accept");
+});

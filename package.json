@@ -379,6 +379,9 @@
     "linkedom": {
       "htmlparser2": "$htmlparser2"
     },
+    "micromark-extension-math": {
+      "katex": "$katex"
+    },
     "rehype-katex": {
       "katex": "$katex"
     }

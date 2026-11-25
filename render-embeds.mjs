@@ -10,7 +10,7 @@
  * @property {RegExp} pattern the author's URL
  * @property {(match: RegExpExecArray, url: string) => string} player the iframe URL, built only from the pattern's checked parts
  * @property {string} origin the player's origin
- * @property {string} path the player's path prefix, checked again on a click
+ * @property {RegExp} path what the player's path looks like, checked again on a click
  */
 
 /** @param {string | undefined} value */
@@ -47,7 +47,7 @@ export const EMBED_PROVIDERS = [
       /^https:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?:[?&#].*)?$/,
     player: (m) => `https://www.youtube-nocookie.com/embed/${m[1]}?autoplay=1`,
     origin: "https://www.youtube-nocookie.com",
-    path: "/embed/",
+    path: /^\/embed\//,
   },
   {
     name: "tiktok",
@@ -57,7 +57,7 @@ export const EMBED_PROVIDERS = [
       /^https:\/\/(?:www\.)?tiktok\.com\/@[A-Za-z0-9_.]{1,24}\/video\/(\d{10,25})(?:[/?#].*)?$/,
     player: (m) => `https://www.tiktok.com/player/v1/${m[1]}?autoplay=1`,
     origin: "https://www.tiktok.com",
-    path: "/player/v1/",
+    path: /^\/player\/v1\//,
   },
   {
     name: "spotify",
@@ -67,7 +67,7 @@ export const EMBED_PROVIDERS = [
       /^https:\/\/open\.spotify\.com\/(track|album|playlist|episode|show)\/([A-Za-z0-9]{22})(?:[?#].*)?$/,
     player: (m) => `https://open.spotify.com/embed/${m[1]}/${m[2]}`,
     origin: "https://open.spotify.com",
-    path: "/embed/",
+    path: /^\/embed\//,
   },
   {
     name: "soundcloud",
@@ -76,7 +76,7 @@ export const EMBED_PROVIDERS = [
     pattern: /^https:\/\/soundcloud\.com\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\/?$/,
     player: (_m, url) => `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}`,
     origin: "https://w.soundcloud.com",
-    path: "/player/",
+    path: /^\/player\//,
   },
   {
     name: "apple-podcasts",
@@ -87,7 +87,7 @@ export const EMBED_PROVIDERS = [
     player: (m) =>
       `https://embed.podcasts.apple.com/${m[1]}/podcast/${m[2]}/id${m[3]}${m[4] ? `?i=${m[4]}` : ""}`,
     origin: "https://embed.podcasts.apple.com",
-    path: "/",
+    path: /^\/[a-z]{2}\/podcast\//,
   },
   {
     name: "amazon-music",
@@ -97,7 +97,7 @@ export const EMBED_PROVIDERS = [
     pattern: /^https:\/\/music\.amazon\.com\/embed\/([A-Z0-9]{10})\/?(?:\?[^#]*)?$/,
     player: (m, url) => amazonPlayer(m[1], url),
     origin: "https://music.amazon.com",
-    path: "/embed/",
+    path: /^\/embed\//,
   },
   {
     name: "google-maps",
@@ -107,7 +107,7 @@ export const EMBED_PROVIDERS = [
     pattern: /^https:\/\/www\.google\.com\/maps\/embed\?pb=([A-Za-z0-9!._%~-]{10,4000})$/,
     player: (m) => `https://www.google.com/maps/embed?pb=${m[1]}`,
     origin: "https://www.google.com",
-    path: "/maps/embed",
+    path: /^\/maps\/embed/,
   },
   {
     name: "x",
@@ -117,7 +117,7 @@ export const EMBED_PROVIDERS = [
       /^https:\/\/(?:www\.)?(?:x|twitter)\.com\/[A-Za-z0-9_]{1,15}\/status\/(\d{5,25})(?:[/?#].*)?$/,
     player: (m) => `https://platform.twitter.com/embed/Tweet.html?id=${m[1]}&dnt=true`,
     origin: "https://platform.twitter.com",
-    path: "/embed/",
+    path: /^\/embed\//,
   },
   {
     name: "bluesky",
@@ -127,7 +127,7 @@ export const EMBED_PROVIDERS = [
     pattern: /^https:\/\/bsky\.app\/profile\/(did:plc:[a-z2-7]{24})\/post\/([a-z2-7]{13})\/?$/,
     player: (m) => `https://embed.bsky.app/embed/${m[1]}/app.bsky.feed.post/${m[2]}`,
     origin: "https://embed.bsky.app",
-    path: "/embed/",
+    path: /^\/embed\//,
   },
   {
     name: "instagram",
@@ -136,7 +136,7 @@ export const EMBED_PROVIDERS = [
     pattern: /^https:\/\/(?:www\.)?instagram\.com\/(p|reel)\/([A-Za-z0-9_-]{5,40})\/?(?:\?.*)?$/,
     player: (m) => `https://www.instagram.com/${m[1]}/${m[2]}/embed/`,
     origin: "https://www.instagram.com",
-    path: "/",
+    path: /^\/(?:p|reel)\/[A-Za-z0-9_-]+\/embed\/$/,
   },
 ];
 
@@ -154,7 +154,7 @@ export const BLUESKY_HANDLE =
 export function embedPlayerUrl(src) {
   try {
     const url = new URL(src);
-    return EMBED_PROVIDERS.some((p) => url.origin === p.origin && url.pathname.startsWith(p.path))
+    return EMBED_PROVIDERS.some((p) => url.origin === p.origin && p.path.test(url.pathname))
       ? url.href
       : null;
   } catch {
