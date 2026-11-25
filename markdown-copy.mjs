@@ -55,6 +55,15 @@ export function llmsHeaderOf(text, origin) {
 }
 
 /**
+ * @typedef {object} MarkdownCopy
+ * @property {string} title the page's name: `og:title`, else `<title>`, else its first heading
+ * @property {string} description the meta description, or ""
+ * @property {string | undefined} canonical the canonical link, absolute
+ * @property {boolean} noindex the page asks search engines to leave it out
+ * @property {string} markdown the body of the page's `<main>` (or `<body>`) as Markdown, its headings from `##`
+ */
+
+/**
  * @typedef {(request: Request, env?: any, ctx?: any) => Promise<Response> | Response} FetchHandler
  * A Worker's fetch handler; `env` and `ctx` (its ExecutionContext) are passed through untouched, so a handler that reads
  * `ctx.exports` or `ctx.passThroughOnException` keeps its own types.

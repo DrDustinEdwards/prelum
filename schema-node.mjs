@@ -2,9 +2,7 @@
 
 const CONTEXT = "https://schema.org";
 
-/**
- * @typedef {Record<string, unknown>} SchemaNode
- */
+/** @import { SchemaNode } from "./schema.mjs" */
 
 /**
  * The descriptor React Router's `meta` serializes into a `<script type="application/ld+json">`; `headHtml` writes the same.
