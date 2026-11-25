@@ -162,13 +162,13 @@ test("a share image's type is the one served, never a resized URL's extension; X
   assert.equal(content("og:image:type"), "image/jpeg");
   assert.equal(content("og:image:alt"), alt);
   assert.ok((content("twitter:image:alt") ?? "").length <= 420);
-  // C3: a size URL is served as WebP or AVIF whatever its name says, so only the type the site passes is written.
+  // A size URL is served as WebP or AVIF whatever its name says, so only the type the site passes is written.
   assert.equal(head({ image: "/media/c.jpg?w=1200&r=40x21" })("og:image:type"), undefined);
   assert.equal(
     head({ image: { url: "/media/c.jpg?w=1200&r=40x21", type: "image/webp" } })("og:image:type"),
     "image/webp",
   );
-  // E4: each video the page plays.
+  // Each video the page plays.
   const video = head({
     videos: [
       { url: "/media/demo.mp4", width: 640, height: 360 },
@@ -203,7 +203,7 @@ test("a share image's type is the one served, never a resized URL's extension; X
       videoObject({ name: "Demo", thumbnailUrl: "", uploadDate: "2026-10-31", contentUrl: "x" }),
     /are required/,
   );
-  // C6: the three crops in Google's order, each with the picture's rights, and a crop that is not its ratio refused.
+  // The three crops in Google's order, each with the picture's rights, and a crop that is not its ratio refused.
   const set = articleImageSet(
     {
       "1x1": { url: "/s", width: 1200, height: 1200 },
@@ -320,6 +320,16 @@ test("the audit finds a broken link through a trailing slash, a redirect chain o
   );
   assert.equal(pages, 7);
   assert.equal(summary["title-duplicate"], 2);
+});
+
+test("a > inside a quoted attribute does not end the tag", () => {
+  const description = `Fish > chips${"x".repeat(300)}`;
+  const html = `<html lang="en"><head><title>T</title><meta name="description" content="${description}"></head><body></body></html>`;
+  const { findings } = auditPages([{ url: `${ORIGIN}/`, status: 200, html }], { origin: ORIGIN });
+  assert.match(
+    findings.find((f) => f.check === "description-long")?.detail ?? "",
+    /\(312 characters\)/,
+  );
 });
 
 test("a canonical must be on the production origin, and a sitemap page's canonical must be itself, trailing slash included", () => {
@@ -462,24 +472,6 @@ test("a request on any other origin is a preview: robots.txt disallows everythin
   assert.equal(llms.headers.get("x-robots-tag"), "noindex");
 });
 
-test("the canonical drops a trailing slash but keeps the home page's and an opted-out route's", () => {
-  const head = defineHead({
-    origin: ORIGIN,
-    siteName: "Sample",
-    image: "/card.png",
-    suffix: " | Sample",
-  });
-  const canonical = (/** @type {Record<string, unknown>} */ page) => {
-    const tag = head({ title: "T", description: "D", path: "/", ...page }).find(
-      (tag) => "rel" in tag && tag.rel === "canonical",
-    );
-    return tag && "href" in tag ? tag.href : undefined;
-  };
-  assert.equal(canonical({ path: "/about/" }), `${ORIGIN}/about`);
-  assert.equal(canonical({ path: "/" }), `${ORIGIN}/`);
-  assert.equal(canonical({ path: "/feed/news/", keepTrailingSlash: true }), `${ORIGIN}/feed/news/`);
-});
-
 test("metaText decodes entities only after the tags are gone, so escaped markup stays text", () => {
   assert.equal(
     metaText("<p>Tom &amp; Jerry&#39;s <b>&lt;script&gt;</b>&nbsp;tale</p><script>x()</script>"),
@@ -488,7 +480,7 @@ test("metaText decodes entities only after the tags are gone, so escaped markup 
   assert.equal(metaText("A &bogus; entity"), "A &bogus; entity");
 });
 
-test("defineHead joins each indexable page to the site with a WebPage and the trail through its named sections", () => {
+test("defineHead joins each indexable page to the site with a WebPage and the trail through its named sections, and keeps a canonical slash only for the home page and an opted-out route", () => {
   const head = defineHead({
     origin: ORIGIN,
     siteName: "Sample",
@@ -543,6 +535,15 @@ test("defineHead joins each indexable page to the site with a WebPage and the tr
   assert.ok(
     named.includes('"name":"A post","description"') && !named.includes('"name":"A post · Sample"'),
   );
+  const canonical = (/** @type {Record<string, unknown>} */ page) => {
+    const tag = full({ title: "T", description: "D", path: "/", ...page }).find(
+      (tag) => "rel" in tag && tag.rel === "canonical",
+    );
+    return tag && "href" in tag ? tag.href : undefined;
+  };
+  assert.equal(canonical({ path: "/about/" }), `${ORIGIN}/about`);
+  assert.equal(canonical({ path: "/" }), `${ORIGIN}/`);
+  assert.equal(canonical({ path: "/feed/news/", keepTrailingSlash: true }), `${ORIGIN}/feed/news/`);
   const slashed = JSON.stringify(
     full({ title: "A post", description: "D", path: "/blog/a-post/", keepTrailingSlash: true }),
   );
@@ -596,7 +597,12 @@ test("auditIcons passes the files prelum-icons writes and names a favicon that i
   );
 });
 
-test("htmlToText drops Prelum's heading anchors, a described list item keeps its text, and a duration is ISO 8601", () => {
+test("htmlToText drops Prelum's heading anchors and spaces block tags but not inline ones, a described list item keeps its text, and a duration is ISO 8601", () => {
+  assert.equal(
+    htmlToText("<p>Hello <b>world</b>.</p><p>Next<br>line</p>"),
+    "Hello world. Next line",
+  );
+  assert.equal(isoDuration(0.4), undefined);
   assert.equal(
     htmlToText(
       '<h2 id="a">Setup<a class="heading-anchor" href="#a">#</a></h2><p>Tom &amp; Jerry</p>',

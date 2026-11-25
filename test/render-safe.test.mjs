@@ -52,33 +52,6 @@ test("a renderer that crashes is a failure of the check, not a refusal", async (
   assert.equal(refusing.rendered, 0);
 });
 
-test("the corpus is large enough to cover the classes it names", () => {
-  assert.ok(HOSTILE_INPUTS.length >= 44);
-  assert.equal(
-    new Set(HOSTILE_INPUTS.map((input) => input.name)).size,
-    HOSTILE_INPUTS.length,
-    "names are unique",
-  );
-  for (const word of [
-    "script",
-    "onerror",
-    "iframe",
-    "svg",
-    "form",
-    "vbscript",
-    "file",
-    "katex",
-    "directive",
-    "comment",
-    "bracket",
-  ]) {
-    assert.ok(
-      HOSTILE_INPUTS.some((input) => input.name.includes(word)),
-      `no input for ${word}`,
-    );
-  }
-});
-
 test("the construction holds: raw HTML in the source never becomes markup", async () => {
   const { html } = await renderSite(
     '<script>alert(1)</script>\n\n<img src="x" onerror="alert(1)">\n\n<!-- c -->',

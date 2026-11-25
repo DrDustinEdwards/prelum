@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { SLUG_PATTERN, slugify, uniqueSlug } from "../slug.mjs";
+import { SLUG_PATTERN, isSlug, slugify, uniqueSlug } from "../slug.mjs";
 
 test("accents fold and ß ø æ œ đ ł transliterate, other runs are one hyphen, and a cut ends on a whole word with no trailing hyphen", () => {
   assert.equal(slugify("  Café — Naïve: Ünïcode!  "), "cafe-naive-unicode");
@@ -27,4 +27,12 @@ test("uniqueSlug counts past taken slugs, stays within max, and falls back to a 
     assert.match(slug, /-[a-z0-9]{6}$/);
     assert.match(slug, SLUG_PATTERN);
   }
+});
+
+test("isSlug holds what slugify makes and refuses the rest", () => {
+  for (const text of ["Café au lait", "Straße Ørsted", "  2026: Spring update!  "])
+    assert.equal(isSlug(slugify(text)), true);
+  for (const bad of ["", "-lead", "trail-", "two--hyphens", "Upper", "under_score", 7, null])
+    assert.equal(isSlug(bad), false);
+  assert.equal(isSlug("field-notes", { max: 5 }), false);
 });

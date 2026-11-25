@@ -8,11 +8,13 @@ import {
   absolutizeUrls,
   atomEntry,
   cdata,
+  escapeXml,
   isoDay,
   mathToTex,
   rfc822,
   rssItem,
   sitemapDocument,
+  unescapeXml,
 } from "../index.mjs";
 
 /** Runs `body` with the process in another time zone, so a date read as local time shows up as wrong. */
@@ -42,16 +44,6 @@ test("xml: CDATA wraps empty text, and every ]]> in long text, so the text reads
   assert.equal(wrapped.replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, ""), "");
 });
 
-test("xml: dates from a Date, an epoch and both stored string forms are the same instant", () => {
-  const expected = "Sun, 21 Jun 2026 09:30:00 GMT";
-  assert.equal(rfc822(new Date("2026-06-21T09:30:00Z")), expected);
-  assert.equal(rfc822(Date.UTC(2026, 5, 21, 9, 30)), expected);
-  assert.equal(rfc822("2026-06-21T09:30:00Z"), expected);
-  assert.equal(rfc822("2026-06-21 09:30:00"), expected);
-  assert.equal(isoDay(Date.UTC(2026, 5, 21, 23, 59)), "2026-06-21");
-  assert.equal(isoDay(new Date("2026-06-21T23:59:00Z")), "2026-06-21");
-});
-
 test("xml: a stored date, and the feeds and datetime sitemap that use it, read as UTC whatever zone the machine is in", () => {
   const post = {
     slug: "a",
@@ -64,6 +56,7 @@ test("xml: a stored date, and the feeds and datetime sitemap that use it, read a
   };
   inZone("America/Chicago", () => {
     assert.equal(rfc822("2026-06-21 09:30:00"), "Sun, 21 Jun 2026 09:30:00 GMT");
+    assert.equal(rfc822("2026-06-21T09:30:00"), "Sun, 21 Jun 2026 09:30:00 GMT");
     assert.match(
       rssItem(post, "https://x.test"),
       /<pubDate>Sun, 21 Jun 2026 09:30:00 GMT<\/pubDate>/,
@@ -84,15 +77,21 @@ test("xml: a stored date, and the feeds and datetime sitemap that use it, read a
   });
 });
 
-test("xml: a missing or invalid date is the epoch in a feed and nothing in a sitemap", () => {
+test("xml: a Date, an epoch and both stored string forms are the same instant, and a missing or invalid date is the epoch in a feed and nothing in a sitemap", () => {
+  const expected = "Sun, 21 Jun 2026 09:30:00 GMT";
+  assert.equal(rfc822(new Date("2026-06-21T09:30:00Z")), expected);
+  assert.equal(rfc822(Date.UTC(2026, 5, 21, 9, 30)), expected);
+  assert.equal(rfc822("2026-06-21T09:30:00Z"), expected);
+  assert.equal(rfc822("2026-06-21 09:30:00"), expected);
+  assert.equal(rfc822("2026-06-21 09:30:00+02:00"), "Sun, 21 Jun 2026 07:30:00 GMT");
+  assert.equal(isoDay(Date.UTC(2026, 5, 21, 23, 59)), "2026-06-21");
+  assert.equal(isoDay(new Date("2026-06-21T23:59:00Z")), "2026-06-21");
+  assert.equal(isoDay("2026-06-21 00:30:00+02:00"), "2026-06-20");
   const epoch = "Thu, 01 Jan 1970 00:00:00 GMT";
-  assert.equal(rfc822(null), epoch);
-  assert.equal(rfc822(undefined), epoch);
-  assert.equal(rfc822(""), epoch);
-  assert.equal(rfc822(new Date("nope")), epoch);
-  assert.equal(isoDay(undefined), null);
-  assert.equal(isoDay(""), null);
-  assert.equal(isoDay(new Date("nope")), null);
+  for (const none of [null, undefined, "", new Date("nope")]) {
+    assert.equal(rfc822(none), epoch);
+    assert.equal(isoDay(none), null);
+  }
 });
 
 test("xml: absolute, protocol-relative and document-relative URLs are left alone, in links and in a srcset", () => {
@@ -104,18 +103,33 @@ test("xml: absolute, protocol-relative and document-relative URLs are left alone
   const html = `<a href="https://y.test/a">a</a><a href="b/c">b</a><img src="http://y.test/i.png">`;
   assert.equal(absolutizeUrls(html, "https://x.test"), html);
   assert.equal(absolutizeUrls("", "https://x.test"), "");
+  // Single-quoted attributes are read, and escaped code samples are not.
+  assert.equal(
+    absolutizeUrls(
+      `<a href='/x'>&lt;a href="/y"&gt;</a><img src="/i.png" srcset='/i.png 1x, /j.png 2x'>`,
+      "https://e.test",
+    ),
+    `<a href='https://e.test/x'>&lt;a href="/y"&gt;</a><img src="https://e.test/i.png" srcset='https://e.test/i.png 1x, https://e.test/j.png 2x'>`,
+  );
 });
 
-test("xml: inline math before display math is converted too, each with its own delimiter", () => {
-  const html = ` ${katex("a")} then ${katex("b", true)} then ${katex("c")}`;
-  assert.equal(mathToTex(html), " $a$ then $$b$$ then $c$");
+test("xml: characters XML 1.0 forbids are dropped, and numeric references decode only when XML allows them", () => {
+  assert.equal(escapeXml("a\u0000b\u0008c\u000bd\u001fe\uffff\ufffe"), "abcde");
+  assert.equal(cdata("a\u000cb"), "<![CDATA[ab]]>");
+  assert.equal(escapeXml("a\tb\nc😀"), "a\tb\nc😀");
+  assert.equal(unescapeXml("a&amp;lt;&quot;&apos;&gt;"), `a&lt;"'>`);
+  assert.equal(
+    unescapeXml("&#38;&#x26;&#x1F600;&#0;&#xD800;&#x110000;&#38"),
+    "&&\u{1F600}&#0;&#xD800;&#x110000;&#38",
+  );
 });
 
-test("xml: the TeX is trimmed and keeps its own escaping", () => {
+test("xml: KaTeX becomes its TeX with its own delimiter, trimmed and escaped as written, and anything it cannot read is left as it was", () => {
+  assert.equal(
+    mathToTex(` ${katex("a")} then ${katex("b", true)} then ${katex("c")}`),
+    " $a$ then $$b$$ then $c$",
+  );
   assert.equal(mathToTex(katex("  a &lt; b\n")), "$a &lt; b$");
-});
-
-test("xml: KaTeX with no annotation, an empty one or no closing tag is left as it was", () => {
   const noAnnotation = `<p>${`<span class="katex"><span class="katex-html">x</span></span>`}</p>`;
   assert.equal(mathToTex(noAnnotation), noAnnotation);
   const empty = `<p>${katex("")}</p>`;
@@ -124,6 +138,5 @@ test("xml: KaTeX with no annotation, an empty one or no closing tag is left as i
   assert.equal(mathToTex(unclosed), unclosed);
   const unclosedAtEnd = `ab<span class="katex"><span><annotation encoding="application/x-tex">x</annotation></span>`;
   assert.equal(mathToTex(unclosedAtEnd), unclosedAtEnd);
-  const followed = `${noAnnotation}${katex("y")}`;
-  assert.equal(mathToTex(followed), `${noAnnotation}$y$`);
+  assert.equal(mathToTex(`${noAnnotation}${katex("y")}`), `${noAnnotation}$y$`);
 });

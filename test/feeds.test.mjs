@@ -91,7 +91,7 @@ const atomFeed = (/** @type {ReturnType<typeof post>[]} */ posts) => ({
   posts,
 });
 
-test("feeds: an RSS item has the elements a reader lists it by", () => {
+test("feeds: an RSS item and channel have the elements a reader lists them by", () => {
   const xml = rssDocument(rssFeed([post({ tags: ["a", "b"] })]));
   assertWellFormed(xml);
   const item = one(xml, "item");
@@ -103,6 +103,17 @@ test("feeds: an RSS item has the elements a reader lists it by", () => {
   assert.equal(one(item, "content:encoded"), "<![CDATA[<p>Body</p>]]>");
   assert.equal(one(item, "pubDate"), "Sun, 21 Jun 2026 09:30:00 GMT");
   assert.deepEqual(all(item, "category"), ["a", "b"]);
+
+  const empty = rssDocument(rssFeed([]));
+  assertWellFormed(empty);
+  assert.match(empty, /^<\?xml version="1.0" encoding="UTF-8"\?>/);
+  assert.match(empty, /<rss version="2.0"/);
+  const channel = one(empty, "channel");
+  assert.equal(all(channel, "title")[0], "Site");
+  assert.equal(all(channel, "link")[0], `${ORIGIN}/`);
+  assert.equal(all(channel, "description")[0], "About");
+  assert.deepEqual(attr(channel, /<atom:link [^>]*\/>/g, "href"), [`${ORIGIN}/feed.xml`]);
+  assert.deepEqual(all(channel, "item"), []);
 });
 
 test("feeds: a stored guid is kept over the link, so a renamed post is not announced again", () => {
@@ -125,20 +136,7 @@ test("feeds: an unreadable date is refused with the post and the value, never wr
   assert.throws(() => feedItem(jsonPost({ publishAt: "next Tuesday" }), ORIGIN), bad);
 });
 
-test("feeds: an RSS channel names itself and its own URL", () => {
-  const xml = rssDocument(rssFeed([]));
-  assertWellFormed(xml);
-  assert.match(xml, /^<\?xml version="1.0" encoding="UTF-8"\?>/);
-  assert.match(xml, /<rss version="2.0"/);
-  const channel = one(xml, "channel");
-  assert.equal(all(channel, "title")[0], "Site");
-  assert.equal(all(channel, "link")[0], `${ORIGIN}/`);
-  assert.equal(all(channel, "description")[0], "About");
-  assert.deepEqual(attr(channel, /<atom:link [^>]*\/>/g, "href"), [`${ORIGIN}/feed.xml`]);
-  assert.deepEqual(all(channel, "item"), []);
-});
-
-test("feeds: an Atom entry has the elements a validator requires", () => {
+test("feeds: an Atom entry and feed have the elements a validator requires", () => {
   const xml = atomDocument(
     atomFeed([post({ tags: ["a", "b"], updatedAt: "2026-07-01T00:00:00Z" })]),
   );
@@ -152,13 +150,13 @@ test("feeds: an Atom entry has the elements a validator requires", () => {
   assert.equal(one(entry, "summary"), "Summary");
   assert.equal(one(entry, "content"), "<![CDATA[<p>Body</p>]]>");
   assert.deepEqual(attr(entry, /<category [^>]*\/>/g, "term"), ["a", "b"]);
-});
+  // Without an updatedAt, an entry's updated is its published date.
+  assert.equal(one(atomEntry(post(), ORIGIN), "updated"), "2026-06-21T09:30:00.000Z");
 
-test("feeds: an Atom feed names itself, its author and its own URL", () => {
-  const xml = atomDocument(atomFeed([post()]));
-  assertWellFormed(xml);
-  assert.match(xml, /<feed xmlns="http:\/\/www\.w3\.org\/2005\/Atom">/);
-  const head = xml.slice(0, xml.indexOf("<entry>"));
+  const feedXml = atomDocument(atomFeed([post()]));
+  assertWellFormed(feedXml);
+  assert.match(feedXml, /<feed xmlns="http:\/\/www\.w3\.org\/2005\/Atom">/);
+  const head = feedXml.slice(0, feedXml.indexOf("<entry>"));
   assert.equal(one(head, "title"), "Site");
   assert.equal(one(head, "subtitle"), "About");
   assert.equal(one(head, "id"), `${ORIGIN}/`);
@@ -179,10 +177,6 @@ test("feeds: a post with no body, summary, date or tags omits those elements rat
     assert.doesNotMatch(entry, new RegExp(`<${name}[ >]`));
   // An Atom entry with no `updated` is invalid, so an undated one gets the epoch.
   assert.equal(one(entry, "updated"), "1970-01-01T00:00:00.000Z");
-});
-
-test("feeds: an Atom entry's updated falls back to its published date", () => {
-  assert.equal(one(atomEntry(post(), ORIGIN), "updated"), "2026-06-21T09:30:00.000Z");
 });
 
 test("feeds: the Atom feed's updated is its newest post's latest date, and the epoch when it has none", () => {

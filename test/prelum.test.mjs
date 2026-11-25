@@ -23,6 +23,7 @@ import {
   splitSource,
   llmsDocument,
   llmsFullDocument,
+  llmsLink,
   markdownPage,
   markdownPath,
   prefersMarkdown,
@@ -70,22 +71,25 @@ test("sitemap: an expanded document with datetimes, changefreq and priority is r
   );
 });
 
-test("sitemap: a URL listed twice is written once, and compact layout refuses the fields it cannot write", () => {
+test("sitemap: a URL listed twice is written once, an ampersand is escaped, compact layout refuses the fields it cannot write, and the expanded fields are validated", () => {
   const xml = sitemapDocument([
-    { loc: "https://x.test/a" },
-    { loc: "https://x.test/a", lastmod: "2026-01-01" },
+    { loc: "https://x.test/a?b=1&c=2" },
+    { loc: "https://x.test/a?b=1&c=2", lastmod: "2026-01-01" },
   ]);
   assert.equal(xml.match(/<url>/g)?.length, 1);
   assert.doesNotMatch(xml, /lastmod/);
+  assert.match(xml, /<loc>https:\/\/x\.test\/a\?b=1&amp;c=2<\/loc>/);
+  const loc = "https://e.test/a";
   assert.throws(
-    () => sitemapDocument([{ loc: "https://x.test/a", priority: 1 }]),
+    () => sitemapDocument([{ loc, priority: 1 }]),
     /only the expanded layout writes/,
   );
-});
-
-test("sitemap: a loc with an ampersand does not end the document", () => {
-  const xml = sitemapDocument([{ loc: "https://x.test/a?b=1&c=2" }]);
-  assert.match(xml, /<loc>https:\/\/x\.test\/a\?b=1&amp;c=2<\/loc>/);
+  const expanded = (/** @type {object} */ fields) =>
+    sitemapDocument([{ loc, ...fields }], { layout: "expanded" });
+  assert.throws(() => expanded({ priority: 1.5 }), /priority/);
+  assert.throws(() => expanded({ priority: 0.25 }), /steps of 0.1/);
+  assert.match(expanded({ priority: 0.3 }), /<priority>0.3</);
+  assert.throws(() => expanded({ changefreq: "sometimes" }), /changefreq/);
 });
 
 test("sitemap: images are listed under their page, and the image namespace is declared only when one is", () => {
@@ -119,6 +123,11 @@ test("sitemap: images are listed under their page, and the image namespace is de
   assert.doesNotMatch(
     sitemapDocument([{ loc: "https://x.test/a", images: [] }]),
     /xmlns:image|image:image/,
+  );
+  const many = Array.from({ length: 1001 }, (_, i) => `https://x.test/${i}.png`);
+  assert.equal(
+    sitemapDocument([{ loc: "https://x.test/a", images: many }]).match(/<image:image>/g)?.length,
+    1000,
   );
 });
 
@@ -168,7 +177,7 @@ test("llms: a file with prose sections is reproduced byte for byte from its part
   );
 });
 
-test("llms: a link title's brackets are escaped and an empty section is dropped", () => {
+test("llms: a link title's brackets are escaped, an empty section is dropped, newlines flatten and spaces and parentheses encode", () => {
   const text = llmsDocument({
     title: "T",
     summary: "S",
@@ -179,6 +188,12 @@ test("llms: a link title's brackets are escaped and an empty section is dropped"
   });
   assert.match(text, /- \[\\\[draft\\\] note\]\(https:\/\/x\.test\/n\)/);
   assert.doesNotMatch(text, /## Empty/);
+  assert.equal(llmsDocument({ title: "A\nB", summary: "C\nD", sections: [] }), "# A B\n\n> C D\n");
+  assert.equal(llmsDocument({ title: "Site", summary: "", intro: ["Intro"], sections: [] }), "# Site\n\nIntro\n");
+  assert.equal(
+    llmsLink({ title: "t", url: "https://e.test/a b_(c)" }),
+    "- [t](https://e.test/a%20b_%28c%29)",
+  );
 });
 
 test("llms-full: the llms.txt header, then each page as its Markdown copy, so the two files and the .md cannot disagree", () => {
@@ -221,7 +236,7 @@ test("markdown: only an Accept header that ranks Markdown above HTML and every w
     assert.equal(prefersMarkdown(accept), wanted, accept);
 });
 
-test("frontmatter: values, quoted values, inline and block lists, and the body after it", () => {
+test("frontmatter: values, quoted values, inline and block lists, a BOM, trailing comments, and the body after it", () => {
   const { data, body } = frontmatter(
     "---\r\nname: \"Button\"\r\nparts: [a, 'b']\r\nstates:\r\n  - hover\r\n  - focus\r\nadded:\r\n---\r\n# Body\r\n",
   );
@@ -233,6 +248,12 @@ test("frontmatter: values, quoted values, inline and block lists, and the body a
   });
   assert.equal(body, "# Body\n");
   assert.deepEqual(frontmatter("# No header"), { data: {}, body: "# No header" });
+  assert.deepEqual(frontmatter("---\n---\nbody"), { data: {}, body: "body" });
+  assert.deepEqual(frontmatter("\uFEFF---\ntitle: x\n---\nbody").data, { title: "x" });
+  assert.deepEqual(
+    frontmatter(`---\ntags: ["a, b", c]\ndraft: true # wip\nt: "a # b" # c\n---\n`).data,
+    { tags: ["a, b", "c"], draft: "true", t: "a # b" },
+  );
 });
 
 test("frontmatter blocks: a write changes only the block it names, and every other byte comes back as it was", () => {
@@ -282,21 +303,18 @@ test("frontmatter blocks: a write changes only the block it names, and every oth
   assert.equal(setRawKey(crlf, "title", '"Hi"'), 'title: "Hi"\r\ntags: [old]');
 });
 
-test("search: a quote inside a term is doubled, so the term cannot leave its quotes", () => {
+test("search: terms are quoted literals, a quote is doubled, only the last takes the prefix star, and nothing to match is null", () => {
   assert.equal(ftsLiteral(`say "hi"`), `"say ""hi"""`);
   assert.equal(toMatchExpression({ terms: [`a"b`] }), `"a""b"`);
-});
-
-test("search: operators and hyphens stay literal text", () => {
   assert.equal(
     toMatchExpression({ terms: ["NEAR", "e-mail"], phrases: ["exact words"] }),
     `"exact words" AND "NEAR" AND "e-mail"`,
   );
-});
-
-test("search: only the last term takes the prefix star, and nothing to match is null", () => {
   assert.equal(toMatchExpression({ terms: ["a", "cloudf"] }, true), `"a" AND "cloudf"*`);
   assert.equal(toMatchExpression({ terms: [] }), null);
+  // A punctuation-only term is dropped and NUL is stripped.
+  assert.equal(toMatchExpression({ terms: ["...", "a\u0000b"] }), '"ab"');
+  assert.equal(toMatchExpression({ terms: ["--"] }), null);
 });
 
 test("search: fusion uses k = 60, or the k passed, and adds a document's contributions from every list", () => {
