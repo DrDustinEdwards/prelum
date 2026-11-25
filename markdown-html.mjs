@@ -9,14 +9,7 @@ import { fromHtml } from "./render-hast.mjs";
 
 /** @typedef {import("hast").Root | import("hast").Element} Parent */
 
-/**
- * @typedef {object} MarkdownCopy
- * @property {string} title the page's name: `og:title`, else `<title>`, else its first heading
- * @property {string} description the meta description, or ""
- * @property {string | undefined} canonical the canonical link, absolute
- * @property {boolean} noindex the page asks search engines to leave it out
- * @property {string} markdown the body of the page's `<main>` (or `<body>`) as Markdown, its headings from `##`
- */
+/** @import { MarkdownCopy } from "./markdown-copy.mjs" */
 
 /** Elements that carry no reading text: scripts, styles, controls, the site's own navigation, players and drawings. */
 const DROPPED = new Set([
