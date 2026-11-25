@@ -1,6 +1,4 @@
-// The Markdown copies every site serves through one wrapper. A mistake here ships silently on every site at once: a copy
-// that carries the site's menu or a script's text, or relative links an agent cannot follow; a browser handed Markdown; a
-// site's own copy or llms-full.txt overwritten; or an llms-full.txt that lists a noindex page.
+// The Markdown copies every site serves through one wrapper: a mistake here ships silently on every site at once.
 
 import assert from "node:assert/strict";
 import test from "node:test";

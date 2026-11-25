@@ -147,9 +147,8 @@ function sizeRoot(svg, label) {
 /**
  * Draws what is missing (or everything, with `force`), audits each drawing before writing it, and deletes nothing: it
  * returns the files no diagram names, for the caller to prune by its own rules. The browser is only launched when there
- * is something to draw, so a build with every asset current needs no Chromium. PUPPETEER_EXECUTABLE_PATH points
- * Puppeteer at an installed Chromium; MERMAID_PUPPETEER_CONFIG is JSON launch options, for example
- * {"args":["--no-sandbox"]} in a container that runs as root.
+ * is something to draw. PUPPETEER_EXECUTABLE_PATH points Puppeteer at an installed Chromium; MERMAID_PUPPETEER_CONFIG is JSON
+ * launch options, for example {"args":["--no-sandbox"]} in a container that runs as root.
  *
  * @param {{
  *   diagrams: Array<{ key: string, source: string, label?: string }>,

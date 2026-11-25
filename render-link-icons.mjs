@@ -3,8 +3,7 @@
 // files as it likes; rehypeLinks (render-links.mjs) asks it for each away host and writes `<img class="cap-link-icon">` from the
 // answer, and `linkIconResponse` is the one route that serves the stored bytes.
 //
-// Here and not in site-runtime: the fetch is a step of rendering a body, which site-runtime never does, and Prelum already ships the
-// responses for what it publishes (robotsResponse, markdownResponse, keyFileResponse). Web-standard only, so it runs in a Worker.
+// Web-standard only, so it runs in a Worker.
 //
 // What it trusts of another site: nothing. Only https, only a public host name (no IP literal, no localhost or .local), a byte cap
 // and a time cap on every request, the type read from the bytes rather than the header, and an SVG refused when it holds anything

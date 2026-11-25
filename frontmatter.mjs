@@ -4,9 +4,8 @@
  * value is one line of text (quotes taken off, a double-quoted value read as JSON), a flow list `[a, b]` or `- item` lines.
  * A write replaces only the block it names, so every other block, comment and unknown key comes back byte for byte.
  *
- * One reader for every site and package: `frontmatter` for a file read whole (Capsomer's doc pages, the specimen), the
- * block reader and writer for an editor that changes one field (site-api's post fields, Carrel's field boxes). This module is
- * the only owner of these mechanics; site-api keeps just the Carrel field names (search fields, post fields, tags) built on them.
+ * `frontmatter` reads a file whole; the block reader and writer serve an editor that changes one field (site-api's post fields,
+ * Carrel's field boxes), which keep only their own field names on top.
  */
 
 // A leading byte order mark belongs to the opening fence, so `open + front + close + body` is still the source. The first form is

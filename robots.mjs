@@ -202,7 +202,7 @@ function robotsNotes(origin) {
 }
 
 /**
- * /robots.txt as a whole response, the route every site wrote: `robotsDocument` with `robotsNotes(origin)` as the notes unless
+ * /robots.txt as a whole response: `robotsDocument` with `robotsNotes(origin)` as the notes unless
  * the site passes its own, `Disallow: /` for every crawler when the request is a preview, and `plainTextResponse`'s headers.
  *
  * @param {Omit<RobotsInput, "preview"> & PlainTextOptions} input

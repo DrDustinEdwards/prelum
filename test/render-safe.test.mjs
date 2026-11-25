@@ -1,5 +1,5 @@
-// The safe-HTML guarantee of the markdown pipeline: the hostile corpus renders to nothing a browser could run, the scan that says so is
-// itself seen to catch each class of attack, and the allowlist it holds the output to is derived from real output rather than written.
+// The safe-HTML guarantee of the markdown pipeline: the hostile corpus renders to nothing a browser could run, and the scan that
+// says so is itself seen to catch each class of attack.
 //
 // UPDATE_ALLOWLIST=1 npm test rewrites render-allowlist.mjs from the benign corpus. Review the diff: a new tag or attribute there is a
 // change in what the pipeline can emit.
