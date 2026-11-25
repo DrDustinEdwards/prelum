@@ -1,8 +1,7 @@
-// prelum-chart-audit against a local site with one clean page and one page of planted mistakes, in a real browser: a check
-// that misses a chart without its table, an unnamed SVG, text that fails only in dark, another chart library, a chart
-// drawn only by script, one that scrolls at 320 px or a page behind a sign-in wall calls a site clean that is not; one that flags the clean page fails every
-// site that does it right. The clean page is a :::chart Prelum rendered, with Enarratio's redrawCharts redrawing it at 320 px, a
-// textured series, an enhanced chart's role and inline primitives, so the check's exceptions and the redraw are proven together.
+// prelum-chart-audit against a local site with one clean page and one page of planted mistakes, in a real browser: a check that
+// misses a planted mistake calls a site clean that is not, and one that flags the clean page fails every site that does it right.
+// The clean page is a :::chart Prelum rendered, redrawn by Enarratio at 320 px, so the check's exceptions and the redraw are
+// proven together.
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";

@@ -1,7 +1,5 @@
-// What a feed reader or validator sees in the RSS, Atom and JSON Feed documents: the elements it requires, the dates it
-// sorts by, text that stays text however it is punctuated, and links that resolve on the reader's origin, not this one.
-// Assertions read elements back out of the document rather than comparing it byte for byte, so a change of layout
-// alone fails nothing here.
+// What a feed reader or validator sees in the RSS, Atom and JSON Feed documents. Assertions read elements back out of the
+// document rather than comparing it byte for byte, so a change of layout alone fails nothing here.
 
 import assert from "node:assert/strict";
 import test from "node:test";
