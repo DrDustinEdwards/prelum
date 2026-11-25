@@ -1,4 +1,4 @@
-// The accessibility statement every public site serves at /accessibility (devkit-a11y item S6), written once. The sections
+// The accessibility statement every public site serves at /accessibility, written once. The sections
 // follow the W3C WAI statement generator: the commitment, the standard and how far the site meets it, the measures taken,
 // the known limitations, how to report a problem, and the date. The site passes its name, contact route and date, the
 // open findings from the latest devkit-a11y report, and two facts about how it is built (whether its pages come from

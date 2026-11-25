@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // prelum-chart-audit: crawl a live site the way prelum-audit does (its sitemap, then the same-origin pages those pages link to) and
-// check every chart on every page against the charts checklist (area 10, section G), in a headless browser, with scripts off
+// check every chart on every page against the charts checklist, in a headless browser, with scripts off
 // and in the light and dark color schemes.
 //
 //   prelum-chart-audit --origin https://example.com [--from https://preview.example.workers.dev] [--max-pages 1500]
 //               [--chart-kb 100] [--no-strict-frame] [--pages <file | comma list>] [--start <url>]...
 //
-// A chart is an Enarratio figure or piece (`.enarratio[data-enarratio]`), or the Capsomer frame it sits in (`.cap-chart`, Capsomer 0.53).
+// A chart is an Enarratio figure or piece (`.enarratio[data-enarratio]`), or the Capsomer frame it sits in (`.cap-chart`).
 // Each finding is a GitHub annotation titled with its checklist item, its proof the page's URL:
 //
 //   B2   with scripts off there is no SVG, or the chart is drawn only by script

@@ -1,5 +1,4 @@
-// The blocks every site gets beyond :::figure and :::details, measured against Ghost's cards, WordPress's core blocks and GitHub's
-// alerts: callouts, video, audio, embeds, galleries, buttons, bookmarks, FAQs, links to other posts and the inline marks raw HTML
+// The blocks every site gets beyond :::figure and :::details: callouts, video, audio, embeds, galleries, buttons, bookmarks, FAQs, links to other posts and the inline marks raw HTML
 // would otherwise be the only way to write. Each refuses what it cannot render well rather than guessing, as :::figure does.
 
 import { visit } from "unist-util-visit";

@@ -82,7 +82,6 @@ const footerHtml = (version) =>
 </div>`,
   });
 
-/** The family letterhead (capsomer/site-header), with its theme button, wired by /specimen.js. */
 const HEADER = letterheadHtml({
   name: "Prelum",
   mark: '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M10 7h8a6 6 0 0 1 0 12h-4v6h-4z"/></svg>',
@@ -111,10 +110,8 @@ const SHARE_CARD = {
   alt: "Prelum, one publishing library for every site: markdown, feeds, sitemaps, llms.txt and search.",
 };
 
-/** The page's head: Prelum's own defineHead, so the specimen carries the WebPage graph every site's pages do. */
 const head = defineHead({ origin: ORIGIN, siteName: "Prelum", image: SHARE_CARD, locale: "en_US" });
 
-/** What the specimen is about, on its page beside the WebPage: the site, and the library it shows. */
 const SITE_DESCRIPTION =
   "Prelum, the publishing library for Dustin Edwards's sites: markdown to pages, feeds, sitemaps, llms.txt and search.";
 const AUTHOR = {
@@ -316,7 +313,7 @@ ${await outputsSection(version, elements.length + 1, priority)}
     }),
   );
 
-  // The accessibility statement (devkit-a11y S6): Prelum's own, with this site's facts and the open findings of
+  // The accessibility statement: Prelum's own, with this site's facts and the open findings of
   // devkit-a11y's last run.
   const statement = accessibilityStatement({
     siteName: "The Prelum specimen",

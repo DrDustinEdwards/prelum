@@ -221,7 +221,6 @@ export function readStrays(libraries) {
     const rects = boxes("rect").filter(
       (r) => !labels.some(([x, y]) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom),
     );
-    /** Where each wire starts and ends, on screen. */
     const ends = Array.from(svg.querySelectorAll("path")).flatMap((path) => {
       const matrix = path.getScreenCTM();
       const length = path.getTotalLength();

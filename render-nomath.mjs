@@ -1,5 +1,5 @@
 // The markdown pipeline: markdown in, a safe HTML fragment out, one renderer for every site that publishes Carrel's writing
-// (carrel/design-markdown-pipeline.md). Runs in a Worker, so no node:fs.
+// Runs in a Worker, so no node:fs.
 //
 // This module is the pipeline without math, and imports no KaTeX: a site with no math imports it as `render/nomath`, `$3,000` stays
 // text, and KaTeX (about 1.6 MB raw) never enters its bundle. render.mjs is the same pipeline with KaTeX passed in.

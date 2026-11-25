@@ -36,7 +36,7 @@ export function writeStyles(outDir) {
     prose: true,
     parts: ["manual", "popover", "theme-switch", "site-header", "family-footer", "chart-frame"],
     // Capsomer's tokens.css also maps the --enarratio-* properties onto its tokens (css/enarratio.css). The two agree, being
-    // generated from the same tokens; Enarratio 0.1.0-alpha.8 has no color-free base stylesheet, so its full one is used.
+    // generated from the same tokens; Enarratio has no color-free base stylesheet, so its full one is used.
     after: [
       stylesheet(capsomerTheme),
       ...["site.css", "output.css"].map((file) => readFileSync(join(HERE, file), "utf8")),

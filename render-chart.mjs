@@ -17,7 +17,7 @@ const NARROW_WIDTH = 240;
 // A phone's scatter plot is taller for its width than the wide one, so it keeps its own shape (Capsomer's keepShape).
 const NARROW_HEIGHT = Math.round((DEFAULT_HEIGHT * 5) / 6);
 
-/** The issues `strict` refuses (E4): a reader would struggle with each, and the author can fix each in the directive. */
+/** The issues `strict` refuses: a reader would struggle with each, and the author can fix each in the directive. */
 const STRICT_CHART_ISSUES = ["title-missing", "too-many-series"];
 
 /**
@@ -102,7 +102,7 @@ function resolveSeries(attrs, columns) {
 }
 
 /**
- * The figure's words beside the drawing, from the directive's attributes (Enarratio 0.4's options):
+ * The figure's words beside the drawing, from the directive's attributes (Enarratio's options):
  * a subtitle, notes, a source (linked with `source-href`), a byline and axis units.
  *
  * @param {Record<string, string>} attrs
@@ -202,7 +202,7 @@ function frameOf(html) {
  * @param {Record<string, string>} attrs
  * @param {string} csv
  * @param {{ strict?: boolean }} [options] `strict` refuses the chart on an issue in STRICT_CHART_ISSUES, where
- *   the default only reports it (E4), so an editor can block a publish on one
+ *   the default only reports it, so an editor can block a publish on one
  */
 export function buildChartModel(attrs, csv, { strict = false } = {}) {
   const type = attrs.type;
@@ -285,7 +285,7 @@ export function buildChartModel(attrs, csv, { strict = false } = {}) {
 }
 
 /**
- * The figure Enarratio drew, as hast, in Capsomer 0.53's chart frame: the markup of its `frameHtml(figure)`,
+ * The figure Enarratio drew, as hast, in Capsomer's chart frame: the markup of its `frameHtml(figure)`,
  * `div.cap-chart > div.cap-chart-figure > figure.enarratio`, written here so Capsomer is not a dependency.
  * Parsed rather than allowDangerousHtml, which would open raw HTML in every post. Enarratio's figcaption
  * is the head (title and finding). The author's caption is the caption under the chart, where Enarratio
@@ -310,7 +310,7 @@ export function renderChartHast(model, captionChildren, figure) {
   if ("narrow" in model.redraw) assertSafe(model.redraw.narrow);
   // What Enarratio's `redrawCharts` redraws the chart from at the frame's width (its own `data-enarratio-redraw`); without that script the drawing is the server's.
   // A scatter plot's phone drawing keeps its own shape: until the script swaps it in, the wide drawing is shown at the phone
-  // drawing's height (Capsomer's data-keep-shape), so the swap moves nothing under the chart (D5).
+  // drawing's height (Capsomer's data-keep-shape), so the swap moves nothing under the chart.
   figure.properties = {
     className: ["cap-chart"],
     dataEnarratioRedraw: JSON.stringify(model.redraw),
@@ -327,7 +327,7 @@ export function renderChartHast(model, captionChildren, figure) {
   if (captionChildren.length > 0) {
     // Where Enarratio places a caption: after the drawing, its control row and the summary, before the notes, source and
     // data. Not between the drawing and the control row: enhance() puts the row back right after the drawing whenever the
-    // redraw swaps it, which moved the caption down on a phone (D5).
+    // redraw swaps it, which moved the caption down on a phone.
     const before = new Set(["enarratio-frame", "enarratio-controls", "enarratio-summary"]);
     const after = children.reduce(
       (/** @type {number} */ last, /** @type {any} */ n, /** @type {number} */ i) =>
