@@ -198,6 +198,37 @@ export function organization(organization) {
 }
 
 /**
+ * @typedef {object} SoftwareApplicationInput
+ * @property {string} name
+ * @property {string} [id]
+ * @property {string} [url]
+ * @property {string} [description]
+ * @property {string} [applicationCategory] a schema.org category, e.g. `BusinessApplication`
+ * @property {string} [operatingSystem] e.g. `Web`
+ * @property {SchemaNode} [publisher] usually `{ "@id": ... }` of the Organization
+ * @property {SchemaNode | SchemaNode[]} [offers] only a price the page can honor; a product with no single price writes none
+ */
+
+/**
+ * A SoftwareApplication. `offers` is written only when given: a price a crawler reads is a promise.
+ *
+ * @param {SoftwareApplicationInput} app
+ * @returns {SchemaNode}
+ */
+export function softwareApplication(app) {
+  return thing("SoftwareApplication", {
+    "@id": app.id,
+    name: app.name,
+    applicationCategory: app.applicationCategory,
+    operatingSystem: app.operatingSystem,
+    url: app.url,
+    description: app.description,
+    publisher: app.publisher,
+    offers: app.offers,
+  });
+}
+
+/**
  * A PodcastSeries, tying the show to its feed.
  *
  * @param {PodcastSeriesInput} series
