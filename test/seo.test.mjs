@@ -30,6 +30,7 @@ import {
   imageObject,
   itemList,
   jsonLd,
+  softwareApplication,
   videoObject,
 } from "../schema.mjs";
 import { SITEMAP_MAX_URLS, sitemapDocument, sitemapIndexDocument } from "../sitemap.mjs";
@@ -715,5 +716,29 @@ test("a sitemap file past Google's limits throws and a sitemap index lists the f
       { loc: "https://x.test/a&b.xml" },
     ]),
     `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <sitemap><loc>https://x.test/sitemap-1.xml</loc><lastmod>2026-11-07</lastmod></sitemap>\n  <sitemap><loc>https://x.test/a&amp;b.xml</loc></sitemap>\n</sitemapindex>\n`,
+  );
+});
+
+test("softwareApplication writes only what it is given, offers included", () => {
+  assert.deepEqual(
+    softwareApplication({
+      name: "App",
+      url: "https://x.test/",
+      applicationCategory: "BusinessApplication",
+    }),
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: "App",
+      applicationCategory: "BusinessApplication",
+      url: "https://x.test/",
+    },
+  );
+  assert.deepEqual(
+    softwareApplication({ name: "App", offers: { "@type": "Offer", price: "0" } }).offers,
+    {
+      "@type": "Offer",
+      price: "0",
+    },
   );
 });

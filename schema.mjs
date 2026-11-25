@@ -7,6 +7,7 @@ export {
   sameAs,
   person,
   organization,
+  softwareApplication,
   podcastSeries,
   podcastEpisode,
   dataset,
