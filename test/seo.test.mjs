@@ -1,10 +1,5 @@
-// The parts of the SEO helpers a mistake in would ship silently: a named robots group that drops the disallow list opens every
-// private path to that crawler; an empty date tag claims a page has no date; `</script>` in a title would end the JSON-LD; and an
-// audit that compares URLs by their exact spelling misses a broken link written with a trailing slash or a fragment, and
-// one that lets a workers.dev canonical or a redirect chain through calls a site clean that search engines do not. A cut
-// title that runs past the limit with its "...", or an entity the audit reads as extra characters, warns on every page. An
-// image's license node without a rights field, or an Article image under Google's size, is structured data Google ignores. A favicon that answers HTML, or a manifest icon that 404s, is a blank tab and a broken
-// install that no page check sees.
+// The parts of the SEO helpers a mistake in would ship silently: robots groups, structured data, head tags, the site audit and the
+// icon files.
 
 import assert from "node:assert/strict";
 import test from "node:test";
