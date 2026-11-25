@@ -270,7 +270,7 @@ function chartSrcRefusal(src) {
 }
 
 /**
- * `:::chart{src="..."}` (E3): the CSV comes from the site's `chartData(src, { file })`, called at render time, in place of the
+ * `:::chart{src="..."}`: the CSV comes from the site's `chartData(src, { file })`, called at render time, in place of the
  * fenced block. Prelum fetches nothing itself, so without the hook a `src` is refused; with it, the text it returns is the block. The
  * `src` is the author's text and reaches the loader after only a basic guard (chartSrcRefusal): the loader must validate it itself.
  *
@@ -359,7 +359,7 @@ const remarkDiagram = remarkModelDirective({
  * @param {string} options.assetPrefix the prefix of the site's diagram assets, for example "example-"
  * @param {(src: string, context: { file: string }) => string | Promise<string>} [options.chartData] reads the CSV a
  *   `:::chart{src="..."}` cites (a URL or a media path), at render time; without it a `src` is refused
- * @param {boolean} [options.strictCharts] refuse a chart with no title or too many series, where the default renders it with a warning (E4)
+ * @param {boolean} [options.strictCharts] refuse a chart with no title or too many series, where the default renders it with a warning
  * @param {Record<string, { width: number, height: number }>} [options.diagramSizes] the DIAGRAM_SIZES_FILE drawDiagrams writes
  *   beside the drawings, which sizes each diagram's images; a diagram it does not list is rendered unsized, with a warning
  * @returns {RenderPack}

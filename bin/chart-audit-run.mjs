@@ -279,7 +279,7 @@ export function createAuditor(env) {
       /** @type {Array<{ t: number, value: number, moved: string }>} */
       let shifts = [];
       if (pinned && result.units.length > 0) {
-        // A site may enhance its charts late (Foxhound's dashboard, about 5 s after load): the shifts are read once two seconds
+        // A site may enhance its charts late (a dashboard can take seconds): the shifts are read once two seconds
         // pass with none.
         await page.evaluate(quietShifts, 0);
         shifts = await page.evaluate(readShifts, foldsAt);

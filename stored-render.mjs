@@ -1,5 +1,5 @@
 /**
- * Rendered HTML stored beside its Markdown, from germomics (app/lib/render.server.ts): a public read shows the stored render when
+ * Rendered HTML stored beside its Markdown: a public read shows the stored render when
  * it is at this release's RENDER_VERSION, renders in memory when it is older (a cron stores it later), and keeps the last stored
  * HTML when the body no longer renders, so a page never fails on its own text. The HTML is wrapped in the version it was
  * rendered at (`data-render-version`), which render-audit's prelum-content check reads to see a page an upgrade left behind.
