@@ -4,7 +4,7 @@ import { visit } from "unist-util-visit";
 
 import { ContentError } from "./render-error.mjs";
 import { BLUESKY_HANDLE, EMBED_PROVIDERS } from "./render-embeds.mjs";
-import { attrsOf, caption, element, textOf, urlAttribute, where } from "./render-blocks.mjs";
+import { attrsOf, caption, element, blockText, urlAttribute, where } from "./render-blocks.mjs";
 import { refuseHeading, widthClass } from "./render-directives.mjs";
 
 /** `![""](x)`, straight or curly quotes: the author's word that the image is decorative. */
@@ -68,7 +68,7 @@ export function remarkMedia(file) {
         const captions = urlAttribute(file, node, name, "captions", !("silent" in attrs));
         const poster = urlAttribute(file, node, name, "poster");
         // A silent video has no audio to caption, but its pictures still need a text alternative (WCAG 1.2.1): the content is it.
-        if ("silent" in attrs && !textOf({ children }).trim())
+        if ("silent" in attrs && !blockText({ children }).trim())
           throw new ContentError(
             file,
             `${where(node, name)} is silent, so it needs a description as its content (:::video{…} then text, then :::), the text alternative to its pictures`,
@@ -142,7 +142,8 @@ export function remarkEmbeds(file) {
         return;
       const url = attrsOf(node).url ?? "";
       const title =
-        (node.type === "leafDirective" ? textOf(node).trim() : "") || attrsOf(node).title?.trim();
+        (node.type === "leafDirective" ? blockText(node).trim() : "") ||
+        attrsOf(node).title?.trim();
       for (const provider of EMBED_PROVIDERS) {
         const match = provider.pattern.exec(url);
         if (!match) continue;
