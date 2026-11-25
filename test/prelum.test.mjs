@@ -80,10 +80,7 @@ test("sitemap: a URL listed twice is written once, an ampersand is escaped, comp
   assert.doesNotMatch(xml, /lastmod/);
   assert.match(xml, /<loc>https:\/\/x\.test\/a\?b=1&amp;c=2<\/loc>/);
   const loc = "https://e.test/a";
-  assert.throws(
-    () => sitemapDocument([{ loc, priority: 1 }]),
-    /only the expanded layout writes/,
-  );
+  assert.throws(() => sitemapDocument([{ loc, priority: 1 }]), /only the expanded layout writes/);
   const expanded = (/** @type {object} */ fields) =>
     sitemapDocument([{ loc, ...fields }], { layout: "expanded" });
   assert.throws(() => expanded({ priority: 1.5 }), /priority/);
@@ -189,7 +186,10 @@ test("llms: a link title's brackets are escaped, an empty section is dropped, ne
   assert.match(text, /- \[\\\[draft\\\] note\]\(https:\/\/x\.test\/n\)/);
   assert.doesNotMatch(text, /## Empty/);
   assert.equal(llmsDocument({ title: "A\nB", summary: "C\nD", sections: [] }), "# A B\n\n> C D\n");
-  assert.equal(llmsDocument({ title: "Site", summary: "", intro: ["Intro"], sections: [] }), "# Site\n\nIntro\n");
+  assert.equal(
+    llmsDocument({ title: "Site", summary: "", intro: ["Intro"], sections: [] }),
+    "# Site\n\nIntro\n",
+  );
   assert.equal(
     llmsLink({ title: "t", url: "https://e.test/a b_(c)" }),
     "- [t](https://e.test/a%20b_%28c%29)",
