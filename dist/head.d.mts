@@ -1,0 +1,320 @@
+/**
+ * The full head of a public page: title, description, canonical, Open Graph and Twitter. `twitter:card` is always
+ * `summary_large_image`, because the image is required: a card without one renders as a bare link. The image's type is the one
+ * passed, else its extension's when the URL has no query, and `twitter:image:alt` is cut to X's 420 characters. An absent date writes no tag,
+ * since an empty `article:published_time` claims there is no date.
+ *
+ * @param {HeadInput} input
+ * @returns {HeadTag[]}
+ */
+export function headTags(input: HeadInput): HeadTag[];
+/**
+ * The ISO dates both the Open Graph tags and the Article schema write, so the two cannot disagree. A missing or unreadable
+ * date is undefined.
+ *
+ * @param {ArticleFacts} article
+ * @returns {{ published: string | undefined, modified: string | undefined }}
+ */
+export function articleDates(article: ArticleFacts): {
+    published: string | undefined;
+    modified: string | undefined;
+};
+/**
+ * A drawn share card as `defineHead` reads it, so og:image carries its size and alt text.
+ *
+ * @param {string} url absolute https, or a path on `origin`
+ * @param {string} alt
+ * @returns {HeadImage}
+ */
+export function shareCard(url: string, alt: string): HeadImage;
+/**
+ * A path on `origin` made absolute; an absolute URL is kept as it is.
+ *
+ * @param {string} origin
+ * @param {string} path
+ */
+export function absoluteUrl(origin: string, path: string): string;
+/**
+ * The tags as HTML, for a page built without React Router (a static build). Attribute values are escaped, and JSON-LD is
+ * written by `scriptJson`, so a title holding `</script>` cannot end the script element.
+ *
+ * @param {HeadTag[]} tags
+ * @returns {string}
+ */
+export function headHtml(tags: HeadTag[]): string;
+/**
+ * @typedef {object} SiteHead
+ * @property {string} origin the site's production origin
+ * @property {string} siteName `og:site_name`
+ * @property {HeadImage | string} image the site's default card, for a page without its own: `{ url, width, height, alt }`,
+ *   as `HeadInput`'s `image`
+ * @property {string} [suffix] what follows a page's title in `<title>`, e.g. " | Example Co"; `searchTitle` drops it where the
+ *   two do not fit
+ * @property {string} [locale] `og:locale`, e.g. `en_US`
+ * @property {HeadFeed[]} [feeds] the site's feeds, linked from every page
+ * @property {Record<string, string>} [sections] the names of the section pages a breadcrumb trail passes through, by path
+ *   (`{ "/blog": "Blog" }`); a path not named here is left out of the trail
+ * @property {string} [description] the site's own description, for a page that passes none
+ * @property {boolean} [wholeHomeTitle] the home page's `title` is already the whole `<title>`, so it takes no suffix
+ */
+/**
+ * @typedef {Omit<HeadInput, "origin" | "siteName" | "image" | "locale" | "description"> & {
+ *   description?: string,
+ *   image?: HeadImage | string | null,
+ *   imageAlt?: string,
+ *   fullTitle?: boolean,
+ *   pageType?: string,
+ *   breadcrumbs?: Array<{ name: string, path: string }> | false,
+ * }} PageHead
+ * One page's head: `title` is the page's own title, without the suffix, unless `fullTitle` says it is already the whole
+ * `<title>`, in which case the site's suffix is taken off it for the page's name in the graph and its breadcrumb. `feeds`
+ * are added to the site's. `pageType` is the WebPage subtype (`CollectionPage` for a list, `AboutPage`,
+ * `ProfilePage`, `SearchResultsPage`); `breadcrumbs` is the trail from the home page down, in place of the one built from
+ * `sections`, or false for none. `description` falls back to the site's. `imageAlt` is the alt of the page's own `image` when
+ * that is a URL or has none; the site's default card keeps its own. A path's trailing slash is dropped (`keepTrailingSlash`
+ * keeps it), and with the site's `wholeHomeTitle` the home page's title is the whole `<title>`.
+ */
+/**
+ * The per-site head builder around `headTags`: the site's facts once, then a function a route's `meta`
+ * calls with the page's. The `<title>` is `searchTitle(title, suffix)` (the suffix dropped and the title cut where both do
+ * not fit) and the share card keeps the whole title as `socialTitle`; the description is cut at a word to
+ * `SERP_DESCRIPTION`'s width, and the share card keeps it whole. An indexable page also gets its WebPage and BreadcrumbList
+ * as one JSON-LD graph, joined to the site's `website` node by its `@id`, so no page goes without them.
+ *
+ * @param {SiteHead} site
+ * @returns {(page: PageHead) => HeadTag[]}
+ */
+export function defineHead(site: SiteHead): (page: PageHead) => HeadTag[];
+/**
+ * The root route's loader data, read from a route's `meta` matches: the one place a page's title suffix, the site's
+ * settings or the request origin are loaded once for every page. Undefined when the root has no loader data (an error
+ * page). React Router 8 names it `loaderData`.
+ *
+ * @template T
+ * @param {ReadonlyArray<{ id: string, loaderData?: unknown } | undefined>} matches
+ * @returns {T | undefined}
+ */
+export function rootLoaderData<T>(matches: ReadonlyArray<{
+    id: string;
+    loaderData?: unknown;
+} | undefined>): T | undefined;
+/**
+ * A signed-in, admin or other private page's whole head: its title and `robots: noindex`, and nothing a share card or a
+ * search result would read. The Worker also sends `X-Robots-Tag: noindex` on these paths, which covers their redirects
+ * and resource routes, where no meta can go.
+ *
+ * @param {string} title
+ * @returns {Array<{ title: string } | { name: string, content: string }>}
+ */
+export function privateMeta(title: string): Array<{
+    title: string;
+} | {
+    name: string;
+    content: string;
+}>;
+/**
+ * The shortest trail that gets a BreadcrumbList: home, a section, the page. A top-level page (home and itself) shows no
+ * trail on any site, since breadcrumbs belong to pages inside a section (https://www.nngroup.com/articles/breadcrumbs/,
+ * https://design-system.service.gov.uk/components/breadcrumbs/), and markup must describe what a visitor sees
+ * (https://developers.google.com/search/docs/appearance/structured-data/sd-policies), so it carries none either.
+ */
+export const BREADCRUMB_MIN_ITEMS: 3;
+export type SiteHead = {
+    /**
+     * the site's production origin
+     */
+    origin: string;
+    /**
+     * `og:site_name`
+     */
+    siteName: string;
+    /**
+     * the site's default card, for a page without its own: `{ url, width, height, alt }`,
+     * as `HeadInput`'s `image`
+     */
+    image: HeadImage | string;
+    /**
+     * what follows a page's title in `<title>`, e.g. " | Example Co"; `searchTitle` drops it where the
+     * two do not fit
+     */
+    suffix?: string | undefined;
+    /**
+     * `og:locale`, e.g. `en_US`
+     */
+    locale?: string | undefined;
+    /**
+     * the site's feeds, linked from every page
+     */
+    feeds?: HeadFeed[] | undefined;
+    /**
+     * the names of the section pages a breadcrumb trail passes through, by path
+     * (`{ "/blog": "Blog" }`); a path not named here is left out of the trail
+     */
+    sections?: Record<string, string> | undefined;
+    /**
+     * the site's own description, for a page that passes none
+     */
+    description?: string | undefined;
+    /**
+     * the home page's `title` is already the whole `<title>`, so it takes no suffix
+     */
+    wholeHomeTitle?: boolean | undefined;
+};
+/**
+ * One page's head: `title` is the page's own title, without the suffix, unless `fullTitle` says it is already the whole
+ * `<title>`, in which case the site's suffix is taken off it for the page's name in the graph and its breadcrumb. `feeds`
+ * are added to the site's. `pageType` is the WebPage subtype (`CollectionPage` for a list, `AboutPage`,
+ * `ProfilePage`, `SearchResultsPage`); `breadcrumbs` is the trail from the home page down, in place of the one built from
+ * `sections`, or false for none. `description` falls back to the site's. `imageAlt` is the alt of the page's own `image` when
+ * that is a URL or has none; the site's default card keeps its own. A path's trailing slash is dropped (`keepTrailingSlash`
+ * keeps it), and with the site's `wholeHomeTitle` the home page's title is the whole `<title>`.
+ */
+export type PageHead = Omit<HeadInput, "origin" | "siteName" | "image" | "locale" | "description"> & {
+    description?: string;
+    image?: HeadImage | string | null;
+    imageAlt?: string;
+    fullTitle?: boolean;
+    pageType?: string;
+    breadcrumbs?: Array<{
+        name: string;
+        path: string;
+    }> | false;
+};
+/**
+ * The descriptor shapes React Router's `meta` export takes, so a route returns `headTags(...)` as it is.
+ */
+export type HeadTag = {
+    title: string;
+} | {
+    name: string;
+    content: string;
+} | {
+    property: string;
+    content: string;
+} | {
+    tagName: "link";
+    rel: string;
+    href: string;
+    type?: string;
+    title?: string;
+} | {
+    "script:ld+json": Record<string, unknown>;
+};
+export type HeadImage = {
+    /**
+     * absolute https, or a path on `origin`
+     */
+    url: string;
+    /**
+     * in pixels; with `height`, a crawler can draw the card before it has fetched the image
+     */
+    width?: number | undefined;
+    height?: number | undefined;
+    /**
+     * the media type the URL is served as, e.g. `image/webp`. Without it the type is read from the file's
+     * extension, but only for a URL with no query: a resized size (`/media/photo.jpg?w=1200`) is served as WebP or AVIF whatever
+     * its name says, so a site passes the type it serves, and none is written rather than a wrong one
+     */
+    type?: string | undefined;
+    /**
+     * what the image shows, for a reader who cannot see it
+     */
+    alt?: string | undefined;
+};
+/**
+ * A video the page plays, as `og:video` (render's `videos` gives a body's)
+ */
+export type HeadVideo = {
+    /**
+     * the file, or for an embed its player (`embedUrl`); absolute https, or a path on `origin`
+     */
+    url: string;
+    /**
+     * `video/mp4`, or `text/html` for a player; read from a file's extension when not given
+     */
+    type?: string | undefined;
+    width?: number | undefined;
+    height?: number | undefined;
+};
+export type ArticleFacts = {
+    published?: string | number | Date | null | undefined;
+    /**
+     * falls back to `published`
+     */
+    modified?: string | number | Date | null | undefined;
+    author?: string | undefined;
+    tags?: string[] | undefined;
+};
+export type HeadInput = {
+    /**
+     * the site's production origin, never the request's: a workers.dev copy must not claim to be the page
+     */
+    origin: string;
+    path: string;
+    /**
+     * the `<title>`, with any site suffix already on it
+     */
+    title: string;
+    description: string;
+    /**
+     * the page's card, or the site's default: a card is always sent. Pass the object with its
+     * size and alt; a bare URL is still read, but writes a card without them, and the audit flags it
+     */
+    image: HeadImage | string;
+    siteName?: string | undefined;
+    /**
+     * `og:title` and `twitter:title`, where they differ from `title`
+     */
+    socialTitle?: string | undefined;
+    socialDescription?: string | undefined;
+    type?: "article" | "website" | "book" | "profile" | undefined;
+    /**
+     * an absolute URL, where it is not `origin` + `path`
+     */
+    canonical?: string | undefined;
+    /**
+     * e.g. `en_US`
+     */
+    locale?: string | undefined;
+    noindex?: boolean | undefined;
+    /**
+     * `article:*` tags; pass the same facts to the schema's `article` so the two agree
+     */
+    article?: ArticleFacts | undefined;
+    /**
+     * the page's videos, each as `og:video` with its type and size; pass the same to the schema's
+     * `videoObject`
+     */
+    videos?: HeadVideo[] | undefined;
+    /**
+     * the page's Markdown copy (`markdownPath(path)` from `llms`), absolute or a path on `origin`, linked as
+     * `<link rel="alternate" type="text/markdown">` so an agent can find it
+     */
+    markdown?: string | undefined;
+    /**
+     * the site's or the page's feeds, each linked as `<link rel="alternate">` so a reader finds it
+     */
+    feeds?: HeadFeed[] | undefined;
+    /**
+     * keep a trailing slash on `path` in the canonical and `og:url`; by default
+     * `/about/` is written `/about` (the home page stays `/`), so one page has one canonical URL. A route served only with its
+     * slash (a feed's page at `/feed/news/`) keeps it.
+     */
+    keepTrailingSlash?: boolean | undefined;
+};
+export type HeadFeed = {
+    /**
+     * `rss`, `atom` and `json` name the usual media types; any other
+     * value is written as the type
+     */
+    type: "rss" | "atom" | "json" | (string & {});
+    /**
+     * absolute, or a path on `origin`
+     */
+    href: string;
+    /**
+     * e.g. "Example Co (RSS)"
+     */
+    title?: string | undefined;
+};
+export { SERP_DESCRIPTION, SERP_TITLE, metaText, searchTitle, serpWidth, truncateForSerp } from "./serp.mjs";
