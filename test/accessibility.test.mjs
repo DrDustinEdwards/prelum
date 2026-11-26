@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { accessibilityStatement, HAND_CHECK_LIMITATIONS } from "../accessibility.mjs";
+import { accessibilityStatement } from "../accessibility.mjs";
 
 /** @type {import("../accessibility.mjs").AccessibilityInput} */
 const input = {
@@ -11,23 +11,21 @@ const input = {
   links: "marked",
 };
 
-test("a partial statement lists the findings and the hand-check gaps, a full one says none are known, and the date is plain or refused", () => {
+test("the statement says the site is built to be accessible and tested, never that it fully conforms, and lists open findings only when there are some", () => {
   const { body, title } = accessibilityStatement({
     ...input,
     limitations: ["The map has no text alternative."],
   });
   assert.equal(title, "Accessibility statement");
-  assert.match(body, /partially conforms to WCAG 2\.2 level AA/);
-  assert.match(body, /- The map has no text alternative\./);
-  for (const item of HAND_CHECK_LIMITATIONS) assert.ok(body.includes(item));
-  assert.match(body, /\[the contact page\]\(\/contact\)/);
-  assert.match(body, /last reviewed on October 31, 2026\./);
-  // A full statement with no findings says none are known; a bad date is refused.
   assert.match(
-    accessibilityStatement({ ...input, conformance: "full" }).body,
-    /conforms to WCAG 2\.2 level AA\./,
+    body,
+    /^Example is built to be accessible and is tested with screen-reader and keyboard tools\./,
   );
-  assert.match(accessibilityStatement({ ...input, conformance: "full" }).body, /no limitations/);
+  assert.match(body, /- The map has no text alternative\./);
+  assert.match(body, /\[the contact page\]\(\/contact\) and we'll fix it/);
+  assert.match(body, /last reviewed on October 31, 2026\./);
+  assert.ok(!/conform|have not tested/i.test(body));
+  assert.ok(!accessibilityStatement(input).body.includes("Known limitations"));
   assert.throws(() => accessibilityStatement({ ...input, date: "Oct 31" }), /YYYY-MM-DD/);
 });
 
@@ -40,7 +38,7 @@ test("the HTML copy has the same sections and escapes what the site passes", () 
   });
   assert.match(html, /<h2>Known limitations<\/h2><ul><li>x &lt; y<\/li>/);
   assert.match(html, /<a href="\/c\?a=1&amp;b=2">the &lt;contact&gt; page<\/a>/);
-  assert.match(html, /A &amp; B partially conforms/);
+  assert.match(html, /A &amp; B is built to be accessible/);
   assert.ok(!html.includes("<contact>"));
 });
 
